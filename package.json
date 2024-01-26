@@ -1,0 +1,51 @@
+{
+  "name": "mytms",
+  "author": {
+    "name": "Yogann Henry",
+    "email": "yogann.henry@gmail.com"
+  },
+  "version": "1.0.18",
+  "private": "true",
+  "scripts": {
+    "dev": "vite",
+    "stage": "vite --mode staging",
+    "build": "vue-tsc --noEmit && vite build",
+    "build:stage": "vue-tsc --noEmit && vite build --mode staging",
+    "preview": "vite preview"
+  },
+  "dependencies": {
+    "@element-plus/icons-vue": "^2.0.6",
+    "axios": "^0.27.2",
+    "element-plus": "^2.2.9",
+    "node-sass": "^9.0.0",
+    "nprogress": "^0.2.0",
+    "overlayscrollbars": "^1.13.2",
+    "pathe": "^0.3.2",
+    "pinia": "^2.0.16",
+    "qs": "^6.11.0",
+    "sass-loader": "^14.0.0",
+    "vue": "^3.2.37",
+    "vue-router": "^4.1.2"
+  },
+  "devDependencies": {
+    "@types/mockjs": "^1.0.6",
+    "@types/node": "^18.0.5",
+    "@types/nprogress": "^0.2.0",
+    "@types/overlayscrollbars": "^1.12.1",
+    "@types/qs": "^6.9.7",
+    "@vitejs/plugin-vue": "^3.0.0",
+    "@vitejs/plugin-vue-jsx": "^2.0.0",
+    "autoprefixer": "^10.4.7",
+    "mockjs": "^1.1.0",
+    "postcss": "^8.4.14",
+    "postcss-flexbugs-fixes": "^5.0.2",
+    "postcss-nesting": "^10.1.10",
+    "sass": "^1.70.0",
+    "typescript": "^4.7.4",
+    "unplugin-vue-components": "^0.21.1",
+    "vite": "^3.0.0",
+    "vite-plugin-sass": "^0.1.0",
+    "vite-plugin-svg-icons": "^2.0.1",
+    "vue-tsc": "^0.38.7"
+  }
+}

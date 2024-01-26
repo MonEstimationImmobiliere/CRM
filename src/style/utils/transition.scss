@@ -1,0 +1,24 @@
+.button-slide-up-enter-active,
+.button-slide-up-leave-active {
+  transition: opacity var(--el-transition-duration) ease-out, transform var(--el-transition-duration) ease-out;
+}
+
+.button-slide-up-enter-from {
+  opacity: 0;
+  transform: translateY(30px);
+}
+
+.button-slide-up-leave-to {
+  opacity: 0;
+  transform: translateY(-30px);
+}
+
+.fade-enter-active,
+.fade-leave-active {
+  transition: opacity var(--el-transition-duration) ease;
+}
+
+.fade-enter-from,
+.fade-leave-to {
+  opacity: 0;
+}

@@ -1,0 +1,106 @@
+@use 'element-plus/theme-chalk/src/mixins/function.scss' as *;
+@use 'sass:map';
+
+$custom-border-radius: (
+  'base': 8px
+);
+
+$custom-colors: (
+  'primary': (
+    'base': #002e51,
+  ),
+  'success': (
+    'base': #4bc372,
+  ),
+  'warning': (
+    'base': #ffb600,
+  ),
+  'danger': (
+    'base': #ed3030,
+  ),
+  'error': (
+    'base': #f56c6c,
+  ),
+  'info': (
+    'base': #909399,
+  ),
+);
+
+$custom-text-color: (
+  'primary':#000000,
+  'regular': #000000,
+  'secondary': #909399,
+  'placeholder': #a8abb2,
+  'disabled': #c0c4cc,
+);
+
+$custom-border-color: (
+  '': #cccccc,
+  'light': #d9d9d9,
+  'lighter': #e6e6e6,
+  'extra-light': #ebebeb,
+  'dark': #a0a0a0,
+  'darker': #696969
+);
+
+$custom-font-family: (
+  '': "'Work Sans', 'Arial', sans-serif"
+);
+
+$custom-font-size: (
+  'extra-large': 18px,
+  'large': 16px,
+  'medium': 15px,
+  'base': 14px,
+  'small': 12px,
+  'extra-small': 11px
+);
+
+$custom-disabled: (
+  'bg-color': #f6f6f6,
+  'text-color': getCssVar('text-color', 'disabled'),
+  'border-color': getCssVar('border-color', 'light'),
+  'placeholder-color': #c5c9d2
+);
+
+$custom-bg-color: (
+  'page': #f6f6f6
+);
+
+$custom-common-component-size: (
+  '': 34px,
+  'small': 24px,
+  'large': 44px
+);
+
+$custom-messagebox: (
+  'border-radius': getCssVar('border-radius', 'base'),
+  'width': 450px
+);
+
+$custom-transition-duration: (
+  '': 0.25s,
+  'fast': 0.15s,
+);
+
+@forward 'element-plus/theme-chalk/src/common/var.scss' with (
+  $border-radius: $custom-border-radius,
+  $colors: $custom-colors,
+  $text-color: $custom-text-color,
+  $border-color: $custom-border-color,
+  $font-family: $custom-font-family,
+  $font-size: $custom-font-size,
+  $disabled: $custom-disabled,
+  $bg-color: $custom-bg-color,
+  $common-component-size: $custom-common-component-size,
+  $messagebox: $custom-messagebox,
+  $transition-duration: $custom-transition-duration,
+);
+
+$sb-xs-max-width: 479px;
+$sb-sm-max-width: 767px;
+$sb-md-max-width: 1023px;
+$sb-lg-max-width: 1499px;
+$sb-xl-max-width: 1919px;
+
+$sb-main-padding: 20px;

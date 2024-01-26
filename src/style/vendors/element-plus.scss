@@ -1,0 +1,152 @@
+body {
+  .el-date-editor {
+    .el-input__wrapper {
+      padding-right: 5px;
+    }
+  }
+
+  .el-input .el-input__icon {
+    margin-left: 4px;
+    margin-right: 4px;
+  }
+  
+  .el-button + .el-button {
+    margin-left: unset;
+  }
+
+  .el-virtual-scrollbar {
+    border-radius: 5px !important;
+    width: 10px !important;
+  }
+
+  .el-loading-mask {   
+    transition-duration: 0.5s;
+
+    &.delay {
+      &:not(.el-loading-fade-leave-active) {
+        transition-delay: 2s;
+      }
+
+      &.el-loading-fade-enter-active {
+        display: none !important;
+      }
+    }
+
+    //////////////////////////////
+    // this prevent loading outside of the screen in container exceeding the screen
+    //////////////////////////////
+    &::before {
+      content: '';
+      display: block;
+      height: 50%;
+      max-height: 50vh;
+    }
+
+    .el-loading-spinner {
+      bottom: 20px;
+      position: sticky;
+      top: 20px;
+    }
+    //////////////////////////////
+  }
+
+  table,
+  .el-table,
+  .el-table-v2 {
+    --el-table-header-bg-color: var(--el-color-primary);
+    --el-table-header-text-color: var(--el-color-white);
+  }
+
+  .el-table {
+    tr:hover,
+    .el-table__row--striped:hover,
+    .el-table__row:hover {
+      .el-table__cell {
+        border-color: var(--el-color-primary);
+      }
+    }
+
+    .cell {
+      line-height: inherit;
+    }
+
+    .el-table__header {
+      .cell {
+        white-space: nowrap;
+      }
+    }
+
+    .el-table__header,
+    .el-table__row {
+      .cell {
+        padding: 0 5px 0 var(--sb-gap-x);
+      }
+
+      .is-right .cell {
+        padding: 0 var(--sb-gap-x) 0 5px;
+      }
+
+      .is-center .cell {
+        padding: 0 5px;
+      }
+    }
+  }
+
+  .el-tag {
+    line-height: inherit;
+  }
+
+  .el-dropdown { 
+    line-height: inherit;
+  }
+  
+  .el-message-box {
+    --el-messagebox-padding-primary: var(--sb-gap-x);
+  
+    padding-bottom: var(--sb-gap-y);
+  
+    .el-message-box__header {
+      .el-message-box__title {
+        color: var(--el-text-color-primary);
+        font-size: 20px;
+        font-weight: bold;
+        height: 24px;
+        line-height: 24px;
+      }
+        
+      .el-message-box__headerbtn {
+        border-radius: 5px;
+        display: block;
+        font-size: 24px;
+        font-weight: bold;
+        padding: 4px;
+        right: 15px;
+        top: 15px;
+      
+        
+        .el-message-box__close {
+          color: var(--el-text-color-primary);
+          display: block;
+  
+          svg {
+            stroke: var(--el-text-color-primary);
+            stroke-width: 25;
+          }
+        }
+          
+        &:hover {
+          background-color: var(--el-color-info-light-8);
+        }
+      }
+    }
+  
+    .el-message-box__btns {
+      padding: var(--el-messagebox-padding-primary) var(--el-messagebox-padding-primary) 0;
+  
+      .el-button {
+        height: 40px;
+        min-width: 70px;
+      }
+    }
+  }
+}

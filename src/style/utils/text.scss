@@ -1,0 +1,105 @@
+.text {
+  &-left {
+    text-align: left !important;
+  }
+
+  &-center {
+    text-align: center !important;
+  }
+
+  &-right {
+    text-align: right !important;
+  }
+
+  &-uppercase {
+    text-transform: uppercase !important;
+  }
+
+  &-capitalize {
+    text-transform: capitalize !important;
+  }
+
+  &-primary {
+    color: var(--el-color-primary) !important;
+  }
+
+  &-danger {
+    color: var(--el-color-danger) !important;
+  }
+
+  &-warning {
+    color: var(--el-color-warning) !important;
+  }
+
+  &-success {
+    color: var(--el-color-success) !important;
+  }
+
+  &-info {
+    color: var(--el-color-info) !important;
+  }
+
+  &-italic {
+    font-style: italic !important;
+  }
+
+  &-bold {
+    font-weight: bold !important;
+  }
+
+  &-semi-bold {
+    font-weight: 600 !important;
+  }
+
+  &-medium {
+    font-weight: 500 !important;
+  }
+
+  &-light {
+    font-weight: 300 !important;
+  }
+
+  &-disabled {
+    color: var(--el-text-color-disabled) !important;
+  }
+
+  &-underline {
+    text-decoration: underline;
+  }
+
+  &-clamp-1,
+  &-ellipsis {
+    overflow: hidden !important;
+    text-overflow: ellipsis !important;
+    white-space: nowrap !important;
+  }
+
+  @for $i from 2 through 5 {
+    &-clamp-#{$i} {
+      -webkit-box-orient: vertical;
+      /* stylelint-disable-next-line value-no-vendor-prefix */
+      display: -webkit-box;
+      -webkit-line-clamp: #{$i};
+      overflow: hidden;
+      overflow-wrap: anywhere;
+      text-overflow: ellipsis;
+      white-space: normal;
+    }
+  }
+
+  &-nowrap {
+    white-space: nowrap !important;
+  }
+
+  &-wrap {
+    overflow-wrap: anywhere !important;
+  }
+
+  &-small {
+    font-size: var(--el-font-size-small) !important;
+  }
+
+  &-extra-small {
+    font-size: var(--el-font-size-extra-small) !important;
+  }
+}

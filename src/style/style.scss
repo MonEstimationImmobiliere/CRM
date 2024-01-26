@@ -1,0 +1,78 @@
+@import url('https://fonts.googleapis.com/css2?family=Work+Sans:ital,wght@0,300;0,400;0,500;0,600;0,700;1,300;1,400;1,500;1,600;1,700&display=swap');
+
+// Utils
+@import './utils/accessibility';
+@import './utils/animations';
+@import './utils/cursor';
+@import './utils/display';
+@import './utils/flex';
+@import './utils/grid';
+@import './utils/sizing';
+@import './utils/spacing';
+@import './utils/text';
+@import './utils/position';
+@import './utils/transition';
+
+// Vendors
+@import './vendors/element-plus';
+
+:root {
+  --sb-gap-x: 15px;
+  --sb-gap-y: 10px;
+
+  --sb-side-nav-width: 250px;
+
+  --sb-xs-max-width: #{$sb-xs-max-width};
+  --sb-sm-max-width: #{$sb-sm-max-width};
+  --sb-md-max-width: #{$sb-md-max-width};
+  --sb-lg-max-width: #{$sb-lg-max-width};
+  --sb-xl-max-width: #{$sb-xl-max-width};
+
+  --sb-main-max-width: calc(var(--sb-md-max-width) - 100px);
+  
+  --sb-header-z-index: 1999;
+
+  --sb-receipt-list-item-height: 90px; // /!\ test with ticket expirations before decreasing
+}
+
+body {
+  color: var(--el-text-color-primary);
+  font-family: 'montserrat', Helvetica, sans-serif;
+  font-size: var(--el-font-size-base);
+}
+
+html {
+  background-color: var(--el-bg-color-page); // this background should be replaced by transparent if barcode scanner is started
+}
+
+body,
+html {
+  // /!\ no set background-color here, it will break the scan
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  width: 100%;
+}
+
+#app {
+  height: 100%;
+  width: 100%;
+}
+
+*,
+*::before,
+*::after {
+  box-sizing: border-box;
+  font-family: inherit;
+  -webkit-tap-highlight-color: rgba(0, 0, 0, 0);
+  touch-action: manipulation;
+}
+
+h1,
+h2,
+h3,
+h4,
+h5,
+h6 {
+  margin: 0;
+}

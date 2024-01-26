@@ -1,0 +1,33 @@
+.d {
+  &-flex {
+    display: flex !important;
+  }
+
+  &-grid {
+    display: grid !important;
+  }
+
+  &-inline {
+    display: inline !important;
+  }
+
+  &-inherit {
+    display: inherit !important;
+  }
+
+  &-inline-flex {
+    display: inline-flex !important;
+  }
+
+  &-block {
+    display: block !important;
+  }
+
+  &-inline-block {
+    display: inline-block !important;
+  }
+
+  &-none {
+    display: none !important;
+  }
+}
