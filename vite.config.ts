@@ -1,5 +1,6 @@
 import { defineConfig } from 'vite'
 import vue from '@vitejs/plugin-vue'
+import ElementPlus from "unplugin-element-plus/vite";
 import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import vueJsx from '@vitejs/plugin-vue-jsx'
@@ -16,8 +17,12 @@ function resolvePath(src: string) {
 // https://vitejs.dev/config/
 export default defineConfig({
   base: '/',
+ 
   plugins: [
     vue(),
+    ElementPlus({
+      useSource: true
+    }),
     vueJsx(),
     createSvgIconsPlugin({
       iconDirs: [resolvePath('src/svgs')],
@@ -27,9 +32,21 @@ export default defineConfig({
       resolvers: [
         ElementPlusResolver()
       ]
-    })
+    }),
   ],
+  define: {
+    __VUE_I18N_FULL_INSTALL__: true,
+    __VUE_I18N_LEGACY_API__: false,
+    __INTLIFY_PROD_DEVTOOLS__: false
+  },
   css: {
+    preprocessorOptions: {
+      scss: {
+        // eslint-disable-next-line quotes
+        additionalData: `@use "./src/style/style.scss" as *;`
+        // additionalData: `@use "./src/styles/element/index.scss" as *;`,
+      }
+    },
     postcss: {
       plugins: [
         postcssNesting,
@@ -50,7 +67,8 @@ export default defineConfig({
   },
   resolve: {
     alias: {
-      '@': '/src'
+      '@': '/src',
+      '@reusableComponents': path.resolve(__dirname, 'src/components')
     }
   },
   server: {

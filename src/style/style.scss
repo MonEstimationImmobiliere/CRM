@@ -22,17 +22,14 @@
 
   --sb-side-nav-width: 250px;
 
-  --sb-xs-max-width: #{$sb-xs-max-width};
-  --sb-sm-max-width: #{$sb-sm-max-width};
-  --sb-md-max-width: #{$sb-md-max-width};
-  --sb-lg-max-width: #{$sb-lg-max-width};
-  --sb-xl-max-width: #{$sb-xl-max-width};
+
 
   --sb-main-max-width: calc(var(--sb-md-max-width) - 100px);
   
   --sb-header-z-index: 1999;
 
   --sb-receipt-list-item-height: 90px; // /!\ test with ticket expirations before decreasing
+  --sb-bg-color-dark: #292929;
 }
 
 body {
@@ -75,4 +72,8 @@ h4,
 h5,
 h6 {
   margin: 0;
+}
+
+p {
+  line-height: 1.7;
 }

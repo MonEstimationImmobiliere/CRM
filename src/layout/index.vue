@@ -6,6 +6,7 @@ import SideBar from './SideBar.vue'
 import TabsBar from './TabsBar.vue'
 import isMobile from '@/composables/isMobile'
 import Logo from '@/assets/logo.svg'
+
 import type { Layout } from 'types/layout'
 
 const _isMobile = isMobile()
@@ -41,10 +42,10 @@ provide('loading', loading)
 <template>
   <ElContainer style="height: 100%">
     <ElAside v-if="!_isMobile" :width="asideWidth">
-      <div class="shadow-lg" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+      <div class="shadow-lg" style="width: 100%; height: 100%; background-color: #f6f6f6">
         <RouterLink to="/">
-          <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0' }"
-            :src="Logo" fit="contain" />
+          <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0', position: 'sticky', top: '0', backgroundColor: '#f8f8f8', zIndex: '100'}"
+            :src="myTmsIcon" fit="contain" />
         </RouterLink>
         <SideBar></SideBar>
       </div>
@@ -52,21 +53,12 @@ provide('loading', loading)
     <ElContainer>
       <ElHeader>
         <HeadBar></HeadBar>
-        <TabsBar :withIcons="true"></TabsBar>
+        <TabsBar :withIcons="true"></TabsBar> 
       </ElHeader>
       <ElMain id="content-window">
-        <RouterView v-slot="{ Component, route }">
-          <Transition name="fade-scale" mode="out-in">
-            <!-- 
-             The conflict between Vite's HMR and the keep-alive component can cause the route to fail after Vite's hot update.
-During development, comment out the keep-alive component.
-Refer to: https://github.com/vuejs/core/pull/5165"
-            -->
-            <!-- <KeepAlive :include="getKeepAlivePages"> -->
-            <component :is="Component" :key="route.path" />
-            <!-- </KeepAlive> -->
-          </Transition>
-        </RouterView>
+          <Transition name="slide-left" mode="out-in">
+        <RouterView />
+        </Transition>
       </ElMain>
     </ElContainer>
   </ElContainer>

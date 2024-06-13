@@ -1,4 +1,4 @@
-import router from './router'
+import { router } from './router'
 import NProgress from 'nprogress'
 import 'nprogress/nprogress.css'
 import { appTitle } from './appConfig'
@@ -14,14 +14,63 @@ let contentWindowDom: HTMLElement | null = null
 
 router.beforeEach(async (to, from, next) => {
   NProgress.start()
-  // 设置页面标题
+  //Définir le titre de la page
   document.title = `${to.meta.title}-${appTitle}`
-  // 路径命中白名单，放行通过
+  // Le chemin est dans la liste blanche, autoriser le passage
   if (whitelist.includes(to.path)) next()
   else {
-    // 判断是否有token
-    const token = getCookie('token')
-    const user = userStore()
+
+/**************************************************************************************** */
+/**************************************************************************************** */
+/*****************************<REAL CODE TO AUTHENTIFICATE >************************************** */
+/**************************************************************************************** */
+/**************************************************************************************** */
+
+    // Check if there is a token
+    // const token = getCookie('token')
+    // const user = userStore()
+
+/**************************************************************************************** */
+/**************************************************************************************** */
+/*****************************<REAL CODE TO AUTHENTIFICATE >************************************** */
+/**************************************************************************************** */
+/**************************************************************************************** */
+
+
+
+
+
+/**************************************************************************************** */
+/**************************************************************************************** */
+/*****************************<FAKE CODE TO AUTHENTIFICATE >************************************** */
+/**************************************************************************************** */
+/**************************************************************************************** */
+
+    const token = "bobToken"
+
+    console.log('token:', token)
+    const user = {
+      '$id': 'user',
+      name: 'bob',
+      age: 18,
+      sex: 'male',
+      token: 'bobToken',
+      _isOptionsAPI: true,
+      _hmrPayload: {
+        actions: {},
+        getters: {},
+        state: [ 'name', 'age', 'sex', 'token' ],
+      }
+    }
+
+
+    /**************************************************************************************** */
+/**************************************************************************************** */
+/*****************************<FAKE CODE TO AUTHENTIFICATE >************************************** */
+/**************************************************************************************** */
+/**************************************************************************************** */
+
+
     if (!token) {
       next('/login')
     } else if (!user.token) {
@@ -29,8 +78,8 @@ router.beforeEach(async (to, from, next) => {
         await user.getUserInfo(token)
         next()
       } catch (_) {
-        ElMessage.error('token失效，请重新登录')
-        removeCookie('token') // 清除cookie
+        ElMessage.error('Token expiré, veuillez vous reconnecter.')
+        removeCookie('token') // Effacer les cookies.
         next('/login')
       }
     } else {

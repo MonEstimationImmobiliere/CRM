@@ -1,22 +1,12 @@
 <script setup lang="ts">
 import { inject } from 'vue'
-import { useRouter } from 'vue-router'
-import { userStore } from '../stores/user'
-import BreadCrumb from './BreadCrumb.vue'
-import { Fold, ArrowRightBold } from '@element-plus/icons-vue'
+import { Fold } from '@element-plus/icons-vue'
 import type { Layout } from 'types/layout'
+import { ElIcon } from 'element-plus'
 
 const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated')
-const loading = inject<Layout.Loading>('loading')
-const user = userStore()
-const router = useRouter()
 
-function logout() {
-  if (loading) loading.logout = true
-  user.logout().then(_ => {
-    router.replace('/login')
-  })
-}
+
 </script>
 
 <template>
@@ -25,13 +15,8 @@ function logout() {
       <ElIcon :class="['icon-sidebar-trigger', sidebarRelated?.collapsed && 'collapsed']"
         @click="sidebarRelated && (sidebarRelated.collapsed = !sidebarRelated.collapsed)">
         <Fold />
-      </ElIcon>
-      <BreadCrumb :withIcons="true"></BreadCrumb>
-    </section>
-    <section>
-      <span style="margin-right: 1rem">{{ user.name }}</span>
-      <ElButton type="primary" :icon="ArrowRightBold" circle :loading="loading?.logout" @click="logout" title="退出登录">
-      </ElButton>
+      </ElIcon>    
+        <BreadCrumb :withIcons="true"></BreadCrumb>
     </section>
   </header>
 </template>

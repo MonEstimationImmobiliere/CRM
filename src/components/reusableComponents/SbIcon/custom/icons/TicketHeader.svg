@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<svg viewBox="0 0 20 29" version="1.1" xmlns="http://www.w3.org/2000/svg" xmlns:xlink="http://www.w3.org/1999/xlink">
+  <title>TicketHeader</title>
+  <defs>
+    <path
+      d="M-1.77635684e-15,1.42859 C-1.77635684e-15,1.04969 0.1505,0.68629 0.4184,0.41839 C0.6863,0.15051 1.0497,0 1.4286,0 L18.5714,0 C18.9503,0 19.3136,0.15051 19.5815,0.41839 C19.8494,0.68629 19.9999,1.04969 19.9999,1.42859 L19.9999,28.57139 L15,24.99989 L10,28.57139 L5,24.99989 L-1.77635684e-15,28.57139 L-1.77635684e-15,1.42859 Z"
+      id="path-1"></path>
+    <path d="M5.7139,12.85699 L14.2853,12.85699 M5.7139,18.57119 L14.2853,18.57119 M5.7139,7.14269 L14.2853,7.14269"
+      id="path-3"></path>
+  </defs>
+  <g id="Page-1" stroke="none" stroke-width="1" fill="none" fill-rule="evenodd">
+    <g id="TicketHeader">
+      <g id="Clipped">
+        <mask id="mask-2" fill="white">
+          <use xlink:href="#path-1"></use>
+        </mask>
+        <g id="Path"></g>
+        <polygon id="Path" fill="#FFB600" fill-rule="nonzero" mask="url(#mask-2)"
+          points="-7.14258 -2.85715 27.143 -2.85715 27.143 31.42849 -7.14258 31.42849"></polygon>
+        <mask id="mask-4" fill="white">
+          <use xlink:href="#path-3"></use>
+        </mask>
+        <g id="Shape"></g>
+      </g>
+      <rect id="Rectangle" fill="#FFB600" fill-rule="nonzero" x="3.1426" y="4.00009" width="14.5714" height="18"></rect>
+      <rect id="Rectangle" fill="#FFFFFF" fill-rule="nonzero" x="1.4287" y="2.57149" width="17.1428" height="3.42856"
+        rx="1.5"></rect>
+    </g>
+  </g>
+</svg>

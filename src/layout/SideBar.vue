@@ -1,3 +1,20 @@
+<template>
+  <Scrollbar :speed="3">
+    <ElMenu class="menu-vertical" mode="vertical" :collapse="sidebarRelated?.collapsed" :defaultActive="defaultActive"
+      :defaultOpeneds="defaultOpeneds" :collapseTransition="false">
+      <template v-for="route in routesList" key="index">
+        <MenuItemNav :route="route" :basePath="route.path">
+        </MenuItemNav>
+      </template>
+    </ElMenu>
+
+  </Scrollbar>
+  <div class="SideBar-logout-container">
+    <SbConfirmationDeleteDialog :title="'Confirmer la déconnexion?'" :confirmButtonText="'OK'" :cancelButtonText="'Annuler'"
+      :icon="InfoFilled" :iconColor="'#626AEF'" @confirm="logout"/>
+  </div>
+</template>
+
 <script setup lang="tsx">
 // tsx doesn't require manual imports
 import 'element-plus/es/components/menu/style/css'
@@ -13,9 +30,16 @@ import type { RouteMeta, RouteRecordRaw } from 'vue-router'
 import { ElMenu, ElMenuItem, ElSubMenu, ElIcon } from 'element-plus/es'
 import SvgIcon from '../components/SvgIcon.vue'
 import type { Layout } from 'types/layout'
+import { userStore } from '../stores/user'
+
+import { Fold, ArrowRightBold, InfoFilled, SwitchButton} from '@element-plus/icons-vue'
+
+
 
 const router = useRouter()
 const route = useRoute()
+const user = userStore()
+
 const defaultActive = ref<string>(route.path) // default selected item in the menu
 const defaultOpeneds = ref<string[]>(
   router.getRoutes()
@@ -25,9 +49,20 @@ const defaultOpeneds = ref<string[]>(
 
 const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated')
 const keepAlivePages = inject<Layout.keepAlivePages>('keepAlivePages')
-const routesList = computed(() => {
-  return router.options.routes
-})
+  const routesList = computed(() => {
+    //on retire la route CarrierSelected du menu
+  const filteredRoutes = router.options.routes.filter(route => route.name !== "CarrierSelected");
+  return filteredRoutes;
+});
+
+const loading = inject<Layout.Loading>('loading')
+
+function logout() {
+  if (loading) loading.logout = true
+  user.logout().then(_ => {
+    router.replace('/login')
+  })
+}
 
 watch(() => route.path, () => {
   defaultActive.value = route.path
@@ -101,25 +136,28 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
 }
 </script>
 
-<template>
-  <Scrollbar :speed="3">
-    <ElMenu class="menu-vertical" mode="vertical" :collapse="sidebarRelated?.collapsed" :defaultActive="defaultActive"
-      :defaultOpeneds="defaultOpeneds" :collapseTransition="false">
-      <template v-for="route in routesList" key="index">
-        <MenuItemNav :route="route" :basePath="route.path"></MenuItemNav>
-      </template>
-    </ElMenu>
-  </Scrollbar>
-</template>
-
 <style lang="postcss">
 .menu-vertical {
   width: v-bind('sidebarRelated?.collapsedWidth') !important;
+  background-color: red;
 }
 
 .menu-vertical:not(.el-menu--collapse) {
   width: v-bind('sidebarRelated?.width') !important;
   padding-left: calc(var(--el-menu-expand-base-level-padding) + var(--el-menu-level) * var(--el-menu-level-padding));
   padding-right: 1rem;
+}
+
+.SideBar-logout-container{
+  padding: 20px;
+  margin-bottom: 40px;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  cursor: pointer;
+  position: sticky;
+  bottom: 0;
+  width: 100%;
+  background-color: #ffffff;
 }
 </style>
