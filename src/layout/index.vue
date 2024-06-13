@@ -42,10 +42,10 @@ provide('loading', loading)
 <template>
   <ElContainer style="height: 100%">
     <ElAside v-if="!_isMobile" :width="asideWidth">
-      <div class="shadow-lg" style="width: 100%; height: 100%; background-color: #f6f6f6">
+      <div class="shadow-lg" style="width: 100%; height: 100%;">
         <RouterLink to="/">
-          <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0', position: 'sticky', top: '0', backgroundColor: '#f8f8f8', zIndex: '100'}"
-            :src="myTmsIcon" fit="contain" />
+          <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0', position: 'sticky', top: '0', zIndex: '100'}"
+            :src="Logo" fit="contain" />
         </RouterLink>
         <SideBar></SideBar>
       </div>
@@ -88,5 +88,9 @@ provide('loading', loading)
   padding: 0;
   display: flex;
   flex-direction: column;
+}
+
+.shadow-lg {
+  background-color: #fff;
 }
 </style>

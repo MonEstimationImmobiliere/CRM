@@ -139,7 +139,6 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
 <style lang="postcss">
 .menu-vertical {
   width: v-bind('sidebarRelated?.collapsedWidth') !important;
-  background-color: red;
 }
 
 .menu-vertical:not(.el-menu--collapse) {
