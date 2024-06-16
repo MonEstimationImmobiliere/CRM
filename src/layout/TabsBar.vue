@@ -156,7 +156,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       >
         <ElIcon
           v-if="props.withIcons && tab.meta.icon"
-          :name="tab.meta.icon"
+            :name="typeof tab.meta.icon === 'string' ? tab.meta.icon : ''"
         >
           v-if="props.withIcons && tab.meta.icon"
           >
@@ -187,7 +187,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       plain
       @click="refreshPage(menuPanelDom?.getContext())"
     >
-      <ElIcon>
+      <ElIcon name="icon-refresh">
         <RefreshLeft />
       </ElIcon>
       <span>refresh</span>
@@ -197,7 +197,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       plain
       @click="closeTab(menuPanelDom?.getContext())"
     >
-      <ElIcon>
+      <ElIcon name="icon-close">
         <Close />
       </ElIcon>
       <span>close</span>
@@ -207,7 +207,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       plain
       @click="closeOtherTabs(menuPanelDom?.getContext())"
     >
-      <ElIcon>
+      <ElIcon name="icon-close">
         <Close />
       </ElIcon>
       <span>close others</span>
@@ -217,7 +217,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       plain
       @click="closeAllTabs()"
     >
-      <ElIcon>
+      <ElIcon name="icon-close">
         <Close />
       </ElIcon>
       <span>close all</span>
