@@ -16,7 +16,8 @@
     ],
     "skipLibCheck": true,
     "types": [
-      "element-plus/global"
+      "element-plus/global",
+      "node"
     ],
     "baseUrl": "./",
     "paths": {
@@ -27,6 +28,7 @@
         "src/*"
       ]
     }
+    
   },
   "include": [
     "src/**/*.ts",

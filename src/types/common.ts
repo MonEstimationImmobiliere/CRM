@@ -28,18 +28,6 @@ export type ComponentEmits<T extends Component> = T extends new (...args: unknow
   ? InstanceType<T>["$emit"]
   : never;
 
-export type Events<T extends Component> = T extends ComponentOptions<
-never,
-unknown,
-unknown,
-ComputedOptions,
-MethodOptions,
-ComponentOptionsMixin,
-ComponentOptionsMixin,
-infer E
->
-  ? keyof E
-  : never;
 
 export enum EStatus {
   IDLE = "idle",
@@ -58,10 +46,6 @@ export enum EStatus {
   PROCESS_SUCCESS = "process-success",
   ERROR = "error"
 }
-
-export type UncapitalizedObjectKeysInDepth<T> = {
-  [K in keyof T as K extends string ? Uncapitalize<K> : K]: T[K] extends object ? UncapitalizedObjectKeysInDepth<T[K]> : T[K];
-};
 
 export enum EStreetNumberTypes {
   Bis = "Bis",

@@ -34,7 +34,7 @@ function login() {
     if (!valid) return false
     loading.login = true
     user.login(form.username, form.password).then(_ => {
-      router.replace('/dashboard')
+      router.replace('/')
     }).catch(err => {
       loading.login = false
       ElMessage.error(err)

@@ -8,12 +8,12 @@ const dateTimeFormatter = (options?: Intl.DateTimeFormatOptions): Intl.DateTimeF
 const dateMonthYearFormatter = (options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => new Intl.DateTimeFormat("fr-FR", { year: "numeric", month: "long", ...options });
 const dateMonthYearNumericFormatter = (options?: Intl.DateTimeFormatOptions): Intl.DateTimeFormat => new Intl.DateTimeFormat("fr-FR", { year: "numeric", month: "2-digit", ...options });
 
-export const formatCurrency = (number, options?): string => currencyFormatter(options).format(number);
-export const formatInt = (number, options?): string => intFormatter(options).format(number);
-export const formatDecimal = (number, options?): string => decimalFormatter(options).format(number);
-export const formatNumber = (number, options?): string => numberFormatter(options).format(number);
-export const formatDate = (date, options?): string => dateFormatter(options).format(new Date(date));
-export const formatDateFull = (date, options?): string => dateFullFormatter(options).format(new Date(date));
-export const formatDateTime = (date, options?): string => dateTimeFormatter(options).format(new Date(date));
-export const formatMonthYear = (date, options?): string => dateMonthYearFormatter(options).format(new Date(date));
-export const formatMonthYearNumeric = (date, options?): string => dateMonthYearNumericFormatter(options).format(new Date(date));
+export const formatCurrency = (number: number | bigint, options?: Intl.NumberFormatOptions | undefined): string => currencyFormatter(options).format(number);
+export const formatInt = (number: number | bigint, options?: Intl.NumberFormatOptions | undefined): string => intFormatter(options).format(number);
+export const formatDecimal = (number: number | bigint, options?: Intl.NumberFormatOptions | undefined): string => decimalFormatter(options).format(number);
+export const formatNumber = (number: number | bigint, options?: Intl.NumberFormatOptions | undefined): string => numberFormatter(options).format(number);
+export const formatDate = (date: string | number | Date, options?: Intl.DateTimeFormatOptions | undefined): string => dateFormatter(options).format(new Date(date));
+export const formatDateFull = (date: string | number | Date, options?: Intl.DateTimeFormatOptions | undefined): string => dateFullFormatter(options).format(new Date(date));
+export const formatDateTime = (date: string | number | Date, options?: Intl.DateTimeFormatOptions | undefined): string => dateTimeFormatter(options).format(new Date(date));
+export const formatMonthYear = (date: string | number | Date, options?: Intl.DateTimeFormatOptions | undefined): string => dateMonthYearFormatter(options).format(new Date(date));
+export const formatMonthYearNumeric = (date: string | number | Date, options?: Intl.DateTimeFormatOptions | undefined): string => dateMonthYearNumericFormatter(options).format(new Date(date));

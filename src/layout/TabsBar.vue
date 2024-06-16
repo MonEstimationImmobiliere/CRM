@@ -25,11 +25,6 @@ const props = withDefaults(defineProps<{
 onBeforeMount(() => { addTab(); });
 
 watch(() => route.path, addTab);
-watch(() => tabs.value, (newVal) => {
-  if (newVal.length <= 0) {
-    router.push('/redirect/dashboard');
-  }
-});
 
 function addTab() {
   const tab: RouteLocationNormalizedLoaded = route;
@@ -95,7 +90,7 @@ async function closeTab(tab: RouteLocationNormalizedLoaded) {
       router.replace({ path, query });
     }
   } else {
-    router.replace('/redirect/dashboard');
+    router.replace('/');
   }
 }
 
@@ -116,7 +111,7 @@ function askBeforeCloseTab(tab: RouteLocationNormalizedLoaded) {
 function closeAllTabs() {
   keepAlivePages?.clear();
   tabs.value = [];
-  router.replace('/redirect/dashboard');
+  router.replace('/');
 }
 
 function closeOtherTabs(saveTab: RouteLocationNormalizedLoaded) {

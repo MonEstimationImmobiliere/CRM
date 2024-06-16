@@ -60,7 +60,7 @@ function shadowClick() {
               </footer>
             </template>
           </div>
-          <ElIcon v-if="!_isMobile && props.showClose" class="icon-close" @click="emit('update:show', false)">
+          <ElIcon v-if="!_isMobile && props.showClose" class="icon-close" name="close-bold" @click="emit('update:show', false)">
             <CloseBold />
           </ElIcon>
         </div>

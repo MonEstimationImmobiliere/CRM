@@ -48,7 +48,6 @@ router.beforeEach(async (to, from, next) => {
 
     const token = "bobToken"
 
-    console.log('token:', token)
     const user = {
       '$id': 'user',
       name: 'bob',

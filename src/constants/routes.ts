@@ -13,13 +13,7 @@ export enum ERouteName {
 
 
 export const ROUTES: Record<ERouteName, IRoute> = {
-  //PLANNING
-  /*[ERouteName.Home]: {
-    label: "Home",
-    name: ERouteName.Home,
-    path: "/Dashboard",
-    iconPath: "Element:EditPen"
-  },*/
+ 
   [ERouteName.Dashboard]: {
     label: i18n.global.t("common.routes.dashboard"),
     name: ERouteName.Dashboard,

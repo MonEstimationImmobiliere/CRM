@@ -10,11 +10,11 @@ export const routes: Array<RouteRecordRaw> = [
   {
     ...ROUTES.Dashboard,
     component: Layout,
+    redirect: "/",
     meta: { title: "Planning", askBeforeCloseTab: true },
     children: [
       {
         path: "",
-        name: "planningIndex",
         component: () => import("@/views/dashboard.vue"),
         meta: { title: "Planning", icon: Link },
       },
