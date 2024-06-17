@@ -28,7 +28,7 @@ function refreshBreadCrumb() {
 <template>
   <ElBreadcrumb>
     <ElBreadcrumbItem v-for="(route, index) in routeMatched" :key="route.path">
-      <ElIcon v-if="props.withIcons && route.meta.icon">
+      <ElIcon name="icon-breadcrumb" v-if="props.withIcons && route.meta.icon">
         <SvgIcon v-if="typeof route.meta.icon === 'string'" :iconName="(route.meta.icon as string)"></SvgIcon>
         <component v-else :is="route.meta.icon"></component>
       </ElIcon>
