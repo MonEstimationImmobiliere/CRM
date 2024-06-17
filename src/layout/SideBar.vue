@@ -11,7 +11,7 @@
   </Scrollbar>
   <div class="SideBar-logout-container">
     <SbConfirmationDeleteDialog :title="'Confirmer la déconnexion?'" :confirmButtonText="'OK'" :cancelButtonText="'Annuler'"
-      :icon="InfoFilled" :iconColor="'#626AEF'" @confirm="logout"/>
+      :icon="'InfoFilled'" :iconColor="'#626AEF'" @confirm="logout"/>
   </div>
 </template>
 
