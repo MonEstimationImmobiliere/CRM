@@ -8,7 +8,6 @@ import path from 'path'
 import postcssNesting from 'postcss-nesting'
 import autoprefixer from 'autoprefixer'
 import flexbugsFixes from 'postcss-flexbugs-fixes'
-import { createSvgIconsPlugin } from 'vite-plugin-svg-icons'
 
 function resolvePath(src: string) {
   return path.resolve(__dirname, src)
@@ -24,10 +23,7 @@ export default defineConfig({
       useSource: true
     }),
     vueJsx(),
-    createSvgIconsPlugin({
-      iconDirs: [resolvePath('src/svgs')],
-      symbolId: 'svg-[dir]-[name]',
-    }),
+
     Components({
       resolvers: [
         ElementPlusResolver()
