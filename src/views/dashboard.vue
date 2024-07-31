@@ -73,7 +73,7 @@
 
       <SbTableColumn label="numero" prop="numero" sortable >
         <template #default="{ row }">
-          <div>{{ row.numero + ' ' +row.rep  }}</div>
+          <div>{{ row.numero + ' ' +row.rep }}</div>
         </template>
       </SbTableColumn>
 
@@ -83,21 +83,43 @@
         </template>
       </SbTableColumn>
 
-      <SbTableColumn label="Rues" prop="nom_voie"  >
+      <SbTableColumn label="dernierevente" prop="dernierevente"  >
         <template #default="{ row }">
-          <div>{{ row.DateCharg }}</div>
+          <div>{{ row.dernierevente }}</div>
         </template>
       </SbTableColumn>
 
-      <SbTableColumn label="Client" prop="Client">
+      <SbTableColumn label="type_local" prop="type_local">
         <template #default="{ row }">
-          <div>{{ row.Client }}</div>
+          <div>{{ row.type_local  + ' ' +row.lot1_numero}}</div>
         </template>
       </SbTableColumn>
 
-      <SbTableColumn label="Véhicules" prop="Véhicules" :min-width=90>
+
+
+      <SbTableColumn label="surface_reelle_bati" prop="surface_reelle_bati">
         <template #default="{ row }">
-          <div>{{ row.Véhicules }}</div>
+          <div>{{ row.surface_reelle_bati}}</div>
+        </template>
+      </SbTableColumn>
+
+      <SbTableColumn label="nombre_pieces_principales" prop="nombre_pieces_principales">
+        <template #default="{ row }">
+          <div>{{ row.nombre_pieces_principales}}</div>
+        </template>
+      </SbTableColumn>
+
+ 
+
+      <SbTableColumn label="historique" prop="historique" :min-width=90>
+        <template #default="{ row }">
+          <div>{{ row.nb }}</div>
+        </template>
+      </SbTableColumn>
+
+      <SbTableColumn label="prix_dernierevente" prop="prix_dernierevente" :min-width=90>
+        <template #default="{ row }">
+          <div>{{ row.prix_dernierevente }}</div>
         </template>
       </SbTableColumn>
 
