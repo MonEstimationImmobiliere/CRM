@@ -4,6 +4,7 @@ import {Link,} from "@element-plus/icons-vue";
 import type { RouteRecordRaw } from "vue-router";
 import { ROUTES } from "@/constants/routes";
 
+
 const routerHistory = createWebHistory(import.meta.env.BASE_URL);
 
 export const routes: Array<RouteRecordRaw> = [
@@ -21,14 +22,15 @@ export const routes: Array<RouteRecordRaw> = [
     ],
   },
   {
-    ...ROUTES.Modal,
+    ...ROUTES.Settings,
     component: Layout,
+    //redirect: '/customer/index',
     children: [
       {
         path: "",
-        name: "modalIndex",
-        component: () => import("@/views/modal.vue"),
-        meta: { title: "modal", icon: Link, askBeforeCloseTab: true },
+        name: "settings",
+        component: () => import("@/views/settings/settings.vue"),
+        meta: { title: "Paramètres", icon: Link, askBeforeCloseTab: true },
       },
     ],
   },

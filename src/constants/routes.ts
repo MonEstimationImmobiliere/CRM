@@ -8,7 +8,7 @@ export enum ERouteName {
   Login = "Login",
   Modal = "Modal",
   Redirect = "Redirect",
-  
+  Settings = "Settings"    
 }
 
 
@@ -18,6 +18,13 @@ export const ROUTES: Record<ERouteName, IRoute> = {
     label: i18n.global.t("common.routes.dashboard"),
     name: ERouteName.Dashboard,
     path: "/",
+    iconPath: "Element:EditPen"
+  },
+
+  [ERouteName.Settings]: {
+    label: i18n.global.t("common.routes.settings"),
+    name: ERouteName.Settings,
+    path: "/settings",
     iconPath: "Element:EditPen"
   },
 
