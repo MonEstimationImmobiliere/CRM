@@ -103,12 +103,17 @@
         </template>
       </SbTableColumn>
 
+      <SbTableColumn label="surfaceTerrain" prop="surfaceTerrain">
+        <template #default="{ row }">
+          <div>{{ row.surfaceTerrain}}</div>
+        </template>
+      </SbTableColumn>
+
       <SbTableColumn label="nombre_pieces_principales" prop="nombre_pieces_principales">
         <template #default="{ row }">
           <div>{{ row.nombre_pieces_principales}}</div>
         </template>
       </SbTableColumn>
-
  
 
       <SbTableColumn label="historique" prop="historique" :min-width=90>
