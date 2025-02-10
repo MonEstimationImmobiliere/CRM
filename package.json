@@ -15,6 +15,7 @@
   },
   "dependencies": {
     "@element-plus/icons-vue": "^2.0.6",
+    "@tailwindcss/cli": "^4.0.4",
     "@vue/eslint-config-typescript": "^13.0.0",
     "axios": "^1.7.2",
     "element-plus": "^2.2.9",
@@ -26,6 +27,7 @@
     "qs": "^6.11.0",
     "sass-loader": "^14.0.0",
     "sass-resources-loader": "^2.2.5",
+    "tailwindcss": "^4.0.4",
     "unplugin-element-plus": "^0.8.0",
     "vue": "^3.2.37",
     "vue-axios": "^3.5.2",

@@ -3,6 +3,7 @@
   <SbPage :header="false" class="block app-dashboard-main" style="min-height: 100%; padding:5px;">
 
     {{  formAddress }}
+    <div class="h-20 w-20 bg-red-300">bob </div>
 
     <div style="display: grid; grid-template-columns: 1fr 2fr;">
       <SbTypography as="h6">Ville</SbTypography>
@@ -44,27 +45,7 @@
     fit
      :default-sort="{ prop: 'numero', order: 'ascending' }"
     >
-    <!--  <template #filters>
-        <div class="justify-between align-items-center w-100 gap-10">
-          <SbSelect v-model="testValeur" class="m-2" :placeholder="t('common.form.filter.selectPeriod')" size="medium"
-            style="width: 200px">
-            <SbSelectOption label="aujourd'hui" value="aujourd'hui" />
-            <SbSelectOption label="demain" value="demain" />
-            <SbSelectOption label="trois prochains jours" value="trois prochains jours" />
-          </SbSelect>-->
-          <!-- <SbAutocomplete v-model="database" placeholder="Rechercher" style="width: 50%" /> -->
-          <!-- <SbButton :icon-size="25">
-            Créer une commande
-          </SbButton> -->
-      <!--      <div class="container-filter-button">
-              <SbButton type="info" @click="toggleDrawer" class="dashboard-button-filter">
-                Filtrer
-              </SbButton>
-            </div>
-
-          <DrawerFormFilter title="Filtrer" v-model="drawer" />
-        </div>
-      </template>-->   
+  
   
       <SbTableColumn label="Numero" prop="numero" sortable :sort-method="sortByNumeroAndAppartement">
         <template #default="{ row }">

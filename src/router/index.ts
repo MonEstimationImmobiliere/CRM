@@ -16,7 +16,9 @@ export const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "",
-        component: () => import("@/views/dashboard.vue"),
+        // component: () => import("@/views/dashboard.vue"),
+        component: () => import("@/views/Dashboard/main.vue"),
+
         meta: { title: "Planning", icon: Link },
       },
     ],
