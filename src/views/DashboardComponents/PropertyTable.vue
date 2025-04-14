@@ -1,8 +1,11 @@
 <template>
     <el-table 
       :data="addresses" 
-      class="w-full"
+      class="w-full Tableau"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
+      height="80vh" 
+      @row-click="handleRowClick"
+      :row-class-name="'cursor-pointer'"
     >
       <el-table-column label="Numero" prop="numero" sortable>
         <template #default="{ row }">
@@ -65,7 +68,8 @@
             size="small" 
             @click="$emit('edit-property', row)"
           >
-            <Setting class="w-5 h-5" />
+            <!-- <Setting class="w-5 h-5 Icon" /> -->
+             Ouvrir
           </el-button>
         </template>
       </el-table-column>
@@ -82,5 +86,24 @@
     }
   });
   
-  defineEmits(['edit-property']);
+  const emit = defineEmits(['edit-property']);
+  
+  const handleRowClick = (row: any) => {
+    emit('edit-property', row);
+  };
   </script>
+  
+  <style scoped>
+  :deep(.cursor-pointer) {
+    cursor: pointer;
+  }
+  :deep(.cursor-pointer:hover) {
+    background-color: #f5f7fa;
+  }
+
+  .Tableau {
+    border-radius: 8px;
+    border: 1px solid #e4e7ed;
+  }
+  
+  </style>

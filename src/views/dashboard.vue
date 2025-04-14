@@ -78,8 +78,9 @@ const handlePropertySave = async () => {
 </script>
 
 <template>
-  <div class="property-dashboard container mx-auto p-4">
-    <div class="grid grid-cols-1 md:grid-cols-2 gap-4 mb-4">
+  <section class="block dashboardContainer">
+  <div class="p-4">
+    <div class="headerFilterInfoContainer">
       <CityAutocomplete 
         v-model="selectedCity" 
         @select="handleCitySelect"
@@ -89,9 +90,9 @@ const handlePropertySave = async () => {
         :code-insee="selectedCodeInsee"
         @select="handleStreetSelect"
       />
-    </div>
 
-    <div class="flex space-x-4 mb-4">
+      <div class="validationButtonContainer">
+    
       <el-button 
         type="primary" 
         @click="querySearchAddress" 
@@ -106,6 +107,7 @@ const handlePropertySave = async () => {
       >
         Estimations
       </el-button>
+      </div>  
     </div>
 
     <PropertyTable 
@@ -115,10 +117,22 @@ const handlePropertySave = async () => {
 
     <PropertyForm @save="handlePropertySave" />
   </div>
+</section>
 </template>
 
 <style scoped>
-.property-dashboard {
-  @apply bg-white rounded-lg shadow-md p-6;
+
+.headerFilterInfoContainer{
+  display: flex;
+  align-items: start;
+  flex-direction: row;
+  gap: 20px;
 }
+
+.validationButtonContainer{
+  gap: 10px;
+  display: flex;
+  margin-left: 40px;
+}
+
 </style>

@@ -1,28 +1,28 @@
 <script setup lang="ts">
-import { computed, watch } from 'vue';
-import { ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard } from 'element-plus';
-import { usePropertyStore } from '../../stores/propertyHome';
+import { computed, watch } from "vue";
+import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer } from "element-plus";
+import { usePropertyStore } from "../../stores/propertyHome";
+import { CircleCloseFilled } from "@element-plus/icons-vue";
 
 const store = usePropertyStore();
 
 const visible = computed({
   get: () => store.isDialogVisible,
-  set: (value) => store.setDialogVisible(value)
+  set: (value) => store.setDialogVisible(value),
 });
 
 const isEditing = computed(() => !!store.selectedProperty?.id);
 
 const dialogTitle = computed(() => {
-  if (!store.selectedProperty) return 'Nouvelle propriété';
-  return `${store.selectedProperty.id ? 'Modifier' : 'Nouvelle'} propriété`;
+  if (!store.selectedProperty) return "Nouvelle propriété";
+  return `${store.selectedProperty.id ? "Modifier" : "Nouvelle"} propriété`;
 });
 
 const emailFormatter = (value: string) => value.toLowerCase();
 const emailParser = (value: string) => value.trim();
 
-const phoneFormatter = (value: string) => 
-  value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
-const phoneParser = (value: string) => value.replace(/\D/g, '').substring(0, 10);
+const phoneFormatter = (value: string) => value.replace(/\D/g, "").replace(/(\d{2})(?=\d)/g, "$1 ");
+const phoneParser = (value: string) => value.replace(/\D/g, "").substring(0, 10);
 
 const closeDialog = () => {
   store.setDialogVisible(false);
@@ -42,18 +42,17 @@ const saveProperty = () => {
 </script>
 
 <template>
-  <el-dialog 
-    v-model="visible" 
-    :title="dialogTitle" 
-    width="90%"
-    class="property-form-dialog"
-  >
-    <el-form 
-      v-if="store.selectedProperty"
-      :model="store.selectedProperty" 
-      label-width="180px"
-      class="property-form"
-    >
+   <el-drawer v-model="visible" size="40%" :style="{ borderRadius: '10px', height: '98%', bottom: 0, top: null,  '--el-drawer-padding-primary': '0'  }">
+
+    <template #header="{ titleId }">
+      <div class="headerContainer">
+        <div></div>
+        <h4 :id="titleId" class="titleHeader">{{ dialogTitle }}</h4>
+        <div></div>
+      </div>
+    </template>
+
+    <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >
       <!-- Contact Information Card -->
       <el-card shadow="hover">
         <h3 class="card-title">Informations de contact</h3>
@@ -61,23 +60,13 @@ const saveProperty = () => {
           <el-form-item label="Propriétaire">
             <el-input v-model="store.selectedProperty.owner" size="large" />
           </el-form-item>
-          
+
           <el-form-item label="Mail">
-            <el-input 
-              v-model="store.selectedProperty.email" 
-              size="large"
-              :formatter="emailFormatter" 
-              :parser="emailParser"
-            />
+            <el-input v-model="store.selectedProperty.email" size="large" :formatter="emailFormatter" :parser="emailParser" />
           </el-form-item>
-          
+
           <el-form-item label="Téléphone">
-            <el-input 
-              v-model="store.selectedProperty.phone" 
-              size="large"
-              :formatter="phoneFormatter" 
-              :parser="phoneParser"
-            />
+            <el-input v-model="store.selectedProperty.phone" size="large" :formatter="phoneFormatter" :parser="phoneParser" />
           </el-form-item>
         </div>
       </el-card>
@@ -95,49 +84,23 @@ const saveProperty = () => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <el-form-item label="Année de construction">
-              <el-input-number 
-                v-model="store.selectedProperty.year_built" 
-                :min="1800" 
-                :max="new Date().getFullYear()"
-                size="large"
-                class="w-full"
-              />
+              <el-input-number v-model="store.selectedProperty.year_built" :min="1800" :max="new Date().getFullYear()" size="large" class="w-full" />
             </el-form-item>
-            
+
             <el-form-item label="Année d'acquisition">
-              <el-input-number 
-                v-model="store.selectedProperty.year_buy" 
-                :min="1800" 
-                :max="new Date().getFullYear()"
-                size="large"
-                class="w-full"
-              />
+              <el-input-number v-model="store.selectedProperty.year_buy" :min="1800" :max="new Date().getFullYear()" size="large" class="w-full" />
             </el-form-item>
           </div>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <el-form-item label="Surface habitable">
-              <el-input-number 
-                v-model="store.selectedProperty.surface" 
-                :min="0" 
-                :precision="2" 
-                :step="1"
-                size="large"
-                class="w-full"
-              >
+              <el-input-number v-model="store.selectedProperty.surface" :min="0" :precision="2" :step="1" size="large" class="w-full">
                 <template #suffix>m²</template>
               </el-input-number>
             </el-form-item>
-            
+
             <el-form-item label="Surface du terrain">
-              <el-input-number 
-                v-model="store.selectedProperty.area" 
-                :min="0" 
-                :precision="2" 
-                :step="1"
-                size="large"
-                class="w-full"
-              >
+              <el-input-number v-model="store.selectedProperty.area" :min="0" :precision="2" :step="1" size="large" class="w-full">
                 <template #suffix>m²</template>
               </el-input-number>
             </el-form-item>
@@ -168,21 +131,11 @@ const saveProperty = () => {
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <el-form-item label="Chambres">
-              <el-input-number 
-                v-model="store.selectedProperty.bedrooms" 
-                :min="0"
-                size="large"
-                class="w-full"
-              />
+              <el-input-number v-model="store.selectedProperty.bedrooms" :min="0" size="large" class="w-full" />
             </el-form-item>
 
             <el-form-item label="Salles de bains">
-              <el-input-number 
-                v-model="store.selectedProperty.bathrooms" 
-                :min="0"
-                size="large"
-                class="w-full"
-              />
+              <el-input-number v-model="store.selectedProperty.bathrooms" :min="0" size="large" class="w-full" />
             </el-form-item>
           </div>
         </div>
@@ -287,39 +240,27 @@ const saveProperty = () => {
       <div class="form-card">
         <h3 class="card-title">Commentaires</h3>
         <div class="card-content">
-          <el-input 
-            v-model="store.selectedProperty.comment" 
-            type="textarea" 
-            :autosize="{ minRows: 3, maxRows: 6 }"
-            placeholder="Ajoutez vos commentaires ici..."
-          />
+          <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
         </div>
       </div>
 
       <div class="dialog-footer">
         <el-button @click="closeDialog" size="large">Annuler</el-button>
-        <el-button 
-          type="primary" 
-          @click="saveProperty"
-          size="large"
-        >
-          {{ isEditing ? 'Sauvegarder' : 'Créer' }}
+        <el-button type="primary" @click="saveProperty" size="large">
+          {{ isEditing ? "Sauvegarder" : "Créer" }}
         </el-button>
       </div>
     </el-form>
-  </el-dialog>
+  </el-drawer>
 </template>
 
 <style scoped>
-.property-form-dialog :deep(.el-dialog) {
-  max-width: 1200px;
-  background-color: #f9fafb;
-}
 
 .property-form {
   margin-top: 1.5rem;
   margin-bottom: 1.5rem;
   padding: 1rem;
+  background-color: #f6f6f6;
 }
 
 .form-card {
@@ -356,6 +297,7 @@ const saveProperty = () => {
   margin-top: 2rem;
 }
 
+
 :deep(.el-form-item__label) {
   color: #374151;
   font-weight: 500;
@@ -389,5 +331,21 @@ const saveProperty = () => {
 
 :deep(.el-checkbox) {
   margin: 0;
+}
+
+.bg-red {
+  background-color: #f87171;
+}
+
+.titleHeader {
+  font-size: 24px;
+  font-weight: bold;
+  color: #121212;
+  margin-left: 1rem;
+}
+
+.headerContainer {
+  display: flex;
+  justify-content: space-between;
 }
 </style>

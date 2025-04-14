@@ -12,12 +12,12 @@ export const routes: Array<RouteRecordRaw> = [
     ...ROUTES.Dashboard,
     component: Layout,
     redirect: "/",
-    meta: { title: "Planning", askBeforeCloseTab: true },
+    meta: { title: "Ventes", askBeforeCloseTab: true },
     children: [
       {
         path: "",
         component: () => import("@/views/dashboard.vue"),
-        meta: { title: "Planning", icon: Link },
+        meta: { title: "Ventes", icon: Link },
       },
     ],
   },

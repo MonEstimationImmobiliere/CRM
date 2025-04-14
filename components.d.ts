@@ -9,6 +9,7 @@ declare module 'vue' {
   export interface GlobalComponents {
     CustomIcon: typeof import('./src/components/reusableComponents/SbIcon/custom/CustomIcon.vue')['default']
     Dialog: typeof import('./src/components/Dialog.vue')['default']
+    DynamicLabelUI: typeof import('./src/components/OwnReusableComponents/DynamicLabelUI.vue')['default']
     ElAside: typeof import('element-plus/es')['ElAside']
     ElAutocomplete: typeof import('element-plus/es')['ElAutocomplete']
     ElButton: typeof import('element-plus/es')['ElButton']
