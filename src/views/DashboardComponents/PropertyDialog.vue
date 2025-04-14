@@ -72,7 +72,7 @@ const saveProperty = () => {
       </el-card>
 
       <!-- Basic Property Information Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Informations principales</h3>
         <div class="card-content">
           <el-form-item label="Type de bien">
@@ -106,10 +106,10 @@ const saveProperty = () => {
             </el-form-item>
           </div>
         </div>
-      </div>
+      </el-card>
 
       <!-- Property Details Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Caractéristiques</h3>
         <div class="card-content">
           <el-form-item label="Orientation">
@@ -139,21 +139,21 @@ const saveProperty = () => {
             </el-form-item>
           </div>
         </div>
-      </div>
+      </el-card>
 
       <!-- Kitchen Features Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Cuisine</h3>
-        <div class="card-content grid grid-cols-2 gap-4">
+        <div class="card-content-grid">
           <el-checkbox v-model="store.selectedProperty.fitted_kitchen" label="Cuisine aménagée" size="large" />
           <el-checkbox v-model="store.selectedProperty.equipped_kitchen" label="Cuisine équipée" size="large" />
           <el-checkbox v-model="store.selectedProperty.american_kitchen" label="Cuisine américaine" size="large" />
           <el-checkbox v-model="store.selectedProperty.scullery" label="Arrière-cuisine" size="large" />
         </div>
-      </div>
+      </el-card>
 
       <!-- Heating and Windows Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Chauffage et Fenêtres</h3>
         <div class="card-content">
           <el-form-item label="Type de chauffage">
@@ -191,12 +191,12 @@ const saveProperty = () => {
             </el-radio-group>
           </el-form-item>
         </div>
-      </div>
+      </el-card>
 
       <!-- Amenities Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Équipements et Commodités</h3>
-        <div class="card-content grid grid-cols-2 md:grid-cols-3 gap-4">
+        <div class="card-content-grid">
           <el-checkbox v-model="store.selectedProperty.cheminee" label="Cheminée d'appoint" size="large" />
           <el-checkbox v-model="store.selectedProperty.district_heating" label="Chauffage collectif" size="large" />
           <el-checkbox v-model="store.selectedProperty.patio" label="Terrasse" size="large" />
@@ -213,10 +213,10 @@ const saveProperty = () => {
           <el-checkbox v-model="store.selectedProperty.bike_room" label="Local vélo" size="large" />
           <el-checkbox v-model="store.selectedProperty.guardian" label="Gardien" size="large" />
         </div>
-      </div>
+      </el-card>
 
       <!-- Roof and Structure Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Toiture et Structure</h3>
         <div class="card-content">
           <el-form-item label="Type de toit">
@@ -234,15 +234,15 @@ const saveProperty = () => {
             <el-checkbox v-model="store.selectedProperty.ground" label="Plain-pied" size="large" />
           </div>
         </div>
-      </div>
+      </el-card>
 
       <!-- Comments Card -->
-      <div class="form-card">
+       <el-card shadow="hover">
         <h3 class="card-title">Commentaires</h3>
         <div class="card-content">
           <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
         </div>
-      </div>
+      </el-card>
 
       <div class="dialog-footer">
         <el-button @click="closeDialog" size="large">Annuler</el-button>
@@ -269,6 +269,9 @@ top : none;
   margin-bottom: 1.5rem;
   padding: 1rem;
   background-color: #f6f6f6;
+  gap: 20px;
+  display: flex;
+  flex-direction: column;
 }
 
 .form-card {
@@ -296,6 +299,16 @@ top : none;
 .card-content {
   margin-top: 1rem;
   margin-bottom: 1rem;
+  display: flex;
+  justify-content: start;
+  flex-direction: column;
+}
+
+.card-content-grid {
+  margin-top: 1rem;
+  margin-bottom: 1rem;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
 }
 
 .dialog-footer {
@@ -355,5 +368,6 @@ top : none;
 .headerContainer {
   display: flex;
   justify-content: space-between;
+  padding-top: 20px;
 }
 </style>
