@@ -42,7 +42,7 @@ const saveProperty = () => {
 </script>
 
 <template>
-   <el-drawer v-model="visible" size="40%" :style="{ borderRadius: '10px', height: '98%', bottom: 0, top: null,  '--el-drawer-padding-primary': '0'  }">
+   <el-drawer v-model="visible" size="40%" :style="{ borderRadius: '10px', height: '98%', bottom: 0, top: 'unset',  '--el-drawer-padding-primary': '0'  }">
 
     <template #header="{ titleId }">
       <div class="headerContainer">
@@ -255,6 +255,14 @@ const saveProperty = () => {
 </template>
 
 <style scoped>
+
+.el-drawer.ltr {
+top : none;
+}
+
+:deep(.el-drawer.ltr) {
+  top: unset !important;
+}
 
 .property-form {
   margin-top: 1.5rem;
