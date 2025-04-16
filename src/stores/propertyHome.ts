@@ -109,29 +109,6 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.push(newProperty);
   }
 
-  /*const createPropertyData = async () => {
-    try   {
-      const url = `${API_URL}/property`;
-      const data = formProperty.value;
-      const response = await axios.post(url, data);
-      formProperty.value = response.data.property;
-    } catch (error) {
-      console.error('Erreur lors de la création des données de propriété:', error);   
-      variableDebug.value = error;
-    }
-  };
-  
-  /*const savePropertyData = async () => {
-    try {
-      const url = `${API_URL}/property/${encodeURIComponent(formProperty.value.id_fantoir_long)}`;
-      const data = formProperty.value;
-      const response = await axios.post(url, data);
-      formProperty.value = response.data.property;       
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde des données de propriété:', error);
-      variableDebug.value = error;
-    }
-  };*/
 
   const saveProperty = async (property: PropertyData) => {
 
