@@ -23,13 +23,13 @@
   
       <el-table-column label="Type" prop="type_bien" sortable>
         <template #default="{ row }">
-          {{ row.type_bien }} {{ row.numero_appartement || '' }}
+          {{ row.type_bien }} {{ row.apart_number || '' }}
         </template>
       </el-table-column>
   
       <el-table-column label="Surface" prop="surface_reelle_bati" sortable>
         <template #default="{ row }">
-          {{ row.surface_reelle_bati }}
+          {{ row.surface }}
         </template>
       </el-table-column>
   
@@ -41,7 +41,7 @@
   
       <el-table-column label="Terrain" prop="surfaceTerrain" sortable>
         <template #default="{ row }">
-          {{ row.surfaceTerrain }}
+          {{ row.area }}
         </template>
       </el-table-column>
   

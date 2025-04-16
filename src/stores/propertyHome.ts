@@ -135,11 +135,9 @@ export const usePropertyStore = defineStore('property', () => {
 
   const saveProperty = async (property: PropertyData) => {
 
-  
     try {
       if (property.id) {
-
-        const response = await axios.post(`${API_URL}/property/update/${encodeURIComponent(property.id)}`, property);
+       const response = await axios.post(`${API_URL}/property/update/${encodeURIComponent(property.id)}`, property);
         updateProperty(response.data.property); // update locale avec retour API
 
       } else {
@@ -158,7 +156,6 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value = properties.value.filter(p => p.id !== id);
   }
 
-
  function updateProperty(property: PropertyData) {
     const index = properties.value.findIndex(p => p.id === property.id);
     if (index !== -1) {
@@ -166,35 +163,8 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  /*const updateProperty = async (property: PropertyData) => {
-    if (property.id_fantoir_long) {
-      try {
-        // Envoie de la requête pour mettre à jour la propriété
-        //const { data } = await axios.post(`${API_URL}/property/${encodeURIComponent(property.id_fantoir_long)}`, property);
-        const { data } = await axios.post(`${API_URL}/property/update`, property);
-        
-        // Met à jour la propriété dans la liste des propriétés locales
-        const updatedProperty = data.property;
-        const index = properties.value.findIndex(p => p.id_fantoir_long === updatedProperty.id_fantoir_long);
-        
-        if (index !== -1) {
-          properties.value[index] = updatedProperty; // Remplace l'ancienne propriété par la nouvelle
-        }
-      } catch (error) {
-        console.error("Erreur lors de la mise à jour de la propriété :", error);
-        // Si erreur, fallback vers la propriété originale
-        const index = properties.value.findIndex(p => p.id_fantoir_long === property.id_fantoir_long);
-        if (index !== -1) {
-          properties.value[index] = property;
-        }
-      }
-    } else {
-      console.error("Aucune id_fantoir_long fournie pour la mise à jour.");
-    }
-  };*/
-
-   const selectProperty = async (property: PropertyData) => {
-      if (property.id_fantoir_long) {
+  const selectProperty = async (property: PropertyData | null | undefined) => {
+    if (property?.id_fantoir_long) {
         try {
           const { data } = await axios.get(`${API_URL}/property/show/${property.id_fantoir_long}`);
           selectedProperty.value = { ...defaultPropertyData, ...data };

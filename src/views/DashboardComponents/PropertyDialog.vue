@@ -57,8 +57,6 @@ const saveProperty = () => {
       </div>
     </template>
 
-    {{ store.selectedProperty }}
-
     <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >         
 
       <!-- Contact Information Card -->
