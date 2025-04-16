@@ -1,15 +1,17 @@
 <template>
+
+
+
     <el-table 
       :data="addresses" 
       class="w-full Tableau"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
       height="80vh" 
-      @row-click="handleRowClick"
       :row-class-name="'cursor-pointer'"
     >
-      <el-table-column label="Numero" prop="numero" sortable>
+      <el-table-column label="Numero" prop="numero" sortable :sort-method="sortByNumeroAndRep" :sort-orders="['ascending', 'descending']">
         <template #default="{ row }">
-          {{ row.numero }} {{ row.rep || '' }}
+        {{ row.numero }} {{ row.rep || '' }}
         </template>
       </el-table-column>
   
@@ -88,9 +90,22 @@
   
   const emit = defineEmits(['edit-property']);
   
-  const handleRowClick = (row: any) => {
-    emit('edit-property', row);
-  };
+
+
+  const sortByNumeroAndRep = (a, b) => {
+  const numA = parseInt(a.numero) || 0;
+  const numB = parseInt(b.numero) || 0;
+
+  if (numA !== numB) {
+    return numA - numB;
+  }
+
+  const repA = (a.rep || '').toLowerCase();
+  const repB = (b.rep || '').toLowerCase();
+
+  return repA.localeCompare(repB);
+};
+
   </script>
   
   <style scoped>

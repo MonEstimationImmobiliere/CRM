@@ -6,6 +6,8 @@ import { CircleCloseFilled } from "@element-plus/icons-vue";
 
 const store = usePropertyStore();
 
+//console.log(store.selectedProperty);
+
 const visible = computed({
   get: () => store.isDialogVisible,
   set: (value) => store.setDialogVisible(value),
@@ -32,13 +34,16 @@ const closeDialog = () => {
 const saveProperty = () => {
   if (store.selectedProperty) {
     if (isEditing.value) {
-      store.updateProperty(store.selectedProperty);
+      store.saveProperty(store.selectedProperty);
     } else {
-      store.addProperty(store.selectedProperty);
+      store.saveProperty(store.selectedProperty);
     }
     closeDialog();
   }
 };
+
+
+
 </script>
 
 <template>
@@ -52,10 +57,13 @@ const saveProperty = () => {
       </div>
     </template>
 
-    <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >
+    {{ store.selectedProperty }}
+
+    <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >         
+
       <!-- Contact Information Card -->
       <el-card shadow="hover">
-        <h3 class="card-title">Informations de contact</h3>
+        <h3 class="card-title">Informations de contact</h3>        
         <div class="card-content">
           <el-form-item label="Propriétaire">
             <el-input v-model="store.selectedProperty.owner" size="large" />

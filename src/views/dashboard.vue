@@ -55,26 +55,17 @@ const openPropertyDialog = (property: any) => {
   store.setDialogVisible(true);
 };
 
-const handlePropertySave = async () => {
-  if (!store.selectedProperty) return;
+/*const openPropertyDialog = async (property: any) => {
+  await store.selectProperty(property); // ici, appel distant si ID présent
+  store.setDialogVisible(true);
+};*/
 
-  try {
-    if (store.selectedProperty.id) {
-      await axios.post(
-        `${API_URL}/property/${encodeURIComponent(store.selectedProperty.id_fantoir_long)}`,
-        store.selectedProperty
-      );
-      store.updateProperty(store.selectedProperty);
-    } else {
-      const response = await axios.post(`${API_URL}/property`, store.selectedProperty);
-      store.addProperty({ ...store.selectedProperty, id: response.data.id });
-    }
-    store.setDialogVisible(false);
-    querySearchAddress(); // Refresh the address list
-  } catch (error) {
-    console.error('Error saving property:', error);
-  }
-};
+/*const handlePropertySave = async () => {
+  await store.saveProperty(); // appelle juste le store
+  store.setDialogVisible(false);
+  querySearchAddress(); // refresh
+};*/
+
 </script>
 
 <template>
