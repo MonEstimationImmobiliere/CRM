@@ -91,13 +91,30 @@ const openPropertyDialog = (property: any) => {
       >
         Afficher
       </el-button>
+
       <el-button 
         type="primary" 
-        @click="queryEstimations" 
-        :disabled="!selectedStreet || !selectedCodeInsee"
+        @click="queryEstimations"         
       >
-        Estimations
+        Estimations reçues
       </el-button>
+
+      <el-button 
+        type="primary" 
+        @click="queryRdv"         
+      >
+      Mes rappels
+      </el-button>
+
+      <el-button 
+        type="primary" 
+        @click="queryRdv"         
+      >
+      Mes dernières mise à jour
+      </el-button>
+
+
+
       </div>  
     </div>
 

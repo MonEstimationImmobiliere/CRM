@@ -15,9 +15,25 @@ const visible = computed({
 
 const isEditing = computed(() => !!store.selectedProperty?.id);
 
+/*<el-dialog  v-model="dialogPropertyVisible" :title="`${formAddress.numero}${formAddress.rep ? ` ${formAddress.rep}` : ''} - ${formAddress.nom_voie}${formAddress.numero_appartement ? ` - Appartement ${formAddress.numero_appartement}` : ''}`" width="80%">
+
+
 const dialogTitle = computed(() => {
   if (!store.selectedProperty) return "Nouvelle propriété";
   return `${store.selectedProperty.id ? "Modifier" : "Nouvelle"} propriété`;
+});*/
+
+const dialogTitle = computed(() => {
+  if (!store.selectedProperty.id) return "Nouvelle propriété";
+
+  const numero = store.selectedProperty.numero || "";
+  const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : "";
+  const voie = store.selectedProperty.nom_voie || "";
+  const appart = store.selectedProperty.numero_appartement
+    ? ` - Appartement ${store.selectedProperty.numero_appartement}`
+    : "";
+
+  return `${numero}${rep} - ${voie}${appart}`;
 });
 
 const emailFormatter = (value: string) => value.toLowerCase();

@@ -9,6 +9,12 @@
       height="80vh" 
       :row-class-name="'cursor-pointer'"
     >
+      <el-table-column label="Ville" prop="city" sortable>
+        <template #default="{ row }">
+        {{ row.city }} {{ row.codePostal}}
+        </template>
+      </el-table-column>
+
       <el-table-column label="Numero" prop="numero" sortable :sort-method="sortByNumeroAndRep" :sort-orders="['ascending', 'descending']">
         <template #default="{ row }">
         {{ row.numero }} {{ row.rep || '' }}
@@ -24,6 +30,13 @@
       <el-table-column label="Type" prop="type_bien" sortable>
         <template #default="{ row }">
           {{ row.type_bien }} {{ row.apart_number || '' }}
+
+       <!--   <el-icon v-if="row.type_bien === 'maison'"><House /></el-icon>
+    <el-icon v-else-if="row.type_bien === 'appartement'"><OfficeBuilding /></el-icon>
+    <el-icon v-else-if="row.type_bien === 'immeuble'"><OfficeBuilding /></el-icon>
+    <el-icon v-else><QuestionFilled /></el-icon>
+
+    <span v-if="row.apart_number"> - {{ row.apart_number }}</span>-->
         </template>
       </el-table-column>
   
@@ -33,7 +46,7 @@
         </template>
       </el-table-column>
   
-      <el-table-column label="Nb pieces" prop="nombre_pieces_principales" sortable>
+      <el-table-column label="Nb chambres" prop="nombre_pieces_principales" sortable>
         <template #default="{ row }">
           {{ row.nombre_pieces_principales }}
         </template>
@@ -51,19 +64,44 @@
         </template>
       </el-table-column>
   
-      <el-table-column label="Date vente" prop="date_derniere_vente" sortable>
+      <el-table-column label="Dernière vente" prop="date_derniere_vente" sortable>
         <template #default="{ row }">
           {{ row.date_derniere_vente }}
         </template>
       </el-table-column>
   
-      <el-table-column label="Prix vente" prop="dernier_prix_vente" sortable>
+      <el-table-column label="Prix de vente" prop="dernier_prix_vente" sortable>
         <template #default="{ row }">
           {{ row.dernier_prix_vente }}
         </template>
       </el-table-column>
+
+      <el-table-column label="Date Estimation" prop="rappel" sortable>
+        <template #default="{ row }">
+          {{ row.rappel}}
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Prix Estimation" prop="maj" sortable>
+        <template #default="{ row }">
+          {{ row.maj }}
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Date Rappel" prop="rappel" sortable>
+        <template #default="{ row }">
+          {{ row.rappel}}
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Date Maj" prop="maj" sortable>
+        <template #default="{ row }">
+          {{ row.maj }}
+        </template>
+      </el-table-column>
   
-      <el-table-column label="Actions" width="100">
+  
+      <el-table-column label="Actions" width="50">
         <template #default="{ row }">
           <el-button 
             type="primary" 
@@ -80,6 +118,7 @@
   
   <script setup lang="ts">
   import { Setting } from '@element-plus/icons-vue';
+  //import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
   
   defineProps({
     addresses: {
