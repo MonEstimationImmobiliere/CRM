@@ -1,8 +1,7 @@
 <script setup lang="ts">
 import { ref } from 'vue';
-import axios from 'axios';
-import API_URL from '@/utils/API_URL';
 import { usePropertyStore } from '../stores/propertyHome';
+import { PropertyService } from '@/api';
 
 // Component imports
 import CityAutocomplete from './DashboardComponents/CityAutocomplete.vue';
@@ -33,9 +32,7 @@ const handleStreetSelect = (street: any) => {
 
 const querySearchAddress = async () => {
   try {
-    const url = `${API_URL}/addresses/${selectedCodeIdFantoir.value}`;
-    const response = await axios.get(url);
-    addresses.value = response.data;
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value);
   } catch (error) {
     console.error('Error fetching addresses:', error);
   }

@@ -1,8 +1,6 @@
 import { defineStore } from 'pinia';
 import { ref } from 'vue';
-
-import API_URL from '@/utils/API_URL';
-import axios from 'axios';  // Import d'axios
+import { PropertyService } from '@/api';
 
 const defaultPropertyData: PropertyData = {
   id_fantoir_long: '',
@@ -97,8 +95,7 @@ export interface PropertyData {
 
 export const usePropertyStore = defineStore('property', () => {
   const properties = ref<PropertyData[]>([]);
- ///const selectedProperty = ref<PropertyData | null>(null);
- const selectedProperty = ref<PropertyData>({ ...defaultPropertyData });
+  const selectedProperty = ref<PropertyData>({ ...defaultPropertyData });
   const isDialogVisible = ref(false);
 
   function addProperty(property: PropertyData) {
@@ -109,31 +106,25 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.push(newProperty);
   }
 
-
   const saveProperty = async (property: PropertyData) => {
-
     try {
       if (property.id) {
-       const response = await axios.post(`${API_URL}/property/update/${encodeURIComponent(property.id)}`, property);
-        updateProperty(response.data.property); // update locale avec retour API
-
+        const updatedProperty = await PropertyService.updateProperty(property.id, property);
+        updateProperty(updatedProperty);
       } else {
-        const response = await axios.post(`${API_URL}/property/create`, property);
-        addProperty({ ...selectedProperty.value, id: response.data.id });
+        const response = await PropertyService.createProperty(property);
+        addProperty({ ...selectedProperty.value, id: response.id });
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de la propriété :", error);
     }
   };
 
-
-
-
   function deleteProperty(id: number) {
     properties.value = properties.value.filter(p => p.id !== id);
   }
 
- function updateProperty(property: PropertyData) {
+  function updateProperty(property: PropertyData) {
     const index = properties.value.findIndex(p => p.id === property.id);
     if (index !== -1) {
       properties.value[index] = property;
@@ -142,28 +133,21 @@ export const usePropertyStore = defineStore('property', () => {
 
   const selectProperty = async (property: PropertyData | null | undefined) => {
     if (property?.id_fantoir_long) {
-        try {
-          const { data } = await axios.get(`${API_URL}/property/show/${property.id_fantoir_long}`);
-          selectedProperty.value = { ...defaultPropertyData, ...data };
-        } catch (error) {
-          console.error("Erreur lors du chargement de la propriété :", error);
-          selectedProperty.value = { ...defaultPropertyData, ...(property || {}) }; // fallback si erreur
-        }
-      } else {
-        selectedProperty.value = { ...defaultPropertyData, ...(property || {}) };
+      try {
+        const data = await PropertyService.getPropertyById(property.id_fantoir_long);
+        selectedProperty.value = { ...defaultPropertyData, ...data };
+      } catch (error) {
+        console.error("Erreur lors du chargement de la propriété :", error);
+        selectedProperty.value = { ...defaultPropertyData, ...(property || {}) }; // fallback si erreur
       }
-    };
+    } else {
+      selectedProperty.value = { ...defaultPropertyData, ...(property || {}) };
+    }
+  };
 
-  /*function selectProperty(property: PropertyData | null) {
-    selectedProperty.value = property;
-  }*/
-
-  
   function setDialogVisible(visible: boolean) {
     isDialogVisible.value = visible;
   }
-
-
 
   return {
     properties,
