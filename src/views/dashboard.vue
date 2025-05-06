@@ -2,11 +2,14 @@
 import { ref } from 'vue';
 import { usePropertyStore } from '../stores/propertyHome';
 import { PropertyService } from '@/api';
+import { DataBoard, Grid } from '@element-plus/icons-vue'
+
 
 // Component imports
 import CityAutocomplete from './DashboardComponents/CityAutocomplete.vue';
 import StreetAutocomplete from './DashboardComponents/StreetAutocomplete.vue';
 import PropertyTable from './DashboardComponents/PropertyTable.vue';
+import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog.vue';
 
 // Store
@@ -18,6 +21,7 @@ const selectedStreet = ref(null);
 const selectedCodeInsee = ref('');
 const selectedCodeIdFantoir = ref('');
 const addresses = ref([]);
+const viewType = ref('table'); // Add view type tracking
 
 // Methods
 const handleCitySelect = (city: any) => {
@@ -50,6 +54,14 @@ const openPropertyDialog = (property: any) => {
     id_fantoir_long: property.id_fantoir_long
   });
   store.setDialogVisible(true);
+};
+
+const setTableView = () => {
+  viewType.value = 'table';
+};
+
+const setCardView = () => {
+  viewType.value = 'card';
 };
 
 /*const openPropertyDialog = async (property: any) => {
@@ -113,9 +125,35 @@ const openPropertyDialog = (property: any) => {
 
 
       </div>  
+
+      <div class="layoutContainer">
+        <el-row :gutter="20">
+          <el-col :span="12">
+            <div class="grid-container" @click="setTableView">
+              <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
+              <DataBoard />
+              </el-icon>
+            </div>
+          </el-col>
+          <el-col :span="12">
+            <div class="grid-container" @click="setCardView">
+              <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
+              <Grid />
+              </el-icon>
+            </div>
+          </el-col>
+        </el-row>
+        </div>
     </div>
 
     <PropertyTable 
+      v-if="viewType === 'table'"
+      :addresses="addresses" 
+      @edit-property="openPropertyDialog"
+    />
+
+    <PropertyTableCard 
+      v-else
       :addresses="addresses" 
       @edit-property="openPropertyDialog"
     />
@@ -140,4 +178,35 @@ const openPropertyDialog = (property: any) => {
   margin-left: 40px;
 }
 
+.grid-container {
+  cursor: pointer;
+  padding: 5px;
+  border:#409EFF 2px solid;
+  border-radius: 4px;
+  display: flex ;
+  justify-content: center;
+  align-items: center;
+  &:hover {
+    background-color: #f5f7fa;
+  }
+  
+}
+
+.databoard-icon,
+.grid-icon {
+  font-size: 24px;
+  color: #909399;
+  transition: color 0.3s, transform 0.3s;
+}
+
+.databoard-icon:hover,
+.grid-icon:hover {
+  transform: scale(1.1);
+}
+
+.databoard-icon.active,
+.grid-icon.active {
+  color: #409EFF;
+  transform: scale(1.1);
+}
 </style>
