@@ -53,7 +53,7 @@
           shadow="hover"
         >
           <div class="property-content">
-            <el-tag type="success" class="price-tag">{{ property.dernier_prix_vente }} €</el-tag>
+            <el-tag type="alert" class="price-tag">{{ property.dernier_prix_vente }} €</el-tag>
             <div class="property-header">
               <div class="property-address">
                 <el-icon><Location /></el-icon>
@@ -314,6 +314,9 @@
   .property-card {
     overflow: hidden;
     transition: all 0.3s;
+    background-color: #fafafa;
+    border-radius: 12px;
+    /* border: 1px solid #337ecc; */
   }
   
   .property-image-container {
