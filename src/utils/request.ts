@@ -3,7 +3,7 @@ import axios from 'axios'
 import { getCookie } from '.'
 
 const request = axios.create({
-  baseURL: import.meta.env.VITE_APP_BASE_API,
+  baseURL: "https://monestimationimmobiliere.fr/myimmo/public/api",
   withCredentials: true,
   timeout: 60000
 })
@@ -25,26 +25,40 @@ request.interceptors.request.use(
 
 request.interceptors.response.use(
   response => {
-    const { code, msg } = response.data
-    if (code !== 200) {
-      ElMessage({
-        message: `error code"${code}：${msg || 'unknown error'}`,
-        type: 'error',
-        duration: 5 * 1000
-      })
-      return Promise.reject(new Error(msg || 'unknown error'))
-    } else {
-      return response.data
+    // Check if response.data exists and has a code property
+    if (response.data && typeof response.data === 'object') {
+      const { code, msg, data } = response.data;
+      
+      // If there's a code and it's not 200, handle as error
+      if (code !== undefined && code !== 200) {
+        const errorMessage = msg || 'Unknown error';
+        ElMessage({
+          message: `Error code ${code}: ${errorMessage}`,
+          type: 'error',
+          duration: 5 * 1000
+        });
+        return Promise.reject(new Error(errorMessage));
+      } 
+      
+      // Return the original response for successful requests
+      return response.data;
     }
+    
+    // If response.data doesn't follow the expected structure, return as is
+    return response;
   },
   error => {
-    console.error(error)
+    console.error('Response error:', error);
+    
+    // Extract error message from axios error object
+    const errorMessage = error.response?.data?.message || error.message || 'Network error';
+    
     ElMessage({
-      message: error.message,
+      message: errorMessage,
       type: 'error',
       duration: 5 * 1000
-    })
-    return Promise.reject(error)
+    });
+    return Promise.reject(error);
   }
 )
 

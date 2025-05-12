@@ -1,7 +1,7 @@
 <template>
   <div class="floating-label-wrapper">
     <DynamicLabelUI v-model="localValue" text="Rue" color="#aaa" activeColor="#409EFF" :disabled="!codeInsee">
-      <el-autocomplete v-model="localValue" :fetch-suggestions="queryStreets" :debounce="500" :suffix-icon="Search" :icon-size="60" clearable @clear="handleClear" @select="handleSelect" :disabled="!codeInsee">
+      <el-autocomplete v-model="localValue" size="large" :fetch-suggestions="queryStreets" :debounce="500" :suffix-icon="Search" :icon-size="60" clearable @clear="handleClear" @select="handleSelect" :disabled="!codeInsee">
         <template #default="{ item }">
           <div v-html="highlightMatch(item.value, localValue)" />
         </template>

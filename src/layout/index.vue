@@ -6,6 +6,9 @@ import SideBar from './SideBar.vue'
 import TabsBar from './TabsBar.vue'
 import isMobile from '@/composables/isMobile'
 import Logo from '@/assets/logo.svg'
+import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg'
+import Logo2 from '@/assets/logo.png'
+
 
 import type { Layout } from 'types/layout'
 
@@ -45,7 +48,7 @@ provide('loading', loading)
       <div class="shadow-lg" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
         <RouterLink to="/">
           <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0', position: 'sticky', top: '0', zIndex: '100'}"
-            :src="Logo" fit="contain" />
+            :src="MinimalistHouse" fit="contain" />
         </RouterLink>
         <SideBar></SideBar>
       </div>
@@ -69,7 +72,7 @@ provide('loading', loading)
           <RouterLink to="/">
             <el-image
               :style="{ width: sidebarRelated.width, height: sidebarRelated.collapsed ? '3.6rem' : '6.6rem', padding: '0.3rem 0' }"
-              :src="Logo" fit="contain" />
+              :src="MinimalistHouse" fit="contain" />
           </RouterLink>
           <SideBar style="padding-right: 1rem;"></SideBar>
         </div>

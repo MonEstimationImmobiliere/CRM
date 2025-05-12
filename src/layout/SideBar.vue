@@ -12,6 +12,12 @@
   <div class="SideBar-logout-container">
     <SbConfirmationDeleteDialog :title="'Confirmer la déconnexion?'" :confirmButtonText="'OK'" :cancelButtonText="'Annuler'"
       :icon="'InfoFilled'" :iconColor="'#626AEF'" @confirm="logout"/>
+
+      <div class="sidebar-user-name">
+        <el-icon><Avatar /></el-icon>
+        <span>Utilisateur {{ user.name }}</span>
+      </div>
+
   </div>
 </template>
 
@@ -31,6 +37,7 @@ import { ElMenu, ElMenuItem, ElSubMenu, ElIcon } from 'element-plus/es'
 import SvgIcon from '../components/SvgIcon.vue'
 import type { Layout } from 'types/layout'
 import { userStore } from '../stores/user'
+import { Avatar } from '@element-plus/icons-vue'
 
 import { Fold, ArrowRightBold, InfoFilled, SwitchButton} from '@element-plus/icons-vue'
 
@@ -158,5 +165,15 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
   bottom: 0;
   width: 100%;
   background-color: #ffffff;
+  flex-direction: column;
+  align-items: flex-start;
+}
+
+.sidebar-user-name {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  font-size: 14px;
+  color: #333333;
 }
 </style>

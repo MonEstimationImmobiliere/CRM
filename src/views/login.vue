@@ -4,9 +4,11 @@ import { appTitle } from '@/appConfig'
 import { userStore } from '@/stores/user'
 import { useRouter } from 'vue-router'
 import { ElMessage } from 'element-plus'
-import { User, Lock } from '@element-plus/icons-vue'
+import { User, Lock, View, Hide } from '@element-plus/icons-vue'
 import type { ComponentPublicInstance } from 'vue'
 import type { FormInstance } from 'element-plus'
+import axios from 'axios'
+import API_URL from '@/utils/API_URL'
 
 interface LoginForm {
   username: string
@@ -17,8 +19,8 @@ interface LoginForm {
 
 const refForm = ref<ComponentPublicInstance<FormInstance> | null>(null)
 const form = reactive<LoginForm>({
-  username: 'bob',
-  password: 'bob',
+  username: 'bite@exemple.com',
+  password: 'bite',
   showPassword: false,
   remember: true
 })
@@ -27,18 +29,62 @@ const loading = reactive({
 })
 const router = useRouter()
 const user = userStore()
+const loginError = ref("")
 
-function login() {
+// Regex pour valider les emails
+const emailRegex = /^[^\s@]+@[^\s@]+\.[^\s@]+$/;
+
+// Validation de l'email
+function validateEmail(email: string): boolean {
+  return emailRegex.test(email);
+}
+
+// Validation du mot de passe
+function validatePassword(password: string): boolean {
+  return password.length >= 3;
+}
+
+function login()  {
   if (!refForm.value) return
-  refForm.value.validate((valid, fields) => {
+  refForm.value.validate(async (valid, fields) => {
     if (!valid) return false
     loading.login = true
-    user.login(form.username, form.password).then(_ => {
+    loginError.value = "";
+    
+    // Validation supplémentaire
+    if (!validateEmail(form.username)) {
+      ElMessage.error("Veuillez entrer un email valide.");
+      loading.login = false;
+      return;
+    }
+    
+    if (!validatePassword(form.password)) {
+      ElMessage.error("Le mot de passe doit contenir au moins 3 caractères.");
+      loading.login = false;
+      return;
+    }
+
+
+    try {
+    interface LoginResponse {
+      status: number;
+      data: any;
+    }
+    
+    const response = await user.login(form.username, form.password) as LoginResponse;
+     console.log("response", response)
+     
+    if (response.status === 200) {
       router.replace('/')
-    }).catch(err => {
+      ElMessage.success("Connexion réussie");
       loading.login = false
-      ElMessage.error(err)
-    })
+    } 
+    } catch (error) {
+      loginError.value = "Email ou mot de passe incorrect.";
+      ElMessage.error(loginError.value);
+      console.error(error);
+      loading.login = false;
+    }
   })
 }
 </script>
@@ -65,9 +111,8 @@ function login() {
               </el-icon>
             </template>
             <template #suffix>
-              <el-icon size="1.1rem">
-                <SvgIcon :iconName="form.showPassword ? 'eye-open' : 'eye'"
-                  @click="form.showPassword = !form.showPassword"></SvgIcon>
+              <el-icon size="1.1rem" @click="form.showPassword = !form.showPassword">
+                <component :is="form.showPassword ? View : Hide" />
               </el-icon>
             </template>
           </el-input>
@@ -77,6 +122,7 @@ function login() {
         </el-form-item>
         <ElButton type="primary" style="width: 100%;" size="large" :loading="loading.login" @click="login">ok michel
         </ElButton>
+        <div v-if="loginError" class="error-message">{{ loginError }}</div>
       </el-form>
     </section>
   </main>
@@ -113,5 +159,12 @@ function login() {
       }
     }
   }
+}
+
+.error-message {
+  color: var(--el-color-danger);
+  margin-top: 0.5rem;
+  font-size: 0.875rem;
+  text-align: center;
 }
 </style>

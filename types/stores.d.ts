@@ -1,8 +1,11 @@
 export namespace Stores {
   interface user {
     name: string
-    age: number | null
-    sex?: 'male' | 'female' | 'unknown'
-    token?: string
+    token?: string,
+    id?: number | null
+    email: string,
+    phone: string,
+    avatar: null,
+    status: "active" | "inactive",
   }
 }
