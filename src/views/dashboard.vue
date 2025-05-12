@@ -41,9 +41,29 @@ const querySearchAddress = async () => {
   }
 };
 
-const queryEstimations = () => {
-  // Implement estimation logic
-  console.log("Fetching estimations");
+
+const querySearchEstimation = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'estimation');
+  } catch (error) {
+    console.error('Error fetching estimations:', error);
+  }
+};
+
+const querySearchRappel = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'rappel');
+  } catch (error) {
+    console.error('Error fetching rappel:', error);
+  };
+};
+
+const querySearchMaj = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'maj');
+  } catch (error) {
+    console.error('Error fetching maj:', error);
+  }
 };
 
 const openPropertyDialog = (property: any) => {
@@ -87,11 +107,11 @@ const setCardView = () => {
         <div class="validationButtonContainer">
           <el-button type="primary" size="large" @click="querySearchAddress" :disabled="!selectedStreet || !selectedCodeInsee"> Afficher </el-button>
 
-          <el-button type="primary" size="large" @click="queryEstimations"> Estimations reçues </el-button>
+          <el-button type="primary" size="large" @click="querySearchEstimation"> Estimations reçues </el-button>
 
-          <el-button type="primary" size="large" @click="queryRdv"> Mes rappels </el-button>
+          <el-button type="primary" size="large" @click="querySearchRappel"> Mes rappels </el-button>
 
-          <el-button type="primary" size="large" @click="queryRdv"> Mes dernières mise à jour </el-button>
+          <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>
         </div>
 
         <div class="layoutContainer">
