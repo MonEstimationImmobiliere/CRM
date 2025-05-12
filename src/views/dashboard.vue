@@ -32,15 +32,34 @@ const handleStreetSelect = (street: any) => {
 
 const querySearchAddress = async () => {
   try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value);
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'address');
   } catch (error) {
     console.error('Error fetching addresses:', error);
   }
 };
 
-const queryEstimations = () => {
-  // Implement estimation logic
-  console.log('Fetching estimations');
+const querySearchEstimation = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'estimation');
+  } catch (error) {
+    console.error('Error fetching estimations:', error);
+  }
+};
+
+const querySearchRappel = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'rappel');
+  } catch (error) {
+    console.error('Error fetching rappel:', error);
+  };
+};
+
+const querySearchMaj = async () => {
+  try {
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'maj');
+  } catch (error) {
+    console.error('Error fetching maj:', error);
+  }
 };
 
 const openPropertyDialog = (property: any) => {
@@ -91,23 +110,23 @@ const openPropertyDialog = (property: any) => {
 
       <el-button 
         type="primary" 
-        @click="queryEstimations"         
+        @click="querySearchEstimation"         
       >
         Estimations reçues
       </el-button>
 
       <el-button 
         type="primary" 
-        @click="queryRdv"         
+        @click="querySearchRappel"         
       >
       Mes rappels
       </el-button>
 
       <el-button 
         type="primary" 
-        @click="queryRdv"         
+        @click="querySearchMaj"         
       >
-      Mes dernières mise à jour
+      Mes mise à jours
       </el-button>
 
 

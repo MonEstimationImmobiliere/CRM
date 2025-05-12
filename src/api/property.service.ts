@@ -47,9 +47,9 @@ export const PropertyService = {
     }
   },
 
-  async getAddressesByFantoir(idFantoir: string): Promise<any[]> {
+  async getAddressesByFantoir(idFantoir: string, type: string): Promise<any[]> {
     try {
-      const response = await axios.get(`${API_URL}/addresses/${encodeURIComponent(idFantoir)}`);
+      const response = await axios.get(`${API_URL}/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching addresses:', error);
