@@ -90,7 +90,7 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="Date Rappel" prop="rappel" sortable  min-width="120">
+    <!-- <el-table-column label="Date Rappel" prop="rappel" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.rappel}}
       </template>
@@ -100,7 +100,7 @@
       <template #default="{ row }">
         {{ row.maj }}
       </template>
-    </el-table-column>
+    </el-table-column> -->
 
 
     <el-table-column fixed="right" label="Actions" min-width="80">
