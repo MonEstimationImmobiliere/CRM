@@ -35,9 +35,9 @@ const handleStreetSelect = (street: any) => {
 
 const querySearchAddress = async () => {
   try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value);
+    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'address');
   } catch (error) {
-    console.error("Error fetching addresses:", error);
+    console.error('Error fetching addresses:', error);
   }
 };
 
