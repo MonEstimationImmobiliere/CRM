@@ -11,34 +11,40 @@
     @row-click="handleRowClick"
 
   >
-    <!-- <el-table-column label="Ville" prop="city" sortable  min-width="120">
+    <el-table-column label="Ville" prop="city" sortable  min-width="120">
       <template #default="{ row }">
-      {{ row.city }} {{ row.codePostal}}
+      {{ row.nom_commune}} {{ row.codePostal}}
       </template>
-    </el-table-column> -->
+    </el-table-column> 
 
-    <el-table-column label="Numero" prop="numero" sortable  min-width="100" :sort-method="sortByNumeroAndRep" :sort-orders="['ascending', 'descending']">
+
+
+    <el-table-column label="N°" prop="numero" sortable  min-width="100" :sort-method="sortByNumeroAndRep" :sort-orders="['ascending', 'descending']">
       <template #default="{ row }">
+ 
+
       {{ row.numero }} {{ row.rep || '' }}
       </template>
+    
     </el-table-column>
 
-    <!-- <el-table-column label="Rue" prop="nom_voie" sortable  min-width="120">
+    <el-table-column label="Rue" prop="nom_voie" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.nom_voie }}
       </template>
-    </el-table-column> -->
+    </el-table-column> 
 
     <el-table-column label="Type" prop="type_bien" sortable  min-width="100">
       <template #default="{ row }">
-        {{ row.type_bien }} {{ row.apart_number || '' }}
+      <!--  {{ row.type_bien }} {{ row.apart_number || '' }}-->
 
-     <!--   <el-icon v-if="row.type_bien === 'maison'"><House /></el-icon>
-  <el-icon v-else-if="row.type_bien === 'appartement'"><OfficeBuilding /></el-icon>
-  <el-icon v-else-if="row.type_bien === 'immeuble'"><OfficeBuilding /></el-icon>
-  <el-icon v-else><QuestionFilled /></el-icon>
+  <el-icon class="icon-maison" v-if="row.type_bien === 'Maison'"><House /></el-icon>
+  <el-icon class="icon-appartement" v-else-if="row.type_bien === 'Appartement'"><OfficeBuilding /></el-icon>
+  <el-icon class="icon-immeuble" v-else-if="row.type_bien === 'Immeuble'"><OfficeBuilding /></el-icon>
+  <el-icon class="icon-inconnu" v-else><QuestionFilled /></el-icon>
+  <span v-if="row.apart_number">/{{ row.apart_number }}</span>
 
-  <span v-if="row.apart_number"> - {{ row.apart_number }}</span>-->
+
       </template>
     </el-table-column>
 
@@ -48,59 +54,65 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="Nb chambres" prop="nombre_pieces_principales" sortable  min-width="120">
+    <el-table-column label="Chambres" prop="nombre_pieces_principales" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.nombre_pieces_principales }}
       </template>
     </el-table-column>
 
-    <!-- <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
+     <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.area }}
       </template>
-    </el-table-column> -->
+    </el-table-column> -
 
-    <el-table-column label="Nb vente" prop="nombre_ventes" sortable  min-width="120">
+    <!--<el-table-column label="Nb vente" prop="nombre_ventes" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.nombre_ventes }}
       </template>
-    </el-table-column>
+    </el-table-column>-->
 
     <el-table-column label="Dernière vente" prop="date_derniere_vente" sortable min-width="120">
       <template #default="{ row }">
-        {{ row.date_derniere_vente }}
+       <!-- {{ row.date_derniere_vente }}<span v-if="row.nombre_ventes"> ({{ row.nombre_ventes }})</span> -->
+
+         {{ row.date_derniere_vente }}
       </template>
     </el-table-column>
 
-    <el-table-column label="Prix de vente" prop="dernier_prix_vente" sortable  min-width="120">
+
+
+    <el-table-column label="Prix vendu" prop="dernier_prix_vente" sortable min-width="120">
+  <template #default="{ row }">  
+     {{ formatPrice(row.dernier_prix_vente) }}
+  </template>
+</el-table-column>
+
+<!--<el-table-column label="Date Estimation" prop="date_derniere_estimation" sortable min-width="120">
+  <template #default="{ row }">
+    {{ formatDate(row.date_derniere_estimation) }}
+  </template>
+</el-table-column>-->
+
+<el-table-column label="Prix Estimé" prop="dernier_prix_estime" sortable min-width="120">
+  <template #default="{ row }">
+    {{ formatPrice(row.dernier_prix_estime) }}
+  </template>
+</el-table-column>
+
+    <el-table-column label="Date Maj" prop="date_maj" sortable  min-width="120" >
       <template #default="{ row }">
-        {{ row.dernier_prix_vente }}
+            {{ formatDate(row.date_maj ) }}
+      </template>
+    </el-table-column> 
+
+
+     <el-table-column label="Date Rappel" prop="date_rappel" sortable  min-width="120">
+      <template #default="{ row }">
+         {{ formatDate(row.date_rappel) }} 
       </template>
     </el-table-column>
 
-    <el-table-column label="Date Estimation" prop="rappel" sortable  min-width="120">
-      <template #default="{ row }">
-        {{ row.rappel}}
-      </template>
-    </el-table-column>
-
-    <el-table-column label="Prix Estimation" prop="maj" sortable  min-width="120">
-      <template #default="{ row }">
-        {{ row.maj }}
-      </template>
-    </el-table-column>
-
-    <!-- <el-table-column label="Date Rappel" prop="rappel" sortable  min-width="120">
-      <template #default="{ row }">
-        {{ row.rappel}}
-      </template>
-    </el-table-column>
-
-    <el-table-column label="Date Maj" prop="maj" sortable  min-width="120" >
-      <template #default="{ row }">
-        {{ row.maj }}
-      </template>
-    </el-table-column> -->
 
 
     <el-table-column fixed="right" label="Actions" min-width="80">
@@ -120,7 +132,7 @@
 
 <script setup lang="ts">
 import { Setting } from '@element-plus/icons-vue';
-//import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
+import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
 
 defineProps({
   addresses: {
@@ -151,6 +163,19 @@ return repA.localeCompare(repB);
 
 const getRowClass = () => 'custom-row';
 
+const formatDate = (dateStr: string | null) => {
+  if (!dateStr) return '';
+  const date = new Date(dateStr);
+  const day = String(date.getDate()).padStart(2, '0');
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const year = date.getFullYear();
+  return `${day}-${month}-${year}`;
+};
+
+const formatPrice = (value: number | null) => {
+  if (!value) return '';
+  return `${Math.round(value).toLocaleString('fr-FR')} €`;
+};
 
 </script>
 
@@ -181,6 +206,13 @@ const getRowClass = () => 'custom-row';
   border: none;
   padding-top: 16px;
   padding-bottom: 16px;
+
+  /* Taille du texte */
+  font-size: 16px; /* Ajuste à ta convenance */
+  font-weight: 500; /* Optionnel pour un style plus lisible */
+  color: #333;
+  font-family: 'Segoe UI', sans-serif;
+
 }
 
 
@@ -189,5 +221,28 @@ const getRowClass = () => 'custom-row';
   border: 1px solid #e4e7ed;
   width: 100%;
 }
+
+
+.icon-maison {
+font-size: 24px;
+  color: green;
+}
+
+.icon-appartement {
+font-size: 24px;
+  color: blue;
+}
+
+.icon-immeuble {
+font-size: 24px;
+  color: brown;
+}
+
+.icon-inconnu {
+font-size: 24px;
+  color: black;
+}
+
+
 
 </style>

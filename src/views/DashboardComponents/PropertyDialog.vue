@@ -60,6 +60,7 @@ const saveProperty = () => {
 
 
 
+
 </script>
 
 <template>
@@ -261,9 +262,37 @@ const saveProperty = () => {
       <!-- Comments Card -->
        <el-card shadow="hover">
         <h3 class="card-title">Commentaires</h3>
+
         <div class="card-content">
           <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
         </div>
+
+<div class="card-content" style="margin-top: 16px;">
+  <label for="date-rappel" class="el-form-item__label">Date de rappel :</label>
+  <el-date-picker
+    id="date-rappel"
+    v-model="store.selectedProperty.date_rappel"
+    type="date"
+    placeholder="Sélectionnez une date de rappel"
+    format="DD/MM/YYYY"
+    value-format="YYYY-MM-DD"
+    style="width: 100%;"
+  />
+</div>
+
+  <label for="prix-rappel" class="el-form-item__label">Prix estimé (€) :</label>
+  <el-input
+    id="prix-rappel"
+    v-model.number="store.selectedProperty.price"
+    placeholder="Prix en euros"
+    type="number"
+    min="0"
+    step="1"
+    style="width: 100%;"
+  >
+    <template #suffix>€</template>
+  </el-input>
+
       </el-card>
 
       <div class="dialog-footer">

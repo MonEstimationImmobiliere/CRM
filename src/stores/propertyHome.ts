@@ -44,7 +44,8 @@ const defaultPropertyData: PropertyData = {
   basement: false,
   dependency: false,
   ground: false,
-  comment: ''
+  comment: '',
+  date_rappel: null
 };
 
 export interface PropertyData {
@@ -90,6 +91,7 @@ export interface PropertyData {
   dependency: boolean;
   ground: boolean;
   comment: string;
+  date_rappel:  Date | null;
   id?: number;
 }
 
