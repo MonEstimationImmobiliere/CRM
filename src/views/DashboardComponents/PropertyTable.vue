@@ -50,19 +50,19 @@
 
     <el-table-column label="Surface" prop="surface_reelle_bati" sortable  min-width="100">
       <template #default="{ row }">
-        {{ row.surface }}
+             {{ formatMetrage(row.surface) }}
       </template>
     </el-table-column>
 
-    <el-table-column label="Chambres" prop="nombre_pieces_principales" sortable  min-width="120">
+    <el-table-column label="Chambres" prop="bedrooms" sortable  min-width="120">
       <template #default="{ row }">
-        {{ row.nombre_pieces_principales }}
+        {{ row.bedrooms }}
       </template>
     </el-table-column>
 
      <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
       <template #default="{ row }">
-        {{ row.area }}
+  {{ formatMetrage(row.area) }}
       </template>
     </el-table-column> -
 
@@ -76,7 +76,7 @@
       <template #default="{ row }">
        <!-- {{ row.date_derniere_vente }}<span v-if="row.nombre_ventes"> ({{ row.nombre_ventes }})</span> -->
 
-         {{ row.date_derniere_vente }}
+         {{ formatDate(row.date_derniere_vente) }}
       </template>
     </el-table-column>
 
@@ -107,11 +107,13 @@
     </el-table-column> 
 
 
-     <el-table-column label="Date Rappel" prop="date_rappel" sortable  min-width="120">
-      <template #default="{ row }">
-         {{ formatDate(row.date_rappel) }} 
-      </template>
-    </el-table-column>
+    <el-table-column label="Date Rappel" prop="date_rappel" sortable min-width="120">
+  <template #default="{ row }">
+    <span :style="{ color: isDatePassed(row.date_rappel) ? 'red' : 'inherit' }">
+      {{ formatDate(row.date_rappel) }}
+    </span>
+  </template>
+</el-table-column>
 
 
 
@@ -176,6 +178,20 @@ const formatPrice = (value: number | null) => {
   if (!value) return '';
   return `${Math.round(value).toLocaleString('fr-FR')} €`;
 };
+
+const isDatePassed = (dateStr: string | Date | null): boolean => {
+  if (!dateStr) return false;
+  const date = new Date(dateStr);
+  const today = new Date();
+  today.setHours(0, 0, 0, 0); // ignore heure/minute
+  return date < today;
+};
+
+const formatMetrage = (value: number | null) => {
+  if (!value) return '';
+  return `${Math.round(value).toLocaleString('fr-FR')} m²`;
+};
+
 
 </script>
 

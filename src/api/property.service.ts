@@ -27,10 +27,7 @@ export const PropertyService = {
 
   async updateProperty(propertyId: number, property: PropertyData): Promise<PropertyData> {
     try {
-      const response = await axios.post(
-        `${API_URL}/property/update/${encodeURIComponent(propertyId)}`, 
-        property
-      );
+      const response = await axios.post(`${API_URL}/property/update/${encodeURIComponent(propertyId)}`, property);
       return response.data.property;
     } catch (error) {
       console.error('Error updating property:', error);

@@ -52,12 +52,23 @@
           :body-style="{ padding: '0px' }" 
           shadow="hover"
         >
+
+ <!--<img
+  :src="getStreetViewUrl(property)"
+
+
+  alt="Vue Street"
+  style="width: 100%; height: 200px; object-fit: cover;"
+>-->
+
+
           <div class="property-content">
             <el-tag type="alert" class="price-tag">{{ property.dernier_prix_vente }} €</el-tag>
             <div class="property-header">
               <div class="property-address">
                 <el-icon><Location /></el-icon>
-                <h3>{{ property.numero + ' ' + property.nom_voie }}</h3>
+                <h3>{{ property.code_postal + ' ' + property.nom_commune }} <br> {{ property.numero + ' ' + property.nom_voie }}</h3>
+ 
               </div>
   
               <div class="property-features">
@@ -218,6 +229,25 @@
       sortOrder.value = 'desc'
     }
   }
+
+
+  const onImageError = (event: Event) => {
+  const target = event.target as HTMLImageElement
+  const fallback = target.getAttribute('data-fallback')
+  if (fallback && target.src !== fallback) {
+    target.src = fallback
+  }
+}
+
+
+const getStreetViewUrl = (property: any): string => {
+  const address = `${property.numero} ${property.nom_voie}, ${property.code_postal} ${property.nom_commune}`
+  const encodedAddress = encodeURIComponent(address)
+  const apiKey = 'AIzaSyCCtzXZLQQLM6edZnbCPjWViCwS_ttYDFU' // Remplace par ta vraie clé API
+
+  return `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${encodedAddress}&key=${apiKey}`
+}
+
   </script>
   
   <style scoped>

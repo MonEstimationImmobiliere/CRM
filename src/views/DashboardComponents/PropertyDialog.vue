@@ -24,7 +24,10 @@ const dialogTitle = computed(() => {
 });*/
 
 const dialogTitle = computed(() => {
-  if (!store.selectedProperty.id) return "Nouvelle propriété";
+  //if (!store.selectedProperty.id) return "Nouvelle propriété";
+
+  //const code_postal = store.selectedProperty.code_postal || "";
+  //const nom_commune = store.selectedProperty.nom_commune || "";
 
   const numero = store.selectedProperty.numero || "";
   const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : "";
@@ -33,6 +36,7 @@ const dialogTitle = computed(() => {
     ? ` - Appartement ${store.selectedProperty.numero_appartement}`
     : "";
 
+  //return `${code_postal} ${nom_commune} , ${numero}${rep} - ${voie}${appart}`;
   return `${numero}${rep} - ${voie}${appart}`;
 });
 
