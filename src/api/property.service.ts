@@ -3,6 +3,10 @@ import axios from 'axios';
 import API_URL from '@/utils/API_URL';
 import type { PropertyData } from '@/stores/propertyHome';
 
+
+
+
+
 export const PropertyService = {
 
   async getPropertyById(idFantoir: string): Promise<PropertyData> {
