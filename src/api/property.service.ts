@@ -1,6 +1,4 @@
-
-import axios from 'axios';
-import API_URL from '@/utils/API_URL';
+import apiService from '@/api/apiRequests';
 import type { PropertyData } from '@/stores/propertyHome';
 
 
@@ -11,7 +9,7 @@ export const PropertyService = {
 
   async getPropertyById(idFantoir: string): Promise<PropertyData> {
     try {
-      const { data } = await axios.get(`${API_URL}/property/show/${encodeURIComponent(idFantoir)}`);
+      const { data } = await apiService.get<PropertyData>(`/property/show/${encodeURIComponent(idFantoir)}`);
       return data;
     } catch (error) {
       console.error('Error fetching property details:', error);
@@ -21,7 +19,7 @@ export const PropertyService = {
 
   async createProperty(property: PropertyData): Promise<PropertyData> {
     try {
-      const response = await axios.post(`${API_URL}/property/create`, property);
+      const response = await apiService.post<PropertyData>(`/property/create`, property);
       return response.data;
     } catch (error) {
       console.error('Error creating property:', error);
@@ -31,7 +29,7 @@ export const PropertyService = {
 
   async updateProperty(propertyId: number, property: PropertyData): Promise<PropertyData> {
     try {
-      const response = await axios.post(`${API_URL}/property/update/${encodeURIComponent(propertyId)}`, property);
+      const response = await apiService.post<{ property: PropertyData }>(`/property/update/${encodeURIComponent(propertyId)}`, property);
       return response.data.property;
     } catch (error) {
       console.error('Error updating property:', error);
@@ -41,7 +39,7 @@ export const PropertyService = {
 
   async deleteProperty(propertyId: number): Promise<void> {
     try {
-      await axios.delete(`${API_URL}/property/delete/${encodeURIComponent(propertyId)}`);
+      await apiService.delete<void>(`/property/delete/${encodeURIComponent(propertyId)}`);
     } catch (error) {
       console.error('Error deleting property:', error);
       throw error;
@@ -50,7 +48,7 @@ export const PropertyService = {
 
   async getAddressesByFantoir(idFantoir: string, type: string): Promise<any[]> {
     try {
-      const response = await axios.get(`${API_URL}/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
+      const response = await apiService.get<any[]>(`/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching addresses:', error);

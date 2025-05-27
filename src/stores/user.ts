@@ -3,8 +3,7 @@ import { defineStore } from "pinia"
 import request from "@/utils/request"
 import { ElMessage } from "element-plus"
 import { Stores } from "types/stores"
-import API_URL from "@/utils/API_URL"
-import axios from "axios"
+import apiService from "@/api/apiRequests"
 
 export const userStore = defineStore('user', {
   state: (): Stores.user => ({
@@ -20,7 +19,7 @@ export const userStore = defineStore('user', {
   actions: {
     async login(email: string, password: string) {
       try {
-        const response = await axios.post(`${API_URL}/login`, {
+        const response = await apiService.post('/login', {
           email, password
         });
 
@@ -37,7 +36,7 @@ export const userStore = defineStore('user', {
           this.id = response.data.user.id || null;
           
           if (this.token) {
-            setCookie('token', this.token);
+            apiService.setToken(this.token);
           }
           
           // Return standard object structure for consistency
@@ -58,7 +57,7 @@ export const userStore = defineStore('user', {
       return new Promise((resolve) => {
         request.get<Stores.user>('/user/logout').then((res) => {
           const { msg } = res
-          removeCookie('token')
+          apiService.removeToken()
           ElMessage.success(msg)
           resolve(msg)
         })
