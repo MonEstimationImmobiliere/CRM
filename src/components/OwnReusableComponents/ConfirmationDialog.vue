@@ -17,7 +17,6 @@
   
   <script setup lang="ts">
   import { InfoFilled } from '@element-plus/icons-vue'
-  import { SbTypography } from "../../index";
 
 
 

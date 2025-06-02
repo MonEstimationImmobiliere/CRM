@@ -77,7 +77,7 @@ const handleAllCheckedChange = () => {
 
 const drawer = ref(false);
 const loading = ref(false);
-let timer: number | undefined;
+let timer: ReturnType<typeof setTimeout> | undefined;
 
 const form = reactive({
     name: "",

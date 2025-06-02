@@ -27,8 +27,8 @@ router.beforeEach(async (to, from, next) => {
 /**************************************************************************************** */
 
     // Check if there is a token
-    // const token = getCookie('token')
-    // const user = userStore()
+    const token = getCookie('token')
+    const user = userStore()
 
 /**************************************************************************************** */
 /**************************************************************************************** */
@@ -46,21 +46,21 @@ router.beforeEach(async (to, from, next) => {
 /**************************************************************************************** */
 /**************************************************************************************** */
 
-    const token = "bobToken"
+    // const token = "bobToken"
 
-    const user = {
-      '$id': 'user',
-      name: 'bob',
-      age: 18,
-      sex: 'male',
-      token: 'bobToken',
-      _isOptionsAPI: true,
-      _hmrPayload: {
-        actions: {},
-        getters: {},
-        state: [ 'name', 'age', 'sex', 'token' ],
-      }
-    }
+    // const user = {
+    //   '$id': 'user',
+    //   name: 'bob',
+    //   age: 18,
+    //   sex: 'male',
+    //   token: 'bobToken',
+    //   _isOptionsAPI: true,
+    //   _hmrPayload: {
+    //     actions: {},
+    //     getters: {},
+    //     state: [ 'name', 'age', 'sex', 'token' ],
+    //   }
+    // }
 
 
     /**************************************************************************************** */

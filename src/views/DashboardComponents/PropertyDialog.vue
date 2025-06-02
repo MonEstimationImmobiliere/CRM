@@ -1,34 +1,76 @@
 <script setup lang="ts">
 import { computed, watch } from "vue";
-import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer } from "element-plus";
+import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker } from "element-plus";
 import { usePropertyStore } from "../../stores/propertyHome";
 import { CircleCloseFilled } from "@element-plus/icons-vue";
 
+// Property interface
+interface Property {
+  id?: string | number;
+  id_fantoir_long?: string;
+  numero?: string;
+  rep?: string;
+  nom_voie?: string;
+  numero_appartement?: string;
+  code_postal?: string;
+  nom_commune?: string;
+  owner?: string;
+  email?: string;
+  phone?: string;
+  property_type?: string;
+  year_built?: number;
+  year_buy?: number;
+  surface?: number;
+  area?: number;
+  orientation?: string;
+  property_condition?: string;
+  bedrooms?: number;
+  bathrooms?: number;
+  fitted_kitchen?: boolean;
+  equipped_kitchen?: boolean;
+  american_kitchen?: boolean;
+  scullery?: boolean;
+  heating_type?: string;
+  window?: string;
+  window_type?: string;
+  shutter?: string;
+  cheminee?: boolean;
+  district_heating?: boolean;
+  patio?: boolean;
+  Garage?: boolean;
+  pool?: boolean;
+  veranda?: boolean;
+  garden?: boolean;
+  parking?: boolean;
+  Carport?: boolean;
+  kitchen_ext?: boolean;
+  elevator?: boolean;
+  balcony?: boolean;
+  cellar?: boolean;
+  bike_room?: boolean;
+  guardian?: boolean;
+  roof?: string;
+  adjoining?: boolean;
+  basement?: boolean;
+  dependency?: boolean;
+  ground?: boolean;
+  comment?: string;
+  date_rappel?: string;
+  price?: number;
+}
+
 const store = usePropertyStore();
 
-//console.log(store.selectedProperty);
-
-const visible = computed({
+const visible = computed<boolean>({
   get: () => store.isDialogVisible,
-  set: (value) => store.setDialogVisible(value),
+  set: (value: boolean) => store.setDialogVisible(value),
 });
 
-const isEditing = computed(() => !!store.selectedProperty?.id);
+const isEditing = computed<boolean>(() => !!store.selectedProperty?.id);
 
-/*<el-dialog  v-model="dialogPropertyVisible" :title="`${formAddress.numero}${formAddress.rep ? ` ${formAddress.rep}` : ''} - ${formAddress.nom_voie}${formAddress.numero_appartement ? ` - Appartement ${formAddress.numero_appartement}` : ''}`" width="80%">
-
-
-const dialogTitle = computed(() => {
+const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return "Nouvelle propriété";
-  return `${store.selectedProperty.id ? "Modifier" : "Nouvelle"} propriété`;
-});*/
-
-const dialogTitle = computed(() => {
-  //if (!store.selectedProperty.id) return "Nouvelle propriété";
-
-  //const code_postal = store.selectedProperty.code_postal || "";
-  //const nom_commune = store.selectedProperty.nom_commune || "";
-
+  
   const numero = store.selectedProperty.numero || "";
   const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : "";
   const voie = store.selectedProperty.nom_voie || "";
@@ -36,22 +78,21 @@ const dialogTitle = computed(() => {
     ? ` - Appartement ${store.selectedProperty.numero_appartement}`
     : "";
 
-  //return `${code_postal} ${nom_commune} , ${numero}${rep} - ${voie}${appart}`;
   return `${numero}${rep} - ${voie}${appart}`;
 });
 
-const emailFormatter = (value: string) => value.toLowerCase();
-const emailParser = (value: string) => value.trim();
+const emailFormatter = (value: string): string => value.toLowerCase();
+const emailParser = (value: string): string => value.trim();
 
-const phoneFormatter = (value: string) => value.replace(/\D/g, "").replace(/(\d{2})(?=\d)/g, "$1 ");
-const phoneParser = (value: string) => value.replace(/\D/g, "").substring(0, 10);
+const phoneFormatter = (value: string): string => value.replace(/\D/g, "").replace(/(\d{2})(?=\d)/g, "$1 ");
+const phoneParser = (value: string): string => value.replace(/\D/g, "").substring(0, 10);
 
-const closeDialog = () => {
+const closeDialog = (): void => {
   store.setDialogVisible(false);
   store.selectProperty(null);
 };
 
-const saveProperty = () => {
+const saveProperty = (): void => {
   if (store.selectedProperty) {
     if (isEditing.value) {
       store.saveProperty(store.selectedProperty);
@@ -61,9 +102,6 @@ const saveProperty = () => {
     closeDialog();
   }
 };
-
-
-
 
 </script>
 
@@ -271,7 +309,7 @@ const saveProperty = () => {
           <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
         </div>
 
-<div class="card-content" style="margin-top: 16px;">
+<!-- <div class="card-content" style="margin-top: 16px;">
   <label for="date-rappel" class="el-form-item__label">Date de rappel :</label>
   <el-date-picker
     id="date-rappel"
@@ -282,7 +320,7 @@ const saveProperty = () => {
     value-format="YYYY-MM-DD"
     style="width: 100%;"
   />
-</div>
+</div> -->
 
   <label for="prix-rappel" class="el-form-item__label">Prix estimé (€) :</label>
   <el-input

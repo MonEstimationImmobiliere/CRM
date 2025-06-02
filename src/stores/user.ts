@@ -19,7 +19,19 @@ export const userStore = defineStore('user', {
   actions: {
     async login(email: string, password: string) {
       try {
-        const response = await apiService.post('/login', {
+        interface LoginResponse {
+          user: {
+            name: string;
+            email: string;
+            phone: string;
+            avatar: string | null;
+            status: string;
+            id: number | null;
+          };
+          token: string;
+        }
+
+        const response = await apiService.post<LoginResponse>('/login', {
           email, password
         });
 
@@ -30,8 +42,8 @@ export const userStore = defineStore('user', {
           this.name = response.data.user.name || '';
           this.email = response.data.user.email || '';
           this.phone = response.data.user.phone || '';
-          this.avatar = response.data.user.avatar || null;
-          this.status = response.data.user.status || 'active';
+          // this.avatar = response.data.user.avatar || null;
+          // this.status = response.data.user.status || 'active';
           this.token = response.data.token || '';
           this.id = response.data.user.id || null;
           
@@ -56,10 +68,10 @@ export const userStore = defineStore('user', {
     async logout() {
       return new Promise((resolve) => {
         request.get<Stores.user>('/user/logout').then((res) => {
-          const { msg } = res
+          // const { msg } = res
           apiService.removeToken()
-          ElMessage.success(msg)
-          resolve(msg)
+          // ElMessage.success(msg)
+          // resolve(msg)
         })
       })
     },
@@ -70,7 +82,7 @@ export const userStore = defineStore('user', {
             token: token
           }
         }).then(res => {
-          const { data, msg } = res
+          const { data } = res
           if (data) {
             this.name = data.name
             this.email = data.email
@@ -81,9 +93,9 @@ export const userStore = defineStore('user', {
             this.token = data.token
             this.token = token
             setCookie('token', this.token)
-            resolve(msg)
+            // resolve(msg)
           } else {
-            reject(msg)
+            // reject(msg)
           }
         })
       })

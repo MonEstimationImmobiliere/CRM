@@ -145,11 +145,11 @@ defineProps({
 
 const emit = defineEmits(['edit-property']);
 
-const handleRowClick = (row) => {
+const handleRowClick = (row: any) => {
   emit('edit-property', row);
 };
 
-const sortByNumeroAndRep = (a, b) => {
+const sortByNumeroAndRep = (a: { numero: string; rep: any; }, b: { numero: string; rep: any; }) => {
 const numA = parseInt(a.numero) || 0;
 const numB = parseInt(b.numero) || 0;
 

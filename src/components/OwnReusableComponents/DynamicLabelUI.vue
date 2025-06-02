@@ -9,31 +9,18 @@
   </div>
 </template>
 
-<script setup>
+<script setup lang="ts">
 import { ref, computed, defineProps } from "vue";
 
-const props = defineProps({
-  modelValue: {
-    type: [String, Number],
-    default: "",
-  },
-  text: {
-    type: String,
-    required: true,
-  },
-  color: {
-    type: String,
-    default: "#909399", // Default label color
-  },
-  activeColor: {
-    type: String,
-    default: "#409EFF", // Default active/floating label color
-  },
-  disabled: {
-    type: Boolean,
-    default: false, // Disable behavior when true
-  },
-});
+interface Props {
+  modelValue?: string | number;
+  text: string;
+  color?: string;
+  activeColor?: string;
+  disabled?: boolean;
+}
+
+const props = defineProps<Props>();
 
 const isFocused = ref(false);
 

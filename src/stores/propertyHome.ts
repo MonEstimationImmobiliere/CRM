@@ -48,6 +48,11 @@ export interface PropertyData {
   comment: string;
   date_rappel:  Date | null;
   id?: number;
+  numero?: string;
+  rep?: string;
+  nom_voie?: string;
+  numero_appartement?: string;
+  price?: number;
 }
 
 const defaultPropertyData: PropertyData = {

@@ -63,7 +63,7 @@
 
 
           <div class="property-content">
-            <el-tag type="alert" class="price-tag">{{ property.dernier_prix_vente }} €</el-tag>
+            <el-tag type="danger" class="price-tag">{{ property.dernier_prix_vente }} €</el-tag>
             <div class="property-header">
               <div class="property-address">
                 <el-icon><Location /></el-icon>
@@ -172,6 +172,8 @@
     bedrooms: number; 
     bathrooms: number;
     image: string | null;
+    code_postal: string;
+    nom_commune: string;
   }
   
   const props = defineProps<{
