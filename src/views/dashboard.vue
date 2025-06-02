@@ -1,100 +1,3 @@
-<script setup lang="ts">
-import { ref } from "vue";
-import { usePropertyStore } from "../stores/propertyHome";
-import { PropertyService } from "@/api";
-import { DataBoard, Grid } from "@element-plus/icons-vue";
-
-// Component imports
-import CityAutocomplete from "./DashboardComponents/CityAutocomplete.vue";
-import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
-import PropertyTable from "./DashboardComponents/PropertyTable.vue";
-import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
-import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
-
-// Store
-const store = usePropertyStore();
-
-// Reactive state
-const selectedCity = ref(null);
-const selectedStreet = ref(null);
-const selectedCodeInsee = ref("");
-const selectedCodeIdFantoir = ref("");
-const addresses = ref([]);
-const viewType = ref("table"); // Add view type tracking
-
-// Methods
-const handleCitySelect = (city: any) => {
-  selectedCity.value = city;
-  selectedCodeInsee.value = city.codeInsee || "";
-};
-
-const handleStreetSelect = (street: any) => {
-  selectedStreet.value = street;
-  selectedCodeIdFantoir.value = street.idFantoir;
-};
-
-const querySearchAddress = async () => {
-  try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'address');
-  } catch (error) {
-    console.error('Error fetching addresses:', error);
-  }
-};
-
-
-const querySearchEstimation = async () => {
-  try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'estimation');
-  } catch (error) {
-    console.error('Error fetching estimations:', error);
-  }
-};
-
-const querySearchRappel = async () => {
-  try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'rappel');
-  } catch (error) {
-    console.error('Error fetching rappel:', error);
-  };
-};
-
-const querySearchMaj = async () => {
-  try {
-    addresses.value = await PropertyService.getAddressesByFantoir(selectedCodeIdFantoir.value, 'maj');
-  } catch (error) {
-    console.error('Error fetching maj:', error);
-  }
-};
-
-const openPropertyDialog = (property: any) => {
-  store.selectProperty({
-    ...store.defaultPropertyData,
-    ...property,
-    id_fantoir_long: property.id_fantoir_long,
-  });
-  store.setDialogVisible(true);
-};
-
-const setTableView = () => {
-  viewType.value = "table";
-};
-
-const setCardView = () => {
-  viewType.value = "card";
-};
-
-/*const openPropertyDialog = async (property: any) => {
-  await store.selectProperty(property); // ici, appel distant si ID présent
-  store.setDialogVisible(true);
-};*/
-
-/*const handlePropertySave = async () => {
-  await store.saveProperty(); // appelle juste le store
-  store.setDialogVisible(false);
-  querySearchAddress(); // refresh
-};*/
-</script>
-
 <template>
   <section class="block dashboardContainer">
     <div class="p-4">
@@ -142,6 +45,107 @@ const setCardView = () => {
     </div>
   </section>
 </template>
+
+<script setup lang="ts">
+import { computed, onMounted, ref } from "vue";
+import { usePropertyStore } from "../stores/propertyHome";
+import { useDashboardStore } from '@/stores/dashboard'
+import { PropertyService } from "@/api";
+import { DataBoard, Grid } from "@element-plus/icons-vue";
+
+// Component imports
+import CityAutocomplete from "./DashboardComponents/CityAutocomplete.vue";
+import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
+import PropertyTable from "./DashboardComponents/PropertyTable.vue";
+import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
+import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
+
+// Store
+const store = usePropertyStore();
+const dashboardStore = useDashboardStore()
+
+// Reactive state
+// const selectedCodeIdFantoir = computed({
+//   get: () => dashboardStore.selectedCodeIdFantoir,
+//   set: (value) => dashboardStore.selectedCodeIdFantoir = value
+// })
+
+const viewType = computed({
+  get: () => dashboardStore.viewType,
+  set: (value) => dashboardStore.viewType = value
+})
+
+const selectedCity = computed({
+  get: () => dashboardStore.selectedCity,
+  set: (value) => dashboardStore.selectedCity = value
+})
+
+console.log('selectedCity', selectedCity.value)
+
+const selectedStreet = computed({
+  get: () => dashboardStore.selectedStreet,
+  set: (value) => dashboardStore.selectedStreet = value
+})
+
+const selectedCodeInsee = computed({
+  get: () => dashboardStore.selectedCodeInsee,
+  set: (value) => dashboardStore.selectedCodeInsee = value
+})
+
+const addresses = computed(() => dashboardStore.addresses)
+
+// Restaurer l'état au montage du composant
+onMounted(() => {
+  // Si des données existent déjà, ne pas les recharger
+  if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
+    console.log('Données restaurées depuis le store')
+  }
+})
+
+// Methods
+const handleCitySelect = (city: any) => {
+  dashboardStore.selectedCity = city
+  dashboardStore.selectedCodeInsee = city.codeInsee || ""
+}
+
+const handleStreetSelect = (street: any) => {
+  dashboardStore.selectedStreet = street
+  dashboardStore.selectedCodeIdFantoir = street.idFantoir
+}
+
+const querySearchAddress = async () => {
+  await dashboardStore.querySearchAddress()
+}
+
+const querySearchEstimation = async () => {
+  await dashboardStore.querySearchEstimation()
+}
+
+const querySearchRappel = async () => {
+  await dashboardStore.querySearchRappel()
+}
+
+const querySearchMaj = async () => {
+  await dashboardStore.querySearchMaj()
+}
+
+const openPropertyDialog = (property: any) => {
+  store.selectProperty({
+    ...store.defaultPropertyData,
+    ...property,
+    id_fantoir_long: property.id_fantoir_long,
+  });
+  store.setDialogVisible(true);
+};
+
+const setTableView = () => {
+  dashboardStore.viewType = "table"
+}
+
+const setCardView = () => {
+  dashboardStore.viewType = "card"
+}
+</script>
 
 <style scoped>
 .headerFilterInfoContainer {

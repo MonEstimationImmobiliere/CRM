@@ -2,51 +2,6 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import { PropertyService } from '@/api';
 
-const defaultPropertyData: PropertyData = {
-  id_fantoir_long: '',
-  owner: '',
-  email: '',
-  phone: '',
-  property_type: '',
-  year_built: new Date().getFullYear(),
-  year_buy: new Date().getFullYear(),
-  surface: 0,
-  area: 0,
-  orientation: '',
-  property_condition: '',
-  bedrooms: 0,
-  bathrooms: 0,
-  fitted_kitchen: false,
-  equipped_kitchen: false,
-  american_kitchen: false,
-  scullery: false,
-  heating_type: '',
-  window: '',
-  window_type: '',
-  shutter: '',
-  cheminee: false,
-  district_heating: false,
-  patio: false,
-  Garage: false,
-  pool: false,
-  veranda: false,
-  garden: false,
-  parking: false,
-  Carport: false,
-  kitchen_ext: false,
-  elevator: false,
-  balcony: false,
-  cellar: false,
-  bike_room: false,
-  guardian: false,
-  roof: '',
-  adjoining: false,
-  basement: false,
-  dependency: false,
-  ground: false,
-  comment: '',
-  date_rappel: null
-};
 
 export interface PropertyData {
   id_fantoir_long: string;
@@ -94,6 +49,53 @@ export interface PropertyData {
   date_rappel:  Date | null;
   id?: number;
 }
+
+const defaultPropertyData: PropertyData = {
+  id_fantoir_long: '',
+  owner: '',
+  email: '',
+  phone: '',
+  property_type: '',
+  year_built: new Date().getFullYear(),
+  year_buy: new Date().getFullYear(),
+  surface: 0,
+  area: 0,
+  orientation: '',
+  property_condition: '',
+  bedrooms: 0,
+  bathrooms: 0,
+  fitted_kitchen: false,
+  equipped_kitchen: false,
+  american_kitchen: false,
+  scullery: false,
+  heating_type: '',
+  window: '',
+  window_type: '',
+  shutter: '',
+  cheminee: false,
+  district_heating: false,
+  patio: false,
+  Garage: false,
+  pool: false,
+  veranda: false,
+  garden: false,
+  parking: false,
+  Carport: false,
+  kitchen_ext: false,
+  elevator: false,
+  balcony: false,
+  cellar: false,
+  bike_room: false,
+  guardian: false,
+  roof: '',
+  adjoining: false,
+  basement: false,
+  dependency: false,
+  ground: false,
+  comment: '',
+  date_rappel: null
+};
+
 
 export const usePropertyStore = defineStore('property', () => {
   const properties = ref<PropertyData[]>([]);
