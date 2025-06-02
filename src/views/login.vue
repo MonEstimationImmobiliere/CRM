@@ -92,7 +92,8 @@ function login()  {
 <template>
   <main class="main">
     <section class="login-wrapper">
-      <h2 class="title">{{ appTitle }} Login</h2>
+      <h2 class="title">Mon estimation immobilière.fr  </h2>
+      <h3 class="subtitle">Connexion</h3>
       <el-form ref="refForm" label-width="0" :model="form" class="login-form shadow" size="large">
         <el-form-item prop="username" :rules="[{ required: true, message: 'username!' }]">
           <el-input v-model="form.username">
@@ -120,7 +121,7 @@ function login()  {
         <el-form-item prop="remember" style="margin-bottom: .5rem;">
           <el-checkbox v-model="form.remember" label="se souvenir" />
         </el-form-item>
-        <ElButton type="primary" style="width: 100%;" size="large" :loading="loading.login" @click="login">ok michel
+        <ElButton type="primary" style="width: 100%;" size="large" :loading="loading.login" @click="login">ok
         </ElButton>
         <div v-if="loginError" class="error-message">{{ loginError }}</div>
       </el-form>
@@ -166,5 +167,12 @@ function login()  {
   margin-top: 0.5rem;
   font-size: 0.875rem;
   text-align: center;
+}
+
+.subtitle {
+  color: var(--white);
+  text-align: center;
+  margin-bottom: 1rem;
+  font-size: 1.6rem;
 }
 </style>

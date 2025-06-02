@@ -39,9 +39,6 @@ import type { Layout } from 'types/layout'
 import { userStore } from '../stores/user'
 import { Avatar } from '@element-plus/icons-vue'
 
-import { Fold, ArrowRightBold, InfoFilled, SwitchButton} from '@element-plus/icons-vue'
-
-
 
 const router = useRouter()
 const route = useRoute()
@@ -65,7 +62,6 @@ const keepAlivePages = inject<Layout.keepAlivePages>('keepAlivePages')
 const loading = inject<Layout.Loading>('loading')
 
 function logout() {
-  if (loading) loading.logout = true
   user.logout().then(_ => {
     router.replace('/login')
   })

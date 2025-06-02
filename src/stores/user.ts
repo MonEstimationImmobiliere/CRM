@@ -68,12 +68,38 @@ export const userStore = defineStore('user', {
     async logout() {
       return new Promise((resolve) => {
         request.get<Stores.user>('/user/logout').then((res) => {
-          // const { msg } = res
-          apiService.removeToken()
-          // ElMessage.success(msg)
-          // resolve(msg)
-        })
-      })
+          // Reset user state
+          this.name = '';
+          this.token = '';
+          this.id = null;
+          this.email = '';
+          this.phone = '';
+          this.avatar = null;
+          this.status = "active";
+          
+          // Remove token from API service
+          apiService.removeToken();
+          
+          // Remove token cookie
+          removeCookie('token');
+          
+          resolve('Logout successful');
+        }).catch((error) => {
+          // Even if API call fails, clear local state
+          this.name = '';
+          this.token = '';
+          this.id = null;
+          this.email = '';
+          this.phone = '';
+          this.avatar = null;
+          this.status = "active";
+          
+          apiService.removeToken();
+          removeCookie('token');
+          
+          resolve('Logout completed');
+        });
+      });
     },
     async getUserInfo(token: string): Promise<string> {
       return new Promise((resolve, reject) => {
