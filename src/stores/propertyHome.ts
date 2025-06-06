@@ -53,7 +53,7 @@ export interface PropertyData {
   ground: boolean;
   comment: string;
   date_rappel: string | null;
-  comment_rappel: string;
+  comment_rappel?: string;
   id?: number;
   price?: number;
 }

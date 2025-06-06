@@ -3,6 +3,7 @@ import { computed, watch } from "vue";
 import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker } from "element-plus";
 import { usePropertyStore } from "../../stores/propertyHome";
 import { useRemindersStore } from "../../stores/reminders";
+import { useDashboardStore } from "../../stores/dashboard";
 import { CircleCloseFilled } from "@element-plus/icons-vue";
 
 // Property interface
@@ -63,6 +64,7 @@ interface Property {
 
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
+const dashboardStore = useDashboardStore();
 
 const visible = computed<boolean>({
   get: () => store.isDialogVisible,
@@ -95,14 +97,26 @@ const closeDialog = (): void => {
   store.selectProperty(null);
 };
 
-const saveProperty = (): void => {
+const saveProperty = async (): Promise<void> => {
   if (store.selectedProperty) {
-    if (isEditing.value) {
-      store.saveProperty(store.selectedProperty);
-    } else {
-      store.saveProperty(store.selectedProperty);
+    const filteredProperty = store.selectedProperty as any;
+    delete filteredProperty.comment_rappel; 
+    try {
+      if (isEditing.value) {
+        await store.saveProperty(filteredProperty);
+      } else {
+        await store.saveProperty(filteredProperty);
+      }
+      
+      // Refresh the dashboard data after successful save
+      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+        await dashboardStore.querySearchAddress();
+      }
+      
+      closeDialog();
+    } catch (error) {
+      console.error('Error saving property:', error);
     }
-    closeDialog();
   }
 };
 
