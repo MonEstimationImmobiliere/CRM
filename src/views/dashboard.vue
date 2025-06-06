@@ -3,7 +3,7 @@
     <div class="p-4">
       <div class="headerFilterInfoContainer">
         <div class="autoCompleteContainer">
-          <CityAutocomplete class="autoCompleteBtton" v-model="selectedCity" @select="handleCitySelect" />
+          <CityAutocomplete class="autoCompleteBtton" v-model="selectedCity" @select="handleCitySelect" @clear="handleCityClear" />
           <StreetAutocomplete v-model="selectedStreet" :code-insee="selectedCodeInsee" @select="handleStreetSelect" />
         </div>
 
@@ -12,7 +12,7 @@
 
           <el-button type="primary" size="large" @click="querySearchEstimation"> Estimations reçues </el-button>
 
-          <el-button type="primary" size="large" @click="querySearchRappel"> Mes rappels </el-button>
+          <el-button type="primary" size="large" @click="navigateToReminders"> Mes rappels </el-button>
 
           <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>
         </div>
@@ -41,6 +41,9 @@
 
       <PropertyTableCard v-else :addresses="addresses" @edit-property="openPropertyDialog" />
 
+      <!-- Widget des rappels -->
+      <RemindersWidget />
+
       <PropertyForm />
     </div>
   </section>
@@ -48,6 +51,7 @@
 
 <script setup lang="ts">
 import { computed, onMounted, ref } from "vue";
+import { useRouter } from "vue-router";
 import { usePropertyStore } from "../stores/propertyHome";
 import { useDashboardStore } from '@/stores/dashboard'
 import { PropertyService } from "@/api";
@@ -59,10 +63,12 @@ import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
 import PropertyTable from "./DashboardComponents/PropertyTable.vue";
 import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
 import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
+import RemindersWidget from "@/components/RemindersWidget.vue";
 
 // Store
 const store = usePropertyStore();
-const dashboardStore = useDashboardStore()
+const dashboardStore = useDashboardStore();
+const router = useRouter();
 
 // Reactive state
 // const selectedCodeIdFantoir = computed({
@@ -108,6 +114,12 @@ const handleCitySelect = (city: any) => {
   dashboardStore.selectedCodeInsee = city.codeInsee || ""
 }
 
+const handleCityClear = () => {
+  dashboardStore.selectedCity = null
+  dashboardStore.selectedCodeInsee = ""
+  dashboardStore.selectedStreet = null // Vider aussi la rue
+}
+
 const handleStreetSelect = (street: any) => {
   dashboardStore.selectedStreet = street
   dashboardStore.selectedCodeIdFantoir = street.idFantoir
@@ -118,11 +130,16 @@ const querySearchAddress = async () => {
 }
 
 const querySearchEstimation = async () => {
+  console.log('querySearchEstimation called')
   await dashboardStore.querySearchEstimation()
 }
 
 const querySearchRappel = async () => {
   await dashboardStore.querySearchRappel()
+}
+
+const navigateToReminders = () => {
+  router.push('/reminders');
 }
 
 const querySearchMaj = async () => {

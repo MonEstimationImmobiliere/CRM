@@ -22,6 +22,19 @@ export const routes: Array<RouteRecordRaw> = [
     ],
   },
   {
+    path: "/reminders",
+    name: "Reminders",
+    component: Layout,
+    meta: { title: "Rappels", askBeforeCloseTab: true },
+    children: [
+      {
+        path: "",
+        component: () => import("@/views/reminders.vue"),
+        meta: { title: "Mes Rappels", icon: Link },
+      },
+    ],
+  },
+  {
     ...ROUTES.Settings,
     component: Layout,
     //redirect: '/customer/index',
@@ -68,8 +81,6 @@ export const router = createRouter({
   scrollBehavior: (): { top: number } => ({ top: 0 }),
   routes,
 });
-
-// Add navigation guard
 router.beforeEach((to, from, next) => {
   const store = userStore();
   const isAuthenticated = !!store.token;

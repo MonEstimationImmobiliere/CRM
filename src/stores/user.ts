@@ -49,6 +49,8 @@ export const userStore = defineStore('user', {
           
           if (this.token) {
             apiService.setToken(this.token);
+            // IMPORTANT: Save token to cookie for persistence across pages
+            setCookie('token', this.token, 7); // Token expires in 7 days
           }
           
           // Return standard object structure for consistency

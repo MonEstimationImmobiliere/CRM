@@ -51,6 +51,9 @@ function login()  {
     loading.login = true
     loginError.value = "";
     
+    console.log("=== LOGIN DEBUG START ===");
+    console.log("1. Starting login process...");
+    
     // Validation supplémentaire
     if (!validateEmail(form.username)) {
       ElMessage.error("Veuillez entrer un email valide.");
@@ -64,27 +67,59 @@ function login()  {
       return;
     }
 
-
     try {
     interface LoginResponse {
       status: number;
       data: any;
     }
     
+    console.log("2. Calling user.login...");
     const response = await user.login(form.username, form.password) as LoginResponse;
-     console.log("response", response)
+    console.log("3. Login response received:", response);
+    
+    // Check user store state after login
+    console.log("4. User store state after login:", {
+      token: user.token,
+      name: user.name,
+      email: user.email,
+      id: user.id
+    });
+    
+    // Check cookie
+    const tokenCookie = document.cookie.split(';').find(c => c.trim().startsWith('token='));
+    console.log("5. Token cookie:", tokenCookie);
      
     if (response.status === 200) {
-      router.replace('/')
       ElMessage.success("Connexion réussie");
-      loading.login = false
+      loading.login = false;
+      
+      console.log("6. Login successful, preparing redirect...");
+      console.log("7. Current route:", router.currentRoute.value.path);
+      
+      // Attendre un peu pour que le store soit mis à jour
+      setTimeout(async () => {
+        console.log("8. Starting redirect process...");
+        console.log("9. User token before redirect:", user.token);
+        
+        try {
+          console.log("10. Attempting router.push('/')...");
+          await router.push('/');
+          console.log("11. Router.push completed successfully");
+          console.log("12. New route:", router.currentRoute.value.path);
+        } catch (err) {
+          console.warn("13. Router push failed, using window.location", err);
+          window.location.href = window.location.origin + '/';
+        }
+      }, 200);
     } 
     } catch (error) {
+      console.error("LOGIN ERROR:", error);
       loginError.value = "Email ou mot de passe incorrect.";
       ElMessage.error(loginError.value);
-      console.error(error);
       loading.login = false;
     }
+    
+    console.log("=== LOGIN DEBUG END ===");
   })
 }
 </script>

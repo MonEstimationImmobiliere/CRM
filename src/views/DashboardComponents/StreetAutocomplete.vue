@@ -11,7 +11,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from "vue";
+import { ref, computed, watch } from "vue";
 import { Search } from "@element-plus/icons-vue";
 import axios from "axios";
 import API_URL from "@/utils/API_URL";
@@ -81,6 +81,17 @@ const highlightMatch = (value: any, query: any) => {
   }
   return value;
 };
+
+// Watcher pour réinitialiser la rue quand le code INSEE change (ville supprimée)
+watch(
+  () => props.codeInsee,
+  (newCodeInsee, oldCodeInsee) => {
+    // Si le code INSEE devient null/undefined ou change, vider la rue
+    if (!newCodeInsee || newCodeInsee !== oldCodeInsee) {
+      emit("update:modelValue", null);
+    }
+  }
+);
 </script>
 
 <style scoped lang="scss">

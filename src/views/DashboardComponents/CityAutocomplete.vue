@@ -25,7 +25,7 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "select"]);
+const emit = defineEmits(["update:modelValue", "select", "clear"]);
 const isFocused = ref(false);
 
 const localValue = computed({
@@ -60,6 +60,7 @@ const handleSelect = (selectedItem: any) => {
 
 const handleClear = () => {
   emit("update:modelValue", null);
+  emit("clear"); // Émettre un événement clear pour notifier les composants dépendants
 };
 
 const highlightMatch = (value: any, query: any) => {

@@ -5,6 +5,12 @@ import { PropertyService } from '@/api';
 
 export interface PropertyData {
   id_fantoir_long: string;
+  numero?: string;
+  rep?: string;
+  nom_voie?: string;
+  numero_appartement?: string;
+  code_postal?: string;
+  nom_commune?: string;
   owner: string;
   email: string;
   phone: string;
@@ -46,12 +52,9 @@ export interface PropertyData {
   dependency: boolean;
   ground: boolean;
   comment: string;
-  date_rappel:  Date | null;
+  date_rappel: string | null;
+  comment_rappel: string;
   id?: number;
-  numero?: string;
-  rep?: string;
-  nom_voie?: string;
-  numero_appartement?: string;
   price?: number;
 }
 
@@ -98,7 +101,8 @@ const defaultPropertyData: PropertyData = {
   dependency: false,
   ground: false,
   comment: '',
-  date_rappel: null
+  date_rappel: null,
+  comment_rappel: ''
 };
 
 

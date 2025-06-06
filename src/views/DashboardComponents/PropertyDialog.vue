@@ -2,6 +2,7 @@
 import { computed, watch } from "vue";
 import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker } from "element-plus";
 import { usePropertyStore } from "../../stores/propertyHome";
+import { useRemindersStore } from "../../stores/reminders";
 import { CircleCloseFilled } from "@element-plus/icons-vue";
 
 // Property interface
@@ -56,10 +57,12 @@ interface Property {
   ground?: boolean;
   comment?: string;
   date_rappel?: string;
+  comment_rappel?: string;
   price?: number;
 }
 
 const store = usePropertyStore();
+const remindersStore = useRemindersStore();
 
 const visible = computed<boolean>({
   get: () => store.isDialogVisible,
@@ -102,6 +105,60 @@ const saveProperty = (): void => {
     closeDialog();
   }
 };
+
+// Fonction pour désactiver les dates antérieures à aujourd'hui
+const disabledDate = (time: Date): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return time.getTime() < today.getTime();
+};
+
+// Computed pour gérer la date de rappel avec conversion de type
+const reminderDate = computed({
+  get: () => store.selectedProperty.date_rappel || '',
+  set: (value: string) => {
+    store.selectedProperty.date_rappel = value;
+  }
+});
+
+// Watcher pour créer automatiquement un rappel quand une date est sélectionnée
+watch(
+  () => store.selectedProperty.date_rappel,
+  (newDate, oldDate) => {
+    if (newDate && newDate !== oldDate && store.selectedProperty.id_fantoir_long) {
+      // Créer ou mettre à jour le rappel
+      const existingReminder = remindersStore.getRemindersByProperty(store.selectedProperty.id_fantoir_long)
+        .find(r => r.type === 'rappel');
+      
+      if (existingReminder) {
+        remindersStore.updateReminder(existingReminder.id, {
+          date: newDate,
+          description: store.selectedProperty.comment_rappel || 'Rappel pour cette propriété',
+        });
+      } else {
+        const propertyAddress = `${store.selectedProperty.numero || ''} ${store.selectedProperty.nom_voie || ''}`.trim();
+        const propertyCity = store.selectedProperty.nom_commune || '';
+        
+        remindersStore.addReminder({
+          title: `Rappel - ${propertyAddress || 'Propriété'}`,
+          description: store.selectedProperty.comment_rappel || 'Rappel pour cette propriété',
+          date: newDate,
+          type: 'rappel',
+          priority: 'medium',
+          propertyId: store.selectedProperty.id_fantoir_long,
+          completed: false,
+          property: {
+            address: propertyAddress,
+            city: propertyCity,
+            owner: store.selectedProperty.owner || '',
+            phone: store.selectedProperty.phone,
+            email: store.selectedProperty.email,
+          },
+        });
+      }
+    }
+  }
+);
 
 </script>
 
@@ -304,37 +361,58 @@ const saveProperty = (): void => {
       <!-- Comments Card -->
        <el-card shadow="hover">
         <h3 class="card-title">Commentaires</h3>
-
         <div class="card-content">
           <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
         </div>
+      </el-card>
 
-<!-- <div class="card-content" style="margin-top: 16px;">
-  <label for="date-rappel" class="el-form-item__label">Date de rappel :</label>
-  <el-date-picker
-    id="date-rappel"
-    v-model="store.selectedProperty.date_rappel"
-    type="date"
-    placeholder="Sélectionnez une date de rappel"
-    format="DD/MM/YYYY"
-    value-format="YYYY-MM-DD"
-    style="width: 100%;"
-  />
-</div> -->
+      <!-- Date de rappel Card -->
+      <el-card shadow="hover">
+        <h3 class="card-title">Date de rappel</h3>
+        <div class="card-content">
+          <el-form-item label="Date de rappel">
+            <el-date-picker
+              v-model="reminderDate"
+              type="date"
+              placeholder="Sélectionnez une date de rappel"
+              format="DD/MM/YYYY"
+              value-format="YYYY-MM-DD"
+              size="large"
+              :disabled-date="disabledDate"
+              style="width: 100%;"
+              clearable
+            />
+          </el-form-item>
+          <el-form-item label="Commentaire rappel">
+            <el-input
+              v-model="store.selectedProperty.comment_rappel"
+              type="textarea"
+              placeholder="Ajoutez un commentaire pour ce rappel..."
+              :rows="3"
+              maxlength="500"
+              show-word-limit
+            />
+          </el-form-item>
+        </div>
+      </el-card>
 
-  <label for="prix-rappel" class="el-form-item__label">Prix estimé (€) :</label>
-  <el-input
-    id="prix-rappel"
-    v-model.number="store.selectedProperty.price"
-    placeholder="Prix en euros"
-    type="number"
-    min="0"
-    step="1"
-    style="width: 100%;"
-  >
-    <template #suffix>€</template>
-  </el-input>
-
+      <!-- Price Card -->
+      <el-card shadow="hover">
+        <h3 class="card-title">Prix estimé</h3>
+        <div class="card-content">
+          <el-form-item label="Prix estimé (€)">
+            <el-input-number
+              v-model="store.selectedProperty.price"
+              :min="0"
+              :step="1000"
+              :precision="0"
+              placeholder="Prix en euros"
+              size="large"
+              style="width: 100%;"
+              controls-position="right"
+            />
+          </el-form-item>
+        </div>
       </el-card>
 
       <div class="dialog-footer">
