@@ -2,10 +2,6 @@
   <div class="reminders-page">
     <div class="reminders-header">
       <h1>Mes Rappels</h1>
-      <el-button type="primary" @click="showCreateDialog = true" size="large">
-        <el-icon><Plus /></el-icon>
-        Nouveau rappel
-      </el-button>
     </div>
 
     <!-- Statistics Cards -->
