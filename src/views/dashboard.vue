@@ -138,8 +138,10 @@ const querySearchRappel = async () => {
   await dashboardStore.querySearchRappel()
 }
 
-const navigateToReminders = () => {
+const navigateToReminders = async () => {
   router.push('/reminders');
+ const responseRappels =  await dashboardStore.querySearchRappel()
+  console.log('Navigating to reminders', responseRappels);
 }
 
 const querySearchMaj = async () => {
