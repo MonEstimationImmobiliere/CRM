@@ -4,7 +4,7 @@ import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGr
 import { usePropertyStore } from "../../stores/propertyHome";
 import { useRemindersStore } from "../../stores/reminders";
 import { useDashboardStore } from "../../stores/dashboard";
-import { CircleCloseFilled, ArrowDown, Close, Plus } from "@element-plus/icons-vue";
+import { CircleCloseFilled, ArrowDown, Close, Plus, Star, StarFilled } from "@element-plus/icons-vue";
 
 // Property interface
 interface Property {
@@ -129,17 +129,19 @@ const disabledDate = (time: Date): boolean => {
 
 // Computed pour gérer la date de rappel avec conversion de type
 const reminderDate = computed({
-  get: () => store.selectedProperty.date_rappel || '',
+  get: () => store.selectedProperty?.date_rappel || '',
   set: (value: string) => {
-    store.selectedProperty.date_rappel = value;
+    if (store.selectedProperty) {
+      store.selectedProperty.date_rappel = value;
+    }
   }
 });
 
 // Watcher pour créer automatiquement un rappel quand une date est sélectionnée
 watch(
-  () => store.selectedProperty.date_rappel,
+  () => store.selectedProperty?.date_rappel,
   (newDate, oldDate) => {
-    if (newDate && newDate !== oldDate && store.selectedProperty.id_fantoir_long) {
+    if (newDate && newDate !== oldDate && store.selectedProperty?.id_fantoir_long) {
       // Créer ou mettre à jour le rappel
       const existingReminder = remindersStore.getRemindersByProperty(store.selectedProperty.id_fantoir_long)
         .find(r => r.type === 'rappel');
@@ -147,26 +149,27 @@ watch(
       if (existingReminder) {
         remindersStore.updateReminder(existingReminder.id, {
           date: newDate,
-          description: store.selectedProperty.comment_rappel || 'Rappel pour cette propriété',
+          description: store.selectedProperty?.comment_rappel || 'Rappel pour cette propriété',
         });
       } else {
-        const propertyAddress = `${store.selectedProperty.numero || ''} ${store.selectedProperty.nom_voie || ''}`.trim();
-        const propertyCity = store.selectedProperty.nom_commune || '';
+        const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+        const propertyCity = store.selectedProperty?.nom_commune || '';
         
         remindersStore.addReminder({
           title: `Rappel - ${propertyAddress || 'Propriété'}`,
-          description: store.selectedProperty.comment_rappel || 'Rappel pour cette propriété',
+          description: store.selectedProperty?.comment_rappel || 'Rappel pour cette propriété',
           date: newDate,
           type: 'rappel',
           priority: 'medium',
+          sharing: false,
           propertyId: store.selectedProperty.id_fantoir_long,
           completed: false,
           property: {
             address: propertyAddress,
             city: propertyCity,
-            owner: store.selectedProperty.owner || '',
-            phone: store.selectedProperty.phone,
-            email: store.selectedProperty.email,
+            owner: store.selectedProperty?.owner || '',
+            phone: store.selectedProperty?.phone,
+            email: store.selectedProperty?.email,
           },
         });
       }
@@ -183,8 +186,9 @@ const multipleReminders = ref<Array<{
   date: string;
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
+  sharing: boolean;
 }>>([
-  { title: '', description: '', date: '', type: 'rappel', priority: 'medium' }
+  { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false }
 ]);
 
 // Méthode pour gérer les commandes du dropdown de rappels
@@ -204,14 +208,14 @@ const handleReminderCommand = (command: string) => {
 
 // Créer un rappel simple
 const createSingleReminder = () => {
-  if (!store.selectedProperty.id_fantoir_long) return;
+  if (!store.selectedProperty?.id_fantoir_long) return;
   
   const today = new Date();
   const tomorrow = new Date(today);
   tomorrow.setDate(tomorrow.getDate() + 1);
   
-  const propertyAddress = `${store.selectedProperty.numero || ''} ${store.selectedProperty.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty.nom_commune || '';
+  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+  const propertyCity = store.selectedProperty?.nom_commune || '';
   
   remindersStore.addReminder({
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
@@ -219,14 +223,15 @@ const createSingleReminder = () => {
     date: tomorrow.toISOString().split('T')[0],
     type: 'rappel',
     priority: 'medium',
+    sharing: false,
     propertyId: store.selectedProperty.id_fantoir_long,
     completed: false,
     property: {
       address: propertyAddress,
       city: propertyCity,
-      owner: store.selectedProperty.owner || '',
-      phone: store.selectedProperty.phone,
-      email: store.selectedProperty.email,
+      owner: store.selectedProperty?.owner || '',
+      phone: store.selectedProperty?.phone,
+      email: store.selectedProperty?.email,
     },
   });
   
@@ -241,9 +246,9 @@ const createSingleReminder = () => {
 // Initialiser les rappels multiples
 const initializeMultipleReminders = () => {
   multipleReminders.value = [
-    { title: '', description: '', date: '', type: 'rappel', priority: 'medium' },
-    { title: '', description: '', date: '', type: 'estimation', priority: 'medium' },
-    { title: '', description: '', date: '', type: 'visite', priority: 'medium' }
+    { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false },
+    { title: '', description: '', date: '', type: 'estimation', priority: 'medium', sharing: false },
+    { title: '', description: '', date: '', type: 'visite', priority: 'medium', sharing: false }
   ];
 };
 
@@ -254,7 +259,8 @@ const addReminderToList = () => {
     description: '',
     date: '',
     type: 'rappel',
-    priority: 'medium'
+    priority: 'medium',
+    sharing: false
   });
 };
 
@@ -267,10 +273,10 @@ const removeReminderFromList = (index: number) => {
 
 // Sauvegarder les rappels multiples
 const saveMultipleReminders = () => {
-  if (!store.selectedProperty.id_fantoir_long) return;
+  if (!store.selectedProperty?.id_fantoir_long) return;
   
-  const propertyAddress = `${store.selectedProperty.numero || ''} ${store.selectedProperty.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty.nom_commune || '';
+  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+  const propertyCity = store.selectedProperty?.nom_commune || '';
   
   let validReminders = 0;
   
@@ -282,14 +288,15 @@ const saveMultipleReminders = () => {
         date: reminder.date,
         type: reminder.type,
         priority: reminder.priority,
-        propertyId: store.selectedProperty.id_fantoir_long,
+        sharing: reminder.sharing,
+        propertyId: store.selectedProperty!.id_fantoir_long,
         completed: false,
         property: {
           address: propertyAddress,
           city: propertyCity,
-          owner: store.selectedProperty.owner || '',
-          phone: store.selectedProperty.phone,
-          email: store.selectedProperty.email,
+          owner: store.selectedProperty?.owner || '',
+          phone: store.selectedProperty?.phone,
+          email: store.selectedProperty?.email,
         },
       });
       validReminders++;
@@ -312,6 +319,35 @@ const saveMultipleReminders = () => {
   }
 };
 
+// Gestion des favoris
+const toggleFavorite = async () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+  
+  try {
+    if (store.isFavorite(store.selectedProperty.id_fantoir_long)) {
+      await store.removeFromFavorites(store.selectedProperty.id_fantoir_long);
+      ElMessage({
+        message: 'Propriété retirée des favoris',
+        type: 'info',
+        duration: 2000,
+      });
+    } else {
+      await store.addToFavorites(store.selectedProperty.id_fantoir_long);
+      ElMessage({
+        message: 'Propriété ajoutée aux favoris',
+        type: 'success',
+        duration: 2000,
+      });
+    }
+  } catch (error) {
+    ElMessage({
+      message: 'Erreur lors de la modification des favoris',
+      type: 'error',
+      duration: 3000,
+    });
+  }
+};
+
 </script>
 
 <template>
@@ -321,7 +357,19 @@ const saveMultipleReminders = () => {
       <div class="headerContainer">
         <div></div>
         <h4 :id="titleId" class="titleHeader">{{ dialogTitle }}</h4>
-        <div></div>
+        <div class="header-actions">
+          <el-button 
+            @click="toggleFavorite" 
+            :type="store.selectedProperty?.id_fantoir_long && store.isFavorite(store.selectedProperty.id_fantoir_long) ? 'warning' : 'default'"
+            size="small"
+            circle
+          >
+            <el-icon>
+              <StarFilled v-if="store.selectedProperty?.id_fantoir_long && store.isFavorite(store.selectedProperty.id_fantoir_long)" />
+              <Star v-else />
+            </el-icon>
+          </el-button>
+        </div>
       </div>
     </template>
 
@@ -669,6 +717,10 @@ const saveMultipleReminders = () => {
             :rows="2"
           />
         </el-form-item>
+
+        <el-form-item label="Partage">
+          <el-checkbox v-model="reminder.sharing" label="Partager avec l'agence" />
+        </el-form-item>
       </div>
       
       <div class="add-reminder-section">
@@ -802,7 +854,14 @@ top : none;
 .headerContainer {
   display: flex;
   justify-content: space-between;
+  align-items: center;
   padding-top: 20px;
+}
+
+.header-actions {
+  display: flex;
+  gap: 10px;
+  align-items: center;
 }
 
 /* Styles pour les rappels multiples */

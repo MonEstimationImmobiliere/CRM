@@ -227,6 +227,10 @@
             <el-option label="Basse" value="low" />
           </el-select>
         </el-form-item>
+
+        <el-form-item label="Partage">
+          <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
+        </el-form-item>
       </el-form>
       
       <template #footer>
@@ -264,6 +268,7 @@ const reminderForm = ref<{
   date: string;
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
+  sharing: boolean;
   propertyId: string;
 }>({
   title: '',
@@ -271,6 +276,7 @@ const reminderForm = ref<{
   date: '',
   type: 'rappel',
   priority: 'medium',
+  sharing: false,
   propertyId: '',
 });
 
@@ -351,6 +357,7 @@ const editReminder = (reminder: Reminder) => {
     date: reminder.date,
     type: reminder.type,
     priority: reminder.priority,
+    sharing: reminder.sharing || false,
     propertyId: reminder.propertyId,
   };
   showCreateDialog.value = true;
@@ -407,6 +414,7 @@ const resetForm = () => {
     date: '',
     type: 'rappel',
     priority: 'medium',
+    sharing: false,
     propertyId: '',
   };
 };

@@ -2,6 +2,7 @@ import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
 import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 import { NotificationService } from '@/utils/notifications';
+import { ReminderService } from '@/api/reminder.service';
 
 export interface Reminder {
   id: string;
@@ -12,6 +13,7 @@ export interface Reminder {
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
   completed: boolean;
+  sharing: boolean; // Nouveau champ pour le partage
   property?: {
     address: string;
     city: string;
@@ -19,22 +21,63 @@ export interface Reminder {
     phone?: string;
     email?: string;
   };
-  createdAt: string;
-  updatedAt: string;
+  createdAt?: string;
+  updatedAt?: string;
 }
 
 export const useRemindersStore = defineStore('reminders', () => {
   const reminders = ref<Reminder[]>([]);
+  const agencyReminders = ref<Reminder[]>([]);
   const loading = ref(false);
   const selectedReminder = ref<Reminder | null>(null);
 
-  // Load reminders from localStorage on store initialization
-  const loadReminders = () => {
-    if (LocalStorage.isAvailable()) {
-      const savedReminders = LocalStorage.get<Reminder[]>(STORAGE_KEYS.REMINDERS);
-      if (savedReminders && Array.isArray(savedReminders)) {
-        reminders.value = savedReminders;
+  // Load reminders from API
+  const loadReminders = async () => {
+    try {
+      loading.value = true;
+      const [userReminders, sharedReminders] = await Promise.all([
+        ReminderService.getUserReminders(),
+        ReminderService.getAgencyReminders()
+      ]);
+      
+      reminders.value = userReminders
+        .filter(r => r.id) // S'assurer que l'ID existe
+        .map(r => ({
+          ...r,
+          id: r.id!,
+          sharing: r.sharing || false,
+          createdAt: r.createdAt || new Date().toISOString(),
+          updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+      
+      agencyReminders.value = sharedReminders
+        .filter(r => r.id) // S'assurer que l'ID existe
+        .map(r => ({
+          ...r,
+          id: r.id!,
+          sharing: r.sharing || false,
+          createdAt: r.createdAt || new Date().toISOString(),
+          updatedAt: r.updatedAt || new Date().toISOString()
+        }));
+      
+      // Fallback: also save to localStorage 
+      if (LocalStorage.isAvailable()) {
+        LocalStorage.set(STORAGE_KEYS.REMINDERS, reminders.value);
       }
+    } catch (error) {
+      console.error('Error loading reminders from API, falling back to localStorage:', error);
+      // Fallback to localStorage
+      if (LocalStorage.isAvailable()) {
+        const savedReminders = LocalStorage.get<Reminder[]>(STORAGE_KEYS.REMINDERS);
+        if (savedReminders && Array.isArray(savedReminders)) {
+          reminders.value = savedReminders.map(r => ({
+            ...r,
+            sharing: r.sharing || false
+          }));
+        }
+      }
+    } finally {
+      loading.value = false;
     }
   };
 
@@ -57,10 +100,15 @@ export const useRemindersStore = defineStore('reminders', () => {
   // Initialize store
   loadReminders();
 
-  // Computed properties
+  // Computed properties pour tous les rappels (utilisateur + agence)
+  const allReminders = computed(() => [
+    ...reminders.value,
+    ...agencyReminders.value
+  ]);
+
   const todayReminders = computed(() => {
     const today = new Date().toISOString().split('T')[0];
-    return reminders.value.filter(reminder => 
+    return allReminders.value.filter(reminder => 
       reminder.date === today && !reminder.completed
     );
   });
@@ -70,7 +118,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
     
-    return reminders.value.filter(reminder => {
+    return allReminders.value.filter(reminder => {
       const reminderDate = new Date(reminder.date);
       return reminderDate > today && 
              reminderDate <= nextWeek && 
@@ -80,7 +128,7 @@ export const useRemindersStore = defineStore('reminders', () => {
 
   const overdueReminders = computed(() => {
     const today = new Date().toISOString().split('T')[0];
-    return reminders.value.filter(reminder => 
+    return allReminders.value.filter(reminder => 
       reminder.date < today && !reminder.completed
     );
   });
@@ -108,54 +156,124 @@ export const useRemindersStore = defineStore('reminders', () => {
   });
 
   // Actions
-  const addReminder = (reminder: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>) => {
-    const newReminder: Reminder = {
-      ...reminder,
-      id: Date.now().toString(),
-      createdAt: new Date().toISOString(),
-      updatedAt: new Date().toISOString(),
-    };
-    reminders.value.push(newReminder);
-    
-    // Send notification
-    NotificationService.reminderCreated(newReminder.title);
-    
-    return newReminder;
-  };
-
-  const updateReminder = (id: string, updates: Partial<Reminder>) => {
-    const index = reminders.value.findIndex(r => r.id === id);
-    if (index !== -1) {
-      reminders.value[index] = {
-        ...reminders.value[index],
-        ...updates,
-        updatedAt: new Date().toISOString(),
+  const addReminder = async (reminder: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>) => {
+    try {
+      // Essayer d'abord l'API
+      const newReminder = await ReminderService.createReminder({
+        ...reminder,
+        sharing: reminder.sharing || false
+      });
+      
+      const reminderWithDefaults: Reminder = {
+        ...newReminder,
+        id: newReminder.id!,
+        sharing: newReminder.sharing || false,
+        createdAt: newReminder.createdAt || new Date().toISOString(),
+        updatedAt: newReminder.updatedAt || new Date().toISOString(),
       };
       
-      // Send notification for important updates
-      NotificationService.reminderUpdated(reminders.value[index].title);
+      reminders.value.push(reminderWithDefaults);
       
-      return reminders.value[index];
+      // Send notification
+      NotificationService.reminderCreated(reminderWithDefaults.title);
+      
+      return reminderWithDefaults;
+    } catch (error) {
+      console.error('Error creating reminder via API, falling back to local:', error);
+      
+      // Fallback local
+      const localReminder: Reminder = {
+        ...reminder,
+        id: Date.now().toString(),
+        sharing: reminder.sharing || false,
+        createdAt: new Date().toISOString(),
+        updatedAt: new Date().toISOString(),
+      };
+      reminders.value.push(localReminder);
+      
+      // Send notification
+      NotificationService.reminderCreated(localReminder.title);
+      
+      return localReminder;
+    }
+  };
+
+  const updateReminder = async (id: string, updates: Partial<Reminder>) => {
+    try {
+      // Essayer d'abord l'API
+      const updatedReminder = await ReminderService.updateReminder(id, updates);
+      
+      const index = reminders.value.findIndex(r => r.id === id);
+      if (index !== -1) {
+        reminders.value[index] = {
+          ...updatedReminder,
+          id: updatedReminder.id!,
+          sharing: updatedReminder.sharing || false,
+          createdAt: updatedReminder.createdAt || reminders.value[index].createdAt,
+          updatedAt: updatedReminder.updatedAt || new Date().toISOString(),
+        };
+        
+        // Send notification for important updates
+        NotificationService.reminderUpdated(reminders.value[index].title);
+        
+        return reminders.value[index];
+      }
+    } catch (error) {
+      console.error('Error updating reminder via API, falling back to local:', error);
+      
+      // Fallback local
+      const index = reminders.value.findIndex(r => r.id === id);
+      if (index !== -1) {
+        reminders.value[index] = {
+          ...reminders.value[index],
+          ...updates,
+          updatedAt: new Date().toISOString(),
+        };
+        
+        // Send notification for important updates
+        NotificationService.reminderUpdated(reminders.value[index].title);
+        
+        return reminders.value[index];
+      }
     }
     return null;
   };
 
-  const deleteReminder = (id: string) => {
-    const index = reminders.value.findIndex(r => r.id === id);
-    if (index !== -1) {
-      const deletedReminder = reminders.value[index];
-      reminders.value.splice(index, 1);
+  const deleteReminder = async (id: string) => {
+    try {
+      // Essayer d'abord l'API
+      await ReminderService.deleteReminder(id);
       
-      // Send notification
-      NotificationService.reminderDeleted(deletedReminder.title);
+      const index = reminders.value.findIndex(r => r.id === id);
+      if (index !== -1) {
+        const deletedReminder = reminders.value[index];
+        reminders.value.splice(index, 1);
+        
+        // Send notification
+        NotificationService.reminderDeleted(deletedReminder.title);
+        
+        return true;
+      }
+    } catch (error) {
+      console.error('Error deleting reminder via API, falling back to local:', error);
       
-      return true;
+      // Fallback local
+      const index = reminders.value.findIndex(r => r.id === id);
+      if (index !== -1) {
+        const deletedReminder = reminders.value[index];
+        reminders.value.splice(index, 1);
+        
+        // Send notification
+        NotificationService.reminderDeleted(deletedReminder.title);
+        
+        return true;
+      }
     }
     return false;
   };
 
-  const completeReminder = (id: string) => {
-    const updated = updateReminder(id, { completed: true });
+  const completeReminder = async (id: string) => {
+    const updated = await updateReminder(id, { completed: true });
     if (updated) {
       NotificationService.reminderCompleted(updated.title);
     }

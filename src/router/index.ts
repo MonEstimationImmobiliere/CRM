@@ -35,6 +35,19 @@ export const routes: Array<RouteRecordRaw> = [
     ],
   },
   {
+    path: "/favorites",
+    name: "Favorites",
+    component: Layout,
+    meta: { title: "Favoris", askBeforeCloseTab: true },
+    children: [
+      {
+        path: "",
+        component: () => import("@/views/favorites.vue"),
+        meta: { title: "Mes Favoris", icon: Link },
+      },
+    ],
+  },
+  {
     ...ROUTES.Settings,
     component: Layout,
     //redirect: '/customer/index',

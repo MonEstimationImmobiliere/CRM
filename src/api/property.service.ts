@@ -54,5 +54,34 @@ export const PropertyService = {
       console.error('Error fetching addresses:', error);
       throw error;
     }
+  },
+
+  // Gestion des favoris
+  async addToFavorites(propertyId: string): Promise<void> {
+    try {
+      await apiService.post(`/property/${encodeURIComponent(propertyId)}/favorite`);
+    } catch (error) {
+      console.error('Error adding property to favorites:', error);
+      throw error;
+    }
+  },
+
+  async removeFromFavorites(propertyId: string): Promise<void> {
+    try {
+      await apiService.delete(`/property/${encodeURIComponent(propertyId)}/favorite`);
+    } catch (error) {
+      console.error('Error removing property from favorites:', error);
+      throw error;
+    }
+  },
+
+  async getFavorites(): Promise<PropertyData[]> {
+    try {
+      const response = await apiService.get<PropertyData[]>('/property/favorites');
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching favorite properties:', error);
+      throw error;
+    }
   }
 };

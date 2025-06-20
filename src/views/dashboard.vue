@@ -14,6 +14,8 @@
 
           <el-button type="primary" size="large" @click="navigateToReminders"> Mes rappels </el-button>
 
+          <el-button type="warning" size="large" @click="navigateToFavorites"> Mes favoris </el-button>
+
           <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>
         </div>
 
@@ -142,6 +144,10 @@ const navigateToReminders = async () => {
   router.push('/reminders');
  const responseRappels =  await dashboardStore.querySearchRappel()
   console.log('Navigating to reminders', responseRappels);
+}
+
+const navigateToFavorites = () => {
+  router.push('/favorites');
 }
 
 const querySearchMaj = async () => {

@@ -108,8 +108,9 @@ const defaultPropertyData: PropertyData = {
 
 export const usePropertyStore = defineStore('property', () => {
   const properties = ref<PropertyData[]>([]);
-  const selectedProperty = ref<PropertyData>({ ...defaultPropertyData });
-  const isDialogVisible = ref(false);
+  const favorites = ref<PropertyData[]>([]);
+  const selectedProperty = ref<PropertyData | null>(null);
+  const isDialogVisible = ref<boolean>(false);
 
   function addProperty(property: PropertyData) {
     const newProperty = {
@@ -162,6 +163,39 @@ export const usePropertyStore = defineStore('property', () => {
     isDialogVisible.value = visible;
   }
 
+  // Gestion des favoris
+  const loadFavorites = async () => {
+    try {
+      favorites.value = await PropertyService.getFavorites();
+    } catch (error) {
+      console.error('Error loading favorites:', error);
+    }
+  };
+
+  const addToFavorites = async (propertyId: string) => {
+    try {
+      await PropertyService.addToFavorites(propertyId);
+      await loadFavorites(); // Recharger la liste des favoris
+    } catch (error) {
+      console.error('Error adding to favorites:', error);
+      throw error;
+    }
+  };
+
+  const removeFromFavorites = async (propertyId: string) => {
+    try {
+      await PropertyService.removeFromFavorites(propertyId);
+      await loadFavorites(); // Recharger la liste des favoris
+    } catch (error) {
+      console.error('Error removing from favorites:', error);
+      throw error;
+    }
+  };
+
+  const isFavorite = (propertyId: string): boolean => {
+    return favorites.value.some(fav => fav.id_fantoir_long === propertyId);
+  };
+
   return {
     properties,
     selectedProperty,
@@ -172,6 +206,11 @@ export const usePropertyStore = defineStore('property', () => {
     deleteProperty,
     selectProperty,
     setDialogVisible,
-    defaultPropertyData
+    defaultPropertyData,
+    favorites,
+    loadFavorites,
+    addToFavorites,
+    removeFromFavorites,
+    isFavorite
   };
 });
