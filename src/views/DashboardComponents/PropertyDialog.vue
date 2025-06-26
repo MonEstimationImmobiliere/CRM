@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { computed, watch, ref } from "vue";
+import { computed, ref } from "vue";
 import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker, ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage } from "element-plus";
 import { usePropertyStore } from "../../stores/propertyHome";
 import { useRemindersStore } from "../../stores/reminders";
@@ -137,46 +137,6 @@ const reminderDate = computed({
   }
 });
 
-// Watcher pour créer automatiquement un rappel quand une date est sélectionnée
-watch(
-  () => store.selectedProperty?.date_rappel,
-  (newDate, oldDate) => {
-    if (newDate && newDate !== oldDate && store.selectedProperty?.id_fantoir_long) {
-      // Créer ou mettre à jour le rappel
-      const existingReminder = remindersStore.getRemindersByProperty(store.selectedProperty.id_fantoir_long)
-        .find(r => r.type === 'rappel');
-      
-      if (existingReminder) {
-        remindersStore.updateReminder(existingReminder.id, {
-          date: newDate,
-          description: store.selectedProperty?.comment_rappel || 'Rappel pour cette propriété',
-        });
-      } else {
-        const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-        const propertyCity = store.selectedProperty?.nom_commune || '';
-        
-        remindersStore.addReminder({
-          title: `Rappel - ${propertyAddress || 'Propriété'}`,
-          description: store.selectedProperty?.comment_rappel || 'Rappel pour cette propriété',
-          date: newDate,
-          type: 'rappel',
-          priority: 'medium',
-          sharing: false,
-          propertyId: store.selectedProperty.id_fantoir_long,
-          completed: false,
-          property: {
-            address: propertyAddress,
-            city: propertyCity,
-            owner: store.selectedProperty?.owner || '',
-            phone: store.selectedProperty?.phone,
-            email: store.selectedProperty?.email,
-          },
-        });
-      }
-    }
-  }
-);
-
 // Variables pour la gestion des rappels multiples
 const showReminderDialog = ref(false);
 const reminderDialogMode = ref('');
@@ -224,15 +184,8 @@ const createSingleReminder = () => {
     type: 'rappel',
     priority: 'medium',
     sharing: false,
-    propertyId: store.selectedProperty.id_fantoir_long,
+    property_id: store.selectedProperty.id_fantoir_long,
     completed: false,
-    property: {
-      address: propertyAddress,
-      city: propertyCity,
-      owner: store.selectedProperty?.owner || '',
-      phone: store.selectedProperty?.phone,
-      email: store.selectedProperty?.email,
-    },
   });
   
   // Notification de succès
@@ -289,15 +242,8 @@ const saveMultipleReminders = () => {
         type: reminder.type,
         priority: reminder.priority,
         sharing: reminder.sharing,
-        propertyId: store.selectedProperty!.id_fantoir_long,
+        property_id: store.selectedProperty!.id_fantoir_long,
         completed: false,
-        property: {
-          address: propertyAddress,
-          city: propertyCity,
-          owner: store.selectedProperty?.owner || '',
-          phone: store.selectedProperty?.phone,
-          email: store.selectedProperty?.email,
-        },
       });
       validReminders++;
     }

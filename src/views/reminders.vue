@@ -155,17 +155,12 @@
                 </el-tag>
               </div>
               
-              <div v-if="reminder.property" class="reminder-property">
+              <div class="reminder-property">
                 <el-icon><House /></el-icon>
-                <span>{{ reminder.property.address }}, {{ reminder.property.city }}</span>
-              </div>
-              
-              <div v-if="reminder.property?.owner" class="reminder-owner">
-                <el-icon><User /></el-icon>
-                <span>{{ reminder.property.owner }}</span>
-                <span v-if="reminder.property.phone" class="contact-info">
-                  • {{ reminder.property.phone }}
-                </span>
+                <span>Propriété ID: {{ reminder.property_id }}</span>
+                <el-tag v-if="reminder.sharing" type="success" size="small" style="margin-left: 8px;">
+                  Partagé
+                </el-tag>
               </div>
             </div>
           </div>
@@ -269,7 +264,7 @@ const reminderForm = ref<{
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
   sharing: boolean;
-  propertyId: string;
+  property_id: string;
 }>({
   title: '',
   description: '',
@@ -277,7 +272,7 @@ const reminderForm = ref<{
   type: 'rappel',
   priority: 'medium',
   sharing: false,
-  propertyId: '',
+  property_id: '',
 });
 
 // Computed properties
@@ -474,48 +469,7 @@ const getEmptyMessage = () => {
   }
 };
 
-onMounted(() => {
-  // Load sample data for demo
-  if (remindersStore.reminders.length === 0) {
-    const sampleReminders = [
-      {
-        title: 'Rappel estimation Dupont',
-        description: 'Rappeler M. Dupont pour l\'estimation de sa maison',
-        date: new Date().toISOString().split('T')[0],
-        type: 'rappel' as const,
-        priority: 'high' as const,
-        propertyId: '1',
-        completed: false,
-        property: {
-          address: '123 Rue de la Paix',
-          city: 'Paris',
-          owner: 'M. Dupont',
-          phone: '01 23 45 67 89',
-          email: 'dupont@email.com',
-        },
-      },
-      {
-        title: 'Visite propriété Martin',
-        description: 'Visite planifiée chez Mme Martin pour évaluation',
-        date: new Date(Date.now() + 86400000).toISOString().split('T')[0], // tomorrow
-        type: 'visite' as const,
-        priority: 'medium' as const,
-        propertyId: '2',
-        completed: false,
-        property: {
-          address: '456 Avenue des Fleurs',
-          city: 'Lyon',
-          owner: 'Mme Martin',
-          phone: '04 78 90 12 34',
-        },
-      },
-    ];
 
-    sampleReminders.forEach(reminder => {
-      remindersStore.addReminder(reminder);
-    });
-  }
-});
 </script>
 
 <style scoped>

@@ -150,15 +150,8 @@ const createReminderForProperty = (property: any) => {
     type: 'rappel',
     priority: 'medium',
     sharing: false,
-    propertyId: property.id_fantoir_long,
+    property_id: property.id_fantoir_long,
     completed: false,
-    property: {
-      address: propertyAddress,
-      city: propertyCity,
-      owner: property.owner || '',
-      phone: property.phone,
-      email: property.email,
-    },
   });
   
   ElMessage({

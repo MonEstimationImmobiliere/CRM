@@ -2,7 +2,7 @@ import apiService from '@/api/apiRequests';
 
 export interface ReminderData {
   id?: string;
-  propertyId: string;
+  property_id: string;
   title: string;
   description?: string;
   date: string;
@@ -10,13 +10,6 @@ export interface ReminderData {
   priority: 'low' | 'medium' | 'high';
   completed: boolean;
   sharing: boolean; // Nouveau champ pour le partage
-  property?: {
-    address: string;
-    city: string;
-    owner: string;
-    phone?: string;
-    email?: string;
-  };
   createdAt?: string;
   updatedAt?: string;
 }

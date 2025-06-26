@@ -6,7 +6,7 @@ import { ReminderService } from '@/api/reminder.service';
 
 export interface Reminder {
   id: string;
-  propertyId: string;
+  property_id: string;
   title: string;
   description?: string;
   date: string;
@@ -14,13 +14,6 @@ export interface Reminder {
   priority: 'low' | 'medium' | 'high';
   completed: boolean;
   sharing: boolean; // Nouveau champ pour le partage
-  property?: {
-    address: string;
-    city: string;
-    owner: string;
-    phone?: string;
-    email?: string;
-  };
   createdAt?: string;
   updatedAt?: string;
 }
@@ -293,7 +286,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const getRemindersByProperty = (propertyId: string) => {
-    return reminders.value.filter(r => r.propertyId === propertyId);
+    return reminders.value.filter(r => r.property_id === propertyId);
   };
 
   const getRemindersByDateRange = (startDate: string, endDate: string) => {
@@ -310,85 +303,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     reminders.value = reminders.value.filter(r => !r.completed);
   };
 
-  // Initialiser avec des données d'exemple si vide
-  const initializeSampleData = () => {
-    if (reminders.value.length === 0) {
-      const today = new Date();
-      const yesterday = new Date();
-      yesterday.setDate(today.getDate() - 1);
-      const tomorrow = new Date();
-      tomorrow.setDate(today.getDate() + 1);
-      const nextWeek = new Date();
-      nextWeek.setDate(today.getDate() + 7);
 
-      const sampleReminders: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>[] = [
-        {
-          title: 'Rappel estimation M. Dupont',
-          description: 'Rappeler M. Dupont pour finaliser l\'estimation de sa maison avenue des Roses',
-          date: yesterday.toISOString().split('T')[0],
-          type: 'rappel',
-          priority: 'high',
-          propertyId: 'prop_001',
-          completed: false,
-          property: {
-            address: '123 Avenue des Roses',
-            city: 'Paris 16ème',
-            owner: 'M. Jean Dupont',
-            phone: '01 42 34 56 78',
-            email: 'jean.dupont@email.com',
-          },
-        },
-        {
-          title: 'Visite Mme Martin',
-          description: 'Visite d\'expertise pour appartement 3 pièces',
-          date: today.toISOString().split('T')[0],
-          type: 'visite',
-          priority: 'medium',
-          propertyId: 'prop_002',
-          completed: false,
-          property: {
-            address: '45 Rue de la République',
-            city: 'Lyon 2ème',
-            owner: 'Mme Sophie Martin',
-            phone: '04 78 90 12 34',
-            email: 'sophie.martin@email.com',
-          },
-        },
-        {
-          title: 'Estimation maison familiale',
-          description: 'Estimation pour maison 5 pièces avec jardin',
-          date: tomorrow.toISOString().split('T')[0],
-          type: 'estimation',
-          priority: 'medium',
-          propertyId: 'prop_003',
-          completed: false,
-          property: {
-            address: '78 Boulevard des Lilas',
-            city: 'Marseille 8ème',
-            owner: 'M. et Mme Rousseau',
-            phone: '04 91 23 45 67',
-          },
-        },
-        {
-          title: 'Suivi dossier Lemoine',
-          description: 'Relancer M. Lemoine sur les documents manquants',
-          date: nextWeek.toISOString().split('T')[0],
-          type: 'autre',
-          priority: 'low',
-          propertyId: 'prop_004',
-          completed: false,
-          property: {
-            address: '12 Place du Marché',
-            city: 'Toulouse',
-            owner: 'M. Pierre Lemoine',
-            phone: '05 34 56 78 90',
-          },
-        },
-      ];
-
-      sampleReminders.forEach(reminder => addReminder(reminder));
-    }
-  };
 
   // Utility functions
   const getRemindersCount = () => {
@@ -421,10 +336,6 @@ export const useRemindersStore = defineStore('reminders', () => {
     return reminderDate > today && reminderDate <= nextWeek;
   };
 
-  // Initialize with sample data if empty (for demo purposes)
-  if (reminders.value.length === 0) {
-    initializeSampleData();
-  }
 
   return {
     // State
@@ -456,6 +367,5 @@ export const useRemindersStore = defineStore('reminders', () => {
     isReminderOverdue,
     isReminderToday,
     isReminderUpcoming,
-    initializeSampleData,
   };
 });
