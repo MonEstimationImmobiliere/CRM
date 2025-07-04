@@ -5,6 +5,7 @@ import { PropertyService } from '@/api';
 
 export interface PropertyData {
   id_fantoir_long: string;
+  id_fantoir?: string;
   numero?: string;
   rep?: string;
   nom_voie?: string;
@@ -56,10 +57,15 @@ export interface PropertyData {
   comment_rappel?: string;
   id?: number;
   price?: number;
+  is_custom?: boolean; // Nouveau champ pour identifier les propriétés personnalisées
+  user_id?: number; // Pour lier à l'utilisateur
+  agency_id?: number; 
+  favorite?:boolean;
 }
 
 const defaultPropertyData: PropertyData = {
   id_fantoir_long: '',
+  id_fantoir: '',
   owner: '',
   email: '',
   phone: '',
@@ -102,7 +108,8 @@ const defaultPropertyData: PropertyData = {
   ground: false,
   comment: '',
   date_rappel: null,
-  comment_rappel: ''
+  comment_rappel: '',
+  favorite: false,
 };
 
 
@@ -127,7 +134,7 @@ export const usePropertyStore = defineStore('property', () => {
         updateProperty(updatedProperty);
       } else {
         const response = await PropertyService.createProperty(property);
-        addProperty({ ...selectedProperty.value, id: response.id });
+        addProperty({ ...property, id: response.id });
       }
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de la propriété :", error);

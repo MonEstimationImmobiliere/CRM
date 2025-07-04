@@ -83,5 +83,21 @@ export const PropertyService = {
       console.error('Error fetching favorite properties:', error);
       throw error;
     }
-  }
+  },
+
+  // Gestion des propriétés personnalisées
+  async createCustomProperty(property: PropertyData): Promise<PropertyData> {
+    try {
+      const response = await apiService.post<PropertyData>(`/property/create`, {
+        ...property,
+        is_custom: true,
+        id_fantoir: property.id_fantoir || ''
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Error creating custom property:', error);
+      throw error;
+    }
+  },
+
 };

@@ -17,6 +17,9 @@
           <el-button type="warning" size="large" @click="navigateToFavorites"> Mes favoris </el-button>
 
           <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>
+               <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
+            Créer une propriété personnalisée
+          </el-button>
         </div>
 
         <div class="layoutContainer">
@@ -39,14 +42,17 @@
         </div>
       </div>
 
-      <PropertyTable v-if="viewType === 'table'" :addresses="addresses" @edit-property="openPropertyDialog" />
+      <PropertyTable v-if="viewType === 'table' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
 
-      <PropertyTableCard v-else :addresses="addresses" @edit-property="openPropertyDialog" />
+      <PropertyTableCard v-else-if="viewType === 'card' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
 
       <!-- Widget des rappels -->
       <RemindersWidget />
 
       <PropertyForm />
+      
+      <!-- Dialog de création de propriété personnalisée -->
+      <CustomPropertyDialog />
     </div>
   </section>
 </template>
@@ -65,6 +71,7 @@ import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
 import PropertyTable from "./DashboardComponents/PropertyTable.vue";
 import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
 import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
+import CustomPropertyDialog from "./DashboardComponents/CustomPropertyDialog.vue";
 import RemindersWidget from "@/components/RemindersWidget.vue";
 
 // Store
@@ -148,6 +155,10 @@ const navigateToReminders = async () => {
 
 const navigateToFavorites = () => {
   router.push('/favorites');
+}
+
+const openCreateCustomPropertyDialog = () => {
+  dashboardStore.openCustomPropertyDialog()
 }
 
 const querySearchMaj = async () => {

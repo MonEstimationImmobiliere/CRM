@@ -11,7 +11,9 @@ export const useDashboardStore = defineStore('dashboard', {
     addresses: [] as any[],
     viewType: 'table',
     lastSearchParams: null as any,
-    isDataLoaded: false
+    isDataLoaded: false,
+    showCustomPropertyDialog: false,
+    noResultsFound: false
   }),
 
   actions: {
@@ -30,8 +32,10 @@ export const useDashboardStore = defineStore('dashboard', {
           codeIdFantoir: this.selectedCodeIdFantoir
         }
         this.isDataLoaded = true
+        this.noResultsFound = this.addresses.length === 0
       } catch (error) {
         console.error('Error fetching addresses:', error)
+        this.noResultsFound = true
       }
     },
 
@@ -92,6 +96,35 @@ export const useDashboardStore = defineStore('dashboard', {
       this.addresses = []
       this.isDataLoaded = false
       this.lastSearchParams = null
+      this.noResultsFound = false
+      this.showCustomPropertyDialog = false
+    },
+
+    openCustomPropertyDialog() {
+      this.showCustomPropertyDialog = true
+    },
+
+    closeCustomPropertyDialog() {
+      this.showCustomPropertyDialog = false
+    },
+
+    async createCustomProperty(propertyData: any) {
+      try {
+        const propertyWithFantoir = {
+          ...propertyData,
+          id_fantoir: this.selectedCodeIdFantoir
+        }
+        
+        const createdProperty = await PropertyService.createCustomProperty(propertyWithFantoir)
+        
+        // Actualiser la liste des adresses après création
+        await this.querySearchAddress()
+        
+        return createdProperty
+      } catch (error) {
+        console.error('Error creating custom property:', error)
+        throw error
+      }
     }
   }
 })
