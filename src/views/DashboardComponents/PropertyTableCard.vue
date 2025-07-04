@@ -131,13 +131,26 @@
               </div>
             </div>
   
-            <el-button 
-              type="primary" 
-              class="view-details-button"
-              @click="emit('edit-property', property)"
-            >
-              View Details
-            </el-button>
+            <div class="card-actions">
+              <el-button 
+                @click.stop="toggleFavorite(String(property.id_fantoir_long))"
+                :type="isFavorite(String(property.id_fantoir_long)) ? 'warning' : 'default'"
+                size="small"
+                circle
+              >
+                <el-icon>
+                  <StarFilled v-if="isFavorite(String(property.id_fantoir_long))" />
+                  <Star v-else />
+                </el-icon>
+              </el-button>
+              <el-button 
+                type="primary" 
+                class="view-details-button"
+                @click="emit('edit-property', property)"
+              >
+                View Details
+              </el-button>
+            </div>
           </div>
         </el-card>
       </div>
@@ -150,7 +163,11 @@
   
   <script setup lang="ts">
   import { ref, computed } from 'vue'
-  import { Search, Sort, Location, House, ToiletPaper, OfficeBuilding, Timer } from '@element-plus/icons-vue'
+  import { Search, Sort, Location, House, ToiletPaper, OfficeBuilding, Timer, Star, StarFilled } from '@element-plus/icons-vue'
+  import { usePropertyStore } from '@/stores/propertyHome';
+  import { ElMessage } from 'element-plus';
+  
+  const store = usePropertyStore();
   
   
   
@@ -231,6 +248,32 @@
       sortOrder.value = 'desc'
     }
   }
+
+  // Gestion des favoris
+  const toggleFavorite = async (propertyId: string) => {
+    console.log('toggleFavorite called in PropertyTableCard with:', propertyId, typeof propertyId);
+    try {
+      const newFavoriteState = await store.toggleFavorite(propertyId);
+      ElMessage({
+        message: newFavoriteState 
+          ? 'Propriété ajoutée aux favoris' 
+          : 'Propriété retirée des favoris',
+        type: newFavoriteState ? 'success' : 'info',
+        duration: 2000,
+      });
+    } catch (error) {
+      console.log('Error in PropertyTableCard toggleFavorite:', error);
+      ElMessage({
+        message: 'Erreur lors de la modification des favoris',
+        type: 'error',
+        duration: 3000,
+      });
+    }
+  };
+
+  const isFavorite = (propertyId: string): boolean => {
+    return store.isFavorite(propertyId);
+  };
 
 
   const onImageError = (event: Event) => {
@@ -453,8 +496,14 @@ const getStreetViewUrl = (property: any): string => {
   }
   
   .view-details-button {
-    width: 100%;
+    flex: 1;
     margin-top: 4px;
+  }
+
+  .card-actions {
+    display: flex;
+    gap: 8px;
+    align-items: center;
   }
   
   .no-results {

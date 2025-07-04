@@ -267,25 +267,23 @@ const saveMultipleReminders = () => {
 
 // Gestion des favoris
 const toggleFavorite = async () => {
-  if (!store.selectedProperty?.id_fantoir_long) return;
+  
+  if (!store.selectedProperty?.id_fantoir_long) {
+    console.log('No id_fantoir_long, returning early');
+    return;
+  }
   
   try {
-    if (store.isFavorite(store.selectedProperty.id_fantoir_long)) {
-      await store.removeFromFavorites(store.selectedProperty.id_fantoir_long);
-      ElMessage({
-        message: 'Propriété retirée des favoris',
-        type: 'info',
-        duration: 2000,
-      });
-    } else {
-      await store.addToFavorites(store.selectedProperty.id_fantoir_long);
-      ElMessage({
-        message: 'Propriété ajoutée aux favoris',
-        type: 'success',
-        duration: 2000,
-      });
-    }
+    const newFavoriteState = await store.toggleFavorite(store.selectedProperty.id_fantoir_long);
+    ElMessage({
+      message: newFavoriteState 
+        ? 'Propriété ajoutée aux favoris' 
+        : 'Propriété retirée des favoris',
+      type: newFavoriteState ? 'success' : 'info',
+      duration: 2000,
+    });
   } catch (error) {
+    console.log('Error in toggleFavorite:', error);
     ElMessage({
       message: 'Erreur lors de la modification des favoris',
       type: 'error',
@@ -512,7 +510,7 @@ const toggleFavorite = async () => {
         </div>
       </el-card>
 
-      <!-- Date de rappel Card -->
+      <!-- Date de rappel Card
       <el-card shadow="hover">
         <h3 class="card-title">Date de rappel</h3>
         <div class="card-content">
@@ -540,7 +538,7 @@ const toggleFavorite = async () => {
             />
           </el-form-item>
         </div>
-      </el-card>
+      </el-card> -->
 
       <!-- Price Card -->
       <el-card shadow="hover">

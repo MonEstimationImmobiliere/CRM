@@ -117,24 +117,40 @@
 
 
 
-    <el-table-column fixed="right" label="Actions" min-width="80">
+    <el-table-column fixed="right" label="Actions" min-width="140">
       <template #default="{ row }">
-        <el-button 
-          type="primary" 
-          size="small" 
-          @click="$emit('edit-property', row)"
-        >
-          <!-- <Setting class="w-5 h-5 Icon" /> -->
-           Ouvrir
-        </el-button>
+        <div class="action-buttons">
+          <el-button 
+            @click.stop="toggleFavorite(String(row.id_fantoir_long))"
+            :type="isFavorite(String(row.id_fantoir_long)) ? 'warning' : 'default'"
+            size="small"
+            circle
+          >
+            <el-icon>
+              <StarFilled v-if="isFavorite(String(row.id_fantoir_long))" />
+              <Star v-else />
+            </el-icon>
+          </el-button>
+          <el-button 
+            type="primary" 
+            size="small" 
+            @click="$emit('edit-property', row)"
+          >
+            Ouvrir
+          </el-button>
+        </div>
       </template>
     </el-table-column>
   </el-table>
 </template>
 
 <script setup lang="ts">
-import { Setting } from '@element-plus/icons-vue';
+import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
 import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
+import { usePropertyStore } from '@/stores/propertyHome';
+import { ElMessage } from 'element-plus';
+
+const store = usePropertyStore();
 
 defineProps({
   addresses: {
@@ -190,6 +206,33 @@ const isDatePassed = (dateStr: string | Date | null): boolean => {
 const formatMetrage = (value: number | null) => {
   if (!value) return '';
   return `${Math.round(value).toLocaleString('fr-FR')} m²`;
+};
+
+// Gestion des favoris
+const toggleFavorite = async (propertyId: string) => {
+  console.log('toggleFavorite called in PropertyTable with:', propertyId, typeof propertyId);
+  try {
+    const newFavoriteState = await store.toggleFavorite(propertyId);
+    ElMessage({
+      message: newFavoriteState 
+        ? 'Propriété ajoutée aux favoris' 
+        : 'Propriété retirée des favoris',
+      type: newFavoriteState ? 'success' : 'info',
+      duration: 2000,
+    });
+  } catch (error) {
+    console.log('Error in PropertyTable toggleFavorite:', error);
+    ElMessage({
+      message: 'Erreur lors de la modification des favoris',
+      type: 'error',
+      duration: 3000,
+    });
+  }
+};
+
+const isFavorite = (propertyId: string): boolean => {
+  console.log('isFavorite called with:', propertyId, typeof propertyId);
+  return store.isFavorite(propertyId);
 };
 
 
@@ -259,6 +302,10 @@ font-size: 24px;
   color: black;
 }
 
-
+.action-buttons {
+  display: flex;
+  gap: 8px;
+  align-items: center;
+}
 
 </style>

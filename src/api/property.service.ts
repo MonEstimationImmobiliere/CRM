@@ -77,7 +77,7 @@ export const PropertyService = {
 
   async getFavorites(): Promise<PropertyData[]> {
     try {
-      const response = await apiService.get<PropertyData[]>('/property/favorites');
+      const response = await apiService.get<PropertyData[]>('/property/favorite');
       return response.data;
     } catch (error) {
       console.error('Error fetching favorite properties:', error);

@@ -1,5 +1,5 @@
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { PropertyService } from '@/api';
 
 
@@ -115,7 +115,6 @@ const defaultPropertyData: PropertyData = {
 
 export const usePropertyStore = defineStore('property', () => {
   const properties = ref<PropertyData[]>([]);
-  const favorites = ref<PropertyData[]>([]);
   const selectedProperty = ref<PropertyData | null>(null);
   const isDialogVisible = ref<boolean>(false);
 
@@ -131,7 +130,7 @@ export const usePropertyStore = defineStore('property', () => {
     try {
       if (property.id) {
         const updatedProperty = await PropertyService.updateProperty(property.id, property);
-        updateProperty(updatedProperty);
+        updatePropertyInStore(updatedProperty);
       } else {
         const response = await PropertyService.createProperty(property);
         addProperty({ ...property, id: response.id });
@@ -141,14 +140,97 @@ export const usePropertyStore = defineStore('property', () => {
     }
   };
 
+  // Fonction pour mettre à jour une propriété dans le store après sauvegarde
+  function updatePropertyInStore(updatedProperty: PropertyData) {
+    console.log('=== UPDATE PROPERTY IN STORE ===');
+    console.log('Updated property:', updatedProperty);
+    
+    // Chercher par id_fantoir_long d'abord (pour les favoris), puis par id
+    const index = properties.value.findIndex(p => 
+      p.id_fantoir_long === updatedProperty.id_fantoir_long || 
+      p.id === updatedProperty.id
+    );
+    
+    console.log('Property index found:', index);
+    
+    if (index !== -1) {
+      // Préserver la structure existante et mettre à jour avec les nouvelles données
+      properties.value[index] = {
+        ...properties.value[index],
+        ...updatedProperty,
+        favorite: Boolean(updatedProperty.favorite) // Normaliser le booléen
+      };
+      console.log('Property updated in store at index:', index);
+      console.log('Updated property in store:', properties.value[index]);
+    } else {
+      console.log('Property not found in store, adding it...');
+      // Si la propriété n'est pas trouvée, l'ajouter au store
+      const normalizedProperty = {
+        ...updatedProperty,
+        favorite: Boolean(updatedProperty.favorite)
+      };
+      properties.value.push(normalizedProperty);
+      console.log('Property added to store');
+    }
+  }
+
+  const loadProperties = async () => {
+    try {
+      // Ici on pourrait charger toutes les propriétés ou les propriétés utilisateur
+      // Pour l'instant, on garde la logique existante
+      // const allProperties = await PropertyService.getAllProperties();
+      // properties.value = allProperties;
+    } catch (error) {
+      console.error("Erreur lors du chargement des propriétés :", error);
+    }
+  };
+
+  const loadFavoritesProperties = async () => {
+    try {
+      const favoriteProperties = await PropertyService.getFavorites();
+      // Mettre à jour les propriétés existantes ou ajouter les nouvelles
+      favoriteProperties.forEach(favoriteProperty => {
+        const existingIndex = properties.value.findIndex(p => p.id_fantoir_long === favoriteProperty.id_fantoir_long);
+        // Normaliser la propriété favorite en booléen
+        const normalizedProperty = { 
+          ...favoriteProperty, 
+          favorite: Boolean(favoriteProperty.favorite) || true // S'assurer que c'est true pour les favoris
+        };
+        
+        if (existingIndex !== -1) {
+          // Mettre à jour la propriété existante
+          properties.value[existingIndex] = { ...properties.value[existingIndex], ...normalizedProperty };
+        } else {
+          // Ajouter la nouvelle propriété favorite
+          properties.value.push(normalizedProperty);
+        }
+      });
+    } catch (error) {
+      console.error("Erreur lors du chargement des propriétés favorites :", error);
+    }
+  };
+
   function deleteProperty(id: number) {
     properties.value = properties.value.filter(p => p.id !== id);
   }
 
   function updateProperty(property: PropertyData) {
-    const index = properties.value.findIndex(p => p.id === property.id);
+    
+    // Chercher par id_fantoir_long d'abord (identifiant principal), puis par id
+    const index = properties.value.findIndex(p => 
+      p.id_fantoir_long === property.id_fantoir_long || 
+      p.id === property.id
+    );
+    
+    
     if (index !== -1) {
-      properties.value[index] = property;
+      properties.value[index] = {
+        ...properties.value[index],
+        ...property,
+        favorite: Boolean(property.favorite) // Normaliser le booléen
+      };
+    } else {
+      console.log('Property not found for update, id_fantoir_long:', property.id_fantoir_long, 'id:', property.id);
     }
   }
 
@@ -156,7 +238,13 @@ export const usePropertyStore = defineStore('property', () => {
     if (property?.id_fantoir_long) {
       try {
         const data = await PropertyService.getPropertyById(property.id_fantoir_long);
-        selectedProperty.value = { ...defaultPropertyData, ...data };
+        // Convertir les valeurs numériques en booléens pour favorite
+        const normalizedData = { 
+          ...defaultPropertyData, 
+          ...data, 
+          favorite: Boolean(data.favorite) // Convertir 0/1 en false/true
+        };
+        selectedProperty.value = normalizedData;
       } catch (error) {
         console.error("Erreur lors du chargement de la propriété :", error);
         selectedProperty.value = { ...defaultPropertyData, ...(property || {}) }; // fallback si erreur
@@ -171,36 +259,52 @@ export const usePropertyStore = defineStore('property', () => {
   }
 
   // Gestion des favoris
-  const loadFavorites = async () => {
-    try {
-      favorites.value = await PropertyService.getFavorites();
-    } catch (error) {
-      console.error('Error loading favorites:', error);
-    }
-  };
+  const favorites = computed(() => 
+    properties.value.filter(property => property.favorite === true)
+  );
 
-  const addToFavorites = async (propertyId: string) => {
+  const toggleFavorite = async (propertyId: string) => {
     try {
-      await PropertyService.addToFavorites(propertyId);
-      await loadFavorites(); // Recharger la liste des favoris
+      // D'abord chercher si la propriété existe déjà dans le store
+      let property = properties.value.find(p => p.id_fantoir_long === propertyId);
+      
+      if (!property) {
+        console.log('Property not found in store, fetching from API...');
+        // Si la propriété n'existe pas dans le store, la récupérer depuis l'API
+        try {
+          const propertyData = await PropertyService.getPropertyById(propertyId);
+          // Créer la propriété avec les données de l'API et l'ajouter au store
+          property = { 
+            ...defaultPropertyData, 
+            ...propertyData, 
+            favorite: Boolean(propertyData.favorite) || false // Normaliser en booléen
+          };
+          properties.value.push(property);
+        } catch (error) {
+          throw new Error('Impossible de récupérer les données de la propriété');
+        }
+      } else {
+        // S'assurer que la propriété existante a un booléen pour favorite
+        property.favorite = Boolean(property.favorite);
+      }
+      // Maintenant on peut modifier l'état favorite
+      property.favorite = !property.favorite;
+      
+      // Sauvegarder la propriété mise à jour
+      await saveProperty(property);
+      
+      // Retourner le nouvel état pour le message
+      return property.favorite;
     } catch (error) {
-      console.error('Error adding to favorites:', error);
-      throw error;
-    }
-  };
-
-  const removeFromFavorites = async (propertyId: string) => {
-    try {
-      await PropertyService.removeFromFavorites(propertyId);
-      await loadFavorites(); // Recharger la liste des favoris
-    } catch (error) {
-      console.error('Error removing from favorites:', error);
       throw error;
     }
   };
 
   const isFavorite = (propertyId: string): boolean => {
-    return favorites.value.some(fav => fav.id_fantoir_long === propertyId);
+    const property = properties.value.find(p => p.id_fantoir_long === propertyId);
+    // Si la propriété n'est pas dans le store, elle n'est pas favorite par défaut
+    // Convertir également les valeurs numériques en booléens pour la compatibilité
+    return Boolean(property?.favorite) || false;
   };
 
   return {
@@ -215,9 +319,9 @@ export const usePropertyStore = defineStore('property', () => {
     setDialogVisible,
     defaultPropertyData,
     favorites,
-    loadFavorites,
-    addToFavorites,
-    removeFromFavorites,
-    isFavorite
+    toggleFavorite,
+    isFavorite,
+    loadProperties,
+    loadFavoritesProperties
   };
 });

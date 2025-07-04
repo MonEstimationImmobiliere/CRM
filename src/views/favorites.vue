@@ -7,11 +7,7 @@
       </div>
     </div>
 
-    <div v-if="loading" class="loading-container">
-      <el-skeleton :rows="5" animated />
-    </div>
-
-    <div v-else-if="favorites.length === 0" class="empty-state">
+    <div v-if="favorites.length === 0" class="empty-state">
       <el-empty description="Aucune propriété en favoris">
         <el-button type="primary" @click="$router.push('/dashboard')">
           Parcourir les propriétés
@@ -36,7 +32,7 @@
             type="danger" 
             size="small" 
             circle
-            @click.stop="removeFromFavorites(property.id_fantoir_long)"
+            @click.stop="toggleFavorite(property.id_fantoir_long)"
           >
             <el-icon><StarFilled /></el-icon>
           </el-button>
@@ -95,10 +91,10 @@ const store = usePropertyStore();
 const remindersStore = useRemindersStore();
 
 const favorites = computed(() => store.favorites);
-const loading = computed(() => store.loading || false);
 
+// Charger les propriétés favorites au montage du composant
 onMounted(async () => {
-  await store.loadFavorites();
+  await store.loadFavoritesProperties();
 });
 
 const formatPrice = (price: number | undefined) => {
@@ -110,17 +106,19 @@ const formatPrice = (price: number | undefined) => {
   }).format(price);
 };
 
-const removeFromFavorites = async (propertyId: string) => {
+const toggleFavorite = async (propertyId: string) => {
   try {
-    await store.removeFromFavorites(propertyId);
+    const newFavoriteState = await store.toggleFavorite(propertyId);
     ElMessage({
-      message: 'Propriété retirée des favoris',
-      type: 'info',
+      message: newFavoriteState 
+        ? 'Propriété ajoutée aux favoris' 
+        : 'Propriété retirée des favoris',
+      type: newFavoriteState ? 'success' : 'info',
       duration: 2000,
     });
   } catch (error) {
     ElMessage({
-      message: 'Erreur lors de la suppression du favori',
+      message: 'Erreur lors de la modification du favori',
       type: 'error',
       duration: 3000,
     });
