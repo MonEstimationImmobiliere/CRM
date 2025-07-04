@@ -239,7 +239,8 @@ watch(() => dashboardStore.showCustomPropertyDialog, (newValue) => {
       formData.value.nom_voie = searchParams.street?.value || ''
       formData.value.code_postal = searchParams.city?.value || ''
       formData.value.nom_commune = searchParams.city?.city || ''
-      formData.value.id_fantoir_long = `custom_${Date.now()}_${searchParams.codeIdFantoir || ''}`
+      // L'id_fantoir_long sera généré par le store en fonction des données saisies
+      formData.value.id_fantoir_long = ''
     }
   }
 })
@@ -325,7 +326,6 @@ const handleSave = async () => {
     
     // Optionnellement, ouvrir le dialog de propriété pour éditer plus de détails
     propertyStore.selectProperty(createdProperty)
-    propertyStore.setDialogVisible(true)
     
   } catch (error) {
     console.error('Erreur lors de la création de la propriété:', error)

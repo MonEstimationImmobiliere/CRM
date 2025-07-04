@@ -1,6 +1,7 @@
 // src/stores/dashboard.ts
 import { defineStore } from 'pinia'
 import { PropertyService } from '@/api/property.service'
+import apiService from '@/api/apiRequests'
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
@@ -110,15 +111,43 @@ export const useDashboardStore = defineStore('dashboard', {
 
     async createCustomProperty(propertyData: any) {
       try {
+        // Génération de l'id_fantoir_long structuré
+        let id_fantoir_long = this.selectedCodeIdFantoir
+        
+        // Ajouter le numéro de rue s'il existe
+        if (propertyData.numero) {
+          id_fantoir_long += `_${propertyData.numero}`
+        }
+        
+        // Ajouter la répétition (bis, ter, etc.) s'il existe
+        if (propertyData.rep) {
+          id_fantoir_long += `_${propertyData.rep}`
+        }
+        
+        // Ajouter le numéro d'appartement s'il existe
+        if (propertyData.numero_appartement) {
+          id_fantoir_long += `_${propertyData.numero_appartement}`
+        }
+        
         const propertyWithFantoir = {
           ...propertyData,
-          id_fantoir: this.selectedCodeIdFantoir
+          id_fantoir: this.selectedCodeIdFantoir,
+          id_fantoir_long: id_fantoir_long
         }
+        
+        console.log('🏠 Création propriété personnalisée avec id_fantoir:', this.selectedCodeIdFantoir)
+        console.log('🏷️ ID fantoir long généré:', id_fantoir_long)
+        console.log('📋 Données envoyées:', propertyWithFantoir)
         
         const createdProperty = await PropertyService.createCustomProperty(propertyWithFantoir)
         
+        console.log('✅ Propriété créée:', createdProperty)
+        console.log('🔄 Actualisation de la liste...')
+        
         // Actualiser la liste des adresses après création
         await this.querySearchAddress()
+        
+        console.log('📊 Nouvelles adresses après création:', this.addresses.length)
         
         return createdProperty
       } catch (error) {
