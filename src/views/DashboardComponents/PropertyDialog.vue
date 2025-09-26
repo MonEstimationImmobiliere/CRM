@@ -4,7 +4,7 @@ import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGr
 import { usePropertyStore } from "../../stores/propertyHome";
 import { useRemindersStore } from "../../stores/reminders";
 import { useDashboardStore } from "../../stores/dashboard";
-import { CircleCloseFilled, ArrowDown, Close, Plus, Star, StarFilled } from "@element-plus/icons-vue";
+import { CircleCloseFilled, Star, StarFilled } from "@element-plus/icons-vue";
 
 // Property interface
 interface Property {
@@ -137,37 +137,19 @@ const reminderDate = computed({
   }
 });
 
-// Variables pour la gestion des rappels multiples
+// Variables pour la gestion du rappel unique
 const showReminderDialog = ref(false);
-const reminderDialogMode = ref('');
-const multipleReminders = ref<Array<{
-  title: string;
-  description: string;
-  date: string;
-  type: 'rappel' | 'estimation' | 'visite' | 'autre';
-  priority: 'low' | 'medium' | 'high';
-  sharing: boolean;
-}>>([
-  { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false }
-]);
+const reminderForm = ref({
+  title: '',
+  description: '',
+  date: '',
+  type: 'rappel' as 'rappel' | 'estimation' | 'visite' | 'autre',
+  priority: 'medium' as 'low' | 'medium' | 'high',
+  sharing: false
+});
 
-// Méthode pour gérer les commandes du dropdown de rappels
-const handleReminderCommand = (command: string) => {
-  reminderDialogMode.value = command;
-  
-  if (command === 'single') {
-    createSingleReminder();
-  } else if (command === 'multiple') {
-    showReminderDialog.value = true;
-    initializeMultipleReminders();
-  } else if (command === 'recurring') {
-    showReminderDialog.value = true;
-    // TODO: Implement recurring reminders
-  }
-};
-
-// Créer un rappel simple
-const createSingleReminder = () => {
+// Ouvrir la modal de création de rappel
+const openReminderDialog = () => {
   if (!store.selectedProperty?.id_fantoir_long) return;
   
   const today = new Date();
@@ -175,94 +157,110 @@ const createSingleReminder = () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty?.nom_commune || '';
   
-  remindersStore.addReminder({
+  // Pré-remplir le formulaire avec des valeurs par défaut
+  reminderForm.value = {
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
-    description: 'Rappel simple pour cette propriété',
+    description: '',
     date: tomorrow.toISOString().split('T')[0],
     type: 'rappel',
     priority: 'medium',
-    sharing: false,
-    property_id: store.selectedProperty.id_fantoir_long,
-    completed: false,
-  });
+    sharing: false
+  };
   
-  // Notification de succès
-  ElMessage({
-    message: 'Rappel simple créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
+  showReminderDialog.value = true;
 };
 
-// Initialiser les rappels multiples
-const initializeMultipleReminders = () => {
-  multipleReminders.value = [
-    { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false },
-    { title: '', description: '', date: '', type: 'estimation', priority: 'medium', sharing: false },
-    { title: '', description: '', date: '', type: 'visite', priority: 'medium', sharing: false }
-  ];
-};
-
-// Ajouter un nouveau rappel à la liste
-const addReminderToList = () => {
-  multipleReminders.value.push({
+// Réinitialiser le formulaire de rappel
+const resetReminderForm = () => {
+  reminderForm.value = {
     title: '',
     description: '',
     date: '',
     type: 'rappel',
     priority: 'medium',
     sharing: false
-  });
+  };
 };
 
-// Supprimer un rappel de la liste
-const removeReminderFromList = (index: number) => {
-  if (multipleReminders.value.length > 1) {
-    multipleReminders.value.splice(index, 1);
-  }
-};
-
-// Sauvegarder les rappels multiples
-const saveMultipleReminders = () => {
+// Sauvegarder le rappel
+const saveReminder = () => {
   if (!store.selectedProperty?.id_fantoir_long) return;
   
-  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty?.nom_commune || '';
-  
-  let validReminders = 0;
-  
-  multipleReminders.value.forEach((reminder, index) => {
-    if (reminder.title && reminder.date) {
-      remindersStore.addReminder({
-        title: reminder.title || `Rappel ${index + 1} - ${propertyAddress}`,
-        description: reminder.description || `Rappel ${index + 1} pour cette propriété`,
-        date: reminder.date,
-        type: reminder.type,
-        priority: reminder.priority,
-        sharing: reminder.sharing,
-        property_id: store.selectedProperty!.id_fantoir_long,
-        completed: false,
-      });
-      validReminders++;
-    }
-  });
-  
-  if (validReminders > 0) {
+  if (!reminderForm.value.title || !reminderForm.value.date) {
     ElMessage({
-      message: `${validReminders} rappel(s) créé(s) avec succès !`,
-      type: 'success',
-      duration: 3000,
-    });
-    showReminderDialog.value = false;
-  } else {
-    ElMessage({
-      message: 'Veuillez remplir au moins un titre et une date.',
+      message: 'Veuillez remplir au moins le titre et la date.',
       type: 'warning',
       duration: 3000,
     });
+    return;
   }
+  
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id_fantoir_long,
+    completed: false,
+  });
+  
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+  
+  showReminderDialog.value = false;
+  resetReminderForm();
+};
+
+// Sauvegarder le rappel et en créer un autre
+const saveReminderAndAddAnother = () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+  
+  if (!reminderForm.value.title || !reminderForm.value.date) {
+    ElMessage({
+      message: 'Veuillez remplir au moins le titre et la date.',
+      type: 'warning',
+      duration: 3000,
+    });
+    return;
+  }
+  
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id_fantoir_long,
+    completed: false,
+  });
+  
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+  
+  // Réinitialiser le formulaire mais garder la modal ouverte
+  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  reminderForm.value = {
+    title: `Rappel - ${propertyAddress || 'Propriété'}`,
+    description: '',
+    date: tomorrow.toISOString().split('T')[0],
+    type: 'rappel',
+    priority: 'medium',
+    sharing: false
+  };
 };
 
 // Gestion des favoris
@@ -562,20 +560,10 @@ const toggleFavorite = async () => {
       <div class="dialog-footer">
         <el-button @click="closeDialog" size="large">Annuler</el-button>
         
-        <!-- Dropdown pour les rappels -->
-        <el-dropdown @command="handleReminderCommand" trigger="click">
-          <el-button type="success" size="large">
-            Créer rappel(s)
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="single">Créer un rappel simple</el-dropdown-item>
-              <el-dropdown-item command="multiple">Créer plusieurs rappels</el-dropdown-item>
-              <el-dropdown-item command="recurring">Créer un rappel récurrent</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <!-- Bouton pour créer un rappel -->
+        <el-button type="success" size="large" @click="openReminderDialog">
+          Créer un rappel
+        </el-button>
         
         <el-button type="primary" @click="saveProperty" size="large">
           {{ isEditing ? "Sauvegarder" : "Créer" }}
@@ -584,103 +572,82 @@ const toggleFavorite = async () => {
     </el-form>
   </el-drawer>
 
-  <!-- Dialog pour les rappels multiples -->
+  <!-- Dialog pour créer un rappel -->
   <el-dialog 
     v-model="showReminderDialog" 
-    title="Créer plusieurs rappels"
-    width="70%"
+    title="Créer un rappel"
+    width="600px"
     :close-on-click-modal="false"
+    @close="resetReminderForm"
   >
-    <div class="multiple-reminders-form">
-      <div 
-        v-for="(reminder, index) in multipleReminders" 
-        :key="index"
-        class="reminder-item"
-      >
-        <div class="reminder-header">
-          <h4>Rappel {{ index + 1 }}</h4>
-          <el-button 
-            v-if="multipleReminders.length > 1"
-            type="danger" 
-            size="small" 
-            @click="removeReminderFromList(index)"
-            circle
-          >
-            <el-icon><Close /></el-icon>
-          </el-button>
-        </div>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Titre" required>
-              <el-input v-model="reminder.title" placeholder="Titre du rappel" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Date" required>
-              <el-date-picker
-                v-model="reminder.date"
-                type="date"
-                placeholder="Sélectionnez une date"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                :disabled-date="disabledDate"
-                style="width: 100%;"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Type">
-              <el-select v-model="reminder.type" placeholder="Type de rappel">
-                <el-option label="Rappel" value="rappel" />
-                <el-option label="Estimation" value="estimation" />
-                <el-option label="Visite" value="visite" />
-                <el-option label="Autre" value="autre" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Priorité">
-              <el-select v-model="reminder.priority" placeholder="Priorité">
-                <el-option label="Basse" value="low" />
-                <el-option label="Moyenne" value="medium" />
-                <el-option label="Haute" value="high" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-form-item label="Description">
-          <el-input 
-            v-model="reminder.description" 
-            type="textarea" 
-            placeholder="Description du rappel"
-            :rows="2"
-          />
-        </el-form-item>
-
-        <el-form-item label="Partage">
-          <el-checkbox v-model="reminder.sharing" label="Partager avec l'agence" />
-        </el-form-item>
-      </div>
+    <el-form :model="reminderForm" label-width="120px">
+      <el-form-item label="Titre" required>
+        <el-input v-model="reminderForm.title" placeholder="Titre du rappel" />
+      </el-form-item>
       
-      <div class="add-reminder-section">
-        <el-button type="success" @click="addReminderToList" size="large">
-          <el-icon><Plus /></el-icon>
-          Ajouter un rappel
-        </el-button>
-      </div>
-    </div>
+      <el-form-item label="Description">
+        <el-input 
+          v-model="reminderForm.description" 
+          type="textarea" 
+          :rows="3"
+          placeholder="Description du rappel"
+        />
+      </el-form-item>
+      
+      <el-form-item label="Date" required>
+        <el-date-picker 
+          v-model="reminderForm.date"
+          type="date"
+          placeholder="Sélectionnez une date"
+          style="width: 100%;"
+          format="DD/MM/YYYY"
+          value-format="YYYY-MM-DD"
+          :disabled-date="disabledDate"
+        />
+      </el-form-item>
+      
+      <el-form-item label="Type">
+        <el-select v-model="reminderForm.type" style="width: 100%;">
+          <el-option label="Rappel" value="rappel" />
+          <el-option label="Estimation" value="estimation" />
+          <el-option label="Visite" value="visite" />
+          <el-option label="Autre" value="autre" />
+        </el-select>
+      </el-form-item>
+      
+      <el-form-item label="Priorité">
+        <el-select v-model="reminderForm.priority" style="width: 100%;">
+          <el-option label="Haute" value="high" />
+          <el-option label="Moyenne" value="medium" />
+          <el-option label="Basse" value="low" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="Partage">
+        <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
+      </el-form-item>
+    </el-form>
     
     <template #footer>
       <el-button @click="showReminderDialog = false">Annuler</el-button>
-      <el-button type="primary" @click="saveMultipleReminders">
-        Créer les rappels
+      <el-button type="primary" @click="saveReminder">
+        Créer le rappel
       </el-button>
     </template>
+    
+    <div class="reminder-actions-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+      <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+        Vous souhaitez ajouter un autre rappel sur ce bien ?
+      </p>
+      <el-button 
+        type="success" 
+        size="small" 
+        @click="saveReminderAndAddAnother"
+        style="margin-right: 10px;"
+      >
+        Créer et ajouter un autre
+      </el-button>
+    </div>
   </el-dialog>
 </template>
 
@@ -808,40 +775,13 @@ top : none;
   align-items: center;
 }
 
-/* Styles pour les rappels multiples */
-.multiple-reminders-form {
-  max-height: 70vh;
-  overflow-y: auto;
-}
-
-.reminder-item {
-  border: 1px solid #e5e7eb;
-  border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
-  background-color: #f9fafb;
-}
-
-.reminder-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
-}
-
-.reminder-header h4 {
-  margin: 0;
-  color: #374151;
-  font-size: 16px;
-  font-weight: 600;
-}
-
-.add-reminder-section {
+/* Styles pour la modal de rappel */
+.reminder-actions-section {
   text-align: center;
   margin-top: 20px;
   padding: 20px;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
+  border-top: 1px solid #e5e7eb;
   background-color: #f9fafb;
+  border-radius: 0 0 8px 8px;
 }
 </style>
