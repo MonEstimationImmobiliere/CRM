@@ -1,7 +1,7 @@
 <template>
   <div class="floating-label-wrapper">
-    <DynamicLabelUI v-model="localValue" text="Ville" color="#aaa" activeColor="#409EFF">
-      <el-autocomplete id="autocomplete" size="large" v-model="localValue" :fetch-suggestions="queryCities" :debounce="500" :suffix-icon="Search" clearable placeholder="" @clear="handleClear" @select="handleSelect" @focus="isFocused = true" @blur="isFocused = false">
+    <DynamicLabelUI v-model="displayValue" text="Ville" color="#aaa" activeColor="#409EFF">
+      <el-autocomplete id="autocomplete" size="large" v-model="displayValue" :fetch-suggestions="queryCities" :debounce="500" :suffix-icon="Search" clearable placeholder="" @clear="handleClear" @select="handleSelect" @focus="handleFocus" @blur="handleBlur">
         <template #default="{ item }">
           <div v-html="highlightMatch(item.value, localValue) + ', ' + item.city" />
         </template>
@@ -20,7 +20,7 @@ import { PropType } from "vue";
 
 const props = defineProps({
   modelValue: {
-    type: Object as PropType<{ value: string } | null>,
+    type: Object as PropType<{ value: string; city?: string; codeInsee?: string } | null>,
     default: null,
   },
 });
@@ -31,6 +31,21 @@ const isFocused = ref(false);
 const localValue = computed({
   get: () => props.modelValue?.value || "",
   set: (newValue) => {
+    emit("update:modelValue", { value: newValue });
+  },
+});
+
+// Valeur d'affichage qui montre soit la saisie en cours soit la ville sélectionnée
+const displayValue = computed({
+  get: () => {
+    if (props.modelValue?.city && props.modelValue?.value && !isFocused.value) {
+      // Si une ville est sélectionnée et le champ n'est pas en focus, afficher "Ville - Code postal"
+      return `${props.modelValue.city} - ${props.modelValue.value}`;
+    }
+    return props.modelValue?.value || "";
+  },
+  set: (newValue) => {
+    // Lors de la saisie, on stocke juste la valeur
     emit("update:modelValue", { value: newValue });
   },
 });
@@ -61,6 +76,14 @@ const handleSelect = (selectedItem: any) => {
 const handleClear = () => {
   emit("update:modelValue", null);
   emit("clear"); // Émettre un événement clear pour notifier les composants dépendants
+};
+
+const handleFocus = () => {
+  isFocused.value = true;
+};
+
+const handleBlur = () => {
+  isFocused.value = false;
 };
 
 const highlightMatch = (value: any, query: any) => {

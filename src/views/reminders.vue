@@ -353,7 +353,7 @@ const editReminder = (reminder: Reminder) => {
     type: reminder.type,
     priority: reminder.priority,
     sharing: reminder.sharing || false,
-    propertyId: reminder.propertyId,
+    property_id: reminder.property_id,
   };
   showCreateDialog.value = true;
 };
@@ -410,7 +410,7 @@ const resetForm = () => {
     type: 'rappel',
     priority: 'medium',
     sharing: false,
-    propertyId: '',
+    property_id: '',
   };
 };
 
