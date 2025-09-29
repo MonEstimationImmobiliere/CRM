@@ -12,11 +12,11 @@
 
           <el-button type="primary" size="large" @click="querySearchEstimation"> Estimations reçues </el-button>
 
-          <el-button type="primary" size="large" @click="navigateToReminders"> Mes rappels </el-button>
+          <!-- <el-button type="primary" size="large" @click="navigateToReminders"> Mes rappels </el-button> -->
 
-          <el-button type="warning" size="large" @click="navigateToFavorites"> Mes favoris </el-button>
+          <!-- <el-button type="warning" size="large" @click="navigateToFavorites"> Mes favoris </el-button> -->
 
-          <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>
+          <!-- <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button> -->
                <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
             Créer une propriété personnalisée
           </el-button>
@@ -147,29 +147,52 @@ const querySearchRappel = async () => {
   await dashboardStore.querySearchRappel()
 }
 
-const navigateToReminders = async () => {
-  router.push('/reminders');
- const responseRappels =  await dashboardStore.querySearchRappel()
-  console.log('Navigating to reminders', responseRappels);
-}
+// const navigateToReminders = async () => {
+//   router.push('/reminders');
+//  const responseRappels =  await dashboardStore.querySearchRappel()
+//   console.log('Navigating to reminders', responseRappels);
+// }
 
-const navigateToFavorites = () => {
-  router.push('/favorites');
-}
+// const navigateToFavorites = () => {
+//   router.push('/favorites');
+// }
 
 const openCreateCustomPropertyDialog = () => {
   dashboardStore.openCustomPropertyDialog()
 }
 
-const querySearchMaj = async () => {
-  await dashboardStore.querySearchMaj()
-}
+// const querySearchMaj = async () => {
+//   await dashboardStore.querySearchMaj()
+// }
 
 const openPropertyDialog = (property: any) => {
   store.selectProperty({
     ...store.defaultPropertyData,
     ...property,
     id_fantoir_long: property.id_fantoir_long,
+  });
+  store.setDialogVisible(true);
+};
+
+const openTestPropertyDialog = () => {
+  const testProperty = {
+    id_fantoir_long: "example_property_id_1",
+    numero: "123",
+    nom_voie: "Rue de la Paix",
+    property_type: "Maison",
+    surface: 150,
+    area: 500,
+    owner: "Jean Dupont",
+    email: "jean.dupont@example.com",
+    phone: "0123456789",
+    year_built: 1980,
+    price: 350000,
+    comment: "Belle maison avec jardin"
+  };
+  
+  store.selectProperty({
+    ...store.defaultPropertyData,
+    ...testProperty,
   });
   store.setDialogVisible(true);
 };

@@ -627,36 +627,17 @@ const toggleFavorite = async () => {
 
         <!-- Tab Commentaires -->
         <el-tab-pane label="Commentaires" name="comments">
+          <!-- Comments Card -->
           <el-card shadow="hover">
-            <h3 class="card-title">Commentaires sur la propriété</h3>
+            <h3 class="card-title">Commentaires</h3>
             <div class="card-content">
-              <el-input 
-                v-model="store.selectedProperty.comment" 
-                type="textarea" 
-                :autosize="{ minRows: 6, maxRows: 12 }" 
-                placeholder="Ajoutez vos commentaires, observations, ou notes importantes sur cette propriété..."
-                style="font-size: 16px; line-height: 1.6;"
-                show-word-limit
-                maxlength="2000"
-              />
-              <div class="comment-help" style="margin-top: 16px; padding: 12px; background-color: #f8fafc; border-radius: 6px; font-size: 14px; color: #6b7280;">
-                💡 <strong>Conseil :</strong> Utilisez cette section pour noter des informations importantes comme l'état du bien, les travaux à prévoir, les négociations en cours, ou tout autre détail utile.
-              </div>
+              <el-input v-model="store.selectedProperty.comment" type="textarea" :autosize="{ minRows: 3, maxRows: 6 }" placeholder="Ajoutez vos commentaires ici..." />
             </div>
           </el-card>
         </el-tab-pane>
 
         <!-- Tab Rappels -->
         <el-tab-pane label="Rappels" name="reminders">
-          <!-- Message quand aucun rappel -->
-          <el-card shadow="hover" v-if="propertyReminders.length === 0">
-            <div class="no-reminders-content">
-              <el-icon class="no-reminders-icon"><Calendar /></el-icon>
-              <h3>Aucun rappel pour cette propriété</h3>
-              <p>Créez votre premier rappel pour cette propriété en utilisant le bouton "Créer un rappel" ci-dessous.</p>
-            </div>
-          </el-card>
-
           <!-- Reminders History Card -->
           <el-card shadow="hover" v-if="propertyReminders.length > 0">
         <h3 class="card-title">
@@ -753,7 +734,6 @@ const toggleFavorite = async () => {
               </div>
             </div>
           </div>
-        </div>
         </el-card>
         </el-tab-pane>
       </el-tabs>
@@ -870,79 +850,6 @@ top : none;
   gap: 20px;
   display: flex;
   flex-direction: column;
-}
-
-.property-tabs {
-  background-color: white;
-  border-radius: 8px;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.el-tabs__header) {
-  margin: 0;
-  padding: 0 20px;
-  background-color: #fafafa;
-  border-radius: 8px 8px 0 0;
-  border-bottom: 1px solid #e5e7eb;
-}
-
-:deep(.el-tabs__nav-wrap) {
-  padding: 0;
-}
-
-:deep(.el-tabs__content) {
-  padding: 20px;
-}
-
-:deep(.el-tab-pane) {
-  display: flex;
-  flex-direction: column;
-  gap: 20px;
-}
-
-:deep(.el-tabs__item) {
-  font-weight: 500;
-  font-size: 16px;
-  padding: 0 24px;
-  height: 50px;
-  line-height: 50px;
-  color: #6b7280;
-}
-
-:deep(.el-tabs__item.is-active) {
-  color: #3b82f6;
-  font-weight: 600;
-}
-
-:deep(.el-tabs__active-bar) {
-  background-color: #3b82f6;
-  height: 3px;
-}
-
-/* No reminders state */
-.no-reminders-content {
-  text-align: center;
-  padding: 40px 20px;
-  color: #6b7280;
-}
-
-.no-reminders-icon {
-  font-size: 48px;
-  color: #d1d5db;
-  margin-bottom: 16px;
-}
-
-.no-reminders-content h3 {
-  margin: 0 0 8px 0;
-  font-size: 18px;
-  font-weight: 600;
-  color: #374151;
-}
-
-.no-reminders-content p {
-  margin: 0;
-  font-size: 14px;
-  line-height: 1.5;
 }
 
 .form-card {

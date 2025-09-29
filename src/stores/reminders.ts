@@ -90,8 +90,70 @@ export const useRemindersStore = defineStore('reminders', () => {
     { deep: true }
   );
 
-  // Initialize store
-  loadReminders();
+  // Initialize store with sample data if none exists
+  const initializeStore = async () => {
+    await loadReminders();
+    
+    // Add sample reminders if the store is empty (for development/testing)
+    if (reminders.value.length === 0) {
+      const today = new Date();
+      const yesterday = new Date(today);
+      yesterday.setDate(yesterday.getDate() - 1);
+      const tomorrow = new Date(today);
+      tomorrow.setDate(tomorrow.getDate() + 1);
+      const nextWeek = new Date(today);
+      nextWeek.setDate(today.getDate() + 7);
+      
+      const sampleReminders = [
+        {
+          title: "Visite d'estimation",
+          description: "Rendez-vous avec le propriétaire pour évaluer les travaux de rénovation",
+          date: yesterday.toISOString().split('T')[0],
+          type: 'estimation' as const,
+          priority: 'high' as const,
+          sharing: false,
+          property_id: "example_property_id_1",
+          completed: false,
+        },
+        {
+          title: "Rappel de suivi",
+          description: "Contacter le propriétaire pour discuter de la vente",
+          date: today.toISOString().split('T')[0],
+          type: 'rappel' as const,
+          priority: 'medium' as const,
+          sharing: true,
+          property_id: "example_property_id_1",
+          completed: false,
+        },
+        {
+          title: "Visite programmée",
+          description: "Visite avec des acheteurs potentiels",
+          date: tomorrow.toISOString().split('T')[0],
+          type: 'visite' as const,
+          priority: 'high' as const,
+          sharing: false,
+          property_id: "example_property_id_1",
+          completed: false,
+        },
+        {
+          title: "Rappel terminé",
+          description: "Documents transmis au notaire",
+          date: yesterday.toISOString().split('T')[0],
+          type: 'autre' as const,
+          priority: 'low' as const,
+          sharing: false,
+          property_id: "example_property_id_1",
+          completed: true,
+        }
+      ];
+      
+      for (const reminder of sampleReminders) {
+        await addReminder(reminder);
+      }
+    }
+  };
+  
+  initializeStore();
 
   // Computed properties pour tous les rappels (utilisateur + agence)
   const allReminders = computed(() => [
