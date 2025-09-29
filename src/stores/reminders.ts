@@ -408,6 +408,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   return {
     // State
     reminders,
+    agencyReminders,
     loading,
     selectedReminder,
     
@@ -420,6 +421,8 @@ export const useRemindersStore = defineStore('reminders', () => {
     remindersByPriority,
     
     // Actions
+    loadReminders,
+    initializeStore,
     addReminder,
     updateReminder,
     deleteReminder,

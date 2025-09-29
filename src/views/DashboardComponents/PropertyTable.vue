@@ -54,17 +54,17 @@
       </template>
     </el-table-column>
 
-    <el-table-column label="Chambres" prop="bedrooms" sortable  min-width="120">
+    <!-- <el-table-column label="Chambres" prop="bedrooms" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.bedrooms }}
       </template>
-    </el-table-column>
+    </el-table-column> -->
 
-     <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
+     <!-- <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
       <template #default="{ row }">
   {{ formatMetrage(row.area) }}
       </template>
-    </el-table-column> -
+    </el-table-column> - -->
 
     <!--<el-table-column label="Nb vente" prop="nombre_ventes" sortable  min-width="120">
       <template #default="{ row }">
@@ -100,17 +100,23 @@
   </template>
 </el-table-column>
 
-    <el-table-column label="Date Maj" prop="date_maj" sortable  min-width="120" >
+    <!-- <el-table-column label="Date Maj" prop="date_maj" sortable  min-width="120" >
       <template #default="{ row }">
             {{ formatDate(row.date_maj ) }}
       </template>
-    </el-table-column> 
+    </el-table-column>  -->
 
 
     <el-table-column label="Date Rappel" prop="date_rappel" sortable min-width="120">
   <template #default="{ row }">
-    <span :style="{ color: isDatePassed(row.date_rappel) ? 'red' : 'inherit' }">
-      {{ formatDate(row.date_rappel) }}
+    <span 
+      v-if="getNextReminderDate(String(row.id_fantoir_long))"
+      :style="{ color: isDatePassed(getNextReminderDate(String(row.id_fantoir_long))) ? 'red' : 'inherit' }"
+    >
+      {{ formatDate(getNextReminderDate(String(row.id_fantoir_long))) }}
+    </span>
+    <span v-else class="no-reminder">
+      Aucun rappel
     </span>
   </template>
 </el-table-column>
@@ -145,12 +151,20 @@
 </template>
 
 <script setup lang="ts">
-import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
+import { Setting, Star, StarFilled, Bell } from '@element-plus/icons-vue';
 import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
 import { usePropertyStore } from '@/stores/propertyHome';
+import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
+import { onMounted } from 'vue';
 
 const store = usePropertyStore();
+const remindersStore = useRemindersStore();
+
+// Charger les rappels au montage du composant
+onMounted(async () => {
+  await remindersStore.initializeStore();
+});
 
 defineProps({
   addresses: {
@@ -235,6 +249,28 @@ const isFavorite = (propertyId: string): boolean => {
   return store.isFavorite(propertyId);
 };
 
+// Fonction pour obtenir le prochain rappel d'une propriété
+const getNextReminderDate = (propertyId: string): string | null => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  
+  // Filtrer les rappels de cette propriété qui ne sont pas terminés
+  const propertyReminders = remindersStore.reminders
+    .filter((reminder: any) => 
+      reminder.property_id === propertyId && 
+      !reminder.completed
+    )
+    .map((reminder: any) => ({
+      ...reminder,
+      dateObj: new Date(reminder.date)
+    }))
+    .filter((reminder: any) => reminder.dateObj >= today) // Seulement les rappels futurs ou d'aujourd'hui
+    .sort((a: any, b: any) => a.dateObj.getTime() - b.dateObj.getTime()); // Trier par date croissante
+  
+  // Retourner la date du premier rappel (le plus proche)
+  return propertyReminders.length > 0 ? propertyReminders[0].date : null;
+};
+
 
 </script>
 
@@ -306,6 +342,12 @@ font-size: 24px;
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.no-reminder {
+  color: #9ca3af;
+  font-style: italic;
+  font-size: 14px;
 }
 
 </style>
