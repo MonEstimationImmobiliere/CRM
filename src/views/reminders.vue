@@ -119,111 +119,141 @@
           :class="{
             'overdue': isReminderOverdue(reminder),
             'today': isReminderToday(reminder),
-            'completed': reminder.completed
+            'status-todo': getStatus(reminder) === 'todo',
+            'status-progress': getStatus(reminder) === 'progress',
+            'status-completed': getStatus(reminder) === 'completed'
           }"
         >
-          <!-- Left Section: Checkbox -->
-          <div class="reminder-checkbox-section">
-            <el-tooltip 
-              :content="reminder.completed ? 'Marquer comme non terminé' : 'Marquer comme terminé'" 
-              placement="right" 
-              :show-after="500"
+          <!-- Status Tag -->
+          <div class="reminder-status-tag">
+            <el-tag 
+              :type="getStatusTagType(reminder)" 
+              size="small"
+              class="status-indicator"
             >
-              <el-checkbox 
-                v-model="reminder.completed" 
-                @change="toggleComplete(reminder)"
-                size="large"
-                class="reminder-checkbox"
-              />
-            </el-tooltip>
+              {{ getStatusLabel(reminder) }}
+            </el-tag>
           </div>
 
-          <!-- Main Content -->
-          <div class="reminder-main-content" @click="selectReminder(reminder)">
-            <div class="reminder-header">
-              <h3 class="reminder-title" :class="{ 'completed-text': reminder.completed }">
-                {{ reminder.title }}
-              </h3>
-              <div class="reminder-badges">
-                <el-tag 
-                  :type="getTypeColor(reminder.type)" 
-                  size="small"
-                  class="type-tag"
-                >
-                  {{ getTypeLabel(reminder.type) }}
-                </el-tag>
-                <el-tag 
-                  :type="getPriorityType(reminder.priority)" 
-                  size="small"
-                  class="priority-tag"
-                >
-                  {{ getPriorityLabel(reminder.priority) }}
-                </el-tag>
-              </div>
-            </div>
+          <!-- Card Header -->
+          <div class="reminder-card-header">
+            <h3 class="reminder-title" :class="{ 'completed-text': getStatus(reminder) === 'completed' }">
+              {{ reminder.title }}
+            </h3>
+            
+            <!-- Three Dot Menu -->
+            <el-dropdown 
+              @command="handleAction"
+              trigger="click"
+              placement="bottom-end"
+            >
+              <el-button 
+                :icon="MoreFilled" 
+                circle 
+                size="small" 
+                class="more-actions-btn"
+                @click.stop
+              />
+              <template #dropdown>
+                <el-dropdown-menu>
+                  <el-dropdown-item 
+                    :command="{ action: 'edit', reminder }"
+                    :icon="Edit"
+                  >
+                    Modifier
+                  </el-dropdown-item>
+                  <el-dropdown-item 
+                    :command="{ action: 'duplicate', reminder }"
+                    :icon="DocumentCopy"
+                  >
+                    Dupliquer
+                  </el-dropdown-item>
+                  <el-dropdown-item 
+                    :command="{ action: 'delete', reminder }"
+                    :icon="Delete"
+                    divided
+                  >
+                    Supprimer
+                  </el-dropdown-item>
+                </el-dropdown-menu>
+              </template>
+            </el-dropdown>
+          </div>
 
-            <div class="reminder-content">
-              <p v-if="reminder.description" class="reminder-description">
-                {{ reminder.description }}
-              </p>
-              
-              <div class="reminder-meta">
-                <div class="reminder-date-info">
-                  <el-icon><Calendar /></el-icon>
-                  <span class="date-text">{{ formatDate(reminder.date) }}</span>
-                  <el-tag v-if="isReminderOverdue(reminder)" type="danger" size="small">
-                    En retard
-                  </el-tag>
-                  <el-tag v-else-if="isReminderToday(reminder)" type="warning" size="small">
-                    Aujourd'hui
-                  </el-tag>
-                </div>
-                
-                <div class="reminder-property-info">
-                  <el-icon><House /></el-icon>
-                  <span>Propriété ID: {{ reminder.property_id }}</span>
-                  <el-tag v-if="reminder.sharing" type="success" size="small" class="sharing-tag">
-                    Partagé
-                  </el-tag>
-                </div>
-              </div>
+          <!-- Description -->
+          <div v-if="reminder.description" class="reminder-description">
+            {{ reminder.description }}
+          </div>
+
+          <!-- Priority and Type Badges -->
+          <div class="reminder-badges">
+            <el-tag 
+              :type="getPriorityType(reminder.priority)" 
+              size="small"
+              class="priority-badge"
+            >
+              {{ getPriorityLabel(reminder.priority) }}
+            </el-tag>
+            <el-tag 
+              :type="getTypeColor(reminder.type)" 
+              size="small"
+              class="type-badge"
+            >
+              {{ getTypeLabel(reminder.type) }}
+            </el-tag>
+          </div>
+
+          <!-- Date and Days Left -->
+          <div class="reminder-date-section">
+            <div class="reminder-date-info">
+              <el-icon><Calendar /></el-icon>
+              <span class="date-text">{{ formatDate(reminder.date) }}</span>
+            </div>
+            <div class="days-left" :class="getDaysLeftClass(reminder)">
+              {{ getDaysLeftText(reminder) }}
             </div>
           </div>
 
-          <!-- Right Section: Actions -->
-          <div class="reminder-actions-section">
-            <el-tooltip content="Modifier le rappel" placement="left" :show-after="500">
+          <!-- Property Info -->
+          <div class="reminder-property-info">
+            <el-icon><House /></el-icon>
+            <span>Propriété ID: {{ reminder.property_id }}</span>
+            <el-tag v-if="reminder.sharing" type="success" size="small" class="sharing-tag">
+              Partagé
+            </el-tag>
+          </div>
+
+          <!-- Status Action Buttons -->
+          <div class="reminder-status-actions">
+            <el-button-group>
               <el-button 
-                type="primary" 
-                :icon="Edit" 
-                circle
+                :type="getStatus(reminder) === 'todo' ? 'primary' : ''"
+                :plain="getStatus(reminder) !== 'todo'"
                 size="small"
-                @click.stop="editReminder(reminder)"
-                class="action-btn edit-btn"
-              />
-            </el-tooltip>
-            
-            <el-tooltip content="Dupliquer le rappel" placement="left" :show-after="500">
+                @click.stop="updateStatus(reminder, 'todo')"
+                class="status-btn"
+              >
+                À faire
+              </el-button>
               <el-button 
-                type="success" 
-                :icon="DocumentCopy" 
-                circle
+                :type="getStatus(reminder) === 'progress' ? 'warning' : ''"
+                :plain="getStatus(reminder) !== 'progress'"
                 size="small"
-                @click.stop="duplicateReminder(reminder)"
-                class="action-btn duplicate-btn"
-              />
-            </el-tooltip>
-            
-            <el-tooltip content="Supprimer le rappel" placement="left" :show-after="500">
+                @click.stop="updateStatus(reminder, 'progress')"
+                class="status-btn"
+              >
+                En cours
+              </el-button>
               <el-button 
-                type="danger" 
-                :icon="Delete" 
-                circle
+                :type="getStatus(reminder) === 'completed' ? 'success' : ''"
+                :plain="getStatus(reminder) !== 'completed'"
                 size="small"
-                @click.stop="deleteReminder(reminder)"
-                class="action-btn delete-btn"
-              />
-            </el-tooltip>
+                @click.stop="updateStatus(reminder, 'completed')"
+                class="status-btn"
+              >
+                Terminé
+              </el-button>
+            </el-button-group>
           </div>
         </div>
       </div>
@@ -278,6 +308,14 @@
           </el-select>
         </el-form-item>
 
+        <el-form-item label="Statut">
+          <el-select v-model="reminderForm.status" style="width: 100%;">
+            <el-option label="À faire" value="todo" />
+            <el-option label="En cours" value="progress" />
+            <el-option label="Terminé" value="completed" />
+          </el-select>
+        </el-form-item>
+
         <el-form-item label="Partage">
           <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
         </el-form-item>
@@ -318,6 +356,7 @@ const reminderForm = ref<{
   date: string;
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
+  status: 'todo' | 'progress' | 'completed';
   sharing: boolean;
   property_id: string;
 }>({
@@ -326,6 +365,7 @@ const reminderForm = ref<{
   date: '',
   type: 'rappel',
   priority: 'medium',
+  status: 'todo',
   sharing: false,
   property_id: '',
 });
@@ -396,6 +436,8 @@ const handleAction = ({ action, reminder }: { action: string; reminder: Reminder
     editReminder(reminder);
   } else if (action === 'delete') {
     deleteReminder(reminder);
+  } else if (action === 'duplicate') {
+    duplicateReminder(reminder);
   }
 };
 
@@ -407,6 +449,7 @@ const editReminder = (reminder: Reminder) => {
     date: reminder.date,
     type: reminder.type,
     priority: reminder.priority,
+    status: reminder.status || (reminder.completed ? 'completed' : 'todo'),
     sharing: reminder.sharing || false,
     property_id: reminder.property_id,
   };
@@ -420,6 +463,7 @@ const duplicateReminder = (reminder: Reminder) => {
     date: reminder.date,
     type: reminder.type,
     priority: reminder.priority,
+    status: 'todo' as const,
     sharing: reminder.sharing || false,
     property_id: reminder.property_id,
     completed: false,
@@ -457,13 +501,13 @@ const saveReminder = () => {
   if (editingReminder.value) {
     remindersStore.updateReminder(editingReminder.value.id, {
       ...reminderForm.value,
-      completed: false,
+      completed: reminderForm.value.status === 'completed',
     });
     ElMessage.success('Rappel modifié avec succès');
   } else {
     remindersStore.addReminder({
       ...reminderForm.value,
-      completed: false,
+      completed: reminderForm.value.status === 'completed',
     });
     ElMessage.success('Rappel créé avec succès');
   }
@@ -480,6 +524,7 @@ const resetForm = () => {
     date: '',
     type: 'rappel',
     priority: 'medium',
+    status: 'todo',
     sharing: false,
     property_id: '',
   };
@@ -539,6 +584,84 @@ const getEmptyMessage = () => {
       return 'Commencez par créer votre premier rappel.';
   }
 };
+
+// New methods for status management
+const getStatus = (reminder: Reminder): 'todo' | 'progress' | 'completed' => {
+  // Use the new status field if available, otherwise fallback to completed boolean
+  if (reminder.status) {
+    return reminder.status;
+  }
+  // Fallback to old system
+  if (reminder.completed) return 'completed';
+  return 'todo';
+};
+
+const getStatusLabel = (reminder: Reminder): string => {
+  const status = getStatus(reminder);
+  const labels = {
+    todo: 'À faire',
+    progress: 'En cours',
+    completed: 'Terminé'
+  };
+  return labels[status];
+};
+
+const getStatusTagType = (reminder: Reminder): 'info' | 'warning' | 'success' => {
+  const status = getStatus(reminder);
+  const types: Record<string, 'info' | 'warning' | 'success'> = {
+    todo: 'info',
+    progress: 'warning',
+    completed: 'success'
+  };
+  return types[status] || 'info';
+};
+
+const updateStatus = async (reminder: Reminder, status: 'todo' | 'progress' | 'completed') => {
+  try {
+    await remindersStore.updateReminderStatus(reminder.id, status);
+    
+    if (status === 'completed') {
+      ElMessage.success('Rappel marqué comme terminé');
+    } else if (status === 'progress') {
+      ElMessage.info('Rappel marqué comme en cours');
+    } else {
+      ElMessage.info('Rappel marqué comme à faire');
+    }
+  } catch (error) {
+    ElMessage.error('Erreur lors de la mise à jour du statut');
+  }
+};
+
+const getDaysLeftText = (reminder: Reminder): string => {
+  const today = new Date();
+  const reminderDate = new Date(reminder.date);
+  const diffTime = reminderDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) {
+    return `${Math.abs(diffDays)} jour${Math.abs(diffDays) > 1 ? 's' : ''} de retard`;
+  } else if (diffDays === 0) {
+    return 'Aujourd\'hui';
+  } else if (diffDays === 1) {
+    return 'Demain';
+  } else {
+    return `Dans ${diffDays} jours`;
+  }
+};
+
+const getDaysLeftClass = (reminder: Reminder): string => {
+  const today = new Date();
+  const reminderDate = new Date(reminder.date);
+  const diffTime = reminderDate.getTime() - today.getTime();
+  const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
+
+  if (diffDays < 0) return 'days-overdue';
+  if (diffDays === 0) return 'days-today';
+  if (diffDays <= 3) return 'days-soon';
+  return 'days-normal';
+};
+
+
 
 
 </script>
@@ -682,87 +805,72 @@ const getEmptyMessage = () => {
 
 .reminders-grid {
   display: grid;
-  gap: 20px;
+  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
+  gap: 24px;
+  max-width: 1200px;
+  margin: 0 auto;
 }
 
 .reminder-card {
-  display: flex;
-  align-items: stretch;
   background: white;
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border-radius: 16px;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
   border: 1px solid #e5e7eb;
-  border-left: 4px solid #e5e7eb;
   transition: all 0.3s ease;
   overflow: hidden;
-  min-height: 120px;
+  position: relative;
+  padding: 20px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
 .reminder-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
-  transform: translateY(-2px);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
+  transform: translateY(-4px);
 }
 
-.reminder-card.overdue {
-  border-left-color: #ef4444;
+.reminder-card.status-todo {
+  border-left: 4px solid #3b82f6;
+}
+
+.reminder-card.status-progress {
+  border-left: 4px solid #f59e0b;
+}
+
+.reminder-card.status-completed {
+  border-left: 4px solid #10b981;
+  opacity: 0.8;
+}
+
+.reminder-card.overdue:not(.status-completed) {
+  border-left: 4px solid #ef4444;
   background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
-.reminder-card.today {
-  border-left-color: #f59e0b;
-  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
+.reminder-status-tag {
+  position: absolute;
+  top: 16px;
+  right: 16px;
 }
 
-.reminder-card.completed {
-  opacity: 0.6;
-  border-left-color: #10b981;
-  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+.status-indicator {
+  font-weight: 600;
+  border-radius: 8px;
 }
 
-.reminder-checkbox-section {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  padding: 20px;
-  background: rgba(249, 250, 251, 0.8);
-  border-right: 1px solid #f3f4f6;
-  min-width: 80px;
-}
-
-.reminder-checkbox {
-  transform: scale(1.3);
-}
-
-.reminder-checkbox:hover {
-  transform: scale(1.4);
-}
-
-.reminder-main-content {
-  flex: 1;
-  padding: 20px;
-  cursor: pointer;
-  display: flex;
-  flex-direction: column;
-  justify-content: space-between;
-  min-height: 100%;
-}
-
-.reminder-main-content:hover {
-  background: rgba(249, 250, 251, 0.5);
-}
-
-.reminder-header {
+.reminder-card-header {
   display: flex;
   justify-content: space-between;
   align-items: flex-start;
-  margin-bottom: 12px;
-  gap: 16px;
+  gap: 12px;
+  margin-top: 8px;
 }
 
 .reminder-title {
   margin: 0;
-  font-size: 1.2rem;
-  font-weight: 600;
+  font-size: 1.25rem;
+  font-weight: 700;
   color: #1f2937;
   line-height: 1.4;
   flex: 1;
@@ -773,35 +881,48 @@ const getEmptyMessage = () => {
   color: #6b7280;
 }
 
-.reminder-badges {
-  display: flex;
-  gap: 8px;
-  flex-shrink: 0;
+.more-actions-btn {
+  background: transparent;
+  border: 1px solid #e5e7eb;
+  color: #6b7280;
+  transition: all 0.2s ease;
 }
 
-.type-tag, .priority-tag {
-  font-weight: 500;
-}
-
-.reminder-content {
-  flex: 1;
+.more-actions-btn:hover {
+  background: #f3f4f6;
+  border-color: #d1d5db;
+  color: #374151;
 }
 
 .reminder-description {
   color: #6b7280;
-  margin-bottom: 16px;
   line-height: 1.6;
   font-size: 0.95rem;
+  margin: 0;
 }
 
-.reminder-meta {
+.reminder-badges {
   display: flex;
-  flex-direction: column;
-  gap: 12px;
+  gap: 8px;
+  flex-wrap: wrap;
 }
 
-.reminder-date-info,
-.reminder-property-info {
+.priority-badge, .type-badge {
+  font-weight: 600;
+  border-radius: 6px;
+}
+
+.reminder-date-section {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding: 12px 16px;
+  background: rgba(249, 250, 251, 0.8);
+  border-radius: 8px;
+  margin: 4px 0;
+}
+
+.reminder-date-info {
   display: flex;
   align-items: center;
   gap: 8px;
@@ -809,8 +930,7 @@ const getEmptyMessage = () => {
   color: #6b7280;
 }
 
-.reminder-date-info .el-icon,
-.reminder-property-info .el-icon {
+.reminder-date-info .el-icon {
   font-size: 1.1rem;
   color: #9ca3af;
 }
@@ -819,50 +939,81 @@ const getEmptyMessage = () => {
   font-weight: 500;
 }
 
+.days-left {
+  font-size: 0.85rem;
+  font-weight: 600;
+  padding: 4px 8px;
+  border-radius: 4px;
+}
+
+.days-overdue {
+  background: #fef2f2;
+  color: #dc2626;
+}
+
+.days-today {
+  background: #fffbeb;
+  color: #d97706;
+}
+
+.days-soon {
+  background: #eff6ff;
+  color: #2563eb;
+}
+
+.days-normal {
+  background: #f0fdf4;
+  color: #059669;
+}
+
+.reminder-property-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 0.9rem;
+  color: #6b7280;
+  padding: 8px 12px;
+  background: rgba(243, 244, 246, 0.5);
+  border-radius: 6px;
+}
+
+.reminder-property-info .el-icon {
+  font-size: 1.1rem;
+  color: #9ca3af;
+}
+
 .sharing-tag {
   margin-left: 8px;
 }
 
-.reminder-actions-section {
-  display: flex;
-  flex-direction: column;
-  justify-content: center;
-  align-items: center;
-  gap: 8px;
-  padding: 16px 12px;
-  background: rgba(249, 250, 251, 0.8);
-  border-left: 1px solid #f3f4f6;
-  min-width: 85px;
+.reminder-status-actions {
+  margin-top: 8px;
 }
 
-.action-btn {
-  width: 36px;
-  height: 36px;
-  border-radius: 50%;
-  transition: all 0.3s ease;
-  font-size: 14px;
+.reminder-status-actions .el-button-group {
+  width: 100%;
 }
 
-.edit-btn:hover {
-  background-color: #3b82f6;
-  border-color: #3b82f6;
-  transform: scale(1.1);
+.status-btn {
+  flex: 1;
+  font-size: 0.875rem;
+  font-weight: 600;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
-.duplicate-btn:hover {
-  background-color: #10b981;
-  border-color: #10b981;
-  transform: scale(1.1);
+.status-btn:first-child {
+  border-top-right-radius: 0;
+  border-bottom-right-radius: 0;
 }
 
-.delete-btn:hover {
-  background-color: #ef4444;
-  border-color: #ef4444;
-  transform: scale(1.1);
+.status-btn:last-child {
+  border-top-left-radius: 0;
+  border-bottom-left-radius: 0;
 }
 
-.action-btn:active {
-  transform: scale(0.95);
+.status-btn:not(:first-child):not(:last-child) {
+  border-radius: 0;
 }
 
 @media (max-width: 768px) {
@@ -892,46 +1043,39 @@ const getEmptyMessage = () => {
     gap: 16px;
   }
 
+  .reminders-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
+  }
+
   .reminder-card {
-    flex-direction: column;
-    min-height: auto;
-  }
-
-  .reminder-checkbox-section {
-    flex-direction: row;
-    justify-content: flex-start;
-    padding: 16px 20px 12px 20px;
-    border-right: none;
-    border-bottom: 1px solid #f3f4f6;
-    min-width: auto;
-  }
-
-  .reminder-main-content {
-    padding: 16px 20px;
-  }
-
-  .reminder-actions-section {
-    flex-direction: row;
-    justify-content: center;
-    padding: 12px 20px 16px 20px;
-    border-left: none;
-    border-top: 1px solid #f3f4f6;
-    min-width: auto;
+    padding: 16px;
     gap: 12px;
   }
 
-  .reminder-header {
+  .reminder-card-header {
     flex-direction: column;
-    gap: 12px;
     align-items: flex-start;
+    gap: 8px;
   }
 
-  .reminder-badges {
+  .reminder-title {
+    font-size: 1.1rem;
+  }
+
+  .reminder-status-tag {
+    position: static;
     align-self: flex-end;
   }
 
-  .reminder-meta {
+  .reminder-date-section {
+    flex-direction: column;
     gap: 8px;
+    align-items: stretch;
+  }
+
+  .days-left {
+    text-align: center;
   }
 
   .add-reminder-btn {
@@ -939,9 +1083,9 @@ const getEmptyMessage = () => {
     min-width: auto;
   }
 
-  .action-btn {
-    width: 40px;
-    height: 40px;
+  .status-btn {
+    font-size: 0.8rem;
+    padding: 8px 4px;
   }
 }
 
@@ -955,7 +1099,7 @@ const getEmptyMessage = () => {
   }
 
   .reminder-title {
-    font-size: 1.1rem;
+    font-size: 1rem;
   }
 
   .empty-state {
@@ -966,17 +1110,23 @@ const getEmptyMessage = () => {
     margin-bottom: 12px;
   }
 
-  .reminder-checkbox-section {
-    padding: 12px 16px 8px 16px;
+  .reminder-card {
+    padding: 12px;
+    gap: 10px;
   }
 
-  .reminder-main-content {
-    padding: 12px 16px;
+  .reminders-grid {
+    grid-template-columns: 1fr;
+    gap: 12px;
   }
 
-  .reminder-actions-section {
-    padding: 8px 16px 12px 16px;
-    gap: 8px;
+  .reminder-date-section {
+    padding: 8px 12px;
+  }
+
+  .status-btn {
+    font-size: 0.75rem;
+    padding: 6px 2px;
   }
 }
 </style>

@@ -13,6 +13,7 @@ export interface Reminder {
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
   completed: boolean;
+  status?: 'todo' | 'progress' | 'completed'; // New status field
   sharing: boolean; // Nouveau champ pour le partage
   createdAt?: string;
   updatedAt?: string;
@@ -339,6 +340,11 @@ export const useRemindersStore = defineStore('reminders', () => {
     return updateReminder(id, { completed: false });
   };
 
+  const updateReminderStatus = async (id: string, status: 'todo' | 'progress' | 'completed') => {
+    const completed = status === 'completed';
+    return await updateReminder(id, { status, completed });
+  };
+
   const selectReminder = (reminder: Reminder | null) => {
     selectedReminder.value = reminder;
   };
@@ -419,6 +425,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     deleteReminder,
     completeReminder,
     uncompleteReminder,
+    updateReminderStatus,
     selectReminder,
     getReminderById,
     getRemindersByProperty,
