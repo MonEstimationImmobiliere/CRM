@@ -124,22 +124,39 @@
             'status-completed': getStatus(reminder) === 'completed'
           }"
         >
-          <!-- Status Tag -->
-          <div class="reminder-status-tag">
-            <el-tag 
-              :type="getStatusTagType(reminder)" 
-              size="small"
-              class="status-indicator"
-            >
-              {{ getStatusLabel(reminder) }}
-            </el-tag>
-          </div>
+
 
           <!-- Card Header -->
           <div class="reminder-card-header">
-            <h3 class="reminder-title" :class="{ 'completed-text': getStatus(reminder) === 'completed' }">
-              {{ reminder.title }}
-            </h3>
+            <div class="reminder-header-content">
+              <!-- Priority, Status and Type Badges -->
+              <div class="reminder-badges">
+                <div 
+                  class="priority-badge"
+                  :class="reminder.priority"
+                >
+                  <el-icon><Flag /></el-icon>
+                  {{ getPriorityLabel(reminder.priority) }}
+                </div>
+                <div 
+                  class="status-indicator"
+                  :class="getStatus(reminder)"
+                >
+                  <el-icon v-if="getStatus(reminder) === 'completed'"><Check /></el-icon>
+                  {{ getStatusLabel(reminder) }}
+                </div>
+              </div>
+              
+              <!-- Title -->
+              <h3 class="reminder-title" :class="{ 'completed-text': getStatus(reminder) === 'completed' }">
+                {{ reminder.title }}
+              </h3>
+              
+              <!-- Description -->
+              <div v-if="reminder.description" class="reminder-description">
+                {{ reminder.description }}
+              </div>
+            </div>
             
             <!-- Three Dot Menu -->
             <el-dropdown 
@@ -180,20 +197,8 @@
             </el-dropdown>
           </div>
 
-          <!-- Description -->
-          <div v-if="reminder.description" class="reminder-description">
-            {{ reminder.description }}
-          </div>
-
-          <!-- Priority and Type Badges -->
-          <div class="reminder-badges">
-            <el-tag 
-              :type="getPriorityType(reminder.priority)" 
-              size="small"
-              class="priority-badge"
-            >
-              {{ getPriorityLabel(reminder.priority) }}
-            </el-tag>
+          <!-- Type Tag -->
+          <div v-if="reminder.type" class="reminder-type-section">
             <el-tag 
               :type="getTypeColor(reminder.type)" 
               size="small"
@@ -203,29 +208,36 @@
             </el-tag>
           </div>
 
-          <!-- Date and Days Left -->
-          <div class="reminder-date-section">
-            <div class="reminder-date-info">
-              <el-icon><Calendar /></el-icon>
-              <span class="date-text">{{ formatDate(reminder.date) }}</span>
-            </div>
-            <div class="days-left" :class="getDaysLeftClass(reminder)">
-              {{ getDaysLeftText(reminder) }}
-            </div>
-          </div>
+          <!-- Card Content -->
+          <div class="reminder-content">
+            <!-- Date and Property Info -->
+            <div class="reminder-meta-info">
+              <div class="reminder-date-info" :class="{ 'overdue-date': isReminderOverdue(reminder) }">
+                <el-icon><Calendar /></el-icon>
+                <span class="date-text">{{ formatDate(reminder.date) }}</span>
+              </div>
 
-          <!-- Property Info -->
-          <div class="reminder-property-info">
-            <el-icon><House /></el-icon>
-            <span>Propriété ID: {{ reminder.property_id }}</span>
-            <el-tag v-if="reminder.sharing" type="success" size="small" class="sharing-tag">
-              Partagé
-            </el-tag>
+              <div class="reminder-extra-info">
+                <div class="days-left" :class="getDaysLeftClass(reminder)">
+                  {{ getDaysLeftText(reminder) }}
+                </div>
+
+                <div class="reminder-property-info">
+                  <el-icon><House /></el-icon>
+                  <span>{{ reminder.property_id }}</span>
+                </div>
+
+                <div v-if="reminder.sharing" class="sharing-info">
+                  <el-icon><User /></el-icon>
+                  <span>Partagé</span>
+                </div>
+              </div>
+            </div>
           </div>
 
           <!-- Status Action Buttons -->
           <div class="reminder-status-actions">
-            <el-button-group>
+            <div class="status-buttons-container">
               <el-button 
                 :type="getStatus(reminder) === 'todo' ? 'primary' : ''"
                 :plain="getStatus(reminder) !== 'todo'"
@@ -253,7 +265,7 @@
               >
                 Terminé
               </el-button>
-            </el-button-group>
+            </div>
           </div>
         </div>
       </div>
@@ -336,7 +348,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
 import { 
   Plus, Warning, Calendar, Clock, Check, Document, 
-  MoreFilled, Edit, Delete, House, User, DocumentCopy
+  MoreFilled, Edit, Delete, House, User, DocumentCopy, Flag
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
@@ -812,51 +824,44 @@ const getDaysLeftClass = (reminder: Reminder): string => {
 }
 
 .reminder-card {
-  background: white;
-  border-radius: 16px;
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.1);
-  border: 1px solid #e5e7eb;
-  transition: all 0.3s ease;
+  background: rgba(255, 255, 255, 0.9);
+  backdrop-filter: blur(8px);
+  border-radius: 12px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  border: 1px solid rgba(229, 231, 235, 0.5);
+  transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
   padding: 20px;
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: 12px;
+
 }
 
 .reminder-card:hover {
-  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.15);
-  transform: translateY(-4px);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  border-color: #e5e7eb;
+  background: rgba(255, 255, 255, 0.95);
+  transform: translateY(-2px);
 }
 
 .reminder-card.status-todo {
-  border-left: 4px solid #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
 }
 
 .reminder-card.status-progress {
-  border-left: 4px solid #f59e0b;
+  border-color: rgba(245, 158, 11, 0.3);
 }
 
 .reminder-card.status-completed {
-  border-left: 4px solid #10b981;
+  border-color: rgba(16, 185, 129, 0.3);
   opacity: 0.8;
 }
 
 .reminder-card.overdue:not(.status-completed) {
-  border-left: 4px solid #ef4444;
-  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
-}
-
-.reminder-status-tag {
-  position: absolute;
-  top: 16px;
-  right: 16px;
-}
-
-.status-indicator {
-  font-weight: 600;
-  border-radius: 8px;
+  border-color: rgba(239, 68, 68, 0.3);
+  background: rgba(254, 242, 242, 0.5);
 }
 
 .reminder-card-header {
@@ -864,16 +869,71 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   justify-content: space-between;
   align-items: flex-start;
   gap: 12px;
-  margin-top: 8px;
+  padding-bottom: 12px;
+}
+
+.reminder-header-content {
+  flex: 1;
+  min-width: 0;
+}
+
+.reminder-badges {
+  display: flex;
+  gap: 8px;
+  flex-wrap: wrap;
+  margin-bottom: 8px;
+}
+
+.priority-badge, .type-badge, .status-indicator {
+  font-weight: 500;
+  font-size: 0.75rem;
+  padding: 2px 8px;
+  border-radius: 6px;
+  border: 1px solid currentColor;
+  background: transparent;
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+}
+
+.priority-badge.high {
+  color: #dc2626;
+  border-color: rgba(220, 38, 38, 0.3);
+}
+
+.priority-badge.medium {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.priority-badge.low {
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.3);
+}
+
+.status-indicator.todo {
+  color: #3b82f6;
+  border-color: rgba(59, 130, 246, 0.3);
+}
+
+.status-indicator.progress {
+  color: #d97706;
+  border-color: rgba(217, 119, 6, 0.3);
+}
+
+.status-indicator.completed {
+  color: #059669;
+  border-color: rgba(5, 150, 105, 0.3);
 }
 
 .reminder-title {
   margin: 0;
-  font-size: 1.25rem;
-  font-weight: 700;
+  font-size: 1rem;
+  font-weight: 600;
   color: #1f2937;
   line-height: 1.4;
-  flex: 1;
+  word-wrap: break-word;
+  hyphens: auto;
 }
 
 .reminder-title.completed-text {
@@ -883,67 +943,96 @@ const getDaysLeftClass = (reminder: Reminder): string => {
 
 .more-actions-btn {
   background: transparent;
-  border: 1px solid #e5e7eb;
+  border: none;
   color: #6b7280;
   transition: all 0.2s ease;
+  opacity: 0;
+  width: 32px;
+  height: 32px;
+  padding: 0;
+  border-radius: 6px;
+}
+
+.reminder-card:hover .more-actions-btn {
+  opacity: 1;
 }
 
 .more-actions-btn:hover {
   background: #f3f4f6;
-  border-color: #d1d5db;
   color: #374151;
 }
 
 .reminder-description {
   color: #6b7280;
   line-height: 1.6;
-  font-size: 0.95rem;
-  margin: 0;
+  font-size: 0.875rem;
+  margin: 4px 0 0 0;
+  display: -webkit-box;
+  -webkit-line-clamp: 2;
+  line-clamp: 2;
+  -webkit-box-orient: vertical;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
-.reminder-badges {
-  display: flex;
-  gap: 8px;
-  flex-wrap: wrap;
+.reminder-type-section {
+  margin-top: 8px;
 }
 
-.priority-badge, .type-badge {
-  font-weight: 600;
+.type-badge {
+  font-weight: 500;
   border-radius: 6px;
+  font-size: 0.75rem;
+  padding: 4px 8px;
 }
 
-.reminder-date-section {
+.reminder-content {
+  padding-top: 0;
+}
+
+.reminder-meta-info {
   display: flex;
-  justify-content: space-between;
-  align-items: center;
-  padding: 12px 16px;
-  background: rgba(249, 250, 251, 0.8);
-  border-radius: 8px;
-  margin: 4px 0;
+  flex-direction: column;
+  gap: 12px;
 }
 
 .reminder-date-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 6px;
+  font-size: 0.875rem;
   color: #6b7280;
 }
 
+.reminder-date-info.overdue-date {
+  color: #dc2626;
+}
+
 .reminder-date-info .el-icon {
-  font-size: 1.1rem;
-  color: #9ca3af;
+  font-size: 1rem;
+  color: currentColor;
 }
 
 .date-text {
-  font-weight: 500;
+  font-weight: 400;
+}
+
+.reminder-extra-info {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 12px;
+  font-size: 0.875rem;
+  color: #6b7280;
 }
 
 .days-left {
-  font-size: 0.85rem;
-  font-weight: 600;
-  padding: 4px 8px;
+  font-size: 0.75rem;
+  font-weight: 500;
+  padding: 2px 6px;
   border-radius: 4px;
+  white-space: nowrap;
 }
 
 .days-overdue {
@@ -966,54 +1055,40 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   color: #059669;
 }
 
-.reminder-property-info {
+.reminder-property-info,
+.sharing-info {
   display: flex;
   align-items: center;
-  gap: 8px;
-  font-size: 0.9rem;
+  gap: 4px;
+  font-size: 0.875rem;
   color: #6b7280;
-  padding: 8px 12px;
-  background: rgba(243, 244, 246, 0.5);
-  border-radius: 6px;
 }
 
-.reminder-property-info .el-icon {
-  font-size: 1.1rem;
-  color: #9ca3af;
-}
-
-.sharing-tag {
-  margin-left: 8px;
+.reminder-property-info .el-icon,
+.sharing-info .el-icon {
+  font-size: 1rem;
+  color: currentColor;
 }
 
 .reminder-status-actions {
-  margin-top: 8px;
+  margin-top: 12px;
+  padding-top: 12px;
+  border-top: 1px solid rgba(229, 231, 235, 0.5);
 }
 
-.reminder-status-actions .el-button-group {
-  width: 100%;
+.status-buttons-container {
+  display: flex;
+  gap: 8px;
 }
 
 .status-btn {
   flex: 1;
-  font-size: 0.875rem;
-  font-weight: 600;
+  font-size: 0.75rem;
+  font-weight: 500;
   border-radius: 6px;
   transition: all 0.2s ease;
-}
-
-.status-btn:first-child {
-  border-top-right-radius: 0;
-  border-bottom-right-radius: 0;
-}
-
-.status-btn:last-child {
-  border-top-left-radius: 0;
-  border-bottom-left-radius: 0;
-}
-
-.status-btn:not(:first-child):not(:last-child) {
-  border-radius: 0;
+  padding: 6px 8px;
+  min-height: 32px;
 }
 
 @media (max-width: 768px) {
@@ -1054,28 +1129,34 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   }
 
   .reminder-card-header {
+    flex-direction: row;
+    align-items: flex-start;
+    gap: 8px;
+  }
+
+  .reminder-header-content {
+    width: 100%;
+  }
+
+  .reminder-badges {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+
+  .reminder-title {
+    font-size: 1rem;
+  }
+
+  .reminder-extra-info {
     flex-direction: column;
     align-items: flex-start;
     gap: 8px;
   }
 
-  .reminder-title {
-    font-size: 1.1rem;
-  }
-
-  .reminder-status-tag {
-    position: static;
-    align-self: flex-end;
-  }
-
-  .reminder-date-section {
-    flex-direction: column;
-    gap: 8px;
-    align-items: stretch;
-  }
-
-  .days-left {
-    text-align: center;
+  .more-actions-btn {
+    opacity: 1;
   }
 
   .add-reminder-btn {
@@ -1120,13 +1201,14 @@ const getDaysLeftClass = (reminder: Reminder): string => {
     gap: 12px;
   }
 
-  .reminder-date-section {
-    padding: 8px 12px;
+  .status-btn {
+    font-size: 0.7rem;
+    padding: 4px 6px;
+    min-height: 28px;
   }
 
-  .status-btn {
-    font-size: 0.75rem;
-    padding: 6px 2px;
+  .reminder-extra-info {
+    gap: 6px;
   }
 }
 </style>
