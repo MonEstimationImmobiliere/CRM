@@ -80,6 +80,19 @@
       </div>
     </div>
 
+    <!-- Add Button -->
+    <div class="add-reminder-section">
+      <el-button 
+        type="primary" 
+        size="large" 
+        @click="showCreateDialog = true"
+        class="add-reminder-btn"
+      >
+        <el-icon><Plus /></el-icon>
+        Nouveau rappel
+      </el-button>
+    </div>
+
     <!-- Reminders List -->
     <div class="reminders-list">
       <el-card v-if="filteredReminders.length === 0" class="empty-state">
@@ -87,11 +100,19 @@
           <el-icon class="empty-icon"><Document /></el-icon>
           <h3>Aucun rappel trouvé</h3>
           <p>{{ getEmptyMessage() }}</p>
+          <el-button 
+            type="primary" 
+            @click="showCreateDialog = true"
+            style="margin-top: 16px;"
+          >
+            <el-icon><Plus /></el-icon>
+            Créer mon premier rappel
+          </el-button>
         </div>
       </el-card>
 
       <div v-else class="reminders-grid">
-        <el-card 
+        <div 
           v-for="reminder in filteredReminders" 
           :key="reminder.id" 
           class="reminder-card"
@@ -100,77 +121,111 @@
             'today': isReminderToday(reminder),
             'completed': reminder.completed
           }"
-          @click="selectReminder(reminder)"
         >
-          <div class="reminder-header">
-            <div class="reminder-title">
+          <!-- Left Section: Checkbox -->
+          <div class="reminder-checkbox-section">
+            <el-tooltip 
+              :content="reminder.completed ? 'Marquer comme non terminé' : 'Marquer comme terminé'" 
+              placement="right" 
+              :show-after="500"
+            >
               <el-checkbox 
                 v-model="reminder.completed" 
                 @change="toggleComplete(reminder)"
-                @click.stop
+                size="large"
+                class="reminder-checkbox"
               />
-              <h3>{{ reminder.title }}</h3>
-            </div>
-            <div class="reminder-actions">
-              <el-tag 
-                :type="getPriorityType(reminder.priority)" 
-                size="small"
-              >
-                {{ getPriorityLabel(reminder.priority) }}
-              </el-tag>
-              <el-dropdown @command="handleAction">
-                <el-button type="text" @click.stop>
-                  <el-icon><MoreFilled /></el-icon>
-                </el-button>
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item :command="{action: 'edit', reminder}">
-                      <el-icon><Edit /></el-icon>
-                      Modifier
-                    </el-dropdown-item>
-                    <el-dropdown-item :command="{action: 'delete', reminder}" divided>
-                      <el-icon><Delete /></el-icon>
-                      Supprimer
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-            </div>
+            </el-tooltip>
           </div>
 
-          <div class="reminder-content">
-            <p v-if="reminder.description" class="reminder-description">
-              {{ reminder.description }}
-            </p>
-            
-            <div class="reminder-details">
-              <div class="reminder-date">
-                <el-icon><Calendar /></el-icon>
-                <span>{{ formatDate(reminder.date) }}</span>
-                <el-tag v-if="isReminderOverdue(reminder)" type="danger" size="small">
-                  En retard
+          <!-- Main Content -->
+          <div class="reminder-main-content" @click="selectReminder(reminder)">
+            <div class="reminder-header">
+              <h3 class="reminder-title" :class="{ 'completed-text': reminder.completed }">
+                {{ reminder.title }}
+              </h3>
+              <div class="reminder-badges">
+                <el-tag 
+                  :type="getTypeColor(reminder.type)" 
+                  size="small"
+                  class="type-tag"
+                >
+                  {{ getTypeLabel(reminder.type) }}
                 </el-tag>
-                <el-tag v-else-if="isReminderToday(reminder)" type="warning" size="small">
-                  Aujourd'hui
+                <el-tag 
+                  :type="getPriorityType(reminder.priority)" 
+                  size="small"
+                  class="priority-tag"
+                >
+                  {{ getPriorityLabel(reminder.priority) }}
                 </el-tag>
               </div>
+            </div>
+
+            <div class="reminder-content">
+              <p v-if="reminder.description" class="reminder-description">
+                {{ reminder.description }}
+              </p>
               
-              <div class="reminder-property">
-                <el-icon><House /></el-icon>
-                <span>Propriété ID: {{ reminder.property_id }}</span>
-                <el-tag v-if="reminder.sharing" type="success" size="small" style="margin-left: 8px;">
-                  Partagé
-                </el-tag>
+              <div class="reminder-meta">
+                <div class="reminder-date-info">
+                  <el-icon><Calendar /></el-icon>
+                  <span class="date-text">{{ formatDate(reminder.date) }}</span>
+                  <el-tag v-if="isReminderOverdue(reminder)" type="danger" size="small">
+                    En retard
+                  </el-tag>
+                  <el-tag v-else-if="isReminderToday(reminder)" type="warning" size="small">
+                    Aujourd'hui
+                  </el-tag>
+                </div>
+                
+                <div class="reminder-property-info">
+                  <el-icon><House /></el-icon>
+                  <span>Propriété ID: {{ reminder.property_id }}</span>
+                  <el-tag v-if="reminder.sharing" type="success" size="small" class="sharing-tag">
+                    Partagé
+                  </el-tag>
+                </div>
               </div>
             </div>
           </div>
 
-          <div class="reminder-type">
-            <el-tag :type="getTypeColor(reminder.type)" size="small">
-              {{ getTypeLabel(reminder.type) }}
-            </el-tag>
+          <!-- Right Section: Actions -->
+          <div class="reminder-actions-section">
+            <el-tooltip content="Modifier le rappel" placement="left" :show-after="500">
+              <el-button 
+                type="primary" 
+                :icon="Edit" 
+                circle
+                size="small"
+                @click.stop="editReminder(reminder)"
+                class="action-btn edit-btn"
+              />
+            </el-tooltip>
+            
+            <el-tooltip content="Dupliquer le rappel" placement="left" :show-after="500">
+              <el-button 
+                type="success" 
+                :icon="DocumentCopy" 
+                circle
+                size="small"
+                @click.stop="duplicateReminder(reminder)"
+                class="action-btn duplicate-btn"
+              />
+            </el-tooltip>
+            
+            <el-tooltip content="Supprimer le rappel" placement="left" :show-after="500">
+              <el-button 
+                type="danger" 
+                :icon="Delete" 
+                circle
+                size="small"
+                @click.stop="deleteReminder(reminder)"
+                class="action-btn delete-btn"
+              />
+            </el-tooltip>
           </div>
-        </el-card>
+        </div>
       </div>
     </div>
 
@@ -243,7 +298,7 @@ import { ref, computed, onMounted } from 'vue';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
 import { 
   Plus, Warning, Calendar, Clock, Check, Document, 
-  MoreFilled, Edit, Delete, House, User
+  MoreFilled, Edit, Delete, House, User, DocumentCopy
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
@@ -356,6 +411,22 @@ const editReminder = (reminder: Reminder) => {
     property_id: reminder.property_id,
   };
   showCreateDialog.value = true;
+};
+
+const duplicateReminder = (reminder: Reminder) => {
+  const duplicatedReminder = {
+    title: `${reminder.title} (Copie)`,
+    description: reminder.description || '',
+    date: reminder.date,
+    type: reminder.type,
+    priority: reminder.priority,
+    sharing: reminder.sharing || false,
+    property_id: reminder.property_id,
+    completed: false,
+  };
+
+  remindersStore.addReminder(duplicatedReminder);
+  ElMessage.success('Rappel dupliqué avec succès');
 };
 
 const deleteReminder = async (reminder: Reminder) => {
@@ -560,64 +631,124 @@ const getEmptyMessage = () => {
   gap: 12px;
 }
 
+.add-reminder-section {
+  display: flex;
+  justify-content: center;
+  margin-bottom: 32px;
+}
+
+.add-reminder-btn {
+  padding: 12px 32px;
+  border-radius: 8px;
+  font-size: 1rem;
+  font-weight: 600;
+  min-width: 180px;
+}
+
 .reminders-list {
   min-height: 400px;
 }
 
 .empty-state {
   text-align: center;
-  padding: 60px 20px;
+  padding: 80px 20px;
+  background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
+  border: 2px dashed #cbd5e1;
+  border-radius: 12px;
 }
 
 .empty-content {
-  max-width: 300px;
+  max-width: 400px;
   margin: 0 auto;
 }
 
 .empty-icon {
   font-size: 4rem;
-  color: #d1d5db;
-  margin-bottom: 16px;
+  color: #94a3b8;
+  margin-bottom: 20px;
 }
 
 .empty-content h3 {
   color: #374151;
-  margin-bottom: 8px;
+  margin-bottom: 12px;
+  font-size: 1.25rem;
 }
 
 .empty-content p {
   color: #6b7280;
+  font-size: 1rem;
+  margin-bottom: 0;
 }
 
 .reminders-grid {
   display: grid;
-  gap: 16px;
+  gap: 20px;
 }
 
 .reminder-card {
-  transition: all 0.3s ease;
-  cursor: pointer;
+  display: flex;
+  align-items: stretch;
+  background: white;
+  border-radius: 12px;
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.08);
+  border: 1px solid #e5e7eb;
   border-left: 4px solid #e5e7eb;
+  transition: all 0.3s ease;
+  overflow: hidden;
+  min-height: 120px;
 }
 
 .reminder-card:hover {
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 8px 25px rgba(0, 0, 0, 0.12);
   transform: translateY(-2px);
 }
 
 .reminder-card.overdue {
-  border-left-color: #f56565;
-  background-color: #fef2f2;
+  border-left-color: #ef4444;
+  background: linear-gradient(135deg, #ffffff 0%, #fef2f2 100%);
 }
 
 .reminder-card.today {
-  border-left-color: #ed8936;
-  background-color: #fffbeb;
+  border-left-color: #f59e0b;
+  background: linear-gradient(135deg, #ffffff 0%, #fffbeb 100%);
 }
 
 .reminder-card.completed {
-  opacity: 0.7;
-  border-left-color: #48bb78;
+  opacity: 0.6;
+  border-left-color: #10b981;
+  background: linear-gradient(135deg, #ffffff 0%, #f0fdf4 100%);
+}
+
+.reminder-checkbox-section {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 20px;
+  background: rgba(249, 250, 251, 0.8);
+  border-right: 1px solid #f3f4f6;
+  min-width: 80px;
+}
+
+.reminder-checkbox {
+  transform: scale(1.3);
+}
+
+.reminder-checkbox:hover {
+  transform: scale(1.4);
+}
+
+.reminder-main-content {
+  flex: 1;
+  padding: 20px;
+  cursor: pointer;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  min-height: 100%;
+}
+
+.reminder-main-content:hover {
+  background: rgba(249, 250, 251, 0.5);
 }
 
 .reminder-header {
@@ -625,74 +756,124 @@ const getEmptyMessage = () => {
   justify-content: space-between;
   align-items: flex-start;
   margin-bottom: 12px;
+  gap: 16px;
 }
 
 .reminder-title {
-  display: flex;
-  align-items: center;
-  gap: 12px;
+  margin: 0;
+  font-size: 1.2rem;
+  font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
   flex: 1;
 }
 
-.reminder-title h3 {
-  margin: 0;
-  font-size: 1.125rem;
-  font-weight: 600;
-  color: #1f2937;
+.reminder-title.completed-text {
+  text-decoration: line-through;
+  color: #6b7280;
 }
 
-.reminder-actions {
+.reminder-badges {
   display: flex;
-  align-items: center;
   gap: 8px;
+  flex-shrink: 0;
+}
+
+.type-tag, .priority-tag {
+  font-weight: 500;
 }
 
 .reminder-content {
-  margin-bottom: 16px;
+  flex: 1;
 }
 
 .reminder-description {
   color: #6b7280;
-  margin-bottom: 12px;
-  line-height: 1.5;
+  margin-bottom: 16px;
+  line-height: 1.6;
+  font-size: 0.95rem;
 }
 
-.reminder-details {
+.reminder-meta {
   display: flex;
   flex-direction: column;
-  gap: 8px;
+  gap: 12px;
 }
 
-.reminder-date,
-.reminder-property,
-.reminder-owner {
+.reminder-date-info,
+.reminder-property-info {
   display: flex;
   align-items: center;
   gap: 8px;
-  font-size: 0.875rem;
+  font-size: 0.9rem;
   color: #6b7280;
 }
 
-.reminder-date .el-icon,
-.reminder-property .el-icon,
-.reminder-owner .el-icon {
-  font-size: 1rem;
-}
-
-.contact-info {
+.reminder-date-info .el-icon,
+.reminder-property-info .el-icon {
+  font-size: 1.1rem;
   color: #9ca3af;
-  font-size: 0.8rem;
 }
 
-.reminder-type {
+.date-text {
+  font-weight: 500;
+}
+
+.sharing-tag {
+  margin-left: 8px;
+}
+
+.reminder-actions-section {
   display: flex;
-  justify-content: flex-end;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  gap: 8px;
+  padding: 16px 12px;
+  background: rgba(249, 250, 251, 0.8);
+  border-left: 1px solid #f3f4f6;
+  min-width: 85px;
+}
+
+.action-btn {
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  transition: all 0.3s ease;
+  font-size: 14px;
+}
+
+.edit-btn:hover {
+  background-color: #3b82f6;
+  border-color: #3b82f6;
+  transform: scale(1.1);
+}
+
+.duplicate-btn:hover {
+  background-color: #10b981;
+  border-color: #10b981;
+  transform: scale(1.1);
+}
+
+.delete-btn:hover {
+  background-color: #ef4444;
+  border-color: #ef4444;
+  transform: scale(1.1);
+}
+
+.action-btn:active {
+  transform: scale(0.95);
 }
 
 @media (max-width: 768px) {
+  .reminders-page {
+    padding: 16px;
+  }
+
   .reminders-filters {
     flex-direction: column;
     align-items: stretch;
+    gap: 16px;
   }
   
   .filter-actions {
@@ -709,6 +890,93 @@ const getEmptyMessage = () => {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;
+  }
+
+  .reminder-card {
+    flex-direction: column;
+    min-height: auto;
+  }
+
+  .reminder-checkbox-section {
+    flex-direction: row;
+    justify-content: flex-start;
+    padding: 16px 20px 12px 20px;
+    border-right: none;
+    border-bottom: 1px solid #f3f4f6;
+    min-width: auto;
+  }
+
+  .reminder-main-content {
+    padding: 16px 20px;
+  }
+
+  .reminder-actions-section {
+    flex-direction: row;
+    justify-content: center;
+    padding: 12px 20px 16px 20px;
+    border-left: none;
+    border-top: 1px solid #f3f4f6;
+    min-width: auto;
+    gap: 12px;
+  }
+
+  .reminder-header {
+    flex-direction: column;
+    gap: 12px;
+    align-items: flex-start;
+  }
+
+  .reminder-badges {
+    align-self: flex-end;
+  }
+
+  .reminder-meta {
+    gap: 8px;
+  }
+
+  .add-reminder-btn {
+    width: 100%;
+    min-width: auto;
+  }
+
+  .action-btn {
+    width: 40px;
+    height: 40px;
+  }
+}
+
+@media (max-width: 480px) {
+  .reminders-page {
+    padding: 12px;
+  }
+
+  .reminders-header h1 {
+    font-size: 1.5rem;
+  }
+
+  .reminder-title {
+    font-size: 1.1rem;
+  }
+
+  .empty-state {
+    padding: 60px 16px;
+  }
+
+  .stat-card {
+    margin-bottom: 12px;
+  }
+
+  .reminder-checkbox-section {
+    padding: 12px 16px 8px 16px;
+  }
+
+  .reminder-main-content {
+    padding: 12px 16px;
+  }
+
+  .reminder-actions-section {
+    padding: 8px 16px 12px 16px;
+    gap: 8px;
   }
 }
 </style>
