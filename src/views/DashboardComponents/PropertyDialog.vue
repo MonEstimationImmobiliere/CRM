@@ -1,10 +1,10 @@
 <script setup lang="ts">
 import { computed, ref } from "vue";
-import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker, ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage } from "element-plus";
+import { ElDialog, ElForm, ElIcon, ElFormItem, ElInput, ElInputNumber, ElRadioGroup, ElRadioButton, ElCheckbox, ElRow, ElCol, ElButton, ElSelect, ElOption, ElCard, ElDrawer, ElDatePicker, ElDropdown, ElDropdownMenu, ElDropdownItem, ElMessage, ElTag, ElTabs, ElTabPane } from "element-plus";
 import { usePropertyStore } from "../../stores/propertyHome";
 import { useRemindersStore } from "../../stores/reminders";
 import { useDashboardStore } from "../../stores/dashboard";
-import { CircleCloseFilled, ArrowDown, Close, Plus, Star, StarFilled } from "@element-plus/icons-vue";
+import { CircleCloseFilled, Star, StarFilled, Warning, Calendar, Clock, Check } from "@element-plus/icons-vue";
 
 // Property interface
 interface Property {
@@ -138,37 +138,22 @@ const reminderDate = computed({
   }
 });
 
-// Variables pour la gestion des rappels multiples
+// Variables pour la gestion du rappel unique
 const showReminderDialog = ref(false);
-const reminderDialogMode = ref('');
-const multipleReminders = ref<Array<{
-  title: string;
-  description: string;
-  date: string;
-  type: 'rappel' | 'estimation' | 'visite' | 'autre';
-  priority: 'low' | 'medium' | 'high';
-  sharing: boolean;
-}>>([
-  { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false }
-]);
+const reminderForm = ref({
+  title: '',
+  description: '',
+  date: '',
+  type: 'rappel' as 'rappel' | 'estimation' | 'visite' | 'autre',
+  priority: 'medium' as 'low' | 'medium' | 'high',
+  sharing: false
+});
 
-// Méthode pour gérer les commandes du dropdown de rappels
-const handleReminderCommand = (command: string) => {
-  reminderDialogMode.value = command;
-  
-  if (command === 'single') {
-    createSingleReminder();
-  } else if (command === 'multiple') {
-    showReminderDialog.value = true;
-    initializeMultipleReminders();
-  } else if (command === 'recurring') {
-    showReminderDialog.value = true;
-    // TODO: Implement recurring reminders
-  }
-};
+// Variable pour l'onglet actif
+const activeTab = ref('contact');
 
-// Créer un rappel simple
-const createSingleReminder = () => {
+// Ouvrir la modal de création de rappel
+const openReminderDialog = () => {
   if (!store.selectedProperty?.id_fantoir_long) return;
   
   const today = new Date();
@@ -176,98 +161,204 @@ const createSingleReminder = () => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty?.nom_commune || '';
   
-  remindersStore.addReminder({
+  // Pré-remplir le formulaire avec des valeurs par défaut
+  reminderForm.value = {
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
-    description: 'Rappel simple pour cette propriété',
+    description: '',
     date: tomorrow.toISOString().split('T')[0],
     type: 'rappel',
     priority: 'medium',
-    sharing: false,
-    property_id: store.selectedProperty.id_fantoir_long,
-    completed: false,
-  });
+    sharing: false
+  };
   
-  // Notification de succès
-  ElMessage({
-    message: 'Rappel simple créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
+  showReminderDialog.value = true;
 };
 
-// Initialiser les rappels multiples
-const initializeMultipleReminders = () => {
-  multipleReminders.value = [
-    { title: '', description: '', date: '', type: 'rappel', priority: 'medium', sharing: false },
-    { title: '', description: '', date: '', type: 'estimation', priority: 'medium', sharing: false },
-    { title: '', description: '', date: '', type: 'visite', priority: 'medium', sharing: false }
-  ];
-};
-
-// Ajouter un nouveau rappel à la liste
-const addReminderToList = () => {
-  multipleReminders.value.push({
+// Réinitialiser le formulaire de rappel
+const resetReminderForm = () => {
+  reminderForm.value = {
     title: '',
     description: '',
     date: '',
     type: 'rappel',
     priority: 'medium',
     sharing: false
-  });
+  };
 };
 
-// Supprimer un rappel de la liste
-const removeReminderFromList = (index: number) => {
-  if (multipleReminders.value.length > 1) {
-    multipleReminders.value.splice(index, 1);
-  }
-};
-
-// Sauvegarder les rappels multiples
-const saveMultipleReminders = () => {
+// Sauvegarder le rappel
+const saveReminder = () => {
   if (!store.selectedProperty?.id_fantoir_long) return;
   
-  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-  const propertyCity = store.selectedProperty?.nom_commune || '';
-  
-  let validReminders = 0;
-  
-  multipleReminders.value.forEach((reminder, index) => {
-    if (reminder.title && reminder.date) {
-      remindersStore.addReminder({
-        title: reminder.title || `Rappel ${index + 1} - ${propertyAddress}`,
-        description: reminder.description || `Rappel ${index + 1} pour cette propriété`,
-        date: reminder.date,
-        type: reminder.type,
-        priority: reminder.priority,
-        sharing: reminder.sharing,
-        property_id: store.selectedProperty!.id_fantoir_long,
-        completed: false,
-      });
-      validReminders++;
-    }
-  });
-  
-  if (validReminders > 0) {
+  if (!reminderForm.value.title || !reminderForm.value.date) {
     ElMessage({
-      message: `${validReminders} rappel(s) créé(s) avec succès !`,
-      type: 'success',
-      duration: 3000,
-    });
-    showReminderDialog.value = false;
-  } else {
-    ElMessage({
-      message: 'Veuillez remplir au moins un titre et une date.',
+      message: 'Veuillez remplir au moins le titre et la date.',
       type: 'warning',
       duration: 3000,
     });
+    return;
+  }
+  
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id_fantoir_long,
+    completed: false,
+  });
+  
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+  
+  showReminderDialog.value = false;
+  resetReminderForm();
+};
+
+// Sauvegarder le rappel et en créer un autre
+const saveReminderAndAddAnother = () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+  
+  if (!reminderForm.value.title || !reminderForm.value.date) {
+    ElMessage({
+      message: 'Veuillez remplir au moins le titre et la date.',
+      type: 'warning',
+      duration: 3000,
+    });
+    return;
+  }
+  
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id_fantoir_long,
+    completed: false,
+  });
+  
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+  
+  // Réinitialiser le formulaire mais garder la modal ouverte
+  const propertyAddress = `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  
+  reminderForm.value = {
+    title: `Rappel - ${propertyAddress || 'Propriété'}`,
+    description: '',
+    date: tomorrow.toISOString().split('T')[0],
+    type: 'rappel',
+    priority: 'medium',
+    sharing: false
+  };
+};
+
+// Computed properties pour les rappels de la propriété
+const propertyReminders = computed(() => {
+  const propertyId = store.selectedProperty?.id_fantoir_long || "example_property_id_1";
+  return remindersStore.getRemindersByProperty(propertyId);
+});
+
+const sortedPropertyReminders = computed(() => {
+  return [...propertyReminders.value].sort((a, b) => {
+    // Trier par date puis par priorité
+    if (a.date !== b.date) {
+      return b.date.localeCompare(a.date); // Plus récent en premier
+    }
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    return priorityOrder[b.priority] - priorityOrder[a.priority];
+  });
+});
+
+const overdueCounts = computed(() => {
+  return propertyReminders.value.filter(r => 
+    remindersStore.isReminderOverdue(r)
+  ).length;
+});
+
+const todayCounts = computed(() => {
+  return propertyReminders.value.filter(r => 
+    remindersStore.isReminderToday(r) && !r.completed
+  ).length;
+});
+
+const pendingCounts = computed(() => {
+  return propertyReminders.value.filter(r => 
+    !r.completed && !remindersStore.isReminderOverdue(r) && !remindersStore.isReminderToday(r)
+  ).length;
+});
+
+const completedCounts = computed(() => {
+  return propertyReminders.value.filter(r => r.completed).length;
+});
+
+// Fonctions utilitaires
+const toggleReminderComplete = (reminder: any) => {
+  if (reminder.completed) {
+    remindersStore.completeReminder(reminder.id);
+    ElMessage.success('Rappel marqué comme terminé');
+  } else {
+    remindersStore.uncompleteReminder(reminder.id);
+    ElMessage.info('Rappel marqué comme non terminé');
   }
 };
 
+const getPriorityType = (priority: string): 'success' | 'warning' | 'danger' | 'info' => {
+  const types = { high: 'danger', medium: 'warning', low: 'info' } as const;
+  return types[priority as keyof typeof types] || 'info';
+};
+
+const getPriorityLabel = (priority: string) => {
+  const labels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
+  return labels[priority as keyof typeof labels] || priority;
+};
+
+const getTypeColor = (type: string): 'success' | 'warning' | 'danger' | 'info' => {
+  const colors = { 
+    rappel: 'info', 
+    estimation: 'success', 
+    visite: 'warning', 
+    autre: 'info' 
+  } as const;
+  return colors[type as keyof typeof colors] || 'info';
+};
+
+const getTypeLabel = (type: string) => {
+  const labels = { 
+    rappel: 'Rappel', 
+    estimation: 'Estimation', 
+    visite: 'Visite', 
+    autre: 'Autre' 
+  };
+  return labels[type as keyof typeof labels] || type;
+};
+
+const formatReminderDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
 // Gestion des favoris
-/*const toggleFavorite = async () => {
+const toggleFavorite = async () => {
   
   if (!store.selectedProperty?.id_fantoir_long) {
     console.log('No id_fantoir_long, returning early');
@@ -291,39 +382,7 @@ const saveMultipleReminders = () => {
       duration: 3000,
     });
   }
-};*/
-
-
-
-
-const toggleFavorite = async (): Promise<void> => {
-  if (store.selectedProperty) {
-    const filteredProperty = store.selectedProperty as any;
-    delete filteredProperty.comment_rappel; 
-    try {
-      if (isEditing.value) {
-        await store.saveProperty(filteredProperty);
-      } else {
-        await store.saveProperty(filteredProperty);
-      }
-      
-      // Refresh the dashboard data after successful save
-      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
-        await dashboardStore.querySearchAddress();
-      }
-      
-      closeDialog();
-    } catch (error) {
-      console.error('Error saving property:', error);
-    }
-  }
 };
-
-
-
-
-
-
 
 </script>
 
@@ -350,36 +409,41 @@ const toggleFavorite = async (): Promise<void> => {
       </div>
     </template>
 
-    <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >         
+    <el-form v-if="store.selectedProperty" :model="store.selectedProperty" label-width="180px" class="property-form" >
+      
+      <el-tabs v-model="activeTab" class="property-tabs">
+        <!-- Tab Contact -->
+        <el-tab-pane label="Contact" name="contact">
+          <el-card shadow="hover">
+            <h3 class="card-title">Informations de contact</h3>        
+            <div class="card-content">
+              <el-form-item label="Propriétaire">
+                <el-input v-model="store.selectedProperty.owner" size="large" />
+              </el-form-item>
 
-      <!-- Contact Information Card -->
-      <el-card shadow="hover">
-        <h3 class="card-title">Informations de contact</h3>        
-        <div class="card-content">
-          <el-form-item label="Propriétaire">
-            <el-input v-model="store.selectedProperty.owner" size="large" />
-          </el-form-item>
+              <el-form-item label="Mail">
+                <el-input v-model="store.selectedProperty.email" size="large" :formatter="emailFormatter" :parser="emailParser" />
+              </el-form-item>
 
-          <el-form-item label="Mail">
-            <el-input v-model="store.selectedProperty.email" size="large" :formatter="emailFormatter" :parser="emailParser" />
-          </el-form-item>
+              <el-form-item label="Téléphone">
+                <el-input v-model="store.selectedProperty.phone" size="large" :formatter="phoneFormatter" :parser="phoneParser" />
+              </el-form-item>
+            </div>
+          </el-card>
+        </el-tab-pane>
 
-          <el-form-item label="Téléphone">
-            <el-input v-model="store.selectedProperty.phone" size="large" :formatter="phoneFormatter" :parser="phoneParser" />
-          </el-form-item>
-        </div>
-      </el-card>
-
-      <!-- Basic Property Information Card -->
-       <el-card shadow="hover">
-        <h3 class="card-title">Informations principales</h3>
-        <div class="card-content">
-          <el-form-item label="Type de bien">
-            <el-radio-group v-model="store.selectedProperty.property_type" size="large">
-              <el-radio-button label="Maison">Maison</el-radio-button>
-              <el-radio-button label="Appartement">Appartement</el-radio-button>
-            </el-radio-group>
-          </el-form-item>
+        <!-- Tab Caractéristiques -->
+        <el-tab-pane label="Caractéristiques" name="characteristics">
+          <!-- Basic Property Information Card -->
+          <el-card shadow="hover">
+            <h3 class="card-title">Informations principales</h3>
+            <div class="card-content">
+              <el-form-item label="Type de bien">
+                <el-radio-group v-model="store.selectedProperty.property_type" size="large">
+                  <el-radio-button label="Maison">Maison</el-radio-button>
+                  <el-radio-button label="Appartement">Appartement</el-radio-button>
+                </el-radio-group>
+              </el-form-item>
 
           <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
             <el-form-item label="Année de construction">
@@ -543,72 +607,166 @@ const toggleFavorite = async (): Promise<void> => {
         </div>
       </el-card>
 
-      <!-- Date de rappel Card
-      <el-card shadow="hover">
-        <h3 class="card-title">Date de rappel</h3>
-        <div class="card-content">
-          <el-form-item label="Date de rappel">
-            <el-date-picker
-              v-model="reminderDate"
-              type="date"
-              placeholder="Sélectionnez une date de rappel"
-              format="DD/MM/YYYY"
-              value-format="YYYY-MM-DD"
-              size="large"
-              :disabled-date="disabledDate"
-              style="width: 100%;"
-              clearable
-            />
-          </el-form-item>
-          <el-form-item label="Commentaire rappel">
-            <el-input
-              v-model="store.selectedProperty.comment_rappel"
-              type="textarea"
-              placeholder="Ajoutez un commentaire pour ce rappel..."
-              :rows="3"
-              maxlength="500"
-              show-word-limit
-            />
-          </el-form-item>
-        </div>
-      </el-card> -->
+          <!-- Price Card -->
+          <el-card shadow="hover">
+            <h3 class="card-title">Prix estimé</h3>
+            <div class="card-content">
+              <el-form-item label="Prix estimé (€)">
+                <el-input-number
+                  v-model="store.selectedProperty.price"
+                  :min="0"
+                  :step="1000"
+                  :precision="0"
+                  placeholder="Prix en euros"
+                  size="large"
+                  style="width: 100%;"
+                  controls-position="right"
+                />
+              </el-form-item>
+            </div>
+          </el-card>
+        </el-tab-pane>
 
-      <!-- Price Card -->
-      <el-card shadow="hover">
-        <h3 class="card-title">Prix estimé</h3>
+        <!-- Tab Commentaires -->
+        <el-tab-pane label="Commentaires" name="comments">
+          <el-card shadow="hover">
+            <h3 class="card-title">Commentaires sur la propriété</h3>
+            <div class="card-content">
+              <el-input 
+                v-model="store.selectedProperty.comment" 
+                type="textarea" 
+                :autosize="{ minRows: 6, maxRows: 12 }" 
+                placeholder="Ajoutez vos commentaires, observations, ou notes importantes sur cette propriété..."
+                style="font-size: 16px; line-height: 1.6;"
+                show-word-limit
+                maxlength="2000"
+              />
+              <div class="comment-help" style="margin-top: 16px; padding: 12px; background-color: #f8fafc; border-radius: 6px; font-size: 14px; color: #6b7280;">
+                💡 <strong>Conseil :</strong> Utilisez cette section pour noter des informations importantes comme l'état du bien, les travaux à prévoir, les négociations en cours, ou tout autre détail utile.
+              </div>
+            </div>
+          </el-card>
+        </el-tab-pane>
+
+        <!-- Tab Rappels -->
+        <el-tab-pane label="Rappels" name="reminders">
+          <!-- Message quand aucun rappel -->
+          <el-card shadow="hover" v-if="propertyReminders.length === 0">
+            <div class="no-reminders-content">
+              <el-icon class="no-reminders-icon"><Calendar /></el-icon>
+              <h3>Aucun rappel pour cette propriété</h3>
+              <p>Créez votre premier rappel pour cette propriété en utilisant le bouton "Créer un rappel" ci-dessous.</p>
+            </div>
+          </el-card>
+
+          <!-- Reminders History Card -->
+          <el-card shadow="hover" v-if="propertyReminders.length > 0">
+        <h3 class="card-title">
+          Historique des rappels
+          <el-tag :type="overdueCounts > 0 ? 'danger' : pendingCounts > 0 ? 'warning' : 'success'" size="small">
+            {{ propertyReminders.length }} rappel{{ propertyReminders.length > 1 ? 's' : '' }}
+          </el-tag>
+        </h3>
         <div class="card-content">
-          <el-form-item label="Prix estimé (€)">
-            <el-input-number
-              v-model="store.selectedProperty.price"
-              :min="0"
-              :step="1000"
-              :precision="0"
-              placeholder="Prix en euros"
-              size="large"
-              style="width: 100%;"
-              controls-position="right"
-            />
-          </el-form-item>
+          <div class="reminders-summary">
+            <div class="summary-stats">
+              <div class="stat-item" v-if="overdueCounts > 0">
+                <el-icon class="stat-icon overdue"><Warning /></el-icon>
+                <span>{{ overdueCounts }} en retard</span>
+              </div>
+              <div class="stat-item" v-if="todayCounts > 0">
+                <el-icon class="stat-icon today"><Calendar /></el-icon>
+                <span>{{ todayCounts }} aujourd'hui</span>
+              </div>
+              <div class="stat-item" v-if="pendingCounts > 0">
+                <el-icon class="stat-icon pending"><Clock /></el-icon>
+                <span>{{ pendingCounts }} à venir</span>
+              </div>
+              <div class="stat-item" v-if="completedCounts > 0">
+                <el-icon class="stat-icon completed"><Check /></el-icon>
+                <span>{{ completedCounts }} terminé{{ completedCounts > 1 ? 's' : '' }}</span>
+              </div>
+            </div>
+          </div>
+          
+          <div class="reminders-list-history">
+            <div 
+              v-for="reminder in sortedPropertyReminders" 
+              :key="reminder.id" 
+              class="reminder-item"
+              :class="{
+                'overdue': remindersStore.isReminderOverdue(reminder) && !reminder.completed,
+                'today': remindersStore.isReminderToday(reminder) && !reminder.completed,
+                'completed': reminder.completed
+              }"
+            >
+              <div class="reminder-header">
+                <div class="reminder-info">
+                  <el-checkbox 
+                    v-model="reminder.completed" 
+                    @change="toggleReminderComplete(reminder)"
+                    size="large"
+                  />
+                  <div class="reminder-details">
+                    <h4 class="reminder-title">{{ reminder.title }}</h4>
+                    <p class="reminder-description" v-if="reminder.description">
+                      {{ reminder.description }}
+                    </p>
+                  </div>
+                </div>
+                <div class="reminder-meta">
+                  <el-tag 
+                    :type="getPriorityType(reminder.priority)" 
+                    size="small"
+                  >
+                    {{ getPriorityLabel(reminder.priority) }}
+                  </el-tag>
+                </div>
+              </div>
+              
+              <div class="reminder-footer">
+                <div class="reminder-date-info">
+                  <el-icon><Calendar /></el-icon>
+                  <span>{{ formatReminderDate(reminder.date) }}</span>
+                  <el-tag 
+                    v-if="remindersStore.isReminderOverdue(reminder) && !reminder.completed" 
+                    type="danger" 
+                    size="small"
+                  >
+                    En retard
+                  </el-tag>
+                  <el-tag 
+                    v-else-if="remindersStore.isReminderToday(reminder) && !reminder.completed" 
+                    type="warning" 
+                    size="small"
+                  >
+                    Aujourd'hui
+                  </el-tag>
+                </div>
+                
+                <div class="reminder-actions">
+                  <el-tag :type="getTypeColor(reminder.type)" size="small">
+                    {{ getTypeLabel(reminder.type) }}
+                  </el-tag>
+                  <el-tag v-if="reminder.sharing" type="success" size="small">
+                    Partagé
+                  </el-tag>
+                </div>
+              </div>
+            </div>
+          </div>
         </div>
-      </el-card>
+        </el-card>
+        </el-tab-pane>
+      </el-tabs>
 
       <div class="dialog-footer">
         <el-button @click="closeDialog" size="large">Annuler</el-button>
         
-        <!-- Dropdown pour les rappels -->
-        <el-dropdown @command="handleReminderCommand" trigger="click">
-          <el-button type="success" size="large">
-            Créer rappel(s)
-            <el-icon class="el-icon--right"><ArrowDown /></el-icon>
-          </el-button>
-          <template #dropdown>
-            <el-dropdown-menu>
-              <el-dropdown-item command="single">Créer un rappel simple</el-dropdown-item>
-              <el-dropdown-item command="multiple">Créer plusieurs rappels</el-dropdown-item>
-              <el-dropdown-item command="recurring">Créer un rappel récurrent</el-dropdown-item>
-            </el-dropdown-menu>
-          </template>
-        </el-dropdown>
+        <!-- Bouton pour créer un rappel -->
+        <el-button type="success" size="large" @click="openReminderDialog">
+          Créer un rappel
+        </el-button>
         
         <el-button type="primary" @click="saveProperty" size="large">
           {{ isEditing ? "Sauvegarder" : "Créer" }}
@@ -617,103 +775,82 @@ const toggleFavorite = async (): Promise<void> => {
     </el-form>
   </el-drawer>
 
-  <!-- Dialog pour les rappels multiples -->
+  <!-- Dialog pour créer un rappel -->
   <el-dialog 
     v-model="showReminderDialog" 
-    title="Créer plusieurs rappels"
-    width="70%"
+    title="Créer un rappel"
+    width="600px"
     :close-on-click-modal="false"
+    @close="resetReminderForm"
   >
-    <div class="multiple-reminders-form">
-      <div 
-        v-for="(reminder, index) in multipleReminders" 
-        :key="index"
-        class="reminder-item"
-      >
-        <div class="reminder-header">
-          <h4>Rappel {{ index + 1 }}</h4>
-          <el-button 
-            v-if="multipleReminders.length > 1"
-            type="danger" 
-            size="small" 
-            @click="removeReminderFromList(index)"
-            circle
-          >
-            <el-icon><Close /></el-icon>
-          </el-button>
-        </div>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Titre" required>
-              <el-input v-model="reminder.title" placeholder="Titre du rappel" />
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Date" required>
-              <el-date-picker
-                v-model="reminder.date"
-                type="date"
-                placeholder="Sélectionnez une date"
-                format="DD/MM/YYYY"
-                value-format="YYYY-MM-DD"
-                :disabled-date="disabledDate"
-                style="width: 100%;"
-              />
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-row :gutter="20">
-          <el-col :span="12">
-            <el-form-item label="Type">
-              <el-select v-model="reminder.type" placeholder="Type de rappel">
-                <el-option label="Rappel" value="rappel" />
-                <el-option label="Estimation" value="estimation" />
-                <el-option label="Visite" value="visite" />
-                <el-option label="Autre" value="autre" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-          <el-col :span="12">
-            <el-form-item label="Priorité">
-              <el-select v-model="reminder.priority" placeholder="Priorité">
-                <el-option label="Basse" value="low" />
-                <el-option label="Moyenne" value="medium" />
-                <el-option label="Haute" value="high" />
-              </el-select>
-            </el-form-item>
-          </el-col>
-        </el-row>
-        
-        <el-form-item label="Description">
-          <el-input 
-            v-model="reminder.description" 
-            type="textarea" 
-            placeholder="Description du rappel"
-            :rows="2"
-          />
-        </el-form-item>
-
-        <el-form-item label="Partage">
-          <el-checkbox v-model="reminder.sharing" label="Partager avec l'agence" />
-        </el-form-item>
-      </div>
+    <el-form :model="reminderForm" label-width="120px">
+      <el-form-item label="Titre" required>
+        <el-input v-model="reminderForm.title" placeholder="Titre du rappel" />
+      </el-form-item>
       
-      <div class="add-reminder-section">
-        <el-button type="success" @click="addReminderToList" size="large">
-          <el-icon><Plus /></el-icon>
-          Ajouter un rappel
-        </el-button>
-      </div>
-    </div>
+      <el-form-item label="Description">
+        <el-input 
+          v-model="reminderForm.description" 
+          type="textarea" 
+          :rows="3"
+          placeholder="Description du rappel"
+        />
+      </el-form-item>
+      
+      <el-form-item label="Date" required>
+        <el-date-picker 
+          v-model="reminderForm.date"
+          type="date"
+          placeholder="Sélectionnez une date"
+          style="width: 100%;"
+          format="DD/MM/YYYY"
+          value-format="YYYY-MM-DD"
+          :disabled-date="disabledDate"
+        />
+      </el-form-item>
+      
+      <el-form-item label="Type">
+        <el-select v-model="reminderForm.type" style="width: 100%;">
+          <el-option label="Rappel" value="rappel" />
+          <el-option label="Estimation" value="estimation" />
+          <el-option label="Visite" value="visite" />
+          <el-option label="Autre" value="autre" />
+        </el-select>
+      </el-form-item>
+      
+      <el-form-item label="Priorité">
+        <el-select v-model="reminderForm.priority" style="width: 100%;">
+          <el-option label="Haute" value="high" />
+          <el-option label="Moyenne" value="medium" />
+          <el-option label="Basse" value="low" />
+        </el-select>
+      </el-form-item>
+
+      <el-form-item label="Partage">
+        <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
+      </el-form-item>
+    </el-form>
     
     <template #footer>
       <el-button @click="showReminderDialog = false">Annuler</el-button>
-      <el-button type="primary" @click="saveMultipleReminders">
-        Créer les rappels
+      <el-button type="primary" @click="saveReminder">
+        Créer le rappel
       </el-button>
     </template>
+    
+    <div class="reminder-actions-section" style="margin-top: 20px; padding-top: 20px; border-top: 1px solid #eee;">
+      <p style="color: #666; font-size: 14px; margin-bottom: 10px;">
+        Vous souhaitez ajouter un autre rappel sur ce bien ?
+      </p>
+      <el-button 
+        type="success" 
+        size="small" 
+        @click="saveReminderAndAddAnother"
+        style="margin-right: 10px;"
+      >
+        Créer et ajouter un autre
+      </el-button>
+    </div>
   </el-dialog>
 </template>
 
@@ -735,6 +872,79 @@ top : none;
   gap: 20px;
   display: flex;
   flex-direction: column;
+}
+
+.property-tabs {
+  background-color: white;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+}
+
+:deep(.el-tabs__header) {
+  margin: 0;
+  padding: 0 20px;
+  background-color: #fafafa;
+  border-radius: 8px 8px 0 0;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+:deep(.el-tabs__nav-wrap) {
+  padding: 0;
+}
+
+:deep(.el-tabs__content) {
+  padding: 20px;
+}
+
+:deep(.el-tab-pane) {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+:deep(.el-tabs__item) {
+  font-weight: 500;
+  font-size: 16px;
+  padding: 0 24px;
+  height: 50px;
+  line-height: 50px;
+  color: #6b7280;
+}
+
+:deep(.el-tabs__item.is-active) {
+  color: #3b82f6;
+  font-weight: 600;
+}
+
+:deep(.el-tabs__active-bar) {
+  background-color: #3b82f6;
+  height: 3px;
+}
+
+/* No reminders state */
+.no-reminders-content {
+  text-align: center;
+  padding: 40px 20px;
+  color: #6b7280;
+}
+
+.no-reminders-icon {
+  font-size: 48px;
+  color: #d1d5db;
+  margin-bottom: 16px;
+}
+
+.no-reminders-content h3 {
+  margin: 0 0 8px 0;
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+}
+
+.no-reminders-content p {
+  margin: 0;
+  font-size: 14px;
+  line-height: 1.5;
 }
 
 .form-card {
@@ -841,40 +1051,189 @@ top : none;
   align-items: center;
 }
 
-/* Styles pour les rappels multiples */
-.multiple-reminders-form {
-  max-height: 70vh;
+/* Styles pour la modal de rappel */
+.reminder-actions-section {
+  text-align: center;
+  margin-top: 20px;
+  padding: 20px;
+  border-top: 1px solid #e5e7eb;
+  background-color: #f9fafb;
+  border-radius: 0 0 8px 8px;
+}
+
+/* Styles pour l'historique des rappels */
+.reminders-summary {
+  margin-bottom: 20px;
+  padding: 16px;
+  background-color: #f8fafc;
+  border-radius: 8px;
+  border: 1px solid #e2e8f0;
+}
+
+.summary-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 16px;
+  justify-content: space-around;
+}
+
+.stat-item {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 8px 12px;
+  background-color: white;
+  border-radius: 6px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  font-size: 14px;
+  font-weight: 500;
+}
+
+.stat-icon {
+  font-size: 16px;
+}
+
+.stat-icon.overdue {
+  color: #ef4444;
+}
+
+.stat-icon.today {
+  color: #f59e0b;
+}
+
+.stat-icon.pending {
+  color: #3b82f6;
+}
+
+.stat-icon.completed {
+  color: #10b981;
+}
+
+.reminders-list-history {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 400px;
   overflow-y: auto;
 }
 
 .reminder-item {
-  border: 1px solid #e5e7eb;
+  padding: 16px;
+  background-color: white;
   border-radius: 8px;
-  padding: 20px;
-  margin-bottom: 20px;
+  border: 1px solid #e5e7eb;
+  transition: all 0.3s ease, opacity 0.5s ease, filter 0.5s ease;
+}
+
+.reminder-item:hover {
+  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  transform: translateY(-1px);
+}
+
+.reminder-item.overdue {
+  border-left: 4px solid #ef4444;
+  background-color: #fef2f2;
+}
+
+.reminder-item.today {
+  border-left: 4px solid #f59e0b;
+  background-color: #fffbeb;
+}
+
+.reminder-item.completed {
+  opacity: 0.6;
+  border-left: 4px solid #10b981;
   background-color: #f9fafb;
+  filter: grayscale(0.3);
+}
+
+.reminder-item.completed .reminder-title {
+  text-decoration: line-through;
+  color: #9ca3af;
+}
+
+.reminder-item.completed .reminder-description {
+  color: #9ca3af;
+  text-decoration: line-through;
+}
+
+.reminder-item.completed .reminder-date-info {
+  color: #9ca3af;
+}
+
+.reminder-item.completed .reminder-date-info span {
+  text-decoration: line-through;
 }
 
 .reminder-header {
   display: flex;
   justify-content: space-between;
-  align-items: center;
-  margin-bottom: 15px;
+  align-items: flex-start;
+  margin-bottom: 12px;
 }
 
-.reminder-header h4 {
-  margin: 0;
-  color: #374151;
+.reminder-info {
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  flex: 1;
+}
+
+.reminder-details {
+  flex: 1;
+}
+
+.reminder-title {
+  margin: 0 0 4px 0;
   font-size: 16px;
   font-weight: 600;
+  color: #1f2937;
+  line-height: 1.4;
+  transition: color 0.3s ease, text-decoration 0.3s ease;
 }
 
-.add-reminder-section {
-  text-align: center;
-  margin-top: 20px;
-  padding: 20px;
-  border: 2px dashed #d1d5db;
-  border-radius: 8px;
-  background-color: #f9fafb;
+.reminder-description {
+  margin: 0;
+  font-size: 14px;
+  color: #6b7280;
+  line-height: 1.5;
+  transition: color 0.3s ease, text-decoration 0.3s ease;
+}
+
+.reminder-meta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.reminder-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  padding-top: 12px;
+  border-top: 1px solid #f3f4f6;
+}
+
+.reminder-date-info {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  color: #6b7280;
+  transition: color 0.3s ease;
+}
+
+.reminder-date-info span {
+  transition: text-decoration 0.3s ease;
+}
+
+.reminder-date-info .el-icon {
+  font-size: 16px;
+}
+
+.reminder-actions {
+  display: flex;
+  align-items: center;
+  gap: 8px;
 }
 </style>

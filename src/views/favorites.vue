@@ -2,12 +2,38 @@
   <div class="favorites-page">
     <div class="favorites-header">
       <h1>Mes Propriétés Favorites</h1>
-      <div class="header-stats">
-        <el-tag size="large" type="info">{{ favorites.length }} favori(s)</el-tag>
+      <div class="header-controls">
+        <div class="city-filter">
+          <el-select 
+            v-model="selectedCity" 
+            placeholder="Filtrer par ville"
+            clearable
+            size="large"
+            style="width: 200px"
+          >
+            <el-option
+              v-for="city in availableCities"
+              :key="city"
+              :label="city"
+              :value="city"
+            />
+          </el-select>
+        </div>
+        <div class="header-stats">
+          <el-tag size="large" type="info">{{ filteredFavorites.length }} favori(s)</el-tag>
+        </div>
       </div>
     </div>
 
-    <div v-if="favorites.length === 0" class="empty-state">
+    <div v-if="filteredFavorites.length === 0 && favorites.length > 0" class="empty-state">
+      <el-empty description="Aucune propriété trouvée pour cette ville">
+        <el-button type="primary" @click="selectedCity = ''">
+          Voir tous les favoris
+        </el-button>
+      </el-empty>
+    </div>
+
+    <div v-else-if="favorites.length === 0" class="empty-state">
       <el-empty description="Aucune propriété en favoris">
         <el-button type="primary" @click="$router.push('/dashboard')">
           Parcourir les propriétés
@@ -17,7 +43,7 @@
 
     <div v-else class="favorites-grid">
       <el-card 
-        v-for="property in favorites" 
+        v-for="property in filteredFavorites" 
         :key="property.id_fantoir_long"
         class="favorite-card"
         shadow="hover"
@@ -80,7 +106,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted } from 'vue';
+import { computed, onMounted, ref } from 'vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
@@ -90,7 +116,27 @@ import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
 
+const selectedCity = ref<string>('');
+
 const favorites = computed(() => store.favorites);
+
+// Computed pour obtenir les villes disponibles
+const availableCities = computed(() => {
+  const cities = favorites.value
+    .map(property => property.nom_commune)
+    .filter((city): city is string => city !== null && city !== undefined && city !== '') // Filtrer les valeurs nulles/undefined
+    .filter((city, index, array) => array.indexOf(city) === index) // Supprimer les doublons
+    .sort(); // Trier alphabétiquement
+  return cities;
+});
+
+// Computed pour les favoris filtrés
+const filteredFavorites = computed(() => {
+  if (!selectedCity.value) {
+    return favorites.value;
+  }
+  return favorites.value.filter(property => property.nom_commune === selectedCity.value);
+});
 
 // Charger les propriétés favorites au montage du composant
 onMounted(async () => {
@@ -175,6 +221,17 @@ const createReminderForProperty = (property: any) => {
 .favorites-header h1 {
   margin: 0;
   color: #1f2937;
+}
+
+.header-controls {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+}
+
+.city-filter {
+  display: flex;
+  align-items: center;
 }
 
 .header-stats {
