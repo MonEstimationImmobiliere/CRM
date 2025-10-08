@@ -12,11 +12,6 @@
 
           <el-button type="primary" size="large" @click="querySearchEstimation"> Estimations reçues </el-button>
 
-          <!--<el-button type="primary" size="large" @click="navigateToReminders"> Mes rappels </el-button>
-
-          <el-button type="warning" size="large" @click="navigateToFavorites"> Mes favoris </el-button>
-
-          <el-button type="primary" size="large" @click="querySearchMaj"> Mes dernières mise à jour </el-button>-->
           
                <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
             Créer une propriété personnalisée
