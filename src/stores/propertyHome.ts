@@ -263,7 +263,9 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.filter(property => property.favorite === true)
   );
 
-  const toggleFavorite = async (propertyId: string) => {
+
+
+   const toggleFavorite = async (propertyId: string) => {
     try {
       // D'abord chercher si la propriété existe déjà dans le store
       let property = properties.value.find(p => p.id_fantoir_long === propertyId);

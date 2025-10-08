@@ -60,6 +60,7 @@ interface Property {
   date_rappel?: string;
   comment_rappel?: string;
   price?: number;
+  favory?: boolean;
 }
 
 const store = usePropertyStore();
@@ -266,7 +267,7 @@ const saveMultipleReminders = () => {
 };
 
 // Gestion des favoris
-const toggleFavorite = async () => {
+/*const toggleFavorite = async () => {
   
   if (!store.selectedProperty?.id_fantoir_long) {
     console.log('No id_fantoir_long, returning early');
@@ -290,7 +291,39 @@ const toggleFavorite = async () => {
       duration: 3000,
     });
   }
+};*/
+
+
+
+
+const toggleFavorite = async (): Promise<void> => {
+  if (store.selectedProperty) {
+    const filteredProperty = store.selectedProperty as any;
+    delete filteredProperty.comment_rappel; 
+    try {
+      if (isEditing.value) {
+        await store.saveProperty(filteredProperty);
+      } else {
+        await store.saveProperty(filteredProperty);
+      }
+      
+      // Refresh the dashboard data after successful save
+      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+        await dashboardStore.querySearchAddress();
+      }
+      
+      closeDialog();
+    } catch (error) {
+      console.error('Error saving property:', error);
+    }
+  }
 };
+
+
+
+
+
+
 
 </script>
 

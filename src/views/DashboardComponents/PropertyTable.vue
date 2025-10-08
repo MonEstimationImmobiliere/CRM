@@ -54,17 +54,19 @@
       </template>
     </el-table-column>
 
+    <!--
     <el-table-column label="Chambres" prop="bedrooms" sortable  min-width="120">
       <template #default="{ row }">
         {{ row.bedrooms }}
       </template>
     </el-table-column>
+  -->
 
-     <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
+   <!--  <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
       <template #default="{ row }">
   {{ formatMetrage(row.area) }}
       </template>
-    </el-table-column> -
+    </el-table-column> -->
 
     <!--<el-table-column label="Nb vente" prop="nombre_ventes" sortable  min-width="120">
       <template #default="{ row }">
@@ -96,22 +98,58 @@
 
 <el-table-column label="Prix Estimé" prop="dernier_prix_estime" sortable min-width="120">
   <template #default="{ row }">
-    {{ formatPrice(row.dernier_prix_estime) }}
+    <span :style="{color: row.price ? 'green' : 'blue', fontWeight: 'bold'  }"  >
+
+
+      {{ formatPrice(row.price || row.dernier_prix_estime) }}
+</span>
+
   </template>
 </el-table-column>
 
+<!--
     <el-table-column label="Date Maj" prop="date_maj" sortable  min-width="120" >
       <template #default="{ row }">
             {{ formatDate(row.date_maj ) }}
       </template>
     </el-table-column> 
+  -->
 
 
-    <el-table-column label="Date Rappel" prop="date_rappel" sortable min-width="120">
+
+    <el-table-column label="Contact" prop="date_rappel" sortable min-width="120">
   <template #default="{ row }">
-    <span :style="{ color: isDatePassed(row.date_rappel) ? 'red' : 'inherit' }">
-      {{ formatDate(row.date_rappel) }}
-    </span>
+
+
+    <div style="display:flex; align-items:center; gap:6px;">
+  <img :src="getWeatherIcon(row.date_rappel)" alt="météo"
+       width="24" height="24" style="display:block; margin-right:6px;" />
+  <span style="line-height:1;"  :style="{
+    color:
+      getWeatherLabel(row.date_rappel).includes('eviter') ? 'red'
+      : getWeatherLabel(row.date_rappel).includes('mois') ? 'orange'
+      : 'green'
+  }">{{ getWeatherLabel(row.date_rappel) }}</span>
+</div>
+
+
+   <!--  <img
+        :src="getWeatherIcon(row.date_rappel)"
+        alt="météo"
+        width="24"
+        style="margin-right: 6px;"
+      />
+
+<span
+  :style="{
+    color:
+      getWeatherLabel(row.date_rappel).includes('eviter') ? 'red'
+      : getWeatherLabel(row.date_rappel).includes('mois') ? 'orange'
+      : 'green'
+  }"
+>
+  {{ getWeatherLabel(row.date_rappel) }}
+</span>-->
   </template>
 </el-table-column>
 
@@ -145,10 +183,49 @@
 </template>
 
 <script setup lang="ts">
+
+//ICONE
+import soleil from '@/assets/soleil.png'
+import soleilNuage from '@/assets/soleil-nuage.png'
+import nuage from '@/assets/nuage.png'
+import nuagePluie from '@/assets/nuage-pluie.png'
+import orage from '@/assets/orage.png'
+
+function getMonthsDiff(dateRappel: string | null): number {
+  if (!dateRappel) return -1
+  const rappel = new Date(dateRappel)
+  const now = new Date()
+  return (now.getFullYear() - rappel.getFullYear()) * 12 + (now.getMonth() - rappel.getMonth())
+}
+
+function getWeatherIcon(dateRappel: string | null): string {
+  const diff = getMonthsDiff(dateRappel)
+  if (diff < 0 || diff < 1) return soleil
+  if (diff < 3) return soleilNuage
+  if (diff < 6) return nuage
+  if (diff < 12) return nuagePluie
+  return orage
+}
+
+function getWeatherLabel(dateRappel: string | null): string {
+  const diff = getMonthsDiff(dateRappel)
+  if (diff < 0) return 'Immediat'
+  if (diff < 1) return 'Immediat'
+  if (diff < 3) return '1 mois'
+  if (diff < 6) return '3 mois'
+  if (diff < 12) return '6 mois'
+  return 'A eviter'
+}
+
+
+
 import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
 import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
+
+
+
 
 const store = usePropertyStore();
 
