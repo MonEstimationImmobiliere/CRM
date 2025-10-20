@@ -104,6 +104,7 @@ const selectedCodeInsee = computed({
 })
 
 const addresses = computed(() => dashboardStore.addresses)
+console.log('addresses in dashboard.vue', addresses.value)
 
 // Restaurer l'état au montage du composant
 onMounted(() => {

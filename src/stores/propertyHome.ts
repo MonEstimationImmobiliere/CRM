@@ -293,6 +293,8 @@ export const usePropertyStore = defineStore('property', () => {
       property.favorite = !property.favorite;
       
       // Sauvegarder la propriété mise à jour
+    delete property.comment_rappel; 
+
       await saveProperty(property);
       
       // Retourner le nouvel état pour le message

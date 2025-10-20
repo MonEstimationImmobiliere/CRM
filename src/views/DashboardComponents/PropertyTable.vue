@@ -308,7 +308,6 @@ const toggleFavorite = async (propertyId: string) => {
 };
 
 const isFavorite = (propertyId: string): boolean => {
-  console.log('isFavorite called with:', propertyId, typeof propertyId);
   return store.isFavorite(propertyId);
 };
 
