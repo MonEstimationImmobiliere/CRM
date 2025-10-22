@@ -160,12 +160,12 @@
         <div class="action-buttons">
           <el-button 
             @click.stop="toggleFavorite(String(row.id_fantoir_long))"
-            :type="isFavorite(String(row.id_fantoir_long)) ? 'warning' : 'default'"
+            :type="row.favorite === 'true' || isFavorite(String(row.id_fantoir_long)) ? 'warning' : 'default'"
             size="small"
             circle
           >
             <el-icon>
-              <StarFilled v-if="isFavorite(String(row.id_fantoir_long))" />
+              <StarFilled v-if="row.favorite === 'true' || isFavorite(String(row.id_fantoir_long))" />
               <Star v-else />
             </el-icon>
           </el-button>
@@ -288,6 +288,7 @@ const formatMetrage = (value: number | null) => {
 // Gestion des favoris
 const toggleFavorite = async (propertyId: string) => {
   console.log('toggleFavorite called in PropertyTable with:', propertyId, typeof propertyId);
+  
   try {
     const newFavoriteState = await store.toggleFavorite(propertyId);
     ElMessage({

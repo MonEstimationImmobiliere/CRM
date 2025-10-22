@@ -17,7 +17,7 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: "",
         component: () => import("@/views/dashboard.vue"),
-        meta: { title: "Ventes", icon: Link },
+        meta: { title: "Prospection", icon: Link },
       },
     ],
   },
@@ -43,7 +43,7 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: "",
         component: () => import("@/views/favorites.vue"),
-        meta: { title: "Mes Favoris", icon: Link },
+        meta: { title: "Favoris", icon: Link },
       },
     ],
   },
