@@ -151,7 +151,6 @@ export const usePropertyStore = defineStore('property', () => {
       p.id === updatedProperty.id
     );
     
-    console.log('Property index found:', index);
     
     if (index !== -1) {
       // Préserver la structure existante et mettre à jour avec les nouvelles données
@@ -160,8 +159,6 @@ export const usePropertyStore = defineStore('property', () => {
         ...updatedProperty,
         favorite: Boolean(updatedProperty.favorite) // Normaliser le booléen
       };
-      console.log('Property updated in store at index:', index);
-      console.log('Updated property in store:', properties.value[index]);
     } else {
       console.log('Property not found in store, adding it...');
       // Si la propriété n'est pas trouvée, l'ajouter au store
@@ -238,6 +235,7 @@ export const usePropertyStore = defineStore('property', () => {
     if (property?.id_fantoir_long) {
       try {
         const data = await PropertyService.getPropertyById(property.id_fantoir_long);
+        console.log('Données récupérées pour la propriété sélectionnée :', data);
         // Convertir les valeurs numériques en booléens pour favorite
         const normalizedData = { 
           ...defaultPropertyData, 
@@ -294,6 +292,7 @@ export const usePropertyStore = defineStore('property', () => {
       
       // Sauvegarder la propriété mise à jour
     delete property.comment_rappel; 
+    console.log('Saving property with new favorite state:', property);
 
       await saveProperty(property);
       

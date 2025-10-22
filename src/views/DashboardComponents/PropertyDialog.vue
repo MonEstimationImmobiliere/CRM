@@ -101,6 +101,7 @@ const closeDialog = (): void => {
 const saveProperty = async (): Promise<void> => {
   if (store.selectedProperty) {
     const filteredProperty = store.selectedProperty as any;
+    console.log('Saving property:', filteredProperty);
     delete filteredProperty.comment_rappel; 
     try {
       if (isEditing.value) {

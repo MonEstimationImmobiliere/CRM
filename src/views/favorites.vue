@@ -35,7 +35,7 @@
 
     <div v-else-if="favorites.length === 0" class="empty-state">
       <el-empty description="Aucune propriété en favoris">
-        <el-button type="primary" @click="$router.push('/dashboard')">
+        <el-button type="primary" @click="$router.push('/')">
           Parcourir les propriétés
         </el-button>
       </el-empty>

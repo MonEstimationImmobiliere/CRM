@@ -163,6 +163,7 @@ const openCreateCustomPropertyDialog = () => {
 // }
 
 const openPropertyDialog = (property: any) => {
+  console.log('openPropertyDialog called with property:', property);
   store.selectProperty({
     ...store.defaultPropertyData,
     ...property,

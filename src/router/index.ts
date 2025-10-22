@@ -2,7 +2,7 @@ import { createRouter, createWebHistory } from "vue-router";
 import Layout from "@/layout/index.vue";
 import {Link,} from "@element-plus/icons-vue";
 import type { RouteRecordRaw } from "vue-router";
-import { ROUTES } from "@/constants/routes";
+import { ROUTES } from "@/router/routes";
 import { userStore } from "@/stores/user";
 
 const routerHistory = createWebHistory(import.meta.env.BASE_URL);
