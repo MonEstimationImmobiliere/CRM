@@ -43,8 +43,8 @@
             <el-input v-model="formData.code_postal" readonly />
           </el-form-item>
 
-          <el-form-item label="Commune" prop="nom_commune">
-            <el-input v-model="formData.nom_commune" readonly />
+          <el-form-item label="Commune" prop="city">
+            <el-input v-model="formData.city" readonly />
           </el-form-item>
         </el-card>
 
@@ -207,7 +207,7 @@ const formData = ref<PropertyData>({
   nom_voie: '',
   numero_appartement: '',
   code_postal: '',
-  nom_commune: '',
+  city: '',
   is_custom: true
 })
 
@@ -238,7 +238,7 @@ watch(() => dashboardStore.showCustomPropertyDialog, (newValue) => {
     if (searchParams) {
       formData.value.nom_voie = searchParams.street?.value || ''
       formData.value.code_postal = searchParams.city?.value || ''
-      formData.value.nom_commune = searchParams.city?.city || ''
+      formData.value.city = searchParams.city?.city || ''
       // L'id_fantoir_long sera généré par le store en fonction des données saisies
       formData.value.id_fantoir_long = ''
     }
@@ -303,7 +303,7 @@ const resetForm = () => {
     nom_voie: '',
     numero_appartement: '',
     code_postal: '',
-    nom_commune: '',
+    city: '',
     is_custom: true
   }
 }

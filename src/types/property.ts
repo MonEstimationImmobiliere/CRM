@@ -1,0 +1,60 @@
+
+export interface PropertyData {
+  id_fantoir_long: string;
+  id_fantoir?: string;
+  numero?: string;
+  rep?: string;
+  nom_voie?: string;
+  numero_appartement?: string;
+  code_postal?: string;
+  city?: string;
+  owner: string;
+  email: string;
+  phone: string;
+  property_type: string;
+  year_built: number;
+  year_buy: number;
+  surface: number;
+  area: number;
+  orientation: string;
+  property_condition: string;
+  bedrooms: number;
+  bathrooms: number;
+  fitted_kitchen: boolean;
+  equipped_kitchen: boolean;
+  american_kitchen: boolean;
+  scullery: boolean;
+  heating_type: string;
+  window: string;
+  window_type: string;
+  shutter: string;
+  cheminee: boolean;
+  district_heating: boolean;
+  patio: boolean;
+  Garage: boolean;
+  pool: boolean;
+  veranda: boolean;
+  garden: boolean;
+  parking: boolean;
+  Carport: boolean;
+  kitchen_ext: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  cellar: boolean;
+  bike_room: boolean;
+  guardian: boolean;
+  roof: string;
+  adjoining: boolean;
+  basement: boolean;
+  dependency: boolean;
+  ground: boolean;
+  comment: string;
+  date_rappel: string | null;
+  comment_rappel?: string;
+  id?: number;
+  price?: number;
+  is_custom?: boolean; // Nouveau champ pour identifier les propriétés personnalisées
+  user_id?: number; // Pour lier à l'utilisateur
+  agency_id?: number; 
+  favorite?:boolean;
+}

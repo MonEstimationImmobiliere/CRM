@@ -12,6 +12,7 @@ export interface PropertyData {
   numero_appartement?: string;
   code_postal?: string;
   nom_commune?: string;
+  city?: string;
   owner: string;
   email: string;
   phone: string;
@@ -171,41 +172,7 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  const loadProperties = async () => {
-    try {
-      // Ici on pourrait charger toutes les propriétés ou les propriétés utilisateur
-      // Pour l'instant, on garde la logique existante
-      // const allProperties = await PropertyService.getAllProperties();
-      // properties.value = allProperties;
-    } catch (error) {
-      console.error("Erreur lors du chargement des propriétés :", error);
-    }
-  };
-
-  const loadFavoritesProperties = async () => {
-    try {
-      const favoriteProperties = await PropertyService.getFavorites();
-      // Mettre à jour les propriétés existantes ou ajouter les nouvelles
-      favoriteProperties.forEach(favoriteProperty => {
-        const existingIndex = properties.value.findIndex(p => p.id_fantoir_long === favoriteProperty.id_fantoir_long);
-        // Normaliser la propriété favorite en booléen
-        const normalizedProperty = { 
-          ...favoriteProperty, 
-          favorite: Boolean(favoriteProperty.favorite) || true // S'assurer que c'est true pour les favoris
-        };
-        
-        if (existingIndex !== -1) {
-          // Mettre à jour la propriété existante
-          properties.value[existingIndex] = { ...properties.value[existingIndex], ...normalizedProperty };
-        } else {
-          // Ajouter la nouvelle propriété favorite
-          properties.value.push(normalizedProperty);
-        }
-      });
-    } catch (error) {
-      console.error("Erreur lors du chargement des propriétés favorites :", error);
-    }
-  };
+  
 
   function deleteProperty(id: number) {
     properties.value = properties.value.filter(p => p.id !== id);
@@ -310,6 +277,51 @@ export const usePropertyStore = defineStore('property', () => {
     return Boolean(property?.favorite) || false;
   };
 
+  const loadFavoritesProperties = async () => {
+    try {
+      const favoriteProperties = await PropertyService.getFavorites();
+      console.log('Favorite properties loaded from API:', favoriteProperties);
+      
+      // D'abord, remettre à false tous les favoris existants dans le store
+      properties.value.forEach(property => {
+        if (property.favorite) {
+          property.favorite = false;
+        }
+      });
+      
+      // Ensuite, traiter les favoris récupérés de l'API
+      favoriteProperties.forEach(property => {
+        const normalizedProperty = {
+          ...defaultPropertyData,
+          ...property,
+          favorite: true // S'assurer que toutes les propriétés récupérées sont marquées comme favorites
+        };
+        
+        // Vérifier si la propriété existe déjà dans le store
+        const existingIndex = properties.value.findIndex(p => 
+          p.id_fantoir_long === property.id_fantoir_long
+        );
+        
+        if (existingIndex !== -1) {
+          // Mettre à jour la propriété existante en préservant certaines données locales
+          properties.value[existingIndex] = {
+            ...properties.value[existingIndex],
+            ...normalizedProperty
+          };
+        } else {
+          // Ajouter la nouvelle propriété au store
+          properties.value.push(normalizedProperty);
+        }
+      });
+      
+      console.log('Favorites loaded and synced in store:', properties.value.filter(p => p.favorite));
+      console.log('Total properties in store:', properties.value.length);
+    } catch (error) {
+      console.error('Erreur lors du chargement des propriétés favorites :', error);
+      throw error;
+    }
+  };
+
   return {
     properties,
     selectedProperty,
@@ -324,7 +336,6 @@ export const usePropertyStore = defineStore('property', () => {
     favorites,
     toggleFavorite,
     isFavorite,
-    loadProperties,
     loadFavoritesProperties
   };
 });

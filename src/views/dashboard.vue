@@ -140,27 +140,10 @@ const querySearchEstimation = async () => {
   await dashboardStore.querySearchEstimation()
 }
 
-const querySearchRappel = async () => {
-  await dashboardStore.querySearchRappel()
-}
-
-// const navigateToReminders = async () => {
-//   router.push('/reminders');
-//  const responseRappels =  await dashboardStore.querySearchRappel()
-//   console.log('Navigating to reminders', responseRappels);
-// }
-
-// const navigateToFavorites = () => {
-//   router.push('/favorites');
-// }
 
 const openCreateCustomPropertyDialog = () => {
   dashboardStore.openCustomPropertyDialog()
 }
-
-// const querySearchMaj = async () => {
-//   await dashboardStore.querySearchMaj()
-// }
 
 const openPropertyDialog = (property: any) => {
   console.log('openPropertyDialog called with property:', property);
@@ -172,28 +155,6 @@ const openPropertyDialog = (property: any) => {
   store.setDialogVisible(true);
 };
 
-const openTestPropertyDialog = () => {
-  const testProperty = {
-    id_fantoir_long: "example_property_id_1",
-    numero: "123",
-    nom_voie: "Rue de la Paix",
-    property_type: "Maison",
-    surface: 150,
-    area: 500,
-    owner: "Jean Dupont",
-    email: "jean.dupont@example.com",
-    phone: "0123456789",
-    year_built: 1980,
-    price: 350000,
-    comment: "Belle maison avec jardin"
-  };
-  
-  store.selectProperty({
-    ...store.defaultPropertyData,
-    ...testProperty,
-  });
-  store.setDialogVisible(true);
-};
 
 const setTableView = () => {
   dashboardStore.viewType = "table"

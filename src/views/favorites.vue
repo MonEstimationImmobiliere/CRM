@@ -52,13 +52,13 @@
         <div class="favorite-header">
           <div class="property-title">
             <h3>{{ property.numero }} {{ property.nom_voie }}</h3>
-            <p class="property-city">{{ property.nom_commune }}</p>
+            <p class="property-city">{{ property.city }}</p>
           </div>
           <el-button 
             type="danger" 
             size="small" 
             circle
-            @click.stop="toggleFavorite(property.id_fantoir_long)"
+            @click.stop="toggleFavorite(property)"
           >
             <el-icon><StarFilled /></el-icon>
           </el-button>
@@ -112,6 +112,7 @@ import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
 import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
+import { on } from 'events';
 
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
@@ -120,28 +121,39 @@ const selectedCity = ref<string>('');
 
 const favorites = computed(() => store.favorites);
 
+onMounted(async () => {
+  try {
+    await store.loadFavoritesProperties();
+  } catch (error) {
+    ElMessage({
+      message: 'Erreur lors du chargement des favoris',
+      type: 'error',
+      duration: 3000,
+    });
+  }
+});
+
 // Computed pour obtenir les villes disponibles
 const availableCities = computed(() => {
   const cities = favorites.value
-    .map(property => property.nom_commune)
+    .map(property => property.city || null)
     .filter((city): city is string => city !== null && city !== undefined && city !== '') // Filtrer les valeurs nulles/undefined
     .filter((city, index, array) => array.indexOf(city) === index) // Supprimer les doublons
     .sort(); // Trier alphabétiquement
   return cities;
 });
 
+
 // Computed pour les favoris filtrés
 const filteredFavorites = computed(() => {
   if (!selectedCity.value) {
     return favorites.value;
   }
-  return favorites.value.filter(property => property.nom_commune === selectedCity.value);
+  return favorites.value.filter(property => 
+    (property.city || null) === selectedCity.value
+  );
 });
 
-// Charger les propriétés favorites au montage du composant
-onMounted(async () => {
-  await store.loadFavoritesProperties();
-});
 
 const formatPrice = (price: number | undefined) => {
   if (!price) return 'Non renseigné';
@@ -152,9 +164,9 @@ const formatPrice = (price: number | undefined) => {
   }).format(price);
 };
 
-const toggleFavorite = async (propertyId: string) => {
+const toggleFavorite = async (propertyData: any) => {
   try {
-    const newFavoriteState = await store.toggleFavorite(propertyId);
+    const newFavoriteState = await store.toggleFavorite(propertyData);
     ElMessage({
       message: newFavoriteState 
         ? 'Propriété ajoutée aux favoris' 
@@ -185,7 +197,7 @@ const createReminderForProperty = (property: any) => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   const propertyAddress = `${property.numero || ''} ${property.nom_voie || ''}`.trim();
-  const propertyCity = property.nom_commune || '';
+  const propertyCity = property.city || '';
   
   remindersStore.addReminder({
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
