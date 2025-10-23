@@ -11,8 +11,8 @@ export interface PropertyData {
   nom_voie?: string;
   numero_appartement?: string;
   code_postal?: string;
-  nom_commune?: string;
   city?: string;
+  nom_commune?: string;
   owner: string;
   email: string;
   phone: string;
@@ -143,8 +143,6 @@ export const usePropertyStore = defineStore('property', () => {
 
   // Fonction pour mettre à jour une propriété dans le store après sauvegarde
   function updatePropertyInStore(updatedProperty: PropertyData) {
-    console.log('=== UPDATE PROPERTY IN STORE ===');
-    console.log('Updated property:', updatedProperty);
     
     // Chercher par id_fantoir_long d'abord (pour les favoris), puis par id
     const index = properties.value.findIndex(p => 
@@ -161,7 +159,6 @@ export const usePropertyStore = defineStore('property', () => {
         favorite: Boolean(updatedProperty.favorite) // Normaliser le booléen
       };
     } else {
-      console.log('Property not found in store, adding it...');
       // Si la propriété n'est pas trouvée, l'ajouter au store
       const normalizedProperty = {
         ...updatedProperty,
@@ -234,9 +231,9 @@ export const usePropertyStore = defineStore('property', () => {
     try {
       // D'abord chercher si la propriété existe déjà dans le store
       let property = properties.value.find(p => p.id_fantoir_long === propertyId);
+      console.log('Toggling favorite for propertyId:', property);
       
       if (!property) {
-        console.log('Property not found in store, fetching from API...');
         // Si la propriété n'existe pas dans le store, la récupérer depuis l'API
         try {
           const propertyData = await PropertyService.getPropertyById(propertyId);
@@ -258,8 +255,12 @@ export const usePropertyStore = defineStore('property', () => {
       property.favorite = !property.favorite;
       
       // Sauvegarder la propriété mise à jour
-    delete property.comment_rappel; 
-    console.log('Saving property with new favorite state:', property);
+    delete property.comment_rappel;
+    if (property.nom_commune) {
+    delete property.nom_commune; 
+    }
+    console.log('Updated property before save:', property);
+
 
       await saveProperty(property);
       
@@ -280,7 +281,6 @@ export const usePropertyStore = defineStore('property', () => {
   const loadFavoritesProperties = async () => {
     try {
       const favoriteProperties = await PropertyService.getFavorites();
-      console.log('Favorite properties loaded from API:', favoriteProperties);
       
       // D'abord, remettre à false tous les favoris existants dans le store
       properties.value.forEach(property => {
@@ -314,8 +314,6 @@ export const usePropertyStore = defineStore('property', () => {
         }
       });
       
-      console.log('Favorites loaded and synced in store:', properties.value.filter(p => p.favorite));
-      console.log('Total properties in store:', properties.value.length);
     } catch (error) {
       console.error('Erreur lors du chargement des propriétés favorites :', error);
       throw error;

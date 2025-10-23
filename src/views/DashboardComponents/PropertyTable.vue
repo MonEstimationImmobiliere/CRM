@@ -301,7 +301,8 @@ const toggleFavorite = async (propertyId: string) => {
   } catch (error) {
     console.log('Error in PropertyTable toggleFavorite:', error);
     ElMessage({
-      message: 'Erreur lors de la modification des favoris',
+           message: 'La fiche du logement n\'est pas encore créée. Veuillez la créer avant de l\'ajouter aux favoris.',
+
       type: 'error',
       duration: 3000,
     });

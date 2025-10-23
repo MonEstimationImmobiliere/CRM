@@ -73,7 +73,6 @@ import RemindersWidget from "@/components/RemindersWidget.vue";
 // Store
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
-const router = useRouter();
 
 // Reactive state
 // const selectedCodeIdFantoir = computed({

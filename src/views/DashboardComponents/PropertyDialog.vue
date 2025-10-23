@@ -6,63 +6,6 @@ import { useRemindersStore } from "../../stores/reminders";
 import { useDashboardStore } from "../../stores/dashboard";
 import { CircleCloseFilled, Star, StarFilled, Warning, Calendar, Clock, Check } from "@element-plus/icons-vue";
 
-// Property interface
-interface Property {
-  id?: string | number;
-  id_fantoir_long?: string;
-  numero?: string;
-  rep?: string;
-  nom_voie?: string;
-  numero_appartement?: string;
-  code_postal?: string;
-  nom_commune?: string;
-  owner?: string;
-  email?: string;
-  phone?: string;
-  property_type?: string;
-  year_built?: number;
-  year_buy?: number;
-  surface?: number;
-  area?: number;
-  orientation?: string;
-  property_condition?: string;
-  bedrooms?: number;
-  bathrooms?: number;
-  fitted_kitchen?: boolean;
-  equipped_kitchen?: boolean;
-  american_kitchen?: boolean;
-  scullery?: boolean;
-  heating_type?: string;
-  window?: string;
-  window_type?: string;
-  shutter?: string;
-  cheminee?: boolean;
-  district_heating?: boolean;
-  patio?: boolean;
-  Garage?: boolean;
-  pool?: boolean;
-  veranda?: boolean;
-  garden?: boolean;
-  parking?: boolean;
-  Carport?: boolean;
-  kitchen_ext?: boolean;
-  elevator?: boolean;
-  balcony?: boolean;
-  cellar?: boolean;
-  bike_room?: boolean;
-  guardian?: boolean;
-  roof?: string;
-  adjoining?: boolean;
-  basement?: boolean;
-  dependency?: boolean;
-  ground?: boolean;
-  comment?: string;
-  date_rappel?: string;
-  comment_rappel?: string;
-  price?: number;
-  favory?: boolean;
-}
-
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
 const dashboardStore = useDashboardStore();
@@ -378,7 +321,7 @@ const toggleFavorite = async () => {
   } catch (error) {
     console.log('Error in toggleFavorite:', error);
     ElMessage({
-      message: 'Erreur lors de la modification des favoris',
+      message: 'La fiche du logement n\'est pas encore créée. Veuillez la créer avant de l\'ajouter aux favoris.',
       type: 'error',
       duration: 3000,
     });
