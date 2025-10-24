@@ -139,7 +139,7 @@ import { ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOptio
 import { useDashboardStore } from '@/stores/dashboard'
 import { usePropertyStore } from '@/stores/propertyHome'
 import { PropertyService } from '@/api/property.service'
-import type { PropertyData } from '@/stores/propertyHome'
+import type { PropertyData } from '@/types/property'
 
 const dashboardStore = useDashboardStore()
 const propertyStore = usePropertyStore()

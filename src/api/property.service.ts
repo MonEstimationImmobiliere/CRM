@@ -1,5 +1,5 @@
 import apiService from '@/api/apiRequests';
-import type { PropertyData } from '@/stores/propertyHome';
+import type { PropertyData } from '@/types/property';
 
 
 

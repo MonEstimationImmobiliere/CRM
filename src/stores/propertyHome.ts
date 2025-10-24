@@ -1,68 +1,10 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { PropertyService } from '@/api';
+import type { PropertyData } from '@/types/property';
 
 
-export interface PropertyData {
-  id_fantoir_long: string;
-  id_fantoir?: string;
-  numero?: string;
-  rep?: string;
-  nom_voie?: string;
-  numero_appartement?: string;
-  code_postal?: string;
-  city?: string;
-  nom_commune?: string;
-  owner: string;
-  email: string;
-  phone: string;
-  property_type: string;
-  year_built: number;
-  year_buy: number;
-  surface: number;
-  area: number;
-  orientation: string;
-  property_condition: string;
-  bedrooms: number;
-  bathrooms: number;
-  fitted_kitchen: boolean;
-  equipped_kitchen: boolean;
-  american_kitchen: boolean;
-  scullery: boolean;
-  heating_type: string;
-  window: string;
-  window_type: string;
-  shutter: string;
-  cheminee: boolean;
-  district_heating: boolean;
-  patio: boolean;
-  Garage: boolean;
-  pool: boolean;
-  veranda: boolean;
-  garden: boolean;
-  parking: boolean;
-  Carport: boolean;
-  kitchen_ext: boolean;
-  elevator: boolean;
-  balcony: boolean;
-  cellar: boolean;
-  bike_room: boolean;
-  guardian: boolean;
-  roof: string;
-  adjoining: boolean;
-  basement: boolean;
-  dependency: boolean;
-  ground: boolean;
-  comment: string;
-  date_rappel: string | null;
-  comment_rappel?: string;
-  id?: number;
-  price?: number;
-  is_custom?: boolean; // Nouveau champ pour identifier les propriétés personnalisées
-  user_id?: number; // Pour lier à l'utilisateur
-  agency_id?: number; 
-  favorite?:boolean;
-}
+
 
 const defaultPropertyData: PropertyData = {
   id_fantoir_long: '',
@@ -231,50 +173,41 @@ export const usePropertyStore = defineStore('property', () => {
     try {
       // D'abord chercher si la propriété existe déjà dans le store
       let property = properties.value.find(p => p.id_fantoir_long === propertyId);
-      console.log('Toggling favorite for propertyId:', property);
       
-      if (!property) {
-        // Si la propriété n'existe pas dans le store, la récupérer depuis l'API
-        try {
-          const propertyData = await PropertyService.getPropertyById(propertyId);
-          // Créer la propriété avec les données de l'API et l'ajouter au store
-          property = { 
-            ...defaultPropertyData, 
-            ...propertyData, 
-            favorite: Boolean(propertyData.favorite) || false // Normaliser en booléen
-          };
-          properties.value.push(property);
-        } catch (error) {
-          throw new Error('Impossible de récupérer les données de la propriété');
-        }
-      } else {
-        // S'assurer que la propriété existante a un booléen pour favorite
-        property.favorite = Boolean(property.favorite);
+      // Récupérer les données depuis l'API avec l'ID fourni
+      if(property?.id_fantoir_long) {
+      const propertyData = await PropertyService.getPropertyById(property?.id_fantoir_long);
+      
+      // Créer/mettre à jour la propriété avec les données de l'API
+      property = { 
+        ...defaultPropertyData, 
+        ...propertyData, 
+        favorite: !Boolean(propertyData.favorite) // Toggle l'état favorite
+      };
+      
+      // Si la propriété n'existait pas dans le store, l'ajouter
+      if (!properties.value.find(p => p.id_fantoir_long === propertyId)) {
+        properties.value.push(property);
       }
-      // Maintenant on peut modifier l'état favorite
-      property.favorite = !property.favorite;
       
       // Sauvegarder la propriété mise à jour
-    delete property.comment_rappel;
-    if (property.nom_commune) {
-    delete property.nom_commune; 
-    }
-    console.log('Updated property before save:', property);
-
-
+      delete property.comment_rappel;
+      if (property.nom_commune) {
+        delete property.nom_commune; 
+      }
       await saveProperty(property);
+      return property.favorite;
+    }
+
       
       // Retourner le nouvel état pour le message
-      return property.favorite;
     } catch (error) {
       throw error;
     }
-  };
+};
 
   const isFavorite = (propertyId: string): boolean => {
     const property = properties.value.find(p => p.id_fantoir_long === propertyId);
-    // Si la propriété n'est pas dans le store, elle n'est pas favorite par défaut
-    // Convertir également les valeurs numériques en booléens pour la compatibilité
     return Boolean(property?.favorite) || false;
   };
 

@@ -8,6 +8,7 @@ export interface PropertyData {
   numero_appartement?: string;
   code_postal?: string;
   city?: string;
+  nom_commune?: string;
   owner: string;
   email: string;
   phone: string;

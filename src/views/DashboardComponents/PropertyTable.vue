@@ -190,6 +190,10 @@ import soleilNuage from '@/assets/soleil-nuage.png'
 import nuage from '@/assets/nuage.png'
 import nuagePluie from '@/assets/nuage-pluie.png'
 import orage from '@/assets/orage.png'
+import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
+import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
+import { usePropertyStore } from '@/stores/propertyHome';
+import { ElMessage } from 'element-plus';
 
 function getMonthsDiff(dateRappel: string | null): number {
   if (!dateRappel) return -1
@@ -219,10 +223,7 @@ function getWeatherLabel(dateRappel: string | null): string {
 
 
 
-import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
-import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
-import { usePropertyStore } from '@/stores/propertyHome';
-import { ElMessage } from 'element-plus';
+
 
 
 

@@ -1,13 +1,12 @@
 import { RouteLocationNamedRaw, RouteLocationPathRaw } from "vue-router";
 
-import { SbIcon }  from "@/components/index";
 
 import { ComponentProps } from "@/types/common";
 
 export interface IRoute extends RouteLocationNamedRaw, RouteLocationPathRaw {
   label: string;
   name: string;
-  iconPath?: ComponentProps<typeof SbIcon>["iconPath"];
+  iconPath?: ComponentProps<any>["iconPath"];
   icon?: string
   gestAccess?: boolean;
   iconColor?: string;
