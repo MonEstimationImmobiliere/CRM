@@ -166,7 +166,7 @@ const formatPrice = (price: number | undefined) => {
 
 const toggleFavorite = async (propertyData: any) => {
   try {
-    const newFavoriteState = await store.toggleFavorite(propertyData);
+    const newFavoriteState = await store.toggleFavorite(propertyData.id_fantoir_long);
     ElMessage({
       message: newFavoriteState 
         ? 'Propriété ajoutée aux favoris' 
