@@ -3,21 +3,39 @@
     <div class="favorites-header">
       <h1>Mes Propriétés Favorites</h1>
       <div class="header-controls">
-        <div class="city-filter">
-          <el-select 
-            v-model="selectedCity" 
-            placeholder="Filtrer par ville"
-            clearable
-            size="large"
-            style="width: 200px"
-          >
-            <el-option
-              v-for="city in availableCities"
-              :key="city"
-              :label="city"
-              :value="city"
-            />
-          </el-select>
+        <div class="filters-container">
+          <div class="city-filter">
+            <el-select 
+              v-model="selectedCity" 
+              placeholder="Filtrer par ville"
+              clearable
+              size="large"
+              style="width: 200px"
+            >
+              <el-option
+                v-for="city in availableCities"
+                :key="city"
+                :label="city"
+                :value="city"
+              />
+            </el-select>
+          </div>
+          <div class="type-filter">
+            <el-select 
+              v-model="selectedPropertyType" 
+              placeholder="Filtrer par type"
+              clearable
+              size="large"
+              style="width: 200px"
+            >
+              <el-option
+                v-for="type in availablePropertyTypes"
+                :key="type"
+                :label="type"
+                :value="type"
+              />
+            </el-select>
+          </div>
         </div>
         <div class="header-stats">
           <el-tag size="large" type="info">{{ filteredFavorites.length }} favori(s)</el-tag>
@@ -26,9 +44,9 @@
     </div>
 
     <div v-if="filteredFavorites.length === 0 && favorites.length > 0" class="empty-state">
-      <el-empty description="Aucune propriété trouvée pour cette ville">
-        <el-button type="primary" @click="selectedCity = ''">
-          Voir tous les favoris
+      <el-empty description="Aucune propriété trouvée pour ces filtres">
+        <el-button type="primary" @click="clearFilters">
+          Effacer les filtres
         </el-button>
       </el-empty>
     </div>
@@ -118,6 +136,7 @@ const store = usePropertyStore();
 const remindersStore = useRemindersStore();
 
 const selectedCity = ref<string>('');
+const selectedPropertyType = ref<string>('');
 
 const favorites = computed(() => store.favorites);
 
@@ -143,15 +162,56 @@ const availableCities = computed(() => {
   return cities;
 });
 
+// Computed pour obtenir les types de propriétés disponibles
+const availablePropertyTypes = computed(() => {
+  const types = favorites.value
+    .map(property => property.property_type || null)
+    .filter((type, index, array) => array.indexOf(type) === index); // Supprimer les doublons
+  
+  // Séparer les types valides et les valeurs nulles/undefined/vides
+  const validTypes = types
+    .filter((type): type is string => type !== null && type !== undefined && type !== '')
+    .sort(); // Trier alphabétiquement
+  
+  const hasNullTypes = types.some(type => type === null || type === undefined || type === '');
+  
+  // Ajouter "Non renseigné" si il y a des propriétés sans type
+  const result = [...validTypes];
+  if (hasNullTypes) {
+    result.push('Non renseigné');
+  }
+  
+  return result;
+});
+
 
 // Computed pour les favoris filtrés
 const filteredFavorites = computed(() => {
-  if (!selectedCity.value) {
-    return favorites.value;
+  let filtered = favorites.value;
+  
+  // Filtre par ville
+  if (selectedCity.value) {
+    filtered = filtered.filter(property => 
+      (property.city || null) === selectedCity.value
+    );
   }
-  return favorites.value.filter(property => 
-    (property.city || null) === selectedCity.value
-  );
+  
+  // Filtre par type de propriété
+  if (selectedPropertyType.value) {
+    if (selectedPropertyType.value === 'Non renseigné') {
+      // Filtrer les propriétés sans type (null, undefined, ou chaîne vide)
+      filtered = filtered.filter(property => 
+        !property.property_type || property.property_type === ''
+      );
+    } else {
+      // Filtrer par type de propriété spécifique
+      filtered = filtered.filter(property => 
+        property.property_type === selectedPropertyType.value
+      );
+    }
+  }
+  
+  return filtered;
 });
 
 
@@ -190,6 +250,11 @@ const openPropertyDialog = (property: any) => {
     id_fantoir_long: property.id_fantoir_long,
   });
   store.setDialogVisible(true);
+};
+
+const clearFilters = () => {
+  selectedCity.value = '';
+  selectedPropertyType.value = '';
 };
 
 const createReminderForProperty = (property: any) => {
@@ -241,7 +306,13 @@ const createReminderForProperty = (property: any) => {
   gap: 16px;
 }
 
-.city-filter {
+.filters-container {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.city-filter, .type-filter {
   display: flex;
   align-items: center;
 }
