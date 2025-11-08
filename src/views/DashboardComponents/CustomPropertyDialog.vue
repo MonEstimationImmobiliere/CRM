@@ -142,6 +142,8 @@ import { PropertyService } from '@/api/property.service'
 import type { PropertyData } from '@/types/property'
 
 const dashboardStore = useDashboardStore()
+  const { selectedCity } = useDashboardStore();
+
 const propertyStore = usePropertyStore()
 
 const formRef = ref()
@@ -315,6 +317,8 @@ const handleSave = async () => {
 
     saving.value = true
     console.log('Données du formulaire:', formData.value)
+
+    formData.value.city = selectedCity.city;
 
     // Créer la propriété personnalisée via le store dashboard
     const createdProperty = await dashboardStore.createCustomProperty(formData.value)

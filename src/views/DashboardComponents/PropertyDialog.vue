@@ -9,6 +9,7 @@ import { CircleCloseFilled, Star, StarFilled, Warning, Calendar, Clock, Check } 
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
 const dashboardStore = useDashboardStore();
+const { selectedCity } = useDashboardStore();
 
 const visible = computed<boolean>({
   get: () => store.isDialogVisible,
@@ -50,6 +51,7 @@ const saveProperty = async (): Promise<void> => {
       if (isEditing.value) {
         await store.saveProperty(filteredProperty);
       } else {
+        filteredProperty.city = selectedCity.city;
         await store.saveProperty(filteredProperty);
       }
       

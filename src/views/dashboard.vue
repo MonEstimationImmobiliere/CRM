@@ -42,13 +42,15 @@
 
       <PropertyTableCard v-else-if="viewType === 'card' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
 
+      <PropertyForm />
+
       <!-- Widget des rappels -->
       <RemindersWidget />
 
-      <PropertyForm />
+      <CustomPropertyDialog />
+
       
       <!-- Dialog de création de propriété personnalisée -->
-      <CustomPropertyDialog />
     </div>
   </section>
 </template>
