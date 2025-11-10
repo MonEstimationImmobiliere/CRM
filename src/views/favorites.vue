@@ -41,6 +41,27 @@
           <el-tag size="large" type="info">{{ filteredFavorites.length }} favori(s)</el-tag>
         </div>
       </div>
+      
+      <div class="view-controls">
+        <div class="layoutContainer">
+          <el-row :gutter="20">
+            <el-col :span="12">
+              <div class="grid-container" @click="setTableView">
+                <el-icon class="databoard-icon" :class="{ active: favoritesViewType === 'table' }">
+                  <DataBoard />
+                </el-icon>
+              </div>
+            </el-col>
+            <el-col :span="12">
+              <div class="grid-container" @click="setCardView">
+                <el-icon class="grid-icon" :class="{ active: favoritesViewType === 'card' }">
+                  <Grid />
+                </el-icon>
+              </div>
+            </el-col>
+          </el-row>
+        </div>
+      </div>
     </div>
 
     <div v-if="filteredFavorites.length === 0 && favorites.length > 0" class="empty-state">
@@ -59,64 +80,23 @@
       </el-empty>
     </div>
 
-    <div v-else class="favorites-grid">
-      <el-card 
-        v-for="property in filteredFavorites" 
-        :key="property.id_fantoir_long"
-        class="favorite-card"
-        shadow="hover"
-        @click="openPropertyDialog(property)"
-      >
-        <div class="favorite-header">
-          <div class="property-title">
-            <h3>{{ property.numero }} {{ property.nom_voie }}</h3>
-            <p class="property-city">{{ property.city }}</p>
-          </div>
-          <el-button 
-            type="danger" 
-            size="small" 
-            circle
-            @click.stop="toggleFavorite(property)"
-          >
-            <el-icon><StarFilled /></el-icon>
-          </el-button>
-        </div>
+    <!-- Table View -->
+    <FavoritesTable 
+      v-if="favoritesViewType === 'table' && filteredFavorites.length > 0" 
+      :favorites="filteredFavorites"
+      @edit-property="openPropertyDialog"
+      @toggle-favorite="toggleFavorite"
+      @create-reminder="createReminderForProperty"
+    />
 
-        <el-divider />
-
-        <div class="property-details">
-          <div class="detail-row">
-            <span class="label">Propriétaire:</span>
-            <span class="value">{{ property.owner || 'Non renseigné' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Type:</span>
-            <span class="value">{{ property.property_type || 'Non renseigné' }}</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Surface:</span>
-            <span class="value">{{ property.surface || 0 }} m²</span>
-          </div>
-          <div class="detail-row">
-            <span class="label">Prix estimé:</span>
-            <span class="value">{{ formatPrice(property.price) }}</span>
-          </div>
-        </div>
-
-        <el-divider />
-
-        <div class="card-actions">
-          <el-button type="primary" size="small" @click.stop="openPropertyDialog(property)">
-            <el-icon><Edit /></el-icon>
-            Modifier
-          </el-button>
-          <el-button type="success" size="small" @click.stop="createReminderForProperty(property)">
-            <el-icon><Plus /></el-icon>
-            Rappel
-          </el-button>
-        </div>
-      </el-card>
-    </div>
+    <!-- Card View -->
+    <FavoritesCards 
+      v-else-if="favoritesViewType === 'card' && filteredFavorites.length > 0"
+      :favorites="filteredFavorites"
+      @edit-property="openPropertyDialog"
+      @toggle-favorite="toggleFavorite"
+      @create-reminder="createReminderForProperty"
+    />
 
     <!-- Dialog PropertyForm -->
     <PropertyForm />
@@ -128,8 +108,10 @@ import { computed, onMounted, ref } from 'vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
-import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
+import { StarFilled, Edit, Plus, DataBoard, Grid } from '@element-plus/icons-vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
+import FavoritesTable from '@/views/DashboardComponents/FavoritesTable.vue';
+import FavoritesCards from '@/views/DashboardComponents/FavoritesCards.vue';
 import { on } from 'events';
 
 const store = usePropertyStore();
@@ -139,6 +121,7 @@ const selectedCity = ref<string>('');
 const selectedPropertyType = ref<string>('');
 
 const favorites = computed(() => store.favorites);
+const favoritesViewType = computed(() => store.favoritesViewType);
 
 onMounted(async () => {
   try {
@@ -281,6 +264,14 @@ const createReminderForProperty = (property: any) => {
     duration: 3000,
   });
 };
+
+const setTableView = () => {
+  store.setFavoritesViewType('table');
+};
+
+const setCardView = () => {
+  store.setFavoritesViewType('card');
+};
 </script>
 
 <style scoped>
@@ -339,55 +330,50 @@ const createReminderForProperty = (property: any) => {
   gap: 24px;
 }
 
-.favorite-card {
+.view-controls {
+  margin-bottom: 24px;
+}
+
+.layoutContainer {
+  display: flex;
+  justify-content: center;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
+.grid-container {
   cursor: pointer;
-  transition: transform 0.2s ease;
+  padding: 8px 12px;
+  border: 2px solid #337ecc;
+  border-radius: 8px;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  transition: all 0.3s ease;
+  background: white;
 }
 
-.favorite-card:hover {
+.grid-container:hover {
+  background-color: #f5f7fa;
   transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(51, 126, 204, 0.2);
 }
 
-.favorite-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: flex-start;
+.databoard-icon,
+.grid-icon {
+  font-size: 20px;
+  color: #909399;
+  transition: color 0.3s, transform 0.3s;
 }
 
-.property-title h3 {
-  margin: 0 0 4px 0;
-  color: #1f2937;
-  font-size: 18px;
+.databoard-icon:hover,
+.grid-icon:hover {
+  transform: scale(1.1);
 }
 
-.property-city {
-  margin: 0;
-  color: #6b7280;
-  font-size: 14px;
-}
-
-.property-details {
-  margin: 16px 0;
-}
-
-.detail-row {
-  display: flex;
-  justify-content: space-between;
-  margin-bottom: 8px;
-}
-
-.detail-row .label {
-  font-weight: 500;
-  color: #374151;
-}
-
-.detail-row .value {
-  color: #6b7280;
-}
-
-.card-actions {
-  display: flex;
-  gap: 8px;
-  justify-content: flex-end;
+.databoard-icon.active,
+.grid-icon.active {
+  color: #337ecc;
+  transform: scale(1.1);
 }
 </style>

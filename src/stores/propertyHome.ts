@@ -60,6 +60,7 @@ export const usePropertyStore = defineStore('property', () => {
   const properties = ref<PropertyData[]>([]);
   const selectedProperty = ref<PropertyData | null>(null);
   const isDialogVisible = ref<boolean>(false);
+  const favoritesViewType = ref<'table' | 'card'>('card');
 
   function addProperty(property: PropertyData) {
     const newProperty = {
@@ -253,16 +254,22 @@ export const usePropertyStore = defineStore('property', () => {
     }
   };
 
+  const setFavoritesViewType = (viewType: 'table' | 'card') => {
+    favoritesViewType.value = viewType;
+  };
+
   return {
     properties,
     selectedProperty,
     isDialogVisible,
+    favoritesViewType,
     saveProperty,
     addProperty,
     updateProperty,
     deleteProperty,
     selectProperty,
     setDialogVisible,
+    setFavoritesViewType,
     defaultPropertyData,
     favorites,
     toggleFavorite,

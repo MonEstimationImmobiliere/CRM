@@ -12,7 +12,7 @@ export const routes: Array<RouteRecordRaw> = [
     ...ROUTES.Dashboard,
     component: Layout,
     redirect: "/",
-    meta: { title: "Ventes", askBeforeCloseTab: true },
+    meta: { title: "Prospection", askBeforeCloseTab: true },
     children: [
       {
         path: "",
