@@ -536,7 +536,7 @@ const toggleFavorite = async () => {
             </el-radio-group>
           </el-form-item>
 
-          <div class="grid grid-cols-2 gap-4">
+          <div class="checkbox-container">
             <el-checkbox v-model="store.selectedProperty.adjoining" label="Mitoyenneté" size="large" />
             <el-checkbox v-model="store.selectedProperty.basement" label="Sous-sol" size="large" />
             <el-checkbox v-model="store.selectedProperty.dependency" label="Dépendance" size="large" />
@@ -878,6 +878,12 @@ top : none;
   font-size: 48px;
   color: #d1d5db;
   margin-bottom: 16px;
+}
+
+.checkbox-container {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 1rem;
 }
 
 .no-reminders-content h3 {

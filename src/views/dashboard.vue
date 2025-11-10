@@ -18,6 +18,8 @@
           </el-button>
         </div>
 
+      <div class="view-controls">
+
         <div class="layoutContainer">
           <el-row :gutter="20">
             <el-col :span="12">
@@ -36,6 +38,8 @@
             </el-col>
           </el-row>
         </div>
+      </div>
+
       </div>
 
       <PropertyTable v-if="viewType === 'table' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
@@ -184,22 +188,38 @@ const setCardView = () => {
   display: flex;
 }
 
+.view-controls {
+  margin-bottom: 24px;
+}
+
+.layoutContainer {
+  display: flex;
+  justify-content: center;
+  max-width: 200px;
+  margin: 0 auto;
+}
+
 .grid-container {
   cursor: pointer;
-  padding: 5px;
-  border: #337ecc 2px solid;
-  border-radius: 4px;
+  padding: 8px 12px;
+  border: 2px solid #337ecc;
+  border-radius: 8px;
   display: flex;
   justify-content: center;
   align-items: center;
-  &:hover {
-    background-color: #f5f7fa;
-  }
+  transition: all 0.3s ease;
+  background: white;
+}
+
+.grid-container:hover {
+  background-color: #f5f7fa;
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(51, 126, 204, 0.2);
 }
 
 .databoard-icon,
 .grid-icon {
-  font-size: 24px;
+  font-size: 20px;
   color: #909399;
   transition: color 0.3s, transform 0.3s;
 }

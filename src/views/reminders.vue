@@ -66,7 +66,7 @@
       
       <div class="filter-actions">
         <el-select v-model="typeFilter" placeholder="Type" clearable style="width: 150px;">
-          <el-option label="Rappel" value="rappel" />
+          <el-option label="Appel" value="rappel" />
           <el-option label="Estimation" value="estimation" />
           <el-option label="Visite" value="visite" />
           <el-option label="Autre" value="autre" />
@@ -328,9 +328,9 @@
           </el-select>
         </el-form-item>
 
-        <el-form-item label="Partage">
+        <!-- <el-form-item label="Partage">
           <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
-        </el-form-item>
+        </el-form-item> -->
       </el-form>
       
       <template #footer>

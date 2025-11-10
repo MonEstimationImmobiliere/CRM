@@ -4,7 +4,7 @@
       :data="favorites" 
       class="modern-favorites-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
-      height="70vh" 
+      height="79vh" 
       :row-class-name="getRowClass"
       @row-click="handleRowClick"
       empty-text="Aucune propriété favorite trouvée"
