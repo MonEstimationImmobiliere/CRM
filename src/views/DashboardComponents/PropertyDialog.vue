@@ -21,14 +21,18 @@ const isEditing = computed<boolean>(() => !!store.selectedProperty?.id);
 const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return "Nouvelle propriété";
   
+  const id = store.selectedProperty?.id;
+  const favorite = store.selectedProperty.favorite || "";
+  const idFantoir = store.selectedProperty.id_fantoir || "";
+  const idFantoirLong = store.selectedProperty.id_fantoir_long || "";
+  const codePostal = store.selectedProperty.code_postal || "";
+  const city = store.selectedProperty.city || "";
   const numero = store.selectedProperty.numero || "";
   const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : "";
   const voie = store.selectedProperty.nom_voie || "";
-  const appart = store.selectedProperty.numero_appartement
-    ? ` - Appartement ${store.selectedProperty.numero_appartement}`
-    : "";
+  const appart = store.selectedProperty.numero_appartement ? ` - Appartement ${store.selectedProperty.numero_appartement}` : "";
 
-  return `${numero}${rep} - ${voie}${appart}`;
+  return `${id}\n${codePostal} ${city}(${idFantoir})\n${numero}${rep} - ${voie}${appart}(${idFantoirLong})\nfavorite : ${favorite}`;
 });
 
 const emailFormatter = (value: string): string => value.toLowerCase();
@@ -338,7 +342,7 @@ const toggleFavorite = async () => {
     <template #header="{ titleId }">
       <div class="headerContainer">
         <div></div>
-        <h4 :id="titleId" class="titleHeader">{{ dialogTitle }}</h4>
+        <h4 :id="titleId" class="titleHeader" >{{ dialogTitle }}</h4>
         <div class="header-actions">
           <el-button 
             @click="toggleFavorite" 
@@ -348,6 +352,7 @@ const toggleFavorite = async () => {
           >
             <el-icon>
               <StarFilled v-if="store.selectedProperty?.id_fantoir_long && store.isFavorite(store.selectedProperty.id_fantoir_long)" />
+          
               <Star v-else />
             </el-icon>
           </el-button>
@@ -988,6 +993,8 @@ top : none;
   font-weight: bold;
   color: #121212;
   margin-left: 1rem;
+   text-align: center;
+  white-space: pre-line;
 }
 
 .headerContainer {

@@ -70,7 +70,7 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.push(newProperty);
   }
 
-  const saveProperty = async (property: PropertyData) => {
+  /*const saveProperty = async (property: PropertyData) => {
     try {
       if (property.id) {
         const updatedProperty = await PropertyService.updateProperty(property.id, property);
@@ -82,7 +82,30 @@ export const usePropertyStore = defineStore('property', () => {
     } catch (error) {
       console.error("Erreur lors de la sauvegarde de la propriété :", error);
     }
-  };
+  };*/
+
+  const saveProperty = async (property: PropertyData) => {
+  try {
+    let saved;
+
+    if (property.id) {
+      // UPDATE
+      saved = await PropertyService.updateProperty(property.id, property);
+      updatePropertyInStore(saved);
+    } else {
+      // CREATE
+      const created = await PropertyService.createProperty(property);
+      
+      saved = { ...property, id: created.id };
+      addProperty(saved);
+    }
+
+    return saved; // <-- important !
+  } catch (error) {
+    console.error("Erreur lors de la sauvegarde de la propriété :", error);
+    throw error;
+  }
+};
 
   // Fonction pour mettre à jour une propriété dans le store après sauvegarde
   function updatePropertyInStore(updatedProperty: PropertyData) {
@@ -159,6 +182,15 @@ export const usePropertyStore = defineStore('property', () => {
     }
   };
 
+  function loadPropertyBaseData(property: any) {
+  selectedProperty.value = {
+    ...defaultPropertyData,
+    ...property,
+    id_fantoir_long: property.id_fantoir_long,
+    favorite: Boolean(property.favorite),
+  };
+}
+
   function setDialogVisible(visible: boolean) {
     isDialogVisible.value = visible;
   }
@@ -170,42 +202,70 @@ export const usePropertyStore = defineStore('property', () => {
 
 
 
-   const toggleFavorite = async (propertyId: string) => {
+const toggleFavorite = async (id_fantoir_long: string, sourceRow: any = null) => {
+  console.warn("=== toggleFavorite START ===", id_fantoir_long);
+
+  try {
+    let existing = null;
+
+    // 1. Récupérer la propriété si elle existe
     try {
-      // D'abord chercher si la propriété existe déjà dans le store
-      let property = properties.value.find(p => p.id_fantoir_long === propertyId);
-      
-      // Récupérer les données depuis l'API avec l'ID fourni
-      if(property?.id_fantoir_long) {
-      const propertyData = await PropertyService.getPropertyById(property?.id_fantoir_long);
-      
-      // Créer/mettre à jour la propriété avec les données de l'API
-      property = { 
-        ...defaultPropertyData, 
-        ...propertyData, 
-        favorite: !Boolean(propertyData.favorite) // Toggle l'état favorite
-      };
-      
-      // Si la propriété n'existait pas dans le store, l'ajouter
-      if (!properties.value.find(p => p.id_fantoir_long === propertyId)) {
-        properties.value.push(property);
+      existing = await PropertyService.getPropertyById(id_fantoir_long);
+    } catch (err: any) {
+      if (err.response?.status === 404) {
+        existing = null;
+      } else {
+        throw err;
       }
-      
-      // Sauvegarder la propriété mise à jour
-      delete property.comment_rappel;
-      if (property.nom_commune) {
-        delete property.nom_commune; 
-      }
-      await saveProperty(property);
-      return property.favorite;
     }
 
-      
-      // Retourner le nouvel état pour le message
-    } catch (error) {
-      throw error;
+    let property: any;
+
+    if (!existing) {
+      // 2. Création avec enrichissement depuis row
+      property = {
+        ...defaultPropertyData,
+        ...sourceRow,                  // <----- ENRICHISSEMENT ICI !
+        id_fantoir_long,
+        id_fantoir: sourceRow?.id_fantoir || "",
+        code_postal: sourceRow?.code_postal || "",
+        city: sourceRow?.city || "",
+        nom_commune: sourceRow?.nom_commune || "",
+        nom_voie: sourceRow?.nom_voie || "",
+        numero: sourceRow?.numero || "",
+        rep: sourceRow?.rep || "",
+        numero_appartement: sourceRow?.numero_appartement || "",
+        surface: sourceRow?.surface || 0,
+        favorite: true
+      };
+
+      const created = await PropertyService.createProperty(property);
+      property.id = created.id;
+
+    } else {
+
+      // 3. Toggle normal si elle existe
+      property = {
+        ...existing,
+        favorite: !Boolean(existing.favorite)
+      };
+
+      await PropertyService.updateProperty(property.id, property);
     }
+
+    // 4. Mise à jour store Pinia
+    updatePropertyInStore(property);
+
+    return property.favorite;
+
+  } catch (error) {
+    console.error("toggleFavorite ERROR:", error);
+    throw error;
+  }
 };
+
+
+
 
   const isFavorite = (propertyId: string): boolean => {
     const property = properties.value.find(p => p.id_fantoir_long === propertyId);
@@ -268,6 +328,7 @@ export const usePropertyStore = defineStore('property', () => {
     updateProperty,
     deleteProperty,
     selectProperty,
+      loadPropertyBaseData,  
     setDialogVisible,
     setFavoritesViewType,
     defaultPropertyData,

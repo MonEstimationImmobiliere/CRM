@@ -1,5 +1,10 @@
 <template>
 
+<div style="margin-bottom: 10px; white-space: pre-wrap">
+  {{ addresses }}
+</div>
+
+
 
 
   <el-table 
@@ -12,7 +17,12 @@
 
   >
     <el-table-column label="Ville" prop="city" sortable  min-width="120">
+
+
+
+
       <template #default="{ row }">
+
       {{ row.nom_commune}} {{ row.codePostal}}
       </template>
     </el-table-column> 
@@ -159,7 +169,10 @@
       <template #default="{ row }">
         <div class="action-buttons">
           <el-button 
-            @click.stop="toggleFavorite(String(row.id_fantoir_long))"
+        
+
+            @click.stop="toggleFavorite(row)"
+
             :type="row.favorite === 'true' || isFavorite(String(row.id_fantoir_long)) ? 'warning' : 'default'"
             size="small"
             circle
@@ -194,6 +207,10 @@ import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
 import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue'
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
+import { useDashboardStore } from '@/stores/dashboard';
+
+import { ref } from "vue";
+const selectedId = ref<string | null>(null);
 
 function getMonthsDiff(dateRappel: string | null): number {
   if (!dateRappel) return -1
@@ -222,13 +239,9 @@ function getWeatherLabel(dateRappel: string | null): string {
 }
 
 
-
-
-
-
-
-
 const store = usePropertyStore();
+
+const dashboardStore = useDashboardStore();
 
 defineProps({
   addresses: {
@@ -257,7 +270,13 @@ const repB = (b.rep || '').toLowerCase();
 return repA.localeCompare(repB);
 };
 
-const getRowClass = () => 'custom-row';
+//const getRowClass = () => 'custom-row';
+
+const getRowClass = (row: any) => {
+  return row.id_fantoir_long === selectedId.value
+    ? 'custom-row selected-row'
+    : 'custom-row';
+};
 
 const formatDate = (dateStr: string | null) => {
   if (!dateStr) return '';
@@ -287,7 +306,7 @@ const formatMetrage = (value: number | null) => {
 };
 
 // Gestion des favoris
-const toggleFavorite = async (propertyId: string) => {
+/*const toggleFavorite = async (propertyId: string) => {
   console.log('toggleFavorite called in PropertyTable with:', propertyId, typeof propertyId);
   
   try {
@@ -307,6 +326,55 @@ const toggleFavorite = async (propertyId: string) => {
       type: 'error',
       duration: 3000,
     });
+  }
+};*/
+
+/*const toggleFavorite = async (row: any) => {
+  try {
+    selectedId.value = row.id_fantoir_long;
+
+    // 1. Charger les données complètes de property depuis l'API ou fallback
+    await store.selectProperty(row);
+
+    let prop = { ...store.selectedProperty };
+
+    // 2. Si la property n'existe pas encore → CREATE
+    const saved = await store.saveProperty(prop);
+
+    // 3. IMPORTANT : mettre à jour selectedProperty avec l'id créé
+    store.selectedProperty.id = saved.id;
+
+    // 4. Mettre à jour la liste d’adresses dans le dashboard
+    dashboardStore.updateAddress(saved);
+
+    // 5. Toggle le favori
+    const newFavorite = !Boolean(saved.favorite);
+    saved.favorite = newFavorite;
+
+    // 6. Sauvegarder le favori
+    await store.saveProperty(saved);
+
+    // 7. MAJ du tableau
+    dashboardStore.updateAddress(saved);
+
+    ElMessage.success(newFavorite ? "Ajouté aux favoris" : "Retiré des favoris");
+
+  } catch (error) {
+    console.error("Erreur toggleFavorite:", error);
+    ElMessage.error("Impossible de modifier le favori");
+  }
+};*/
+
+
+const toggleFavorite = async (row: any) => {
+  try {
+    const newState = await store.toggleFavorite(row.id_fantoir_long, row);
+
+    ElMessage.success(newState ? "Ajouté aux favoris" : "Retiré des favoris");
+
+    row.favorite = newState;
+  } catch (e) {
+    ElMessage.error("Impossible de modifier le favori");
   }
 };
 

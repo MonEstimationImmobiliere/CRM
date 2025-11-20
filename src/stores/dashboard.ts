@@ -40,6 +40,7 @@ export const useDashboardStore = defineStore('dashboard', {
       }
     },
 
+
     async querySearchEstimation() {
       if (!this.selectedCodeIdFantoir) return
       
@@ -81,6 +82,22 @@ export const useDashboardStore = defineStore('dashboard', {
         console.error('Error fetching maj:', error)
       }
     },
+
+    updateAddress(property: any) {
+  const index = this.addresses.findIndex(
+    a => a.id_fantoir_long === property.id_fantoir_long
+  );
+
+  if (index !== -1) {
+    this.addresses[index] = {
+      ...this.addresses[index],
+      ...property
+    };
+  } else {
+    // Optionnel : si l’adresse n'existait pas dans la liste
+    this.addresses.push(property);
+  }
+},
 
     setSearchParams(city: any, street: any, codeInsee: string, codeIdFantoir: string) {
       this.selectedCity = city

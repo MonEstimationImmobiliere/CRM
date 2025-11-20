@@ -150,6 +150,7 @@ const openCreateCustomPropertyDialog = () => {
   dashboardStore.openCustomPropertyDialog()
 }
 
+//Fonction appelé quanf on clique sur ouvrir
 const openPropertyDialog = (property: any) => {
   console.log('openPropertyDialog called with property:', property);
   store.selectProperty({
@@ -159,6 +160,7 @@ const openPropertyDialog = (property: any) => {
   });
   store.setDialogVisible(true);
 };
+
 
 
 const setTableView = () => {

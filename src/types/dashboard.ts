@@ -22,3 +22,4 @@ export interface AddressItem {
     comment?: string;
     id_fantoir_long?: string;
   }
+
