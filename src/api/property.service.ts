@@ -46,6 +46,22 @@ export const PropertyService = {
     }
   },
 
+
+
+
+
+  async getAddressesByCodeInsee(codeInsee: string): Promise<any[]> {
+    try {
+      const response = await apiService.get<any[]>(`/address-city/${encodeURIComponent(codeInsee)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching code insee:', error);
+      throw error;
+    }
+  },
+
+
+
   async getAddressesByFantoir(idFantoir: string, type: string): Promise<any[]> {
     try {
       const response = await apiService.get<any[]>(`/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
@@ -55,6 +71,20 @@ export const PropertyService = {
       throw error;
     }
   },
+
+async getAddressesByNumero(idFantoir: string, numero: string, rep?: string): Promise<any[]> {
+  try {
+    const url = rep
+      ? `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}/${encodeURIComponent(rep)}`
+      : `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}`;
+
+    const response = await apiService.get<any[]>(url);
+    return response.data;
+  } catch (error) {
+    console.error("Error fetching addresses by numero:", error);
+    throw error;
+  }
+},
 
   // Gestion des favoris
   // async addToFavorites(propertyId: string): Promise<void> {

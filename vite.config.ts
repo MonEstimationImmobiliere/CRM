@@ -13,34 +13,28 @@ function resolvePath(src: string) {
   return path.resolve(__dirname, src)
 }
 
-// https://vitejs.dev/config/
 export default defineConfig({
   base: '/erp/',
- 
+
   plugins: [
     vue(),
-    ElementPlus({
-      useSource: true
-    }),
+    ElementPlus({ useSource: true }),
     vueJsx(),
-
     Components({
-      resolvers: [
-        ElementPlusResolver()
-      ]
+      resolvers: [ElementPlusResolver()]
     }),
   ],
+
   define: {
     __VUE_I18N_FULL_INSTALL__: true,
     __VUE_I18N_LEGACY_API__: false,
     __INTLIFY_PROD_DEVTOOLS__: false
   },
+
   css: {
     preprocessorOptions: {
       scss: {
-        // eslint-disable-next-line quotes
         additionalData: `@use "./src/style/style.scss" as *;`
-        // additionalData: `@use "./src/styles/element/index.scss" as *;`,
       }
     },
     postcss: {
@@ -61,12 +55,25 @@ export default defineConfig({
       ]
     }
   },
+
   resolve: {
     alias: {
       '@': '/src',
       '@reusableComponents': path.resolve(__dirname, 'src/components')
     }
   },
+
+  // ⭐⭐ CORRECTION BIGINT ICI ⭐⭐
+  optimizeDeps: {
+    esbuildOptions: {
+      target: 'esnext'
+    }
+  },
+
+  build: {
+    target: 'esnext'
+  },
+
   server: {
     open: false,
     port: 8888

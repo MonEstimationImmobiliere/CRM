@@ -1,10 +1,8 @@
 <template>
 
-<div style="margin-bottom: 10px; white-space: pre-wrap">
+<!--<div style="margin-bottom: 10px; white-space: pre-wrap">
   {{ addresses }}
-</div>
-
-
+</div>-->
 
 
   <el-table 
@@ -17,16 +15,11 @@
 
   >
     <el-table-column label="Ville" prop="city" sortable  min-width="120">
-
-
-
-
       <template #default="{ row }">
 
       {{ row.nom_commune}} {{ row.codePostal}}
       </template>
     </el-table-column> 
-
 
 
     <el-table-column label="N°" prop="numero" sortable  min-width="100" :sort-method="sortByNumeroAndRep" :sort-orders="['ascending', 'descending']">
@@ -64,25 +57,6 @@
       </template>
     </el-table-column>
 
-    <!--
-    <el-table-column label="Chambres" prop="bedrooms" sortable  min-width="120">
-      <template #default="{ row }">
-        {{ row.bedrooms }}
-      </template>
-    </el-table-column>
-  -->
-
-   <!--  <el-table-column label="Terrain" prop="surfaceTerrain" sortable  min-width="120">
-      <template #default="{ row }">
-  {{ formatMetrage(row.area) }}
-      </template>
-    </el-table-column> -->
-
-    <!--<el-table-column label="Nb vente" prop="nombre_ventes" sortable  min-width="120">
-      <template #default="{ row }">
-        {{ row.nombre_ventes }}
-      </template>
-    </el-table-column>-->
 
     <el-table-column label="Dernière vente" prop="date_derniere_vente" sortable min-width="120">
       <template #default="{ row }">
@@ -93,18 +67,12 @@
     </el-table-column>
 
 
-
     <el-table-column label="Prix vendu" prop="dernier_prix_vente" sortable min-width="120">
   <template #default="{ row }">  
      {{ formatPrice(row.dernier_prix_vente) }}
   </template>
 </el-table-column>
 
-<!--<el-table-column label="Date Estimation" prop="date_derniere_estimation" sortable min-width="120">
-  <template #default="{ row }">
-    {{ formatDate(row.date_derniere_estimation) }}
-  </template>
-</el-table-column>-->
 
 <el-table-column label="Prix Estimé" prop="dernier_prix_estime" sortable min-width="120">
   <template #default="{ row }">
@@ -116,16 +84,6 @@
 
   </template>
 </el-table-column>
-
-<!--
-    <el-table-column label="Date Maj" prop="date_maj" sortable  min-width="120" >
-      <template #default="{ row }">
-            {{ formatDate(row.date_maj ) }}
-      </template>
-    </el-table-column> 
-  -->
-
-
 
     <el-table-column label="Contact" prop="date_rappel" sortable min-width="120">
   <template #default="{ row }">
@@ -143,42 +101,22 @@
 </div>
 
 
-   <!--  <img
-        :src="getWeatherIcon(row.date_rappel)"
-        alt="météo"
-        width="24"
-        style="margin-right: 6px;"
-      />
-
-<span
-  :style="{
-    color:
-      getWeatherLabel(row.date_rappel).includes('eviter') ? 'red'
-      : getWeatherLabel(row.date_rappel).includes('mois') ? 'orange'
-      : 'green'
-  }"
->
-  {{ getWeatherLabel(row.date_rappel) }}
-</span>-->
   </template>
 </el-table-column>
-
-
 
     <el-table-column fixed="right" label="Actions" min-width="140">
       <template #default="{ row }">
         <div class="action-buttons">
           <el-button 
-        
 
             @click.stop="toggleFavorite(row)"
 
-            :type="row.favorite === 'true' || isFavorite(String(row.id_fantoir_long)) ? 'warning' : 'default'"
+              :type="row.favorite === 'true' || row.favorite === true ? 'warning' : 'default'"
             size="small"
             circle
           >
             <el-icon>
-              <StarFilled v-if="row.favorite === 'true' || isFavorite(String(row.id_fantoir_long))" />
+               <StarFilled v-if="row.favorite === 'true' || row.favorite === true" />
               <Star v-else />
             </el-icon>
           </el-button>
@@ -305,65 +243,6 @@ const formatMetrage = (value: number | null) => {
   return `${Math.round(value).toLocaleString('fr-FR')} m²`;
 };
 
-// Gestion des favoris
-/*const toggleFavorite = async (propertyId: string) => {
-  console.log('toggleFavorite called in PropertyTable with:', propertyId, typeof propertyId);
-  
-  try {
-    const newFavoriteState = await store.toggleFavorite(propertyId);
-    ElMessage({
-      message: newFavoriteState 
-        ? 'Propriété ajoutée aux favoris' 
-        : 'Propriété retirée des favoris',
-      type: newFavoriteState ? 'success' : 'info',
-      duration: 2000,
-    });
-  } catch (error) {
-    console.log('Error in PropertyTable toggleFavorite:', error);
-    ElMessage({
-           message: 'La fiche du logement n\'est pas encore créée. Veuillez la créer avant de l\'ajouter aux favoris.',
-
-      type: 'error',
-      duration: 3000,
-    });
-  }
-};*/
-
-/*const toggleFavorite = async (row: any) => {
-  try {
-    selectedId.value = row.id_fantoir_long;
-
-    // 1. Charger les données complètes de property depuis l'API ou fallback
-    await store.selectProperty(row);
-
-    let prop = { ...store.selectedProperty };
-
-    // 2. Si la property n'existe pas encore → CREATE
-    const saved = await store.saveProperty(prop);
-
-    // 3. IMPORTANT : mettre à jour selectedProperty avec l'id créé
-    store.selectedProperty.id = saved.id;
-
-    // 4. Mettre à jour la liste d’adresses dans le dashboard
-    dashboardStore.updateAddress(saved);
-
-    // 5. Toggle le favori
-    const newFavorite = !Boolean(saved.favorite);
-    saved.favorite = newFavorite;
-
-    // 6. Sauvegarder le favori
-    await store.saveProperty(saved);
-
-    // 7. MAJ du tableau
-    dashboardStore.updateAddress(saved);
-
-    ElMessage.success(newFavorite ? "Ajouté aux favoris" : "Retiré des favoris");
-
-  } catch (error) {
-    console.error("Erreur toggleFavorite:", error);
-    ElMessage.error("Impossible de modifier le favori");
-  }
-};*/
 
 
 const toggleFavorite = async (row: any) => {
@@ -372,15 +251,20 @@ const toggleFavorite = async (row: any) => {
 
     ElMessage.success(newState ? "Ajouté aux favoris" : "Retiré des favoris");
 
-    row.favorite = newState;
+    //row.favorite = newState;
+    row.favorite = newState ? 'true' : 'false';
+
+    dashboardStore.updateAddress({
+      ...row,
+      favorite: row.favorite,
+    });
+
   } catch (e) {
+    console.error("toggleFavorite error:", e);
     ElMessage.error("Impossible de modifier le favori");
   }
 };
 
-const isFavorite = (propertyId: string): boolean => {
-  return store.isFavorite(propertyId);
-};
 
 
 </script>

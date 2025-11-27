@@ -5,6 +5,7 @@ import type { RouteRecordRaw } from "vue-router";
 import { ROUTES } from "@/router/routes";
 import { userStore } from "@/stores/user";
 
+
 const routerHistory = createWebHistory(import.meta.env.BASE_URL);
 
 export const routes: Array<RouteRecordRaw> = [
@@ -21,6 +22,23 @@ export const routes: Array<RouteRecordRaw> = [
       },
     ],
   },
+
+{
+  path: "/map",
+  name: "Map",
+  component: Layout,
+  meta: { title: "Carte 3D", askBeforeCloseTab: false },
+  children: [
+    {
+      path: "",
+      component: () => import("@/views/map.vue"),
+      meta: { title: "Carte 3D", icon: Link },
+    },
+  ],
+},
+
+
+
   {
     path: "/reminders",
     name: "Reminders",
@@ -47,7 +65,9 @@ export const routes: Array<RouteRecordRaw> = [
       },
     ],
   },
+
   {
+
     ...ROUTES.Settings,
     component: Layout,
     //redirect: '/customer/index',

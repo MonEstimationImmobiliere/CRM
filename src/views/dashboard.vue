@@ -2,157 +2,265 @@
   <section class="block dashboardContainer">
     <div class="p-4">
       <div class="headerFilterInfoContainer">
+
+        <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
         <div class="autoCompleteContainer">
-          <CityAutocomplete class="autoCompleteBtton" v-model="selectedCity" @select="handleCitySelect" @clear="handleCityClear" />
-          <StreetAutocomplete v-model="selectedStreet" :code-insee="selectedCodeInsee" @select="handleStreetSelect" />
+          <CityAutocomplete
+            class="autoCompleteButton"
+            v-model="selectedCity"
+            @select="handleCitySelect"
+            @clear="handleCityClear"
+          />
+
+          <StreetAutocomplete
+            v-model="selectedStreet"
+            :code-insee="selectedCodeInsee"
+            @select="handleStreetSelect"
+            @clear="handleStreetClear"
+          />
+
+          <NumeroAutocomplete
+            v-model="selectedNumeroFull"
+            :id-fantoir="selectedStreetIdFantoir"
+   
+            @select="handleNumeroSelect"
+            @clear="handleNumeroClear"
+          />
         </div>
 
+        <!-- BOUTONS -->
         <div class="validationButtonContainer">
-          <el-button type="primary" size="large" @click="querySearchAddress" :disabled="!selectedStreet || !selectedCodeInsee"> Afficher </el-button>
+          <el-button
+            type="primary"
+            size="large"
+            @click="querySearchAddress"
+            :disabled="!selectedCity"
+          >
+            Afficher
+          </el-button>
 
-          <el-button type="primary" size="large" @click="querySearchEstimation"> Estimations reçues </el-button>
+          <el-button type="primary" size="large" @click="querySearchEstimation">
+            Estimations reçues
+          </el-button>
 
-          
-               <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
+          <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
             Créer une propriété personnalisée
           </el-button>
         </div>
 
-      <div class="view-controls">
+        <!-- SWITCH LISTE / CARDS -->
+        <div class="view-controls">
+          <div class="layoutContainer">
+            <el-row :gutter="20">
+              <el-col :span="12">
+                <div class="grid-container" @click="setTableView">
+                  <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
+                    <DataBoard />
+                  </el-icon>
+                </div>
+              </el-col>
 
-        <div class="layoutContainer">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div class="grid-container" @click="setTableView">
-                <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
-                  <DataBoard />
-                </el-icon>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div class="grid-container" @click="setCardView">
-                <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
-                  <Grid />
-                </el-icon>
-              </div>
-            </el-col>
-          </el-row>
+              <el-col :span="12">
+                <div class="grid-container" @click="setCardView">
+                  <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
+                    <Grid />
+                  </el-icon>
+                </div>
+              </el-col>
+            </el-row>
+          </div>
         </div>
-      </div>
 
       </div>
 
-      <PropertyTable v-if="viewType === 'table' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
+      <!-- TABLE DES ADRESSES -->
+      <PropertyTable
+        v-if="viewType === 'table' && addresses.length > 0"
+        :addresses="addresses"
+        @edit-property="openPropertyDialog"
+      />
 
-      <PropertyTableCard v-else-if="viewType === 'card' && addresses.length > 0" :addresses="addresses" @edit-property="openPropertyDialog" />
+      <!-- MODE CARD -->
+      <PropertyTableCard
+        v-else-if="viewType === 'card' && addresses.length > 0"
+        :addresses="addresses"
+        @edit-property="openPropertyDialog"
+      />
 
       <PropertyForm />
-
-      <!-- Widget des rappels -->
-      <RemindersWidget />
-
       <CustomPropertyDialog />
 
-      
-      <!-- Dialog de création de propriété personnalisée -->
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from "vue";
-import { useRouter } from "vue-router";
-import { usePropertyStore } from "../stores/propertyHome";
-import { useDashboardStore } from '@/stores/dashboard'
-import { PropertyService } from "@/api";
+/* ------------------------------------
+      IMPORTS
+------------------------------------ */
+import { computed, onMounted } from "vue";
 import { DataBoard, Grid } from "@element-plus/icons-vue";
 
-// Component imports
+// Stores
+import { usePropertyStore } from "@/stores/propertyHome";
+import { useDashboardStore } from "@/stores/dashboard";
+
+// Components
 import CityAutocomplete from "./DashboardComponents/CityAutocomplete.vue";
 import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
+import NumeroAutocomplete from "./DashboardComponents/NumeroAutocomplete.vue";
 import PropertyTable from "./DashboardComponents/PropertyTable.vue";
 import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
 import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
 import CustomPropertyDialog from "./DashboardComponents/CustomPropertyDialog.vue";
-import RemindersWidget from "@/components/RemindersWidget.vue";
+import PropertyTableVirtual from "./DashboardComponents/PropertyTableVirtual.vue"
 
-// Store
+/* ------------------------------------
+      STORES
+------------------------------------ */
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
 
-// Reactive state
-// const selectedCodeIdFantoir = computed({
-//   get: () => dashboardStore.selectedCodeIdFantoir,
-//   set: (value) => dashboardStore.selectedCodeIdFantoir = value
-// })
+/* ------------------------------------
+      COMPUTED BINDINGS
+------------------------------------ */
 
-const viewType = computed({
-  get: () => dashboardStore.viewType,
-  set: (value) => dashboardStore.viewType = value
-})
-
+// --- Ville ---
 const selectedCity = computed({
   get: () => dashboardStore.selectedCity,
-  set: (value) => dashboardStore.selectedCity = value
-})
+  set: (v) => (dashboardStore.selectedCity = v),
+});
 
-console.log('selectedCity', selectedCity.value)
-
+// --- Rue ---
 const selectedStreet = computed({
   get: () => dashboardStore.selectedStreet,
-  set: (value) => dashboardStore.selectedStreet = value
-})
+  set: (v) => (dashboardStore.selectedStreet = v),
+});
 
+// --- Code INSEE ---
 const selectedCodeInsee = computed({
   get: () => dashboardStore.selectedCodeInsee,
-  set: (value) => dashboardStore.selectedCodeInsee = value
-})
+  set: (v) => (dashboardStore.selectedCodeInsee = v),
+});
 
-const addresses = computed(() => dashboardStore.addresses)
-console.log('addresses in dashboard.vue', addresses.value)
+// --- ID FANTOIR de la rue (nécessaire pour NuméroAutocomplete) ---
+const selectedStreetIdFantoir = computed(() => {
+  return dashboardStore.selectedStreet?.idFantoir || "";
+});
 
-// Restaurer l'état au montage du composant
-onMounted(() => {
-  // Si des données existent déjà, ne pas les recharger
-  if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
-    console.log('Données restaurées depuis le store')
+// --- Numéro + rep (ex: "40 bis") ---
+const selectedNumeroFull = computed({
+  get: () => dashboardStore.selectedNumeroFull,
+
+  set: (v) => {
+    dashboardStore.selectedNumeroFull = v;
+
+    if (!v) {
+      dashboardStore.selectedNumero = "";
+      dashboardStore.selectedRep = "";
+      return;
+    }
+
+    // Sélection via autocomplete → objet
+    if (typeof v === "object" && v !== null) {
+      dashboardStore.selectedNumero = v.numero || "";
+      dashboardStore.selectedRep = v.rep || "";
+      return;
+    }
+
+    // Saisie manuelle -> string
+    if (typeof v === "string") {
+      const parts = v.trim().split(" ");
+      dashboardStore.selectedNumero = parts[0] || "";
+      dashboardStore.selectedRep = parts[1] || "";
+    }
   }
-})
+});
 
-// Methods
-const handleCitySelect = (city: any) => {
-  dashboardStore.selectedCity = city
-  dashboardStore.selectedCodeInsee = city.codeInsee || ""
-}
+// --- Vue table / card ---
+const viewType = computed({
+  get: () => dashboardStore.viewType,
+  set: (v) => (dashboardStore.viewType = v),
+});
+
+// --- Résultats des adresses ---
+const addresses = computed(() => dashboardStore.addresses);
+
+/* ------------------------------------
+      LIFECYCLE
+------------------------------------ */
+onMounted(() => {
+  if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
+    console.log("Données restaurées depuis le store");
+  }
+});
+
+/* ------------------------------------
+      HANDLERS
+------------------------------------ */
+const handleCitySelect = (city) => {
+  dashboardStore.selectedCity = city;
+  dashboardStore.selectedCodeInsee = city.codeInsee;
+};
 
 const handleCityClear = () => {
-  dashboardStore.selectedCity = null
-  dashboardStore.selectedCodeInsee = ""
-  dashboardStore.selectedStreet = null // Vider aussi la rue
-}
+  dashboardStore.selectedCity = null;
+  dashboardStore.selectedStreet = null;
+  dashboardStore.selectedCodeInsee = "";
+  dashboardStore.selectedStreet = null;
+  dashboardStore.selectedNumero = "";
+  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumeroFull = null;
+};
 
-const handleStreetSelect = (street: any) => {
-  dashboardStore.selectedStreet = street
-  dashboardStore.selectedCodeIdFantoir = street.idFantoir
-}
+const handleStreetSelect = (street) => {
+  dashboardStore.selectedStreet = street;
+  dashboardStore.selectedCodeIdFantoir = street.idFantoir;
+  dashboardStore.selectedNumero = "";
+  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumeroFull = null;
+};
+const handleStreetClear = () => {
+  dashboardStore.selectedStreet = null;
+  dashboardStore.selectedCodeIdFantoir = "";
+  dashboardStore.selectedNumero = "";
+  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumeroFull = null;
+};
+
+const handleNumeroSelect = (item: any) => {
+  dashboardStore.selectedNumero = item.numero;
+  dashboardStore.selectedRep = item.rep || "";
+  dashboardStore.selectedNumeroFull = item;
+};
+
+const handleNumeroClear = () => {
+  dashboardStore.selectedNumero = "";
+  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumeroFull = null;
+};
+/* ------------------------------------
+      RECHERCHE
+------------------------------------ */
 
 const querySearchAddress = async () => {
-  await dashboardStore.querySearchAddress()
-}
+  await dashboardStore.querySearchAddress();
+};
 
 const querySearchEstimation = async () => {
-  console.log('querySearchEstimation called')
-  await dashboardStore.querySearchEstimation()
-}
+  await dashboardStore.querySearchEstimation();
+};
 
+/* ------------------------------------
+      VIEW SWITCH
+------------------------------------ */
+const setTableView = () => (dashboardStore.viewType = "table");
+const setCardView = () => (dashboardStore.viewType = "card");
 
-const openCreateCustomPropertyDialog = () => {
-  dashboardStore.openCustomPropertyDialog()
-}
-
-//Fonction appelé quanf on clique sur ouvrir
-const openPropertyDialog = (property: any) => {
-  console.log('openPropertyDialog called with property:', property);
+/* ------------------------------------
+      OUVERTURE FICHE
+------------------------------------ */
+const openPropertyDialog = (property) => {
   store.selectProperty({
     ...store.defaultPropertyData,
     ...property,
@@ -160,26 +268,15 @@ const openPropertyDialog = (property: any) => {
   });
   store.setDialogVisible(true);
 };
-
-
-
-const setTableView = () => {
-  dashboardStore.viewType = "table"
-}
-
-const setCardView = () => {
-  dashboardStore.viewType = "card"
-}
 </script>
 
 <style scoped>
 .headerFilterInfoContainer {
   display: flex;
-  align-items: start;
+  align-items: flex-start;
   flex-direction: row;
   justify-content: space-between;
 }
-
 .autoCompleteContainer {
   display: flex;
   gap: 20px;
@@ -224,11 +321,6 @@ const setCardView = () => {
   font-size: 20px;
   color: #909399;
   transition: color 0.3s, transform 0.3s;
-}
-
-.databoard-icon:hover,
-.grid-icon:hover {
-  transform: scale(1.1);
 }
 
 .databoard-icon.active,

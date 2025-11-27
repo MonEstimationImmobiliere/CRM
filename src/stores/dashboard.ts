@@ -10,35 +10,98 @@ export const useDashboardStore = defineStore('dashboard', {
     selectedCodeInsee: '',
     selectedCodeIdFantoir: '',
     addresses: [] as any[],
+    cityCenter: null as null | { lat: number; lon: number },  // <--- AJOUT
     viewType: 'table',
     lastSearchParams: null as any,
     isDataLoaded: false,
     showCustomPropertyDialog: false,
-    noResultsFound: false
+    noResultsFound: false,
+    selectedNumero: "",
+    selectedRep: "",
+    selectedNumeroFull: null,
   }),
 
   actions: {
-    async querySearchAddress() {
-      if (!this.selectedCodeIdFantoir) return
-      
-      try {
-        this.addresses = await PropertyService.getAddressesByFantoir(
-          this.selectedCodeIdFantoir, 
-          'address'
-        )
-        this.lastSearchParams = {
-          city: this.selectedCity,
-          street: this.selectedStreet,
-          codeInsee: this.selectedCodeInsee,
-          codeIdFantoir: this.selectedCodeIdFantoir
-        }
-        this.isDataLoaded = true
-        this.noResultsFound = this.addresses.length === 0
-      } catch (error) {
-        console.error('Error fetching addresses:', error)
-        this.noResultsFound = true
-      }
-    },
+async querySearchAddress() {
+
+  try {
+
+    /* ------------------------------------------------
+        1️⃣ CAS : NUMÉRO + REP SÉLECTIONNÉS
+    ------------------------------------------------ */
+    if (this.selectedNumero) {
+
+      this.addresses = await PropertyService.getAddressesByNumero(
+        this.selectedCodeIdFantoir,
+        this.selectedNumero,
+        this.selectedRep || undefined
+      );
+    }
+
+    /* ------------------------------------------------
+        2️⃣ CAS : SEULEMENT RUE → recherche par FANTOIR
+    ------------------------------------------------ */
+    else if (this.selectedStreet && this.selectedCodeIdFantoir) {
+
+      this.addresses = await PropertyService.getAddressesByFantoir(
+        this.selectedCodeIdFantoir,
+        "address"
+      );
+    }
+
+    /* ------------------------------------------------
+        3️⃣ CAS : UNIQUEMENT VILLE → nouvelle route
+    ------------------------------------------------ */
+    else if (this.selectedCity && this.selectedCodeInsee) {
+
+      this.addresses = await PropertyService.getAddressesByCodeInsee(
+        this.selectedCodeInsee
+      );
+    }
+
+    else {
+      // Aucun filtre valide → vider les résultats
+      this.addresses = [];
+    }
+
+    /* ------------------------------------------------
+        CALCUL DU CENTRE
+    ------------------------------------------------ */
+    if (this.addresses.length > 0) {
+      const lats = this.addresses.map(a => Number(a.lat));
+      const lons = this.addresses.map(a => Number(a.lon));
+
+      this.cityCenter = {
+        lat: lats.reduce((a,b) => a+b, 0) / lats.length,
+        lon: lons.reduce((a,b) => a+b, 0) / lons.length
+      };
+    } else {
+      this.cityCenter = null;
+    }
+
+    /* ------------------------------------------------
+        SAVE PARAMS
+    ------------------------------------------------ */
+    this.lastSearchParams = {
+      city: this.selectedCity,
+      street: this.selectedStreet,
+      codeInsee: this.selectedCodeInsee,
+      codeIdFantoir: this.selectedCodeIdFantoir,
+      numero: this.selectedNumero,
+      rep: this.selectedRep,
+    };
+
+    this.isDataLoaded = true;
+    this.noResultsFound = this.addresses.length === 0;
+
+  } catch (error) {
+    console.error("Error fetching addresses:", error);
+    this.noResultsFound = true;
+  }
+}
+
+,
+
 
 
     async querySearchEstimation() {
@@ -54,6 +117,11 @@ export const useDashboardStore = defineStore('dashboard', {
         console.error('Error fetching estimations:', error)
       }
     },
+
+
+    
+
+
 
     async querySearchRappel() {
       if (!this.selectedCodeIdFantoir) return
