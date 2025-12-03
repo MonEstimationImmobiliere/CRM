@@ -10,100 +10,166 @@ export const useDashboardStore = defineStore('dashboard', {
     selectedCodeInsee: '',
     selectedCodeIdFantoir: '',
     addresses: [] as any[],
-    cityCenter: null as null | { lat: number; lon: number },  // <--- AJOUT
+    cityCenter: null as null | { lat: number; lon: number },
     viewType: 'table',
     lastSearchParams: null as any,
     isDataLoaded: false,
     showCustomPropertyDialog: false,
     noResultsFound: false,
+
     selectedNumero: "",
     selectedRep: "",
     selectedNumeroFull: null,
+
+    dpePoints: [] as any[],   // <-- DPE ajoutés
   }),
 
   actions: {
-async querySearchAddress() {
 
-  try {
+    /* ---------------------------------------------
+         🔥 CHARGEMENT DES DPE PAR CODE INSEE
+    ---------------------------------------------- */
+    async fetchDPE() {
+      try {
+        // Vérification code INSEE
+        const codeInsee =
+          this.selectedCodeInsee ||
+          this.selectedCity?.codeInsee ||
+          this.selectedCity?.code_insee;
 
-    /* ------------------------------------------------
-        1️⃣ CAS : NUMÉRO + REP SÉLECTIONNÉS
-    ------------------------------------------------ */
-    if (this.selectedNumero) {
-
-      this.addresses = await PropertyService.getAddressesByNumero(
-        this.selectedCodeIdFantoir,
-        this.selectedNumero,
-        this.selectedRep || undefined
-      );
-    }
-
-    /* ------------------------------------------------
-        2️⃣ CAS : SEULEMENT RUE → recherche par FANTOIR
-    ------------------------------------------------ */
-    else if (this.selectedStreet && this.selectedCodeIdFantoir) {
-
-      this.addresses = await PropertyService.getAddressesByFantoir(
-        this.selectedCodeIdFantoir,
-        "address"
-      );
-    }
-
-    /* ------------------------------------------------
-        3️⃣ CAS : UNIQUEMENT VILLE → nouvelle route
-    ------------------------------------------------ */
-    else if (this.selectedCity && this.selectedCodeInsee) {
-
-      this.addresses = await PropertyService.getAddressesByCodeInsee(
-        this.selectedCodeInsee
-      );
-    }
-
-    else {
-      // Aucun filtre valide → vider les résultats
-      this.addresses = [];
-    }
-
-    /* ------------------------------------------------
-        CALCUL DU CENTRE
-    ------------------------------------------------ */
-    if (this.addresses.length > 0) {
-      const lats = this.addresses.map(a => Number(a.lat));
-      const lons = this.addresses.map(a => Number(a.lon));
-
-      this.cityCenter = {
-        lat: lats.reduce((a,b) => a+b, 0) / lats.length,
-        lon: lons.reduce((a,b) => a+b, 0) / lons.length
-      };
-    } else {
-      this.cityCenter = null;
-    }
-
-    /* ------------------------------------------------
-        SAVE PARAMS
-    ------------------------------------------------ */
-    this.lastSearchParams = {
-      city: this.selectedCity,
-      street: this.selectedStreet,
-      codeInsee: this.selectedCodeInsee,
-      codeIdFantoir: this.selectedCodeIdFantoir,
-      numero: this.selectedNumero,
-      rep: this.selectedRep,
-    };
-
-    this.isDataLoaded = true;
-    this.noResultsFound = this.addresses.length === 0;
-
-  } catch (error) {
-    console.error("Error fetching addresses:", error);
-    this.noResultsFound = true;
-  }
-}
-
-,
+        if (!codeInsee) {
+          console.warn("Aucun code INSEE → pas de DPE.");
+          this.dpePoints = [];
+          return;
+        }
 
 
+        const to   = "2025-11-30"; // date de fin (exclusif)
+        
+        const from = "2025-11-01"; // date de début
 
+
+     const url =
+  `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
+  //`?code_insee_ban_eq=${codeInsee}` +
+  `?code_departement_ban_eq=14` +
+  `&date_etablissement_dpe_gte=${from}` +
+  `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
+  `&size=5000`;
+
+  //const url = "https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines?code_insee_ban_eq=14456&date_etablissement_dpe_gte=2025-11-01&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe&size=5000";
+
+        console.log("🌍 URL DPE :", url);
+
+        const response = await fetch(url);
+        const json = await response.json();
+
+        if (!json.results) {
+          console.warn("⚠️ Aucun résultat DPE");
+          this.dpePoints = [];
+          return;
+        }
+
+        // Extraction des points
+        this.dpePoints = json.results
+          .filter(r => r._geopoint)
+          .map(r => {
+            const [lat, lon] = r._geopoint.split(",").map(Number);
+            return {
+              lat,
+              lon,
+              adresse: r.adresse_ban,
+              etiquette: r.etiquette_dpe,
+              type: r.type_batiment,
+              date: r.date_etablissement_dpe,
+            };
+          });
+
+        console.log("✅ DPE chargés :", this.dpePoints.length);
+
+      } catch (error) {
+        console.error("❌ Erreur fetch DPE :", error);
+        this.dpePoints = [];
+      }
+    },
+
+
+    /* ---------------------------------------------
+         🔥 RECHERCHE PRINCIPALE
+    ---------------------------------------------- */
+    async querySearchAddress() {
+
+      if (!this.selectedCodeIdFantoir) return;
+
+      try {
+
+        /* ------------------------------------------------
+            1️⃣  ROUTE SPÉCIALE SI NUMÉRO SÉLECTIONNÉ
+        ------------------------------------------------ */
+        if (this.selectedNumero) {
+          this.addresses = await PropertyService.getAddressesByNumero(
+            this.selectedCodeIdFantoir,
+            this.selectedNumero,
+            this.selectedRep || undefined
+          );
+        }
+
+        /* ------------------------------------------------
+            2️⃣  SINON : ROUTE CLASSIQUE PAR FANTOIR
+        ------------------------------------------------ */
+        else {
+          this.addresses = await PropertyService.getAddressesByFantoir(
+            this.selectedCodeIdFantoir,
+            'address'
+          );
+        }
+
+        /* ------------------------------------------------
+            3️⃣  CALCUL DU CENTRE
+        ------------------------------------------------ */
+        if (this.addresses.length > 0) {
+          const lats = this.addresses.map(a => Number(a.lat));
+          const lons = this.addresses.map(a => Number(a.lon));
+
+          this.cityCenter = {
+            lat: lats.reduce((a,b) => a+b, 0) / lats.length,
+            lon: lons.reduce((a,b) => a+b, 0) / lons.length
+          };
+        } else {
+          this.cityCenter = null;
+        }
+
+        /* ------------------------------------------------
+            4️⃣  PARAMÈTRES SAUVEGARDÉS
+        ------------------------------------------------ */
+        this.lastSearchParams = {
+          city: this.selectedCity,
+          street: this.selectedStreet,
+          codeInsee: this.selectedCodeInsee,
+          codeIdFantoir: this.selectedCodeIdFantoir,
+          numero: this.selectedNumero,
+          rep: this.selectedRep,
+        };
+
+        this.isDataLoaded = true;
+        this.noResultsFound = this.addresses.length === 0;
+
+        /* ------------------------------------------------
+            5️⃣  🔥 CHARGER LES DPE ASSOCIÉS
+        ------------------------------------------------ */
+        await this.fetchDPE();
+
+      } catch (error) {
+        console.error("❌ Error fetching addresses:", error);
+        this.noResultsFound = true;
+      }
+    },
+
+
+
+    /* ---------------------------------------------
+         MODES SPÉCIAUX
+    ---------------------------------------------- */
     async querySearchEstimation() {
       if (!this.selectedCodeIdFantoir) return
       
@@ -117,11 +183,6 @@ async querySearchAddress() {
         console.error('Error fetching estimations:', error)
       }
     },
-
-
-    
-
-
 
     async querySearchRappel() {
       if (!this.selectedCodeIdFantoir) return
@@ -151,22 +212,29 @@ async querySearchAddress() {
       }
     },
 
+
+    /* ---------------------------------------------
+         UPDATE PROPERTY
+    ---------------------------------------------- */
     updateAddress(property: any) {
-  const index = this.addresses.findIndex(
-    a => a.id_fantoir_long === property.id_fantoir_long
-  );
+      const index = this.addresses.findIndex(
+        a => a.id_fantoir_long === property.id_fantoir_long
+      );
 
-  if (index !== -1) {
-    this.addresses[index] = {
-      ...this.addresses[index],
-      ...property
-    };
-  } else {
-    // Optionnel : si l’adresse n'existait pas dans la liste
-    this.addresses.push(property);
-  }
-},
+      if (index !== -1) {
+        this.addresses[index] = {
+          ...this.addresses[index],
+          ...property
+        };
+      } else {
+        this.addresses.push(property);
+      }
+    },
 
+
+    /* ---------------------------------------------
+         PARAMÈTRES
+    ---------------------------------------------- */
     setSearchParams(city: any, street: any, codeInsee: string, codeIdFantoir: string) {
       this.selectedCity = city
       this.selectedStreet = street
@@ -186,33 +254,18 @@ async querySearchAddress() {
       this.showCustomPropertyDialog = false
     },
 
-    openCustomPropertyDialog() {
-      this.showCustomPropertyDialog = true
-    },
 
-    closeCustomPropertyDialog() {
-      this.showCustomPropertyDialog = false
-    },
-
+    /* ---------------------------------------------
+         CUSTOM PROPERTY
+    ---------------------------------------------- */
     async createCustomProperty(propertyData: any) {
       try {
-        // Génération de l'id_fantoir_long structuré
         let id_fantoir_long = this.selectedCodeIdFantoir
         
-        // Ajouter le numéro de rue s'il existe
-        if (propertyData.numero) {
-          id_fantoir_long += `_${propertyData.numero}`
-        }
-        
-        // Ajouter la répétition (bis, ter, etc.) s'il existe
-        if (propertyData.rep) {
-          id_fantoir_long += `_${propertyData.rep}`
-        }
-        
-        // Ajouter le numéro d'appartement s'il existe
-        if (propertyData.numero_appartement) {
+        if (propertyData.numero) id_fantoir_long += `_${propertyData.numero}`
+        if (propertyData.rep) id_fantoir_long += `_${propertyData.rep}`
+        if (propertyData.numero_appartement)
           id_fantoir_long += `_${propertyData.numero_appartement}`
-        }
         
         const propertyWithFantoir = {
           ...propertyData,
@@ -220,20 +273,10 @@ async querySearchAddress() {
           id_fantoir_long: id_fantoir_long
         }
         
-        console.log('🏠 Création propriété personnalisée avec id_fantoir:', this.selectedCodeIdFantoir)
-        console.log('🏷️ ID fantoir long généré:', id_fantoir_long)
-        console.log('📋 Données envoyées:', propertyWithFantoir)
-        
         const createdProperty = await PropertyService.createCustomProperty(propertyWithFantoir)
-        
-        console.log('✅ Propriété créée:', createdProperty)
-        console.log('🔄 Actualisation de la liste...')
-        
-        // Actualiser la liste des adresses après création
+
         await this.querySearchAddress()
-        
-        console.log('📊 Nouvelles adresses après création:', this.addresses.length)
-        
+
         return createdProperty
       } catch (error) {
         console.error('Error creating custom property:', error)

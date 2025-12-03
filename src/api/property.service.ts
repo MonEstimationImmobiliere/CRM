@@ -48,8 +48,6 @@ export const PropertyService = {
 
 
 
-
-
   async getAddressesByCodeInsee(codeInsee: string): Promise<any[]> {
     try {
       const response = await apiService.get<any[]>(`/address-city/${encodeURIComponent(codeInsee)}`);
@@ -59,6 +57,17 @@ export const PropertyService = {
       throw error;
     }
   },
+
+    async getAddressesGroupedByCodeInsee(codeInsee: string): Promise<any[]> {
+    try {
+      const response = await apiService.get<any[]>(`/address-city-grouped/${encodeURIComponent(codeInsee)}`);
+      return response.data;
+    } catch (error) {
+      console.error('Error fetching code insee:', error);
+      throw error;
+    }
+  },
+
 
 
 

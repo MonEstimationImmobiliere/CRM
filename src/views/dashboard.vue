@@ -34,7 +34,7 @@
             type="primary"
             size="large"
             @click="querySearchAddress"
-            :disabled="!selectedCity"
+            :disabled="!selectedStreet"
           >
             Afficher
           </el-button>
@@ -113,7 +113,6 @@ import PropertyTable from "./DashboardComponents/PropertyTable.vue";
 import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
 import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
 import CustomPropertyDialog from "./DashboardComponents/CustomPropertyDialog.vue";
-import PropertyTableVirtual from "./DashboardComponents/PropertyTableVirtual.vue"
 
 /* ------------------------------------
       STORES

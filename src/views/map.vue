@@ -37,6 +37,10 @@ function initMap() {
     mapLoaded = true;
     addDVFSource();
     addDVFLayer();
+
+    addDPESource();
+    addDPELayer();
+
     setupWatchers();
   });
 }
@@ -47,17 +51,15 @@ function initMap() {
 function addDVFSource() {
   map!.addSource("dvf_points", {
     type: "geojson",
-    data: {
-      type: "FeatureCollection",
-      features: []
-    }
+    data: emptyGeoJSON()
   });
 }
 
 /* --------------------------------------------------
-   3️⃣ Layer des points DVF
+   Layer DVF
 -------------------------------------------------- */
 function addDVFLayer() {
+  // Points bleus
   map!.addLayer({
     id: "dvf-points",
     type: "circle",
@@ -70,7 +72,7 @@ function addDVFLayer() {
     }
   });
 
-  // Layer pour les points verts (rue sélectionnée)
+  // Points verts = rue sélectionnée
   map!.addLayer({
     id: "dvf-highlight",
     type: "circle",
@@ -84,7 +86,7 @@ function addDVFLayer() {
     filter: ["==", "isSelected", true]
   });
 
-  // Popup au clic
+  // Popup DVF
   map!.on("click", "dvf-points", (e) => {
     const f = e.features?.[0];
     if (!f) return;
@@ -94,6 +96,60 @@ function addDVFLayer() {
       .setHTML(`
         <b>${f.properties.nom_voie} ${f.properties.numero || ""}</b><br>
         ${f.properties.code_postal} ${f.properties.nom_commune}
+      `)
+      .addTo(map!);
+  });
+}
+
+/* --------------------------------------------------
+   3️⃣ Source DPE
+-------------------------------------------------- */
+function addDPESource() {
+  map!.addSource("dpe_points", {
+    type: "geojson",
+    data: emptyGeoJSON()
+  });
+}
+
+/* --------------------------------------------------
+   Layer DPE
+-------------------------------------------------- */
+function addDPELayer() {
+  map!.addLayer({
+    id: "dpe-points",
+    type: "circle",
+    source: "dpe_points",
+    paint: {
+      "circle-radius": 7,
+      "circle-color": [
+        "match",
+        ["get", "etiquette"],
+        "A", "#00ff00",
+        "B", "#7fff00",
+        "C", "#ffff00",
+        "D", "#ffbf00",
+        "E", "#ff7f00",
+        "F", "#ff4000",
+        "G", "#ff0000",
+        "#cccccc"
+      ],
+      "circle-stroke-color": "#000000",
+      "circle-stroke-width": 1.5
+    }
+  });
+
+  // Popup DPE
+  map!.on("click", "dpe-points", (e) => {
+    const f = e.features?.[0];
+    if (!f) return;
+
+    new maplibregl.Popup()
+      .setLngLat(f.geometry.coordinates)
+      .setHTML(`
+        <b>${f.properties.adresse}</b><br>
+        Type : ${f.properties.type}<br>
+        DPE : <b>${f.properties.etiquette}</b><br>
+        Date : ${f.properties.date}
       `)
       .addTo(map!);
   });
@@ -124,25 +180,42 @@ function updateDVFPoints() {
       }
     }));
 
-  const geojson = {
-    type: "FeatureCollection",
-    features
-  };
-
-  (map!.getSource("dvf_points") as any).setData(geojson);
+  setSourceData("dvf_points", features);
 }
 
 /* --------------------------------------------------
-   5️⃣ Mise en évidence de la rue sélectionnée
+   5️⃣ Mise à jour des points DPE
+-------------------------------------------------- */
+function updateDPEPoints() {
+  if (!mapLoaded) return;
+
+  const features = dashboard.dpePoints.map(p => ({
+    type: "Feature",
+    geometry: {
+      type: "Point",
+      coordinates: [p.lon, p.lat]
+    },
+    properties: {
+      adresse: p.adresse,
+      etiquette: p.etiquette,
+      type: p.type,
+      date: p.date
+    }
+  }));
+
+  setSourceData("dpe_points", features);
+}
+
+/* --------------------------------------------------
+   6️⃣ Surlignage rue sélectionnée
 -------------------------------------------------- */
 function highlightStreet(street: any) {
   if (!street || !mapLoaded) return;
 
-  // 1) Reset : tout repasse en bleu
   updateDVFPoints();
 
-  // 2) appliquer la sélection
-  const geojson = (map!.getSource("dvf_points") as any)._data;
+  const source: any = map!.getSource("dvf_points");
+  const geojson = source._data;
 
   geojson.features.forEach((f: any) => {
     if (f.properties.id_fantoir === street.id_fantoir) {
@@ -150,10 +223,8 @@ function highlightStreet(street: any) {
     }
   });
 
-  // 3) mise à jour source
-  (map!.getSource("dvf_points") as any).setData(geojson);
+  source.setData(geojson);
 
-  // 4) zoom sur la rue (centre du premier point)
   const first = geojson.features.find((f: any) => f.properties.isSelected);
   if (first) {
     map!.flyTo({
@@ -165,22 +236,44 @@ function highlightStreet(street: any) {
 }
 
 /* --------------------------------------------------
-   6️⃣ Watchers
+   UTIL
+-------------------------------------------------- */
+function emptyGeoJSON() {
+  return { type: "FeatureCollection", features: [] };
+}
+
+function setSourceData(sourceName: string, features: any[]) {
+  const src: any = map!.getSource(sourceName);
+  src.setData({
+    type: "FeatureCollection",
+    features
+  });
+}
+
+/* --------------------------------------------------
+   7️⃣ Watchers
 -------------------------------------------------- */
 function setupWatchers() {
-  // Mise à jour des points DVF quand une ville change
+
+  // DVF
   watch(
     () => dashboard.addresses,
     () => updateDVFPoints(),
     { deep: true, immediate: true }
   );
 
-  // centrage quand cityCenter change
+  // DPE
+  watch(
+    () => dashboard.dpePoints,
+    () => updateDPEPoints(),
+    { deep: true, immediate: true }
+  );
+
+  // centrage
   watch(
     () => dashboard.cityCenter,
     (center) => {
       if (!mapLoaded || !center) return;
-
       map!.flyTo({
         center: [center.lon, center.lat],
         zoom: 15,
@@ -190,12 +283,10 @@ function setupWatchers() {
     { immediate: true }
   );
 
-  // surlignage d'une rue
+  // rue
   watch(
     () => dashboard.selectedStreet,
-    (street) => {
-      highlightStreet(street);
-    }
+    (street) => highlightStreet(street)
   );
 }
 </script>
