@@ -23,19 +23,6 @@ export const routes: Array<RouteRecordRaw> = [
     ],
   },
 
-{
-  path: "/map",
-  name: "Map",
-  component: Layout,
-  meta: { title: "Carte 3D", askBeforeCloseTab: false },
-  children: [
-    {
-      path: "",
-      component: () => import("@/views/map.vue"),
-      meta: { title: "Carte 3D", icon: Link },
-    },
-  ],
-},
 
 
 

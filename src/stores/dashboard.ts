@@ -19,7 +19,7 @@ export const useDashboardStore = defineStore('dashboard', {
 
     selectedNumero: "",
     selectedRep: "",
-    selectedNumeroFull: null,
+    selectedNumeroFull: null as { numero: string; rep: string; value: string } | null,
 
     dpePoints: [] as any[],   // <-- DPE ajoutés
   }),
@@ -97,73 +97,115 @@ export const useDashboardStore = defineStore('dashboard', {
     /* ---------------------------------------------
          🔥 RECHERCHE PRINCIPALE
     ---------------------------------------------- */
-    async querySearchAddress() {
+   async querySearchAddress() {
+  try {
+    /* ------------------------------------------------
+        🟦 0️⃣ CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
+    ------------------------------------------------ */
+    if (
+      this.selectedCity &&
+      !this.selectedStreet &&
+      !this.selectedNumero &&
+      !this.selectedRep
+    ) {
+      this.addresses =
+        await PropertyService.getAddressesGroupedByCodeInsee(
+          this.selectedCodeInsee
+        );
 
-      if (!this.selectedCodeIdFantoir) return;
+      // 📍 Centrage carte
+      if (this.addresses.length > 0) {
+        const lats = this.addresses.map(a => Number(a.lat));
+        const lons = this.addresses.map(a => Number(a.lon));
 
-      try {
-
-        /* ------------------------------------------------
-            1️⃣  ROUTE SPÉCIALE SI NUMÉRO SÉLECTIONNÉ
-        ------------------------------------------------ */
-        if (this.selectedNumero) {
-          this.addresses = await PropertyService.getAddressesByNumero(
-            this.selectedCodeIdFantoir,
-            this.selectedNumero,
-            this.selectedRep || undefined
-          );
-        }
-
-        /* ------------------------------------------------
-            2️⃣  SINON : ROUTE CLASSIQUE PAR FANTOIR
-        ------------------------------------------------ */
-        else {
-          this.addresses = await PropertyService.getAddressesByFantoir(
-            this.selectedCodeIdFantoir,
-            'address'
-          );
-        }
-
-        /* ------------------------------------------------
-            3️⃣  CALCUL DU CENTRE
-        ------------------------------------------------ */
-        if (this.addresses.length > 0) {
-          const lats = this.addresses.map(a => Number(a.lat));
-          const lons = this.addresses.map(a => Number(a.lon));
-
-          this.cityCenter = {
-            lat: lats.reduce((a,b) => a+b, 0) / lats.length,
-            lon: lons.reduce((a,b) => a+b, 0) / lons.length
-          };
-        } else {
-          this.cityCenter = null;
-        }
-
-        /* ------------------------------------------------
-            4️⃣  PARAMÈTRES SAUVEGARDÉS
-        ------------------------------------------------ */
-        this.lastSearchParams = {
-          city: this.selectedCity,
-          street: this.selectedStreet,
-          codeInsee: this.selectedCodeInsee,
-          codeIdFantoir: this.selectedCodeIdFantoir,
-          numero: this.selectedNumero,
-          rep: this.selectedRep,
+        this.cityCenter = {
+          lat: lats.reduce((a, b) => a + b, 0) / lats.length,
+          lon: lons.reduce((a, b) => a + b, 0) / lons.length,
         };
-
-        this.isDataLoaded = true;
-        this.noResultsFound = this.addresses.length === 0;
-
-        /* ------------------------------------------------
-            5️⃣  🔥 CHARGER LES DPE ASSOCIÉS
-        ------------------------------------------------ */
-        await this.fetchDPE();
-
-      } catch (error) {
-        console.error("❌ Error fetching addresses:", error);
-        this.noResultsFound = true;
+      } else {
+        this.cityCenter = null;
       }
-    },
+
+      this.lastSearchParams = {
+        city: this.selectedCity,
+        street: null,
+        codeInsee: this.selectedCodeInsee,
+        codeIdFantoir: null,
+        numero: null,
+        rep: null,
+      };
+
+      this.isDataLoaded = true;
+      this.noResultsFound = this.addresses.length === 0;
+
+      await this.fetchDPE();
+      return; // ⛔ ON STOPPE ICI
+    }
+
+    /* ------------------------------------------------
+        🟧 1️⃣ CAS RUE / NUMÉRO
+    ------------------------------------------------ */
+
+    // Impossible sans FANTOIR
+    if (!this.selectedCodeIdFantoir) return;
+
+    // 1. S'il y a un numéro → route numéro
+    if (this.selectedNumero) {
+      this.addresses = await PropertyService.getAddressesByNumero(
+        this.selectedCodeIdFantoir,
+        this.selectedNumero,
+        this.selectedRep || undefined
+      );
+    }
+
+    // 2. Rue seule → route SANS type (mode normal)
+    else {
+      this.addresses = await PropertyService.getAddressesByFantoir(
+        this.selectedCodeIdFantoir,'adress'
+      );
+    }
+
+    /* ------------------------------------------------
+        📍 2️⃣ CENTRAGE CARTE
+    ------------------------------------------------ */
+    if (this.addresses.length > 0) {
+      const lats = this.addresses.map(a => Number(a.lat));
+      const lons = this.addresses.map(a => Number(a.lon));
+
+      this.cityCenter = {
+        lat: lats.reduce((a, b) => a + b, 0) / lats.length,
+        lon: lons.reduce((a, b) => a + b, 0) / lons.length,
+      };
+    } else {
+      this.cityCenter = null;
+    }
+
+    /* ------------------------------------------------
+        📝 3️⃣ SAVE PARAMS
+    ------------------------------------------------ */
+    this.lastSearchParams = {
+      city: this.selectedCity,
+      street: this.selectedStreet,
+      codeInsee: this.selectedCodeInsee,
+      codeIdFantoir: this.selectedCodeIdFantoir,
+      numero: this.selectedNumero,
+      rep: this.selectedRep,
+    };
+
+    this.isDataLoaded = true;
+    this.noResultsFound = this.addresses.length === 0;
+
+    /* ------------------------------------------------
+        🔥 4️⃣ LOAD DPE
+    ------------------------------------------------ */
+    await this.fetchDPE();
+
+  } catch (error) {
+    console.error("❌ Error fetching addresses:", error);
+    this.noResultsFound = true;
+  }
+}
+,
 
 
 

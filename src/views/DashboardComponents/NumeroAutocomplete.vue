@@ -24,10 +24,29 @@ const displayValue = computed({
     if (!props.modelValue) return "";
     return props.modelValue.value;     // ex: "40 bis"
   },
-  set: (v) => {
-    // si l’utilisateur tape lui-même (pas via select)
-    emit("update:modelValue", { value: v });
-  },
+set: (newValue) => {
+  // 1️⃣ Si utilisateur efface le champ
+  if (!newValue) {
+    emit("update:modelValue", null);
+    emit("clear");
+    return;
+  }
+
+  // 2️⃣ Si modelValue vient du parent, on le garde intact
+  if (props.modelValue && props.modelValue.value === newValue) {
+    return; // 🔥 NE PAS ÉCRASER CE QUI VIENT DU DASHBOARD
+  }
+
+  // 3️⃣ Si utilisateur écrit à la main → reconstruire proprement
+  const numero = props.modelValue?.numero || "";
+  const rep = props.modelValue?.rep || "";
+
+  emit("update:modelValue", {
+    numero,
+    rep,
+    value: newValue,
+  });
+},
 });
 
 /* ----------------------------------

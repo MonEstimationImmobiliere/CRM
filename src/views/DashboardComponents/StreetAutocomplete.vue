@@ -29,13 +29,23 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "select"]);
+const emit = defineEmits(["update:modelValue", "select","clear"]);
 
 const localValue = computed({
   get: () => props.modelValue?.value || "",
   set: (newValue) => {
-    emit("update:modelValue", { value: newValue });
-  },
+  // Si l'utilisateur efface tout à la main → on considère que la rue est vide
+  if (!newValue) {
+    emit("update:modelValue", null);
+    emit("clear");             // on aligne le comportement avec la croix
+  } else {
+    // Sinon on garde l'ancien objet et on ne modifie que value
+    emit("update:modelValue", {
+      ...(props.modelValue || {}),
+      value: newValue,
+    });
+  }
+},
 });
 
 const queryStreets = (queryString: string, cb: (results: { value: string; idFantoir: string }[]) => void): void => {
@@ -67,6 +77,7 @@ const handleSelect = (selectedItem: any) => {
 
 const handleClear = () => {
   emit("update:modelValue", null);
+  emit("clear");
 };
 
 const highlightMatch = (value: any, query: any) => {

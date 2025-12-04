@@ -26,14 +26,17 @@
       <template #default="{ row }">
  
 
+         <span class="numeroClickable" @click.stop="handleNumeroClick(row)">
       {{ row.numero }} {{ row.rep || '' }}
+    </span>
       </template>
     
     </el-table-column>
 
     <el-table-column label="Rue" prop="nom_voie" sortable  min-width="120">
       <template #default="{ row }">
-        {{ row.nom_voie }}
+         <span class="rueClickable" @click.stop="handleStreetClick(row)">        {{ row.nom_voie }}</span>
+
       </template>
     </el-table-column> 
 
@@ -150,6 +153,18 @@ import { useDashboardStore } from '@/stores/dashboard';
 import { ref } from "vue";
 const selectedId = ref<string | null>(null);
 
+const emit = defineEmits(["select-street","select-numero","edit-property"]);
+
+
+
+const handleStreetClick = (row) => {
+  emit("select-street", row);
+};
+
+const handleNumeroClick = (row) => {
+  emit("select-numero", row);
+};
+
 function getMonthsDiff(dateRappel: string | null): number {
   if (!dateRappel) return -1
   const rappel = new Date(dateRappel)
@@ -188,7 +203,7 @@ defineProps({
   }
 });
 
-const emit = defineEmits(['edit-property']);
+
 
 const handleRowClick = (row: any) => {
   emit('edit-property', row);
@@ -337,6 +352,16 @@ font-size: 24px;
   display: flex;
   gap: 8px;
   align-items: center;
+}
+
+.rueClickable {
+  color: #337ecc;
+  cursor: pointer;
+  font-weight: 600;
+}
+
+.rueClickable:hover {
+  text-decoration: underline;
 }
 
 </style>
