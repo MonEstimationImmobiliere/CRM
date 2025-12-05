@@ -51,33 +51,25 @@
         <!-- SWITCH LISTE / CARDS -->
         <div class="view-controls">
           <div class="layoutContainer">
-            <el-row :gutter="20">
-              <el-col :span="12">
-                <div class="grid-container" @click="setTableView">
-                  <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
-                    <DataBoard />
-                  </el-icon>
-                </div>
-              </el-col>
+<div class="viewSelector">
+  <div class="grid-container" @click="setTableView">
+    <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
+      <DataBoard />
+    </el-icon>
+  </div>
 
-              <el-col :span="12">
-                <div class="grid-container" @click="setCardView">
-                  <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
-                    <Grid />
-                  </el-icon>
-                </div>
-              </el-col>
+  <div class="grid-container" @click="setCardView">
+    <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
+      <Grid />
+    </el-icon>
+  </div>
 
-   <!-- MAP (nouvelle vue) -->
-      <el-col :span="8">
-        <div class="grid-container" @click="setMapView">
-          <el-icon class="grid-icon" :class="{ active: viewType === 'map' }">
-            <Location />
-          </el-icon>
-        </div>
-      </el-col>
-
-            </el-row>
+  <div class="grid-container" @click="setMapView">
+    <el-icon class="grid-icon" :class="{ active: viewType === 'map' }">
+      <Location />
+    </el-icon>
+  </div>
+</div>
           </div>
         </div>
 
@@ -100,7 +92,7 @@
       />
 
       <MapView
-  v-else-if="viewType === 'map' && addresses.length > 0"
+    v-show="viewType === 'map'"
   :addresses="addresses"
   :city-center="dashboardStore.cityCenter"
   :dpe-points="dashboardStore.dpePoints"
@@ -118,7 +110,7 @@
 /* ------------------------------------
       IMPORTS
 ------------------------------------ */
-import { computed, onMounted, watch } from "vue";
+import { computed, onMounted, watch, onBeforeUnmount  } from "vue";
 import { DataBoard, Grid, Location  } from "@element-plus/icons-vue";
 
 // Stores
@@ -140,6 +132,8 @@ import MapView from "./DashboardComponents/MapView.vue";
 ------------------------------------ */
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
+
+
 
 /* ------------------------------------
       WATCHERS AUTOMATIQUES
@@ -254,6 +248,19 @@ onMounted(() => {
   if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
     console.log("Données restaurées depuis le store");
   }
+});
+
+function handleMapOpenProperty(event) {
+  const property = event.detail;
+  openPropertyDialog(property); // ⬅️ utilise ta fonction déjà existante
+}
+
+onMounted(() => {
+  window.addEventListener("map-open-property", handleMapOpenProperty);
+});
+
+onBeforeUnmount(() => {
+  window.removeEventListener("map-open-property", handleMapOpenProperty);
 });
 
 /* ------------------------------------
@@ -410,6 +417,11 @@ const openPropertyDialog = (property) => {
   margin-bottom: 24px;
 }
 
+.viewSelector {
+  display: flex;
+  gap: 12px;
+  align-items: center;
+}
 .layoutContainer {
   display: flex;
   justify-content: center;

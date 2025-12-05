@@ -15,6 +15,8 @@ const dashboard = useDashboardStore();
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
 
+let currentPopup: maplibregl.Popup | null = null;
+
 const MAPTILER_KEY = "qnb10ErHP2vBlMq3fo5B";
 const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
@@ -171,7 +173,11 @@ function setupPopupClick() {
    AFFICHAGE POPUP
 ------------------------------------- */
 function showPopup(feature, html) {
-  new maplibregl.Popup()
+  if (currentPopup) {
+    currentPopup.remove();
+  }
+
+  currentPopup = new maplibregl.Popup()
     .setLngLat(feature.geometry.coordinates)
     .setHTML(html)
     .addTo(map!);
@@ -257,15 +263,36 @@ function setSourceData(sourceName: string, features) {
 /* -------------------------------------
    WATCHERS (sync carte <-> dashboard)
 ------------------------------------- */
+
+
+function closePopup() {
+  if (currentPopup) {
+    currentPopup.remove();
+    currentPopup = null;
+  }
+}
+
+
 function setupWatchers() {
   watch(() => dashboard.addresses, () => {
     updatePoints();
     recenterMap();
   }, { deep: true, immediate: true });
 
-  watch(() => dashboard.selectedCity, () => recenterMap());
-  watch(() => dashboard.selectedStreet, () => recenterMap());
-  watch(() => dashboard.selectedNumeroFull, () => recenterMap());
+watch(() => dashboard.selectedStreet, () => {
+  closePopup();
+  recenterMap();
+});
+
+watch(() => dashboard.selectedNumeroFull, () => {
+  closePopup();
+  recenterMap();
+});
+
+watch(() => dashboard.selectedCity, () => {
+  closePopup();
+  recenterMap();
+});
 }
 </script>
 
