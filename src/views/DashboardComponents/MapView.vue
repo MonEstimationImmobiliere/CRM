@@ -1,14 +1,24 @@
 <template>
   <section class="mapContainer">
-    <div id="map" class="map"></div>
+    <!-- Sidebar Component -->
+    <SideBarMapView 
+      @mode-change="handleModeChange"
+      @sidebar-toggle="handleSidebarToggle"
+    />
+    
+    <!-- Map -->
+    <div class="map-wrapper">
+      <div id="map" class="map"></div>
+    </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, nextTick } from "vue";
+import { onMounted, watch, nextTick, ref } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useDashboardStore } from "@/stores/dashboard";
+import SideBarMapView from "./SideBarMapView.vue";
 
 const dashboard = useDashboardStore();
 
@@ -17,8 +27,24 @@ let mapLoaded = false;
 
 let currentPopup: maplibregl.Popup | null = null;
 
+// Current display mode
+const currentMode = ref<string>('address');
+
 const MAPTILER_KEY = "qnb10ErHP2vBlMq3fo5B";
 const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+
+/* -------------------------------------
+   SIDEBAR EVENT HANDLERS
+------------------------------------- */
+function handleModeChange(mode: string) {
+  currentMode.value = mode;
+  console.log('🔄 Mode changed to:', mode);
+  updatePoints();
+}
+
+function handleSidebarToggle(open: boolean) {
+  console.log('📂 Sidebar toggled:', open);
+}
 
 /* -------------------------------------
    INITIALISATION CARTE
@@ -172,7 +198,7 @@ function setupPopupClick() {
 /* -------------------------------------
    AFFICHAGE POPUP
 ------------------------------------- */
-function showPopup(feature, html) {
+function showPopup(feature: any, html: string) {
   if (currentPopup) {
     currentPopup.remove();
   }
@@ -240,19 +266,19 @@ function avg(arr: number[]) {
   return arr.reduce((a, b) => a + b, 0) / arr.length;
 }
 
-function flyTo(lon, lat, zoom) {
+function flyTo(lon: number | string, lat: number | string, zoom: number) {
   map!.flyTo({
-    center: [parseFloat(lon), parseFloat(lat)],
+    center: [parseFloat(String(lon)), parseFloat(String(lat))],
     zoom,
     speed: 1.1
   });
 }
 
-function emptyGeoJSON() {
-  return { type: "FeatureCollection", features: [] };
+function emptyGeoJSON(): GeoJSON.FeatureCollection {
+  return { type: "FeatureCollection" as const, features: [] };
 }
 
-function setSourceData(sourceName: string, features) {
+function setSourceData(sourceName: string, features: any[]) {
   const src = map!.getSource(sourceName);
   src.setData({
     type: "FeatureCollection",
@@ -297,8 +323,20 @@ watch(() => dashboard.selectedCity, () => {
 </script>
 
 <style scoped>
-.map {
+.mapContainer {
+  display: flex;
   width: 100%;
   height: calc(100vh - 80px);
+  position: relative;
+}
+
+.map-wrapper {
+  flex: 1;
+  position: relative;
+}
+
+.map {
+  width: 100%;
+  height: 100%;
 }
 </style>
