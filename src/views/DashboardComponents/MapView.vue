@@ -4,6 +4,7 @@
     <SideBarMapView 
       @mode-change="handleModeChange"
       @sidebar-toggle="handleSidebarToggle"
+    :addresses="addresses"
     />
     
     <!-- Map -->
@@ -20,7 +21,47 @@ import "maplibre-gl/dist/maplibre-gl.css";
 import { useDashboardStore } from "@/stores/dashboard";
 import SideBarMapView from "./SideBarMapView.vue";
 
+/* -------------------------------------
+   PROPS & EMITS
+------------------------------------- */
+interface Address {
+  lat: string | number;
+  lon: string | number;
+  numero?: string;
+  rep?: string;
+  nom_voie?: string;
+  code_postal?: string;
+  nom_commune?: string;
+  id_fantoir?: string;
+  id_fantoir_long?: string;
+  total_adresses?: number;
+  [key: string]: any;
+}
+
+interface CityCenter {
+  lat: number;
+  lon: number;
+}
+
+interface DpePoint {
+  lat: number;
+  lon: number;
+  [key: string]: any;
+}
+
+const props = defineProps<{
+  addresses: Address[];
+  cityCenter?: CityCenter | null;
+  dpePoints?: DpePoint[];
+}>();
+
+const emit = defineEmits<{
+  (e: 'edit-property', property: Address): void;
+}>();
+
+
 const dashboard = useDashboardStore();
+console.log('📍 MapView store addresses:', dashboard.addresses);
 
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
@@ -169,7 +210,7 @@ function setupPopupClick() {
     /* ---------------------------------
         3️⃣ MODE NUMÉRO (1 seul bien)
     ---------------------------------- */
-    if (dashboard.addresses.length === 1) {
+    if (props.addresses.length === 1) {
       const html = `
         <b>${p.numero || ""} ${p.rep || ""} ${p.nom_voie}</b><br>
         ${p.code_postal} ${p.nom_commune}<br><br>
@@ -182,11 +223,10 @@ function setupPopupClick() {
         document.getElementById("map-open-property")?.addEventListener("click", (ev) => {
           ev.preventDefault();
 
-          const property = dashboard.addresses[0];
+          const property = props.addresses[0];
 
-          window.dispatchEvent(
-            new CustomEvent("map-open-property", { detail: property })
-          );
+          // Émettre l'événement via l'emit au lieu du CustomEvent
+          emit('edit-property', property);
         });
       }, 50);
 
@@ -215,7 +255,7 @@ function showPopup(feature: any, html: string) {
 function updatePoints() {
   if (!mapLoaded) return;
 
-  const features = dashboard.addresses
+  const features = props.addresses
     .filter(a => a.lat && a.lon)
     .map(a => ({
       type: "Feature",
@@ -238,23 +278,23 @@ async function recenterMap() {
   if (!mapLoaded) return;
 
   // 1️⃣ Numéro → centrer sur l'adresse
-  if (dashboard.selectedNumeroFull && dashboard.addresses.length === 1) {
-    const a = dashboard.addresses[0];
+  if (dashboard.selectedNumeroFull && props.addresses.length === 1) {
+    const a = props.addresses[0];
     flyTo(a.lon, a.lat, 19);
     return;
   }
 
   // 2️⃣ Rue → centre moyen
-  if (dashboard.selectedStreet && dashboard.addresses.length > 0) {
-    const lats = dashboard.addresses.map(a => Number(a.lat));
-    const lons = dashboard.addresses.map(a => Number(a.lon));
+  if (dashboard.selectedStreet && props.addresses.length > 0) {
+    const lats = props.addresses.map(a => Number(a.lat));
+    const lons = props.addresses.map(a => Number(a.lon));
     flyTo(avg(lons), avg(lats), 16);
     return;
   }
 
-  // 3️⃣ Ville → cityCenter
-  if (dashboard.selectedCity && dashboard.cityCenter) {
-    flyTo(dashboard.cityCenter.lon, dashboard.cityCenter.lat, 14);
+  // 3️⃣ Ville → cityCenter (utiliser props.cityCenter)
+  if (dashboard.selectedCity && props.cityCenter) {
+    flyTo(props.cityCenter.lon, props.cityCenter.lat, 14);
     return;
   }
 }
@@ -300,10 +340,16 @@ function closePopup() {
 
 
 function setupWatchers() {
-  watch(() => dashboard.addresses, () => {
+  // Watcher sur les props.addresses
+  watch(() => props.addresses, () => {
     updatePoints();
     recenterMap();
   }, { deep: true, immediate: true });
+
+  // Watcher sur props.cityCenter
+  watch(() => props.cityCenter, () => {
+    recenterMap();
+  });
 
 watch(() => dashboard.selectedStreet, () => {
   closePopup();

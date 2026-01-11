@@ -3,20 +3,13 @@ import { ref, computed, watch } from 'vue';
 import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 import { NotificationService } from '@/utils/notifications';
 import { ReminderService } from '@/api/reminder.service';
+import type { IReminder, IReminderCreate, ReminderType, ReminderPriority, ReminderList } from '@/types/reminder';
 
-export interface Reminder {
-  id: string;
-  property_id: string;
-  title: string;
-  description?: string;
-  date: string;
-  type: 'rappel' | 'estimation' | 'visite' | 'autre';
-  priority: 'low' | 'medium' | 'high';
-  completed: boolean;
-  status?: 'todo' | 'progress' | 'completed'; // New status field
-  sharing: boolean; // Nouveau champ pour le partage
-  createdAt?: string;
-  updatedAt?: string;
+/**
+ * Interface locale du store avec status additionnel pour le Kanban
+ */
+export interface Reminder extends IReminder {
+  status?: 'todo' | 'progress' | 'completed';
 }
 
 export const useRemindersStore = defineStore('reminders', () => {
@@ -35,23 +28,17 @@ export const useRemindersStore = defineStore('reminders', () => {
       ]);
       
       reminders.value = userReminders
-        .filter(r => r.id) // S'assurer que l'ID existe
+        .filter(r => r.id)
         .map(r => ({
           ...r,
-          id: r.id!,
           sharing: r.sharing || false,
-          createdAt: r.createdAt || new Date().toISOString(),
-          updatedAt: r.updatedAt || new Date().toISOString()
         }));
       
       agencyReminders.value = sharedReminders
-        .filter(r => r.id) // S'assurer que l'ID existe
+        .filter(r => r.id)
         .map(r => ({
           ...r,
-          id: r.id!,
           sharing: r.sharing || false,
-          createdAt: r.createdAt || new Date().toISOString(),
-          updatedAt: r.updatedAt || new Date().toISOString()
         }));
       
       // Fallback: also save to localStorage 
@@ -105,45 +92,45 @@ export const useRemindersStore = defineStore('reminders', () => {
       const nextWeek = new Date(today);
       nextWeek.setDate(today.getDate() + 7);
       
-      const sampleReminders = [
+      const sampleReminders: IReminderCreate[] = [
         {
           title: "Visite d'estimation",
           description: "Rendez-vous avec le propriétaire pour évaluer les travaux de rénovation",
           date: yesterday.toISOString().split('T')[0],
-          type: 'estimation' as const,
-          priority: 'high' as const,
+          type: 'estimation',
+          priority: 'high',
           sharing: false,
-          property_id: "example_property_id_1",
+          property_id: 1,
           completed: false,
         },
         {
           title: "Rappel de suivi",
           description: "Contacter le propriétaire pour discuter de la vente",
           date: today.toISOString().split('T')[0],
-          type: 'rappel' as const,
-          priority: 'medium' as const,
+          type: 'rappel',
+          priority: 'medium',
           sharing: true,
-          property_id: "example_property_id_1",
+          property_id: 1,
           completed: false,
         },
         {
           title: "Visite programmée",
           description: "Visite avec des acheteurs potentiels",
           date: tomorrow.toISOString().split('T')[0],
-          type: 'visite' as const,
-          priority: 'high' as const,
+          type: 'visite',
+          priority: 'high',
           sharing: false,
-          property_id: "example_property_id_1",
+          property_id: 1,
           completed: false,
         },
         {
           title: "Rappel terminé",
           description: "Documents transmis au notaire",
           date: yesterday.toISOString().split('T')[0],
-          type: 'autre' as const,
-          priority: 'low' as const,
+          type: 'autre',
+          priority: 'low',
           sharing: false,
-          property_id: "example_property_id_1",
+          property_id: 1,
           completed: true,
         }
       ];
@@ -212,20 +199,17 @@ export const useRemindersStore = defineStore('reminders', () => {
   });
 
   // Actions
-  const addReminder = async (reminder: Omit<Reminder, 'id' | 'createdAt' | 'updatedAt'>) => {
+  const addReminder = async (reminderData: IReminderCreate) => {
     try {
       // Essayer d'abord l'API
       const newReminder = await ReminderService.createReminder({
-        ...reminder,
-        sharing: reminder.sharing || false
+        ...reminderData,
+        sharing: reminderData.sharing || false
       });
       
       const reminderWithDefaults: Reminder = {
         ...newReminder,
-        id: newReminder.id!,
         sharing: newReminder.sharing || false,
-        createdAt: newReminder.createdAt || new Date().toISOString(),
-        updatedAt: newReminder.updatedAt || new Date().toISOString(),
       };
       
       reminders.value.push(reminderWithDefaults);
@@ -237,13 +221,22 @@ export const useRemindersStore = defineStore('reminders', () => {
     } catch (error) {
       console.error('Error creating reminder via API, falling back to local:', error);
       
-      // Fallback local
+      // Fallback local - créer un reminder temporaire
+      const now = new Date().toISOString();
       const localReminder: Reminder = {
-        ...reminder,
-        id: Date.now().toString(),
-        sharing: reminder.sharing || false,
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
+        id: Date.now(),
+        property_id: reminderData.property_id,
+        created_by: 0,
+        updated_by: 0,
+        title: reminderData.title,
+        description: reminderData.description || null,
+        date: reminderData.date,
+        type: reminderData.type,
+        priority: reminderData.priority,
+        completed: reminderData.completed || false,
+        sharing: reminderData.sharing || false,
+        created_at: now,
+        updated_at: now,
       };
       reminders.value.push(localReminder);
       
@@ -254,7 +247,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     }
   };
 
-  const updateReminder = async (id: string, updates: Partial<Reminder>) => {
+  const updateReminder = async (id: number, updates: Partial<IReminderCreate>) => {
     try {
       // Essayer d'abord l'API
       const updatedReminder = await ReminderService.updateReminder(id, updates);
@@ -262,11 +255,9 @@ export const useRemindersStore = defineStore('reminders', () => {
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         reminders.value[index] = {
+          ...reminders.value[index],
           ...updatedReminder,
-          id: updatedReminder.id!,
           sharing: updatedReminder.sharing || false,
-          createdAt: updatedReminder.createdAt || reminders.value[index].createdAt,
-          updatedAt: updatedReminder.updatedAt || new Date().toISOString(),
         };
         
         // Send notification for important updates
@@ -283,7 +274,7 @@ export const useRemindersStore = defineStore('reminders', () => {
         reminders.value[index] = {
           ...reminders.value[index],
           ...updates,
-          updatedAt: new Date().toISOString(),
+          updated_at: new Date().toISOString(),
         };
         
         // Send notification for important updates
@@ -295,7 +286,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     return null;
   };
 
-  const deleteReminder = async (id: string) => {
+  const deleteReminder = async (id: number) => {
     try {
       // Essayer d'abord l'API
       await ReminderService.deleteReminder(id);
@@ -328,7 +319,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     return false;
   };
 
-  const completeReminder = async (id: string) => {
+  const completeReminder = async (id: number) => {
     const updated = await updateReminder(id, { completed: true });
     if (updated) {
       NotificationService.reminderCompleted(updated.title);
@@ -336,24 +327,28 @@ export const useRemindersStore = defineStore('reminders', () => {
     return updated;
   };
 
-  const uncompleteReminder = (id: string) => {
+  const uncompleteReminder = (id: number) => {
     return updateReminder(id, { completed: false });
   };
 
-  const updateReminderStatus = async (id: string, status: 'todo' | 'progress' | 'completed') => {
+  const updateReminderStatus = async (id: number, status: 'todo' | 'progress' | 'completed') => {
     const completed = status === 'completed';
-    return await updateReminder(id, { status, completed });
+    const index = reminders.value.findIndex(r => r.id === id);
+    if (index !== -1) {
+      reminders.value[index].status = status;
+    }
+    return await updateReminder(id, { completed });
   };
 
   const selectReminder = (reminder: Reminder | null) => {
     selectedReminder.value = reminder;
   };
 
-  const getReminderById = (id: string) => {
+  const getReminderById = (id: number) => {
     return reminders.value.find(r => r.id === id);
   };
 
-  const getRemindersByProperty = (propertyId: string) => {
+  const getRemindersByProperty = (propertyId: number) => {
     return reminders.value.filter(r => r.property_id === propertyId);
   };
 

@@ -110,8 +110,8 @@ import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
 import { StarFilled, Edit, Plus, DataBoard, Grid } from '@element-plus/icons-vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
-import FavoritesTable from '@/views/DashboardComponents/FavoritesTable.vue';
-import FavoritesCards from '@/views/DashboardComponents/FavoritesCards.vue';
+import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
+import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
 import { on } from 'events';
 
 const store = usePropertyStore();
@@ -245,7 +245,6 @@ const createReminderForProperty = (property: any) => {
   tomorrow.setDate(tomorrow.getDate() + 1);
   
   const propertyAddress = `${property.numero || ''} ${property.nom_voie || ''}`.trim();
-  const propertyCity = property.city || '';
   
   remindersStore.addReminder({
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
@@ -254,7 +253,7 @@ const createReminderForProperty = (property: any) => {
     type: 'rappel',
     priority: 'medium',
     sharing: false,
-    property_id: property.id_fantoir_long,
+    property_id: property.id || 0,
     completed: false,
   });
   

@@ -131,7 +131,6 @@ export const usePropertyStore = defineStore('property', () => {
         favorite: Boolean(updatedProperty.favorite)
       };
       properties.value.push(normalizedProperty);
-      console.log('Property added to store');
     }
   }
 

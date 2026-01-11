@@ -2,26 +2,78 @@
 import { defineStore } from 'pinia'
 import { PropertyService } from '@/api/property.service'
 import apiService from '@/api/apiRequests'
+import type { IAddressGrouped, IAddressDetail } from '@/types/address'
+import type { IDpeResult } from '@/types/dpe'
+
+/**
+ * Interface pour une ville sélectionnée
+ */
+interface SelectedCity {
+  value: string;
+  codeInsee?: string;
+  code_insee?: string;
+}
+
+/**
+ * Interface pour une rue sélectionnée
+ */
+interface SelectedStreet {
+  value: string;
+  idFantoir?: string;
+}
+
+/**
+ * Interface pour le numéro complet sélectionné
+ */
+interface SelectedNumeroFull {
+  numero: string;
+  rep: string;
+  value: string;
+}
+
+/**
+ * Interface pour les paramètres de recherche
+ */
+interface SearchParams {
+  city: SelectedCity | null;
+  street: SelectedStreet | null;
+  codeInsee: string;
+  codeIdFantoir: string | null;
+  numero: string | null;
+  rep: string | null;
+}
+
+/**
+ * Interface pour un point DPE sur la carte
+ */
+interface DpePoint {
+  lat: number;
+  lon: number;
+  adresse: string;
+  etiquette: string;
+  type: string;
+  date: string;
+}
 
 export const useDashboardStore = defineStore('dashboard', {
   state: () => ({
-    selectedCity: null as any,
-    selectedStreet: null as any,
+    selectedCity: null as SelectedCity | null,
+    selectedStreet: null as SelectedStreet | null,
     selectedCodeInsee: '',
     selectedCodeIdFantoir: '',
-    addresses: [] as any[],
+    addresses: [] as (IAddressGrouped | IAddressDetail)[],
     cityCenter: null as null | { lat: number; lon: number },
     viewType: 'table',
-    lastSearchParams: null as any,
+    lastSearchParams: null as SearchParams | null,
     isDataLoaded: false,
     showCustomPropertyDialog: false,
     noResultsFound: false,
 
     selectedNumero: "",
     selectedRep: "",
-    selectedNumeroFull: null as { numero: string; rep: string; value: string } | null,
+    selectedNumeroFull: null as SelectedNumeroFull | null,
 
-    dpePoints: [] as any[],   // <-- DPE ajoutés
+    dpePoints: [] as DpePoint[],
   }),
 
   actions: {
@@ -72,8 +124,8 @@ export const useDashboardStore = defineStore('dashboard', {
 
         // Extraction des points
         this.dpePoints = json.results
-          .filter(r => r._geopoint)
-          .map(r => {
+          .filter((r: IDpeResult) => r._geopoint)
+          .map((r: IDpeResult) => {
             const [lat, lon] = r._geopoint.split(",").map(Number);
             return {
               lat,
@@ -258,9 +310,9 @@ export const useDashboardStore = defineStore('dashboard', {
     /* ---------------------------------------------
          UPDATE PROPERTY
     ---------------------------------------------- */
-    updateAddress(property: any) {
+    updateAddress(property: IAddressDetail) {
       const index = this.addresses.findIndex(
-        a => a.id_fantoir_long === property.id_fantoir_long
+        a => 'id_fantoir_long' in a && a.id_fantoir_long === property.id_fantoir_long
       );
 
       if (index !== -1) {
@@ -277,7 +329,7 @@ export const useDashboardStore = defineStore('dashboard', {
     /* ---------------------------------------------
          PARAMÈTRES
     ---------------------------------------------- */
-    setSearchParams(city: any, street: any, codeInsee: string, codeIdFantoir: string) {
+    setSearchParams(city: SelectedCity | null, street: SelectedStreet | null, codeInsee: string, codeIdFantoir: string) {
       this.selectedCity = city
       this.selectedStreet = street
       this.selectedCodeInsee = codeInsee
@@ -300,7 +352,7 @@ export const useDashboardStore = defineStore('dashboard', {
     /* ---------------------------------------------
          CUSTOM PROPERTY
     ---------------------------------------------- */
-    async createCustomProperty(propertyData: any) {
+    async createCustomProperty(propertyData: Partial<IAddressDetail> & { numero?: string; rep?: string; numero_appartement?: string }) {
       try {
         let id_fantoir_long = this.selectedCodeIdFantoir
         
@@ -315,7 +367,7 @@ export const useDashboardStore = defineStore('dashboard', {
           id_fantoir_long: id_fantoir_long
         }
         
-        const createdProperty = await PropertyService.createCustomProperty(propertyWithFantoir)
+        const createdProperty = await PropertyService.createCustomProperty(propertyWithFantoir as any)
 
         await this.querySearchAddress()
 

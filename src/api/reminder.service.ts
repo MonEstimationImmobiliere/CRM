@@ -1,5 +1,9 @@
 import apiService from '@/api/apiRequests';
+import type { IReminder, IReminderCreate, IReminderUpdate, ReminderList } from '@/types/reminder';
 
+/**
+ * @deprecated Utiliser IReminder, IReminderCreate depuis @/types/reminder
+ */
 export interface ReminderData {
   id?: string;
   property_id: string;
@@ -9,16 +13,16 @@ export interface ReminderData {
   type: 'rappel' | 'estimation' | 'visite' | 'autre';
   priority: 'low' | 'medium' | 'high';
   completed: boolean;
-  sharing: boolean; // Nouveau champ pour le partage
+  sharing: boolean;
   createdAt?: string;
   updatedAt?: string;
 }
 
 export const ReminderService = {
   // Récupérer les rappels de l'utilisateur
-  async getUserReminders(): Promise<ReminderData[]> {
+  async getUserReminders(): Promise<ReminderList> {
     try {
-      const response = await apiService.get<ReminderData[]>('/reminders/user');
+      const response = await apiService.get<ReminderList>('/reminders/user');
       return response.data;
     } catch (error) {
       console.error('Error fetching user reminders:', error);
@@ -27,9 +31,9 @@ export const ReminderService = {
   },
 
   // Récupérer les rappels partagés de l'agence
-  async getAgencyReminders(): Promise<ReminderData[]> {
+  async getAgencyReminders(): Promise<ReminderList> {
     try {
-      const response = await apiService.get<ReminderData[]>('/reminders/agency');
+      const response = await apiService.get<ReminderList>('/reminders/agency');
       return response.data;
     } catch (error) {
       console.error('Error fetching agency reminders:', error);
@@ -38,9 +42,9 @@ export const ReminderService = {
   },
 
   // Créer un nouveau rappel
-  async createReminder(reminder: Omit<ReminderData, 'id' | 'createdAt' | 'updatedAt'>): Promise<ReminderData> {
+  async createReminder(reminder: IReminderCreate): Promise<IReminder> {
     try {
-      const response = await apiService.post<ReminderData>('/reminders', reminder);
+      const response = await apiService.post<IReminder>('/reminders', reminder);
       return response.data;
     } catch (error) {
       console.error('Error creating reminder:', error);
@@ -49,9 +53,9 @@ export const ReminderService = {
   },
 
   // Récupérer un rappel spécifique
-  async getReminderById(id: string): Promise<ReminderData> {
+  async getReminderById(id: number): Promise<IReminder> {
     try {
-      const response = await apiService.get<ReminderData>(`/reminders/${id}`);
+      const response = await apiService.get<IReminder>(`/reminders/${id}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching reminder:', error);
@@ -60,9 +64,9 @@ export const ReminderService = {
   },
 
   // Mettre à jour un rappel
-  async updateReminder(id: string, reminder: Partial<ReminderData>): Promise<ReminderData> {
+  async updateReminder(id: number, reminder: Partial<IReminderUpdate>): Promise<IReminder> {
     try {
-      const response = await apiService.put<ReminderData>(`/reminders/${id}`, reminder);
+      const response = await apiService.put<IReminder>(`/reminders/${id}`, reminder);
       return response.data;
     } catch (error) {
       console.error('Error updating reminder:', error);
@@ -71,7 +75,7 @@ export const ReminderService = {
   },
 
   // Supprimer un rappel
-  async deleteReminder(id: string): Promise<void> {
+  async deleteReminder(id: number): Promise<void> {
     try {
       await apiService.delete(`/reminders/${id}`);
     } catch (error) {

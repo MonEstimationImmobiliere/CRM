@@ -1,5 +1,6 @@
 import apiService from '@/api/apiRequests';
-import type { PropertyData } from '@/types/property';
+import type { PropertyData, IProperty, PropertyList } from '@/types/property';
+import type { IAddressGrouped, IAddressDetail, AddressGroupedList, AddressDetailList } from '@/types/address';
 
 
 
@@ -48,9 +49,9 @@ export const PropertyService = {
 
 
 
-  async getAddressesByCodeInsee(codeInsee: string): Promise<any[]> {
+  async getAddressesByCodeInsee(codeInsee: string): Promise<IAddressDetail[]> {
     try {
-      const response = await apiService.get<any[]>(`/address-city/${encodeURIComponent(codeInsee)}`);
+      const response = await apiService.get<IAddressDetail[]>(`/address-city/${encodeURIComponent(codeInsee)}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching code insee:', error);
@@ -58,9 +59,9 @@ export const PropertyService = {
     }
   },
 
-    async getAddressesGroupedByCodeInsee(codeInsee: string): Promise<any[]> {
+  async getAddressesGroupedByCodeInsee(codeInsee: string): Promise<AddressGroupedList> {
     try {
-      const response = await apiService.get<any[]>(`/address-city-grouped/${encodeURIComponent(codeInsee)}`);
+      const response = await apiService.get<AddressGroupedList>(`/address-city-grouped/${encodeURIComponent(codeInsee)}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching code insee:', error);
@@ -68,12 +69,9 @@ export const PropertyService = {
     }
   },
 
-
-
-
-  async getAddressesByFantoir(idFantoir: string, type: string): Promise<any[]> {
+  async getAddressesByFantoir(idFantoir: string, type: string): Promise<AddressDetailList> {
     try {
-      const response = await apiService.get<any[]>(`/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
+      const response = await apiService.get<AddressDetailList>(`/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
       return response.data;
     } catch (error) {
       console.error('Error fetching addresses:', error);
@@ -81,30 +79,21 @@ export const PropertyService = {
     }
   },
 
-async getAddressesByNumero(idFantoir: string, numero: string, rep?: string): Promise<any[]> {
-  try {
-    const url = rep
-      ? `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}/${encodeURIComponent(rep)}`
-      : `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}`;
+  async getAddressesByNumero(idFantoir: string, numero: string, rep?: string): Promise<IAddressDetail[]> {
+    try {
+      const url = rep
+        ? `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}/${encodeURIComponent(rep)}`
+        : `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}`;
 
-    const response = await apiService.get<any[]>(url);
-    return response.data;
-  } catch (error) {
-    console.error("Error fetching addresses by numero:", error);
-    throw error;
-  }
-},
+      const response = await apiService.get<IAddressDetail[]>(url);
+      return response.data;
+    } catch (error) {
+      console.error("Error fetching addresses by numero:", error);
+      throw error;
+    }
+  },
 
   // Gestion des favoris
-  // async addToFavorites(propertyId: string): Promise<void> {
-  //   try {
-  //     await apiService.post(`/property/${encodeURIComponent(propertyId)}/favorite`);
-  //   } catch (error) {
-  //     console.error('Error adding property to favorites:', error);
-  //     throw error;
-  //   }
-  // },
-
   async removeFromFavorites(propertyId: string): Promise<void> {
     try {
       await apiService.delete(`/property/${encodeURIComponent(propertyId)}/favorite`);
@@ -114,9 +103,9 @@ async getAddressesByNumero(idFantoir: string, numero: string, rep?: string): Pro
     }
   },
 
-  async getFavorites(): Promise<PropertyData[]> {
+  async getFavorites(): Promise<PropertyList> {
     try {
-      const response = await apiService.get<PropertyData[]>('/property/favorite');
+      const response = await apiService.get<PropertyList>('/property/favorite');
       return response.data;
     } catch (error) {
       console.error('Error fetching favorite properties:', error);

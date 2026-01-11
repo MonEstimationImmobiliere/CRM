@@ -370,7 +370,7 @@ const reminderForm = ref<{
   priority: 'low' | 'medium' | 'high';
   status: 'todo' | 'progress' | 'completed';
   sharing: boolean;
-  property_id: string;
+  property_id: number;
 }>({
   title: '',
   description: '',
@@ -379,7 +379,7 @@ const reminderForm = ref<{
   priority: 'medium',
   status: 'todo',
   sharing: false,
-  property_id: '',
+  property_id: 0,
 });
 
 // Computed properties
@@ -475,7 +475,6 @@ const duplicateReminder = (reminder: Reminder) => {
     date: reminder.date,
     type: reminder.type,
     priority: reminder.priority,
-    status: 'todo' as const,
     sharing: reminder.sharing || false,
     property_id: reminder.property_id,
     completed: false,
@@ -538,7 +537,7 @@ const resetForm = () => {
     priority: 'medium',
     status: 'todo',
     sharing: false,
-    property_id: '',
+    property_id: 0,
   };
 };
 

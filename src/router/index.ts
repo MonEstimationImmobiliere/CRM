@@ -34,7 +34,7 @@ export const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "",
-        component: () => import("@/views/reminders.vue"),
+        component: () => import("@/views/Reminders/Reminders.vue"),
         meta: { title: "Mes Rappels", icon: Link },
       },
     ],
@@ -47,7 +47,7 @@ export const routes: Array<RouteRecordRaw> = [
     children: [
       {
         path: "",
-        component: () => import("@/views/favorites.vue"),
+        component: () => import("@/views/Favorites/Favorites.vue"),
         meta: { title: "Favoris", icon: Link },
       },
     ],

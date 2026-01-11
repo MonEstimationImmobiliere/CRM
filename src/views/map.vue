@@ -1,4 +1,4 @@
-<template>
+<!-- <template>
   <section class="mapContainer">
     <div id="map" class="map"></div>
   </section>
@@ -296,4 +296,4 @@ function setupWatchers() {
   width: 100%;
   height: calc(100vh - 80px);
 }
-</style>
+</style> -->

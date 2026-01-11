@@ -110,7 +110,7 @@
 /* ------------------------------------
       IMPORTS
 ------------------------------------ */
-import { computed, onMounted, watch, onBeforeUnmount  } from "vue";
+import { computed, onMounted, watch } from "vue";
 import { DataBoard, Grid, Location  } from "@element-plus/icons-vue";
 
 // Stores
@@ -248,19 +248,6 @@ onMounted(() => {
   if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
     console.log("Données restaurées depuis le store");
   }
-});
-
-function handleMapOpenProperty(event) {
-  const property = event.detail;
-  openPropertyDialog(property); // ⬅️ utilise ta fonction déjà existante
-}
-
-onMounted(() => {
-  window.addEventListener("map-open-property", handleMapOpenProperty);
-});
-
-onBeforeUnmount(() => {
-  window.removeEventListener("map-open-property", handleMapOpenProperty);
 });
 
 /* ------------------------------------
