@@ -380,6 +380,14 @@ export const useDashboardStore = defineStore('dashboard', {
         console.error('Error creating custom property:', error)
         throw error
       }
+    },
+
+    openCustomPropertyDialog() {
+      this.showCustomPropertyDialog = true
+    },
+
+    closeCustomPropertyDialog() {
+      this.showCustomPropertyDialog = false
     }
   }
 })

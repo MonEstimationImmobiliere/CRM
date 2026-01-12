@@ -43,7 +43,7 @@
             Estimations reçues
           </el-button>
 
-          <el-button type="primary" size="large" @click="openCreateCustomPropertyDialog">
+          <el-button type="primary" size="large" @click="dashboardStore.openCustomPropertyDialog()">
             Créer une propriété personnalisée
           </el-button>
         </div>
@@ -225,7 +225,7 @@ const selectedNumeroFull = computed({
 
     // Saisie manuelle -> string
     if (typeof v === "string") {
-      const parts = v.trim().split(" ");
+      const parts = (v as string).trim().split(" ");
       dashboardStore.selectedNumero = parts[0] || "";
       dashboardStore.selectedRep = parts[1] || "";
     }
@@ -253,9 +253,9 @@ onMounted(() => {
 /* ------------------------------------
       HANDLERS
 ------------------------------------ */
-const handleCitySelect = (city) => {
+const handleCitySelect = (city: { value: string; codeInsee?: string }) => {
   dashboardStore.selectedCity = city;
-  dashboardStore.selectedCodeInsee = city.codeInsee;
+  dashboardStore.selectedCodeInsee = city.codeInsee || '';
 };
 
 const handleCityClear = () => {
@@ -275,9 +275,9 @@ const handleCityClear = () => {
   dashboardStore.isDataLoaded = false;
 };
 
-const handleStreetSelect = (street) => {
+const handleStreetSelect = (street: { value: string; idFantoir?: string }) => {
   dashboardStore.selectedStreet = street;
-  dashboardStore.selectedCodeIdFantoir = street.idFantoir;
+  dashboardStore.selectedCodeIdFantoir = street.idFantoir || '';
   dashboardStore.selectedNumero = "";
   dashboardStore.selectedRep = "";
   dashboardStore.selectedNumeroFull = null;
@@ -326,7 +326,7 @@ const handleGroupedStreetClick = (streetRow: any) => {
   }, 10);
 };
 
-const handleTableNumeroClick = (row) => {
+const handleTableNumeroClick = (row: { nom_voie: string; id_fantoir: string; numero: string; rep?: string }) => {
 
   // 1️⃣ REMPLIR LA RUE dans l'autocomplete
   dashboardStore.selectedStreet = {
@@ -373,7 +373,7 @@ const setMapView = () => {  dashboardStore.viewType = "map";};
 /* ------------------------------------
       OUVERTURE FICHE
 ------------------------------------ */
-const openPropertyDialog = (property) => {
+const openPropertyDialog = (property: any) => {
   store.selectProperty({
     ...store.defaultPropertyData,
     ...property,

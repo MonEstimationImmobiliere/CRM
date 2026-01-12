@@ -52,14 +52,14 @@ set: (newValue) => {
 /* ----------------------------------
       AUTOCOMPLETE API
 ----------------------------------- */
-const queryNumero = async (query, cb) => {
+const queryNumero = async (query: string, cb: (results: any[]) => void) => {
   if (!query || !props.idFantoir) return cb([]);
 
   try {
     const url = `${API_URL}/address-number-search/${props.idFantoir}/${query}`;
     const res = await apiService.get(url);
 
-    const results = res.data.map((item) => ({
+    const results = (res.data as any[]).map((item: any) => ({
       numero: item.numero,
       rep: item.rep || "",
       value: item.rep ? `${item.numero} ${item.rep}` : String(item.numero),
@@ -75,7 +75,7 @@ const queryNumero = async (query, cb) => {
 /* ----------------------------------
       SÉLECTION D’UN NUMÉRO
 ----------------------------------- */
-const handleSelect = (item) => {
+const handleSelect = (item: any) => {
   emit("update:modelValue", item);  // objet propre
   emit("select", item);
 };

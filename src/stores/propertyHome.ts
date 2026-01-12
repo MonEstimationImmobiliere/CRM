@@ -287,6 +287,7 @@ const toggleFavorite = async (id_fantoir_long: string, sourceRow: any = null) =>
         const normalizedProperty = {
           ...defaultPropertyData,
           ...property,
+          numero: String(property.numero ?? ''), // Convertir numero en string
           favorite: true // S'assurer que toutes les propriétés récupérées sont marquées comme favorites
         };
         
@@ -300,10 +301,10 @@ const toggleFavorite = async (id_fantoir_long: string, sourceRow: any = null) =>
           properties.value[existingIndex] = {
             ...properties.value[existingIndex],
             ...normalizedProperty
-          };
+          } as typeof properties.value[number];
         } else {
           // Ajouter la nouvelle propriété au store
-          properties.value.push(normalizedProperty);
+          properties.value.push(normalizedProperty as typeof properties.value[number]);
         }
       });
       

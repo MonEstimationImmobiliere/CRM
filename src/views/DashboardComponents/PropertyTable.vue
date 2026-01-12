@@ -157,11 +157,11 @@ const emit = defineEmits(["select-street","select-numero","edit-property"]);
 
 
 
-const handleStreetClick = (row) => {
+const handleStreetClick = (row: any) => {
   emit("select-street", row);
 };
 
-const handleNumeroClick = (row) => {
+const handleNumeroClick = (row: any) => {
   emit("select-numero", row);
 };
 

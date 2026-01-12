@@ -240,7 +240,7 @@ watch(() => dashboardStore.showCustomPropertyDialog, (newValue) => {
     if (searchParams) {
       formData.value.nom_voie = searchParams.street?.value || ''
       formData.value.code_postal = searchParams.city?.value || ''
-      formData.value.city = searchParams.city?.city || ''
+      formData.value.city = searchParams.city?.value || ''
       // L'id_fantoir_long sera généré par le store en fonction des données saisies
       formData.value.id_fantoir_long = ''
     }
@@ -318,10 +318,13 @@ const handleSave = async () => {
     saving.value = true
     console.log('Données du formulaire:', formData.value)
 
-    formData.value.city = selectedCity.city;
+    formData.value.city = selectedCity?.value || '';
 
     // Créer la propriété personnalisée via le store dashboard
-    const createdProperty = await dashboardStore.createCustomProperty(formData.value)
+    const createdProperty = await dashboardStore.createCustomProperty({
+      ...formData.value,
+      favorite: formData.value.favorite ? 'true' : undefined
+    } as any)
     
     ElMessage.success('Propriété personnalisée créée avec succès!')
     

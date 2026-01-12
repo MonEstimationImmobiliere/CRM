@@ -55,7 +55,7 @@ const saveProperty = async (): Promise<void> => {
       if (isEditing.value) {
         await store.saveProperty(filteredProperty);
       } else {
-        filteredProperty.city = selectedCity.city;
+        filteredProperty.city = selectedCity?.value || '';
         await store.saveProperty(filteredProperty);
       }
       
@@ -159,7 +159,7 @@ const saveReminder = () => {
     type: reminderForm.value.type,
     priority: reminderForm.value.priority,
     sharing: reminderForm.value.sharing,
-    property_id: store.selectedProperty.id,
+    property_id: store.selectedProperty.id ?? 0,
     completed: false,
   });
   
@@ -193,7 +193,7 @@ const saveReminderAndAddAnother = () => {
     type: reminderForm.value.type,
     priority: reminderForm.value.priority,
     sharing: reminderForm.value.sharing,
-    property_id: store.selectedProperty.id_fantoir_long,
+    property_id: store.selectedProperty.id ?? 0,
     completed: false,
   });
   
@@ -221,7 +221,7 @@ const saveReminderAndAddAnother = () => {
 
 // Computed properties pour les rappels de la propriété
 const propertyReminders = computed(() => {
-  const propertyId = store.selectedProperty?.id || "example_property_id_1";
+  const propertyId = store.selectedProperty?.id ?? 0;
   return remindersStore.getRemindersByProperty(propertyId);
 });
 
