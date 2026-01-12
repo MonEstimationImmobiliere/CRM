@@ -27,8 +27,8 @@
 
 <script setup lang="ts">
 import { ref, onMounted, onUnmounted } from 'vue'
-import { useDashboardStore } from '@/stores/dashboard'
-import type { IAddressDetail } from '@/types/address'
+import type { IAddressDetail } from '@/types/address'
+
 // Emits
 const emit = defineEmits<{
   'mode-change': [mode: string]
@@ -36,28 +36,14 @@ const emit = defineEmits<{
 }>()
 
 const props = defineProps<{
-  addresses:  IAddressDetail[];
+  addresses: IAddressDetail[];
 }>();
 
-
 console.log('📍 MapView props.addresses dans SideBar:', props.addresses);
-
-// Store
-const dashboard = useDashboardStore()
 
 // État réactif
 const sidebarOpen = ref(true)
 const currentMode = ref<'prospection' | 'estimation' | 'rappel' | 'favoris' | 'dpe'>('prospection')
-
-// Constantes de couleurs
-const COLORS = {
-  prospection: '#4287f5',
-  estimation: '#9333ea',
-  rappel: '#06b6d4',
-  favoris: '#f97316',
-  dpe: '#10b981',
-  none: '#d1d5db'
-}
 
 // Modes d'affichage
 const selectPropertyToDisplay = [
@@ -71,43 +57,7 @@ const selectPropertyToDisplay = [
 const setMode = (mode: string) => {
   currentMode.value = mode as any
   emit('mode-change', mode)
-  
-
-    for (const [id, info] of Object.entries(props.addresses)) {
-
-      const marker = dashboard.markers[id];
-      if (marker) {
-        let color = COLORS.none;
-
-        switch (mode) {
-          case 'prospection':
-            color = info.prospection ? COLORS.prospection : COLORS.none;
-            break;
-          case 'estimation':
-            color = info.estimation ? COLORS.estimation : COLORS.none;
-            break;
-          case 'rappel':
-            color = info.rappel ? COLORS.rappel : COLORS.none;
-            break;
-          case 'favoris':
-            color = info.favori ? COLORS.favoris : COLORS.none;
-            break;
-          case 'dpe':
-            color = info.dpe ? COLORS.dpe : COLORS.none;
-            break;
-          default:
-            color = COLORS.none;
-        }
-
-        // Met à jour la couleur du marqueur
-        (marker.getElement() as HTMLElement).style.backgroundColor = color;
-      }
-    }
-
 }
-
-
-
 
 // Keyboard handler
 const handleGlobalKeydown = (event: KeyboardEvent) => {

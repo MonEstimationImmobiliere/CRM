@@ -4,7 +4,7 @@
     <SideBarMapView 
       @mode-change="handleModeChange"
       @sidebar-toggle="handleSidebarToggle"
-    :addresses="addresses"
+      :addresses="(addresses as any)"
     />
     
     <!-- Map -->
@@ -15,16 +15,19 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, nextTick, ref } from "vue";
+import { onMounted, watch, nextTick, ref, computed, onUnmounted } from "vue";
 import maplibregl from "maplibre-gl";
 import "maplibre-gl/dist/maplibre-gl.css";
 import { useDashboardStore } from "@/stores/dashboard";
+import { useRemindersStore } from "@/stores/reminders";
 import SideBarMapView from "./SideBarMapView.vue";
 
 /* -------------------------------------
    PROPS & EMITS
 ------------------------------------- */
-interface Address {
+import type { IAddressDetail, IAddressGrouped } from '@/types/address';
+
+type Address = IAddressDetail | IAddressGrouped | {
   lat: string | number;
   lon: string | number;
   numero?: string;
@@ -36,7 +39,7 @@ interface Address {
   id_fantoir_long?: string;
   total_adresses?: number;
   [key: string]: any;
-}
+};
 
 interface CityCenter {
   lat: number;
@@ -61,6 +64,7 @@ const emit = defineEmits<{
 
 
 const dashboard = useDashboardStore();
+const remindersStore = useRemindersStore();
 console.log('📍 MapView store addresses:', dashboard.addresses);
 
 let map: maplibregl.Map | null = null;
@@ -69,7 +73,23 @@ let mapLoaded = false;
 let currentPopup: maplibregl.Popup | null = null;
 
 // Current display mode
-const currentMode = ref<string>('address');
+const currentMode = ref<string>('prospection');
+
+// Constantes de couleurs (même que SideBarMapView)
+const COLORS = {
+  prospection: '#4287f5',
+  estimation: '#9333ea',
+  rappel: '#06b6d4',
+  favoris: '#f97316',
+  dpe: '#10b981',
+  none: '#d1d5db'
+};
+
+// Computed: Set des property_id ayant un rappel
+const reminderPropertyIds = computed(() => {
+  const allReminders = [...remindersStore.reminders, ...remindersStore.agencyReminders];
+  return new Set(allReminders.map(r => r.property_id));
+});
 
 const MAPTILER_KEY = "qnb10ErHP2vBlMq3fo5B";
 const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
@@ -80,17 +100,59 @@ const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILE
 function handleModeChange(mode: string) {
   currentMode.value = mode;
   console.log('🔄 Mode changed to:', mode);
-  updatePoints();
+  updatePointsWithColors();
 }
 
 function handleSidebarToggle(open: boolean) {
   console.log('📂 Sidebar toggled:', open);
 }
 
+/**
+ * Détermine la couleur d'un point selon le mode et les données de l'adresse
+ */
+function getPointColor(address: Address, mode: string): string {
+  // Cast to any for dynamic property access since Address can be multiple types
+  const addr = address as any;
+  
+  switch (mode) {
+    case 'prospection':
+      // Prospection: basé sur la présence de données CRM
+      const hasProspectionData = addr.date_maj !== null || 
+                                  (addr.nombre_ventes && addr.nombre_ventes > 0) || 
+                                  (addr.nombre_estimations && addr.nombre_estimations > 0);
+      return hasProspectionData ? COLORS.prospection : COLORS.none;
+    
+    case 'estimation':
+      // Estimation: basé sur dernier_prix_estime
+      return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0 
+        ? COLORS.estimation 
+        : COLORS.none;
+    
+    case 'rappel':
+      // Rappel: vérifie si l'adresse a un rappel dans le store reminders
+      const hasReminder = addr.id !== null && reminderPropertyIds.value.has(addr.id);
+      return hasReminder ? COLORS.rappel : COLORS.none;
+    
+    case 'favoris':
+      // Favoris: basé sur address.favorite === 'true'
+      return addr.favorite === 'true' ? COLORS.favoris : COLORS.none;
+    
+    case 'dpe':
+      // DPE: logique à compléter selon les données disponibles
+      return COLORS.none;
+    
+    default:
+      return COLORS.none;
+  }
+}
+
 /* -------------------------------------
    INITIALISATION CARTE
 ------------------------------------- */
-onMounted(() => {
+onMounted(async () => {
+  // Charger les reminders pour le mode rappel
+  await remindersStore.loadReminders();
+
   map = new maplibregl.Map({
     container: "map",
     style: STYLE,
@@ -104,19 +166,19 @@ onMounted(() => {
     mapLoaded = true;
 
     // Source DVF (points)
-    map.addSource("dvf_points", {
+    map!.addSource("dvf_points", {
       type: "geojson",
       data: emptyGeoJSON()
     });
 
-    // Layer points bleus
-    map.addLayer({
+    // Layer points avec couleur dynamique
+    map!.addLayer({
       id: "dvf-dots",
       type: "circle",
       source: "dvf_points",
       paint: {
         "circle-radius": 7,
-        "circle-color": "#4287f5",
+        "circle-color": COLORS.none,
         "circle-stroke-width": 2,
         "circle-stroke-color": "#ffffff"
       }
@@ -124,6 +186,9 @@ onMounted(() => {
 
     setupWatchers();
     setupPopupClick();
+    
+    // Appliquer les couleurs initiales
+    updatePointsWithColors();
   });
 });
 
@@ -135,6 +200,10 @@ function setupPopupClick() {
     const f = e.features?.[0];
     if (!f) return;
     const p = f.properties;
+    
+    // Get coordinates safely
+    const geom = f.geometry as GeoJSON.Point;
+    const coords = geom.coordinates;
 
     /* ---------------------------------
         1️⃣ MODE VILLE (groupé par rue)
@@ -165,7 +234,7 @@ function setupPopupClick() {
 
           dashboard.querySearchAddress();
 
-          flyTo(f.geometry.coordinates[0], f.geometry.coordinates[1], 16);
+          flyTo(coords[0], coords[1], 16);
         });
       }, 50);
 
@@ -200,7 +269,7 @@ function setupPopupClick() {
           dashboard.selectedRep = p.rep || "";
           dashboard.querySearchAddress();
 
-          flyTo(f.geometry.coordinates[0], f.geometry.coordinates[1], 19);
+          flyTo(coords[0], coords[1], 19);
         });
       }, 50);
 
@@ -261,12 +330,46 @@ function updatePoints() {
       type: "Feature",
       geometry: {
         type: "Point",
-        coordinates: [parseFloat(a.lon), parseFloat(a.lat)]
+        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))]
       },
       properties: { ...a }
     }));
 
   setSourceData("dvf_points", features);
+}
+
+/**
+ * Met à jour les points avec les couleurs selon le mode actuel
+ */
+function updatePointsWithColors() {
+  if (!mapLoaded || !map) return;
+
+  const mode = currentMode.value;
+  
+  // Construire l'expression de couleur match pour chaque point
+  const colorExpression: any[] = ['match', ['get', 'id_fantoir_long']];
+  
+  for (const address of props.addresses) {
+    const addr = address as any;
+    const id = addr.id_fantoir_long || addr.id_fantoir;
+    if (id) {
+      const color = getPointColor(address, mode);
+      colorExpression.push(id, color);
+    }
+  }
+  
+  // Couleur par défaut (fallback)
+  colorExpression.push(COLORS.none);
+  
+  // Appliquer l'expression de couleur au layer
+  try {
+    map.setPaintProperty('dvf-dots', 'circle-color', colorExpression);
+    console.log('🎨 Colors updated for mode:', mode);
+  } catch (error) {
+    console.error('❌ Error updating colors:', error);
+    // Fallback: couleur statique
+    map.setPaintProperty('dvf-dots', 'circle-color', COLORS.prospection);
+  }
 }
 
 /* -------------------------------------
@@ -319,11 +422,13 @@ function emptyGeoJSON(): GeoJSON.FeatureCollection {
 }
 
 function setSourceData(sourceName: string, features: any[]) {
-  const src = map!.getSource(sourceName);
-  src.setData({
-    type: "FeatureCollection",
-    features
-  });
+  const src = map!.getSource(sourceName) as maplibregl.GeoJSONSource | undefined;
+  if (src) {
+    src.setData({
+      type: "FeatureCollection",
+      features
+    });
+  }
 }
 
 /* -------------------------------------
@@ -343,6 +448,7 @@ function setupWatchers() {
   // Watcher sur les props.addresses
   watch(() => props.addresses, () => {
     updatePoints();
+    updatePointsWithColors();
     recenterMap();
   }, { deep: true, immediate: true });
 
@@ -350,6 +456,13 @@ function setupWatchers() {
   watch(() => props.cityCenter, () => {
     recenterMap();
   });
+
+  // Watcher sur les reminders pour mettre à jour les couleurs en mode rappel
+  watch(() => [remindersStore.reminders, remindersStore.agencyReminders], () => {
+    if (currentMode.value === 'rappel') {
+      updatePointsWithColors();
+    }
+  }, { deep: true });
 
 watch(() => dashboard.selectedStreet, () => {
   closePopup();

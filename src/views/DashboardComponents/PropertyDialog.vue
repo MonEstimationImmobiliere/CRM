@@ -149,6 +149,8 @@ const saveReminder = () => {
     });
     return;
   }
+
+  console.log('Saving reminder with data:', store.selectedProperty);
   
   remindersStore.addReminder({
     title: reminderForm.value.title,
@@ -157,7 +159,7 @@ const saveReminder = () => {
     type: reminderForm.value.type,
     priority: reminderForm.value.priority,
     sharing: reminderForm.value.sharing,
-    property_id: store.selectedProperty.id_fantoir_long,
+    property_id: store.selectedProperty.id,
     completed: false,
   });
   
@@ -219,7 +221,7 @@ const saveReminderAndAddAnother = () => {
 
 // Computed properties pour les rappels de la propriété
 const propertyReminders = computed(() => {
-  const propertyId = store.selectedProperty?.id_fantoir_long || "example_property_id_1";
+  const propertyId = store.selectedProperty?.id || "example_property_id_1";
   return remindersStore.getRemindersByProperty(propertyId);
 });
 

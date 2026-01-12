@@ -74,6 +74,9 @@ export const useDashboardStore = defineStore('dashboard', {
     selectedNumeroFull: null as SelectedNumeroFull | null,
 
     dpePoints: [] as DpePoint[],
+    
+    // Marqueurs de la carte (clé = id_fantoir_long, valeur = instance du marqueur MapLibre)
+    markers: {} as Record<string, any>,
   }),
 
   actions: {
@@ -83,7 +86,8 @@ export const useDashboardStore = defineStore('dashboard', {
     ---------------------------------------------- */
     async fetchDPE() {
       try {
-        // Vérification code INSEE
+        // Vérification c
+        // ode INSEE
         const codeInsee =
           this.selectedCodeInsee ||
           this.selectedCity?.codeInsee ||
