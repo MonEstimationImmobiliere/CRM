@@ -1,0 +1,99 @@
+:root{
+    --el-menu-base-level-padding: .5rem;
+    --el-menu-expand-base-level-padding: 1rem;
+    --el-menu-level-padding: 1rem;
+}
+
+.el-header{
+    height: unset;
+    display: flex;
+    align-items: center;
+    width: fit-content;
+}
+
+.el-aside{
+    transition: all ease-in-out 0.2s;
+}
+
+.el-main{
+    padding: 1rem;
+}
+
+.el-menu{
+    border-right: none;
+}
+
+.el-menu .el-icon:not(.el-sub-menu__icon-arrow){
+    border-radius: 0.3rem;
+    background-color: #fff;
+    box-shadow: 0 1.25rem 1.68rem #0000000d;
+    border: 1px solid var(--blue);
+}
+
+.el-menu .el-menu-item.is-active > .el-icon{
+    background-color: var(--blue);
+    color: var(--white);
+}
+
+.el-menu .el-sub-menu.is-active > .el-sub-menu__title > .el-icon:not(.el-sub-menu__icon-arrow){
+    background-color: var(--light-blue);
+    color: var(--blue);
+}
+
+.el-sub-menu__title, .el-menu-item {
+    border-radius: 0.3rem;
+    margin: 0 0.3rem 0.2rem 0.3rem;
+}
+
+.el-form{
+    width: 100%;
+}
+
+.el-form-item{
+    margin-bottom: 1rem;
+}
+
+.el-form-item__label {
+    display: flex;
+    align-items: center;
+    text-align: left;
+}
+
+.el-form-item__label::before {
+    margin: 0;
+}
+
+.el-dialog__header{
+    margin: 0;
+    padding: 1rem;
+    border-bottom: 0.063rem solid var(--light-gray);
+}
+
+.el-dialog__body{
+    padding: 1rem;
+}
+
+.el-input__wrapper{
+    padding: 0 0.5rem;
+    border-radius: 0.3rem;
+}
+
+.el-button--primary{
+    color: var(--white);
+    background-color: var(--blue);
+    border-color: var(--blue);
+}
+
+.el-button--primary:focus, .el-button--primary:hover{
+    background: var(--light-blue);
+    border-color: var(--light-blue);
+    color: var(--blue);
+}
+
+.el-button{
+    border-radius: 0.3rem;
+}
+
+.el-breadcrumb__item:last-child .el-breadcrumb__inner a, .el-breadcrumb__item:last-child .el-breadcrumb__inner{
+    color: var(--blue);
+}

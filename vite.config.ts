@@ -5,9 +5,7 @@ import Components from 'unplugin-vue-components/vite'
 import { ElementPlusResolver } from 'unplugin-vue-components/resolvers'
 import vueJsx from '@vitejs/plugin-vue-jsx'
 import path from 'path'
-import postcssNesting from 'postcss-nesting'
 import autoprefixer from 'autoprefixer'
-import flexbugsFixes from 'postcss-flexbugs-fixes'
 
 function resolvePath(src: string) {
   return path.resolve(__dirname, src)
@@ -39,7 +37,6 @@ export default defineConfig({
     },
     postcss: {
       plugins: [
-        postcssNesting,
         autoprefixer({
           overrideBrowserslist: [
             'Android 4.1',
@@ -50,8 +47,7 @@ export default defineConfig({
             '> 1%',
           ],
           grid: true,
-        }),
-        flexbugsFixes
+        })
       ]
     }
   },

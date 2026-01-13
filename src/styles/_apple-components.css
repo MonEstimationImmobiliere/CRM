@@ -1,0 +1,200 @@
+/* Apple-inspired component styles */
+
+/* Buttons modernisés */
+:deep(.el-button) {
+  border-radius: var(--apple-radius-small);
+  padding: calc(var(--apple-spacing) / 2) var(--apple-spacing);
+  font-weight: 500;
+  letter-spacing: 0.01em;
+  transition: var(--apple-transition);
+  border: none;
+  box-shadow: 0 2px 10px rgba(0, 0, 0, 0.1);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  font-family: inherit;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 6px 20px rgba(0, 0, 0, 0.15);
+}
+
+:deep(.el-button--primary) {
+  background: linear-gradient(135deg, var(--apple-accent) 0%, #0056cc 100%);
+  color: white;
+}
+
+:deep(.el-button--success) {
+  background: linear-gradient(135deg, #34c759 0%, #28a745 100%);
+  color: white;
+}
+
+:deep(.el-button--warning) {
+  background: linear-gradient(135deg, #ff9500 0%, #ff8c00 100%);
+  color: white;
+}
+
+:deep(.el-button--info) {
+  background: linear-gradient(135deg, #8e8e93 0%, #6d6d70 100%);
+  color: white;
+}
+
+/* Cards modernisées */
+:deep(.el-card) {
+  border-radius: var(--apple-radius);
+  border: 1px solid var(--apple-border);
+  background: var(--apple-card-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  box-shadow: var(--apple-shadow);
+  transition: var(--apple-transition);
+  overflow: hidden;
+}
+
+:deep(.el-card:hover) {
+  box-shadow: var(--apple-shadow-hover);
+  transform: translateY(-4px);
+}
+
+:deep(.el-card__body) {
+  padding: var(--apple-spacing);
+}
+
+/* Inputs modernisés */
+:deep(.el-input__wrapper) {
+  border-radius: var(--apple-radius-small);
+  border: 1px solid var(--apple-border);
+  background: var(--apple-card-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  box-shadow: inset 0 1px 3px rgba(0, 0, 0, 0.05);
+  transition: var(--apple-transition);
+}
+
+:deep(.el-input__wrapper:hover) {
+  border-color: var(--apple-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.1);
+}
+
+:deep(.el-input__wrapper.is-focus) {
+  border-color: var(--apple-accent);
+  box-shadow: 0 0 0 3px rgba(0, 122, 255, 0.2);
+}
+
+/* Tables modernisées */
+:deep(.el-table) {
+  border-radius: var(--apple-radius);
+  overflow: hidden;
+  background: var(--apple-card-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--apple-border);
+  box-shadow: var(--apple-shadow);
+}
+
+:deep(.el-table th) {
+  background: var(--glass-bg);
+  color: var(--apple-text-primary);
+  font-weight: 600;
+  letter-spacing: 0.01em;
+  border-bottom: 1px solid var(--apple-border);
+}
+
+:deep(.el-table td) {
+  border-bottom: 1px solid rgba(0, 0, 0, 0.03);
+}
+
+:deep(.el-table tr:hover td) {
+  background-color: rgba(0, 122, 255, 0.04);
+}
+
+/* Menu modernisé */
+:deep(.el-menu) {
+  background: transparent;
+  border: none;
+}
+
+:deep(.el-menu-item) {
+  border-radius: var(--apple-radius-small);
+  margin: calc(var(--apple-spacing) / 4) calc(var(--apple-spacing) / 2);
+  padding: calc(var(--apple-spacing) / 2) var(--apple-spacing);
+  transition: var(--apple-transition);
+  background: transparent;
+  border: 1px solid transparent;
+}
+
+:deep(.el-menu-item:hover) {
+  background: var(--glass-bg);
+  border-color: var(--apple-border);
+  transform: translateX(4px);
+}
+
+:deep(.el-menu-item.is-active) {
+  background: var(--apple-accent);
+  color: white;
+  box-shadow: 0 4px 15px rgba(0, 122, 255, 0.3);
+}
+
+/* Containers modernisés */
+.modern-container {
+  background: var(--apple-card-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius);
+  padding: var(--apple-spacing);
+  margin: calc(var(--apple-spacing) / 2);
+  box-shadow: var(--apple-shadow);
+  transition: var(--apple-transition);
+}
+
+.modern-container:hover {
+  box-shadow: var(--apple-shadow-hover);
+  transform: translateY(-2px);
+}
+
+/* Grid layout moderne */
+.modern-grid {
+  display: grid;
+  gap: var(--apple-spacing);
+  padding: var(--apple-spacing);
+}
+
+.modern-grid-2 {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.modern-grid-3 {
+  grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+}
+
+.modern-grid-4 {
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+}
+
+/* Animations fluides */
+@keyframes fadeInUp {
+  from {
+    opacity: 0;
+    transform: translateY(30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes slideInFromLeft {
+  from {
+    opacity: 0;
+    transform: translateX(-30px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+.animate-fadeInUp {
+  animation: fadeInUp 0.6s cubic-bezier(0.25, 0.1, 0.25, 1);
+}
