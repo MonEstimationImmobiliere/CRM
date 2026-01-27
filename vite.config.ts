@@ -30,11 +30,7 @@ export default defineConfig({
   },
 
   css: {
-    preprocessorOptions: {
-      scss: {
-        additionalData: `@use "./src/style/style.scss" as *;`
-      }
-    },
+
     postcss: {
       plugins: [
         autoprefixer({

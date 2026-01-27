@@ -40,135 +40,70 @@ export type SanitationType = 'tout_egout' | 'fosse_septique' | 'autre' | null;
  * Basée sur le retour de l'API /property/favorite
  */
 export interface IProperty {
-  /** Identifiant unique de la propriété */
   id: number;
-  /** Identifiant FANTOIR long */
   id_fantoir_long: string;
-  /** Identifiant FANTOIR de la voie */
   id_fantoir: string;
-  /** Code INSEE de la commune */
   code_insee: string;
-  /** Code postal */
   code_postal: string;
-  /** Nom de la voie */
   nom_voie: string;
-  /** Numéro de rue */
   numero: number;
-  /** Répétition (bis, ter, etc.) */
   rep: string | null;
-  /** Ville */
   city: string | null;
-  /** Numéro d'appartement */
   apart_number: string | null;
-  /** Type de propriété */
   property_type: PropertyType;
-  /** Surface habitable en m² */
   surface: number;
-  /** Surface du terrain en m² */
   area: number | null;
-  /** Étage de l'appartement */
   floor_number: number | null;
-  /** Nombre total d'étages du bâtiment */
   total_floors: number | null;
-  /** Année de construction */
   year_built: number | null;
-  /** Année d'achat */
   year_buy: number | null;
-  /** État de la propriété */
   property_condition: PropertyCondition;
-  /** Orientation */
   orientation: PropertyOrientation;
-  /** Nombre de pièces */
   rooms: number | null;
-  /** Nombre de chambres */
   bedrooms: number | null;
-  /** Nombre de salles de bain */
   bathrooms: number;
-  /** Cuisine aménagée */
   fitted_kitchen: boolean;
-  /** Cuisine équipée */
   equipped_kitchen: boolean;
-  /** Cuisine américaine */
   american_kitchen: boolean;
-  /** Arrière-cuisine */
   scullery: boolean;
-  /** Type de chauffage */
   heating_type: HeatingType;
-  /** Type de fenêtres (matériau) */
   window: string | null;
-  /** Type de vitrage */
   window_type: WindowType;
-  /** Type de volets */
   shutter: string | null;
-  /** Cheminée */
   cheminee: boolean;
-  /** Chauffage collectif */
   district_heating: boolean;
-  /** Patio */
   patio: boolean;
-  /** Nombre de garages */
   garage: number;
-  /** Piscine */
   pool: boolean;
-  /** Véranda */
   veranda: boolean;
-  /** Jardin */
   garden: boolean;
-  /** Parking */
   parking: boolean;
-  /** Sous-sol */
   basement: boolean;
-  /** Dépendances */
   dependency: boolean;
-  /** Nombre de carports */
   carport: number;
-  /** Cuisine extérieure */
   kitchen_ext: boolean;
-  /** Taxe foncière */
   property_tax: number | null;
-  /** Type de toiture */
   roof: RoofType;
-  /** Mitoyen */
   adjoining: boolean;
-  /** Type d'assainissement */
   sanitation: SanitationType;
-  /** Terrain */
   ground: boolean;
-  /** Charges mensuelles */
   charge: number | null;
-  /** Ascenseur */
   elevator: boolean;
-  /** Balcon */
   balcony: boolean;
-  /** Cave */
   cellar: boolean;
-  /** Local vélos */
   bike_room: boolean;
-  /** Gardien */
   guardian: boolean;
-  /** Email du propriétaire */
   email: string | null;
-  /** Téléphone du propriétaire */
   phone: string | null;
-  /** Nom du propriétaire */
   owner: string | null;
-  /** Prix */
   price: number | null;
-  /** Commentaire */
   comment: string | null;
-  /** ID de l'utilisateur qui a mis à jour */
   update_by: number | null;
-  /** Date de rappel */
   date_rappel: string | null;
-  /** Code de l'agence */
   code_agence: string;
-  /** ID de l'agence */
   id_agence: number | null;
-  /** Date de création (ISO 8601) */
   created_at: string;
-  /** Date de mise à jour (ISO 8601) */
   updated_at: string;
-  /** Indique si c'est un favori */
   favorite: boolean;
   /** Indique si le bien est loué */
   rented: boolean;
