@@ -47,8 +47,8 @@
 
     <!-- Cards Grid -->
     <div class="favorites-grid">
-      <el-card 
-        v-for="property in sortedAndFilteredFavorites" 
+      <el-card
+        v-for="property in sortedAndFilteredFavorites"
         :key="property.id_fantoir_long"
         class="favorite-card"
         shadow="hover"
@@ -57,12 +57,14 @@
         <!-- Card Header -->
         <div class="card-header">
           <div class="address-info">
-            <h3 class="address-title">{{ property.numero }} {{ property.nom_voie }}</h3>
+            <h3 class="address-title">
+              {{ property.numero }} {{ property.nom_voie }}
+            </h3>
             <p class="city-name">{{ property.city || 'Non renseigné' }}</p>
           </div>
-          <el-button 
-            type="danger" 
-            size="small" 
+          <el-button
+            type="danger"
+            size="small"
             circle
             @click.stop="$emit('toggle-favorite', property)"
             class="favorite-button"
@@ -80,10 +82,10 @@
               <span class="label">Propriétaire</span>
               <span class="value">{{ property.owner || 'Non renseigné' }}</span>
             </div>
-            
+
             <div class="detail-item">
               <span class="label">Type</span>
-              <el-tag 
+              <el-tag
                 :type="getPropertyTypeTagType(property.property_type)"
                 size="small"
                 round
@@ -92,12 +94,12 @@
                 {{ property.property_type || 'Non renseigné' }}
               </el-tag>
             </div>
-            
+
             <div class="detail-item">
               <span class="label">Surface</span>
               <span class="value surface">{{ property.surface || 0 }} m²</span>
             </div>
-            
+
             <div class="detail-item">
               <span class="label">Prix estimé</span>
               <span class="value price">{{ formatPrice(property.price) }}</span>
@@ -109,18 +111,18 @@
 
         <!-- Card Actions -->
         <div class="card-actions">
-          <el-button 
-            type="primary" 
-            size="small" 
+          <el-button
+            type="primary"
+            size="small"
             @click.stop="$emit('edit-property', property)"
             class="action-button"
           >
             <el-icon><Edit /></el-icon>
             Modifier
           </el-button>
-          <el-button 
-            type="success" 
-            size="small" 
+          <el-button
+            type="success"
+            size="small"
             @click.stop="$emit('create-reminder', property)"
             class="action-button"
           >
@@ -157,7 +159,11 @@ interface Props {
 const props = defineProps<Props>();
 const router = useRouter();
 
-const emit = defineEmits(['edit-property', 'toggle-favorite', 'create-reminder']);
+const emit = defineEmits([
+  'edit-property',
+  'toggle-favorite',
+  'create-reminder',
+]);
 
 const searchTerm = ref('');
 const sortBy = ref<string>('');
@@ -170,12 +176,13 @@ const sortedAndFilteredFavorites = computed(() => {
   // Apply search filter
   if (searchTerm.value) {
     const term = searchTerm.value.toLowerCase();
-    filtered = filtered.filter(property => 
-      (property.nom_voie || '').toLowerCase().includes(term) ||
-      (property.city || '').toLowerCase().includes(term) ||
-      (property.owner || '').toLowerCase().includes(term) ||
-      (property.property_type || '').toLowerCase().includes(term) ||
-      (property.numero || '').toString().includes(term)
+    filtered = filtered.filter(
+      property =>
+        (property.nom_voie || '').toLowerCase().includes(term) ||
+        (property.city || '').toLowerCase().includes(term) ||
+        (property.owner || '').toLowerCase().includes(term) ||
+        (property.property_type || '').toLowerCase().includes(term) ||
+        (property.numero || '').toString().includes(term)
     );
   }
 
@@ -223,7 +230,7 @@ const handleSortClick = (field: string) => {
 
 const getPropertyTypeTagType = (propertyType: string | undefined) => {
   if (!propertyType) return '';
-  
+
   switch (propertyType.toLowerCase()) {
     case 'maison':
       return 'success';
@@ -243,7 +250,7 @@ const formatPrice = (price: number | undefined) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(price);
 };
 </script>
@@ -438,27 +445,27 @@ const formatPrice = (price: number | undefined) => {
     grid-template-columns: 1fr;
     padding: 0;
   }
-  
+
   .controls-container {
     flex-direction: column;
     gap: 12px;
     align-items: stretch;
   }
-  
+
   .search-container {
     max-width: none;
   }
-  
+
   .sort-controls {
     justify-content: center;
     flex-wrap: wrap;
   }
-  
+
   .detail-grid {
     grid-template-columns: 1fr;
     gap: 12px;
   }
-  
+
   .card-actions {
     justify-content: center;
     flex-wrap: wrap;
@@ -469,7 +476,7 @@ const formatPrice = (price: number | undefined) => {
   :deep(.favorite-card .el-card__body) {
     padding: 16px;
   }
-  
+
   .address-title {
     font-size: 16px;
   }

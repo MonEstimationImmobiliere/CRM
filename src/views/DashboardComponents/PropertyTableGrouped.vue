@@ -1,10 +1,6 @@
 <template>
   <div class="tableWrapper">
-    <el-table
-      :data="rows"
-      style="width: 100%"
-      highlight-current-row
-    >
+    <el-table :data="rows" style="width: 100%" highlight-current-row>
       <el-table-column prop="nom_voie" label="Rue" width="260" />
       <el-table-column prop="code_postal" label="CP" width="100" />
       <el-table-column prop="count" label="Nb adresses" width="140" />
@@ -28,11 +24,11 @@
 defineProps({
   rows: {
     type: Array,
-    required: true
-  }
+    required: true,
+  },
 });
 
-defineEmits(["open-street"]);
+defineEmits(['open-street']);
 </script>
 
 <style scoped>

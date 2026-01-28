@@ -5,7 +5,7 @@
         <div class="mode-controls">
           <h3>Mode d'affichage</h3>
           <div class="mode-buttons">
-            <button 
+            <button
               v-for="mode in selectPropertyToDisplay"
               :key="mode.value"
               :class="['mode-btn', { active: currentMode === mode.value }]"
@@ -26,14 +26,14 @@
 </template>
 
 <script setup lang="ts">
-import { ref, onMounted, onUnmounted } from 'vue'
-import type { IAddressDetail } from '@/types/address'
+import { ref, onMounted, onUnmounted } from 'vue';
+import type { IAddressDetail } from '@/types/address';
 
 // Emits
 const emit = defineEmits<{
-  'mode-change': [mode: string]
-  'sidebar-toggle': [open: boolean]
-}>()
+  'mode-change': [mode: string];
+  'sidebar-toggle': [open: boolean];
+}>();
 
 const props = defineProps<{
   addresses: IAddressDetail[];
@@ -42,8 +42,10 @@ const props = defineProps<{
 console.log('📍 MapView props.addresses dans SideBar:', props.addresses);
 
 // État réactif
-const sidebarOpen = ref(true)
-const currentMode = ref<'prospection' | 'estimation' | 'rappel' | 'favoris' | 'dpe'>('prospection')
+const sidebarOpen = ref(true);
+const currentMode = ref<
+  'prospection' | 'estimation' | 'rappel' | 'favoris' | 'dpe'
+>('prospection');
 
 // Modes d'affichage
 const selectPropertyToDisplay = [
@@ -51,31 +53,31 @@ const selectPropertyToDisplay = [
   { value: 'estimation', label: 'Estimations' },
   { value: 'rappel', label: 'Rappels' },
   { value: 'favoris', label: 'Favoris' },
-  { value: 'dpe', label: 'DPE' }
-]
+  { value: 'dpe', label: 'DPE' },
+];
 
 const setMode = (mode: string) => {
-  currentMode.value = mode as any
-  emit('mode-change', mode)
-}
+  currentMode.value = mode as any;
+  emit('mode-change', mode);
+};
 
 // Keyboard handler
 const handleGlobalKeydown = (event: KeyboardEvent) => {
   // Toggle sidebar with Escape key
   if (event.key === 'Escape') {
-    sidebarOpen.value = !sidebarOpen.value
-    emit('sidebar-toggle', sidebarOpen.value)
+    sidebarOpen.value = !sidebarOpen.value;
+    emit('sidebar-toggle', sidebarOpen.value);
   }
-}
+};
 
 // Lifecycle
 onMounted(() => {
-  document.addEventListener('keydown', handleGlobalKeydown)
-})
+  document.addEventListener('keydown', handleGlobalKeydown);
+});
 
 onUnmounted(() => {
-  document.removeEventListener('keydown', handleGlobalKeydown)
-})
+  document.removeEventListener('keydown', handleGlobalKeydown);
+});
 </script>
 
 <style scoped>
@@ -138,5 +140,4 @@ onUnmounted(() => {
   font-weight: 600;
   color: #374151;
 }
-
 </style>

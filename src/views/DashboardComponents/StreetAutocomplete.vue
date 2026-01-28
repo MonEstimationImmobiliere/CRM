@@ -1,7 +1,24 @@
 <template>
   <div class="floating-label-wrapper">
-    <DynamicLabelUI v-model="localValue" text="Rue" color="#aaa" activeColor="#409EFF" :disabled="!codeInsee">
-      <el-autocomplete v-model="localValue" size="large" :fetch-suggestions="queryStreets" :debounce="500" :suffix-icon="Search" :icon-size="60" clearable @clear="handleClear" @select="handleSelect" :disabled="!codeInsee">
+    <DynamicLabelUI
+      v-model="localValue"
+      text="Rue"
+      color="#aaa"
+      activeColor="#409EFF"
+      :disabled="!codeInsee"
+    >
+      <el-autocomplete
+        v-model="localValue"
+        size="large"
+        :fetch-suggestions="queryStreets"
+        :debounce="500"
+        :suffix-icon="Search"
+        :icon-size="60"
+        clearable
+        @clear="handleClear"
+        @select="handleSelect"
+        :disabled="!codeInsee"
+      >
         <template #default="{ item }">
           <div v-html="highlightMatch(item.value, localValue)" />
         </template>
@@ -11,12 +28,12 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from "vue";
-import { Search } from "@element-plus/icons-vue";
-import axios from "axios";
-import API_URL from "@/utils/API_URL";
+import { ref, computed, watch } from 'vue';
+import { Search } from '@element-plus/icons-vue';
+import axios from 'axios';
+import API_URL from '@/utils/API_URL';
 
-import { PropType } from "vue";
+import { PropType } from 'vue';
 
 const props = defineProps({
   modelValue: {
@@ -29,26 +46,29 @@ const props = defineProps({
   },
 });
 
-const emit = defineEmits(["update:modelValue", "select","clear"]);
+const emit = defineEmits(['update:modelValue', 'select', 'clear']);
 
 const localValue = computed({
-  get: () => props.modelValue?.value || "",
-  set: (newValue) => {
-  // Si l'utilisateur efface tout à la main → on considère que la rue est vide
-  if (!newValue) {
-    emit("update:modelValue", null);
-    emit("clear");             // on aligne le comportement avec la croix
-  } else {
-    // Sinon on garde l'ancien objet et on ne modifie que value
-    emit("update:modelValue", {
-      ...(props.modelValue || {}),
-      value: newValue,
-    });
-  }
-},
+  get: () => props.modelValue?.value || '',
+  set: newValue => {
+    // Si l'utilisateur efface tout à la main → on considère que la rue est vide
+    if (!newValue) {
+      emit('update:modelValue', null);
+      emit('clear'); // on aligne le comportement avec la croix
+    } else {
+      // Sinon on garde l'ancien objet et on ne modifie que value
+      emit('update:modelValue', {
+        ...(props.modelValue || {}),
+        value: newValue,
+      });
+    }
+  },
 });
 
-const queryStreets = (queryString: string, cb: (results: { value: string; idFantoir: string }[]) => void): void => {
+const queryStreets = (
+  queryString: string,
+  cb: (results: { value: string; idFantoir: string }[]) => void
+): void => {
   if (!props.codeInsee || queryString.length < 3) {
     cb([]);
     return;
@@ -56,7 +76,7 @@ const queryStreets = (queryString: string, cb: (results: { value: string; idFant
 
   axios
     .get(`${API_URL}/addresses/${props.codeInsee}/nom_voie/${queryString}`)
-    .then((response) => {
+    .then(response => {
       const data = response.data;
       const results = data.map((item: any) => ({
         value: item.nom_voie,
@@ -64,20 +84,20 @@ const queryStreets = (queryString: string, cb: (results: { value: string; idFant
       }));
       cb(results);
     })
-    .catch((error) => {
-      console.error("Error fetching streets:", error);
+    .catch(error => {
+      console.error('Error fetching streets:', error);
       cb([]);
     });
 };
 
 const handleSelect = (selectedItem: any) => {
-  emit("update:modelValue", selectedItem);
-  emit("select", selectedItem);
+  emit('update:modelValue', selectedItem);
+  emit('select', selectedItem);
 };
 
 const handleClear = () => {
-  emit("update:modelValue", null);
-  emit("clear");
+  emit('update:modelValue', null);
+  emit('clear');
 };
 
 const highlightMatch = (value: any, query: any) => {
@@ -99,7 +119,7 @@ watch(
   (newCodeInsee, oldCodeInsee) => {
     // Si le code INSEE devient null/undefined ou change, vider la rue
     if (!newCodeInsee || newCodeInsee !== oldCodeInsee) {
-      emit("update:modelValue", null);
+      emit('update:modelValue', null);
     }
   }
 );

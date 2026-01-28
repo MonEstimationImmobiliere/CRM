@@ -1,58 +1,12 @@
 import js from '@eslint/js';
 import vue from 'eslint-plugin-vue';
-import typescript from '@vue/eslint-config-typescript';
+import tseslint from 'typescript-eslint';
 import prettier from 'eslint-config-prettier';
 import prettierPlugin from 'eslint-plugin-prettier';
+import vueParser from 'vue-eslint-parser';
 
 export default [
-  // Base configuration for JavaScript
-  js.configs.recommended,
-
-  // Vue.js configuration
-  ...vue.configs['flat/essential'],
-
-  // TypeScript configuration
-  ...typescript(),
-
-  // Prettier configuration (should be last)
-  prettier,
-
-  {
-    files: ['**/*.{js,ts,vue}'],
-    plugins: {
-      prettier: prettierPlugin,
-    },
-    rules: {
-      // Prettier rules
-      'prettier/prettier': 'error',
-
-      // Console and debugger rules
-      'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-      'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
-
-      // Vue specific rules
-      'vue/no-deprecated-slot-attribute': 'off',
-      'vue/multi-word-component-names': 'off',
-
-      // TypeScript specific rules
-      '@typescript-eslint/no-explicit-any': 'off',
-      '@typescript-eslint/no-unused-vars': [
-        'error',
-        { argsIgnorePattern: '^_' },
-      ],
-    },
-  },
-
-  {
-    files: ['**/*.vue'],
-    languageOptions: {
-      parserOptions: {
-        parser: '@typescript-eslint/parser',
-      },
-    },
-  },
-
-  // Ignore patterns
+  // Ignore patterns - put first to avoid processing these files
   {
     ignores: [
       // Dossiers système
@@ -91,5 +45,102 @@ export default [
       'capacitor.config.ts',
       'vite.config.ts',
     ],
+  },
+
+  // Base configuration for JavaScript
+  js.configs.recommended,
+
+  // Vue.js configuration
+  ...vue.configs['flat/essential'],
+
+  // TypeScript configuration for JS/TS files only
+  ...tseslint.configs.recommended.map(config => ({
+    ...config,
+    files: ['**/*.{js,ts,mjs,cjs}'],
+  })),
+
+  // Prettier configuration (should be last)
+  prettier,
+
+  // Configuration for JS/TS files
+  {
+    files: ['**/*.{js,ts,mjs,cjs}'],
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    languageOptions: {
+      globals: {
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        global: 'readonly',
+      },
+    },
+    rules: {
+      // Prettier rules
+      'prettier/prettier': 'error',
+
+      // Console and debugger rules
+      'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+      'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+
+      // TypeScript specific rules
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+        { argsIgnorePattern: '^_' },
+      ],
+    },
+  },
+
+  // Configuration for Vue files
+  {
+    files: ['**/*.vue'],
+    plugins: {
+      prettier: prettierPlugin,
+    },
+    languageOptions: {
+      parser: vueParser,
+      parserOptions: {
+        parser: tseslint.parser,
+        ecmaVersion: 'latest',
+        sourceType: 'module',
+      },
+      globals: {
+        process: 'readonly',
+        __dirname: 'readonly',
+        __filename: 'readonly',
+        Buffer: 'readonly',
+        console: 'readonly',
+        global: 'readonly',
+        defineProps: 'readonly',
+        defineEmits: 'readonly',
+        defineExpose: 'readonly',
+        withDefaults: 'readonly',
+      },
+    },
+    rules: {
+      // Prettier rules
+      'prettier/prettier': 'error',
+
+      // Console and debugger rules
+      'no-console': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+      'no-debugger': process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+
+      // Vue specific rules
+      'vue/no-deprecated-slot-attribute': 'off',
+      'vue/multi-word-component-names': 'off',
+
+      // TypeScript specific rules
+      '@typescript-eslint/no-explicit-any': 'off',
+      '@typescript-eslint/no-empty-object-type': 'off',
+      '@typescript-eslint/no-unused-vars': [
+        process.env.NODE_ENV === 'production' ? 'warn' : 'off',
+        { argsIgnorePattern: '^_' },
+      ],
+    },
   },
 ];

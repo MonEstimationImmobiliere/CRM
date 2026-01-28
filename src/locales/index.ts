@@ -1,15 +1,13 @@
-import { createI18n } from "vue-i18n";
+import { createI18n } from 'vue-i18n';
 
-import fr from "./fr.json";
+import fr from './fr.json';
 
-export {
-  fr
-};
+export { fr };
 
 export const i18n = createI18n({
   legacy: false,
-  locale: "fr",
+  locale: 'fr',
   messages: {
-    fr
-  }
+    fr,
+  },
 });

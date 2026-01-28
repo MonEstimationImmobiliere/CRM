@@ -1,10 +1,10 @@
 <template>
   <div class="favorites-table-container">
-    <el-table 
-      :data="favorites" 
+    <el-table
+      :data="favorites"
       class="modern-favorites-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
-      height="79vh" 
+      height="79vh"
       :row-class-name="getRowClass"
       @row-click="handleRowClick"
       empty-text="Aucune propriété favorite trouvée"
@@ -12,9 +12,9 @@
       <!-- Action Column with Favorite Button -->
       <el-table-column width="60" align="center">
         <template #default="{ row }">
-          <el-button 
-            type="danger" 
-            size="small" 
+          <el-button
+            type="danger"
+            size="small"
             circle
             @click.stop="$emit('toggle-favorite', row)"
             title="Retirer des favoris"
@@ -44,16 +44,23 @@
       <el-table-column label="Rue" prop="nom_voie" sortable min-width="200">
         <template #default="{ row }">
           <div class="street-info">
-            <span class="street-name">{{ row.nom_voie || 'Non renseigné' }}</span>
+            <span class="street-name">{{
+              row.nom_voie || 'Non renseigné'
+            }}</span>
           </div>
         </template>
       </el-table-column>
 
       <!-- Property Type Column -->
-      <el-table-column label="Type" prop="property_type" sortable min-width="120">
+      <el-table-column
+        label="Type"
+        prop="property_type"
+        sortable
+        min-width="120"
+      >
         <template #default="{ row }">
           <div class="property-type">
-            <el-tag 
+            <el-tag
               :type="getPropertyTypeTagType(row.property_type)"
               size="small"
               round
@@ -65,7 +72,12 @@
       </el-table-column>
 
       <!-- Owner Column -->
-      <el-table-column label="Propriétaire" prop="owner" sortable min-width="150">
+      <el-table-column
+        label="Propriétaire"
+        prop="owner"
+        sortable
+        min-width="150"
+      >
         <template #default="{ row }">
           <div class="owner-info">
             <span class="owner-name">{{ row.owner || 'Non renseigné' }}</span>
@@ -83,7 +95,12 @@
       </el-table-column>
 
       <!-- Price Column -->
-      <el-table-column label="Prix estimé" prop="price" sortable min-width="120">
+      <el-table-column
+        label="Prix estimé"
+        prop="price"
+        sortable
+        min-width="120"
+      >
         <template #default="{ row }">
           <div class="price-info">
             <span class="price-value">{{ formatPrice(row.price) }}</span>
@@ -95,17 +112,17 @@
       <el-table-column label="Actions" width="160" align="center">
         <template #default="{ row }">
           <div class="action-buttons">
-            <el-button 
-              type="primary" 
-              size="small" 
+            <el-button
+              type="primary"
+              size="small"
               @click.stop="$emit('edit-property', row)"
               title="Modifier la propriété"
             >
               <el-icon><Edit /></el-icon>
             </el-button>
-            <el-button 
-              type="success" 
-              size="small" 
+            <el-button
+              type="success"
+              size="small"
               @click.stop="$emit('create-reminder', row)"
               title="Créer un rappel"
             >
@@ -127,7 +144,11 @@ interface Props {
 
 defineProps<Props>();
 
-const emit = defineEmits(['edit-property', 'toggle-favorite', 'create-reminder']);
+const emit = defineEmits([
+  'edit-property',
+  'toggle-favorite',
+  'create-reminder',
+]);
 
 const getRowClass = () => {
   return 'favorite-row';
@@ -139,7 +160,7 @@ const handleRowClick = (row: any) => {
 
 const getPropertyTypeTagType = (propertyType: string | undefined) => {
   if (!propertyType) return '';
-  
+
   switch (propertyType.toLowerCase()) {
     case 'maison':
       return 'success';
@@ -159,7 +180,7 @@ const formatPrice = (price: number | undefined) => {
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(price);
 };
 </script>
@@ -180,7 +201,7 @@ const formatPrice = (price: number | undefined) => {
 }
 
 :deep(.el-table tr) {
-background-color: transparent;
+  background-color: transparent;
 }
 
 :deep(.el-table__header) {
@@ -274,11 +295,11 @@ background-color: transparent;
   .modern-favorites-table {
     font-size: 14px;
   }
-  
+
   :deep(.el-table__body td) {
     padding: 12px 8px;
   }
-  
+
   .action-buttons {
     flex-direction: column;
     gap: 4px;

@@ -1,20 +1,20 @@
 export namespace MockApi {
-  type type = Lowercase<'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'>
-  type responseFunc = (options: request) => response
+  type type = Lowercase<'GET' | 'POST' | 'PUT' | 'DELETE' | 'PATCH'>;
+  type responseFunc = (options: request) => response;
   interface request {
-    url: string
-    type: type
-    body: any
-    params: any
+    url: string;
+    type: type;
+    body: any;
+    params: any;
   }
   interface response {
-    code: number
-    msg: string
-    data: any
+    code: number;
+    msg: string;
+    data: any;
   }
   interface obj {
-    url: string
-    type?: type
-    response: responseFunc | response
+    url: string;
+    type?: type;
+    response: responseFunc | response;
   }
 }

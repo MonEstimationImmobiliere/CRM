@@ -1,22 +1,28 @@
 <script setup lang="ts">
-import { inject } from 'vue'
-import { Fold } from '@element-plus/icons-vue'
-import type { Layout } from 'types/layout'
-import { ElIcon } from 'element-plus'
+import { inject } from 'vue';
+import { Fold } from '@element-plus/icons-vue';
+import type { Layout } from 'types/layout';
+import { ElIcon } from 'element-plus';
 
-const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated')
-
-
+const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated');
 </script>
 
 <template>
   <header>
     <section>
-      <ElIcon :class="['icon-sidebar-trigger', sidebarRelated?.collapsed && 'collapsed']"
-        @click="sidebarRelated && (sidebarRelated.collapsed = !sidebarRelated.collapsed)">
+      <ElIcon
+        :class="[
+          'icon-sidebar-trigger',
+          sidebarRelated?.collapsed && 'collapsed',
+        ]"
+        @click="
+          sidebarRelated &&
+          (sidebarRelated.collapsed = !sidebarRelated.collapsed)
+        "
+      >
         <Fold />
-      </ElIcon>    
-        <BreadCrumb :withIcons="true"></BreadCrumb>
+      </ElIcon>
+      <BreadCrumb :withIcons="true"></BreadCrumb>
     </section>
   </header>
 </template>
@@ -36,7 +42,7 @@ header {
       align-items: center;
       flex-shrink: 0;
       overflow: hidden;
-      flex: 1
+      flex: 1;
     }
 
     &:last-of-type {

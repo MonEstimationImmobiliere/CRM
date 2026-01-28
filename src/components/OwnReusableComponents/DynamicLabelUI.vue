@@ -3,14 +3,17 @@
     <label :class="{ active: isFocused || modelValue }" :style="labelStyle">
       {{ text }}
     </label>
-    <div @focusin="!isDisabled && (isFocused = true)" @focusout="!isDisabled && (isFocused = false)">
+    <div
+      @focusin="!isDisabled && (isFocused = true)"
+      @focusout="!isDisabled && (isFocused = false)"
+    >
       <slot />
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps } from "vue";
+import { ref, computed, defineProps } from 'vue';
 
 interface Props {
   modelValue?: string | number;
@@ -27,13 +30,14 @@ const isFocused = ref(false);
 const labelStyle = computed(() => {
   if (props.disabled) {
     return {
-      color: "#ccc", // Change label color when disabled
-      backgroundColor: "#f5f7fa", // Set the background color when disabled
+      color: '#ccc', // Change label color when disabled
+      backgroundColor: '#f5f7fa', // Set the background color when disabled
     };
   }
 
   return {
-    color: isFocused.value || props.modelValue ? props.activeColor : props.color,
+    color:
+      isFocused.value || props.modelValue ? props.activeColor : props.color,
   };
 });
 

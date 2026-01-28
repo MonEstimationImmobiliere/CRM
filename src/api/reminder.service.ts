@@ -1,5 +1,10 @@
 import apiService from '@/api/apiRequests';
-import type { IReminder, IReminderCreate, IReminderUpdate, ReminderList } from '@/types/reminder';
+import type {
+  IReminder,
+  IReminderCreate,
+  IReminderUpdate,
+  ReminderList,
+} from '@/types/reminder';
 
 /**
  * @deprecated Utiliser IReminder, IReminderCreate depuis @/types/reminder
@@ -64,9 +69,15 @@ export const ReminderService = {
   },
 
   // Mettre à jour un rappel
-  async updateReminder(id: number, reminder: Partial<IReminderUpdate>): Promise<IReminder> {
+  async updateReminder(
+    id: number,
+    reminder: Partial<IReminderUpdate>
+  ): Promise<IReminder> {
     try {
-      const response = await apiService.put<IReminder>(`/reminders/${id}`, reminder);
+      const response = await apiService.put<IReminder>(
+        `/reminders/${id}`,
+        reminder
+      );
       return response.data;
     } catch (error) {
       console.error('Error updating reminder:', error);
@@ -82,5 +93,5 @@ export const ReminderService = {
       console.error('Error deleting reminder:', error);
       throw error;
     }
-  }
+  },
 };

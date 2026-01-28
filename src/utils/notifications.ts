@@ -22,7 +22,11 @@ export class NotificationService {
   /**
    * Show a simple message
    */
-  static message(message: string, type: NotificationType = 'info', duration?: number) {
+  static message(
+    message: string,
+    type: NotificationType = 'info',
+    duration?: number
+  ) {
     ElMessage({
       message,
       type,
@@ -62,7 +66,11 @@ export class NotificationService {
   /**
    * Show a detailed notification
    */
-  static notify(title: string, message?: string, options?: CustomNotificationOptions) {
+  static notify(
+    title: string,
+    message?: string,
+    options?: CustomNotificationOptions
+  ) {
     ElNotification({
       title,
       message,
@@ -77,32 +85,48 @@ export class NotificationService {
   /**
    * Show a success notification
    */
-  static notifySuccess(title: string, message?: string, options?: CustomNotificationOptions) {
+  static notifySuccess(
+    title: string,
+    message?: string,
+    options?: CustomNotificationOptions
+  ) {
     this.notify(title, message, { ...options, type: 'success' });
   }
 
   /**
    * Show an error notification
    */
-  static notifyError(title: string, message?: string, options?: CustomNotificationOptions) {
-    this.notify(title, message, { 
-      ...options, 
-      type: 'error', 
-      duration: options?.duration || 5000 
+  static notifyError(
+    title: string,
+    message?: string,
+    options?: CustomNotificationOptions
+  ) {
+    this.notify(title, message, {
+      ...options,
+      type: 'error',
+      duration: options?.duration || 5000,
     });
   }
 
   /**
    * Show a warning notification
    */
-  static notifyWarning(title: string, message?: string, options?: CustomNotificationOptions) {
+  static notifyWarning(
+    title: string,
+    message?: string,
+    options?: CustomNotificationOptions
+  ) {
     this.notify(title, message, { ...options, type: 'warning' });
   }
 
   /**
    * Show an info notification
    */
-  static notifyInfo(title: string, message?: string, options?: CustomNotificationOptions) {
+  static notifyInfo(
+    title: string,
+    message?: string,
+    options?: CustomNotificationOptions
+  ) {
     this.notify(title, message, { ...options, type: 'info' });
   }
 
@@ -110,7 +134,7 @@ export class NotificationService {
    * Show a confirmation dialog
    */
   static async confirm(
-    message: string, 
+    message: string,
     title: string = 'Confirmation',
     confirmText: string = 'Confirmer',
     cancelText: string = 'Annuler'
@@ -171,18 +195,26 @@ export class NotificationService {
   }
 
   static reminderCompleted(title: string) {
-    this.notifySuccess('Rappel terminé', `"${title}" est marqué comme terminé`, {
-      duration: 3000,
-    });
+    this.notifySuccess(
+      'Rappel terminé',
+      `"${title}" est marqué comme terminé`,
+      {
+        duration: 3000,
+      }
+    );
   }
 
   /**
    * Show property-specific notifications
    */
   static propertyCreated(address: string) {
-    this.notifySuccess('Propriété créée', `${address} a été ajoutée à votre portfolio`, {
-      duration: 4000,
-    });
+    this.notifySuccess(
+      'Propriété créée',
+      `${address} a été ajoutée à votre portfolio`,
+      {
+        duration: 4000,
+      }
+    );
   }
 
   static propertyUpdated(address: string) {
@@ -208,11 +240,15 @@ export class NotificationService {
     this.success(message, 2000);
   }
 
-  static networkError(message: string = 'Erreur de connexion. Veuillez réessayer.') {
+  static networkError(
+    message: string = 'Erreur de connexion. Veuillez réessayer.'
+  ) {
     this.error(message, 5000);
   }
 
-  static validationError(message: string = 'Veuillez vérifier les champs saisis') {
+  static validationError(
+    message: string = 'Veuillez vérifier les champs saisis'
+  ) {
     this.warning(message, 4000);
   }
 }

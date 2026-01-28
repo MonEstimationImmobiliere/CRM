@@ -16,28 +16,37 @@ const scrollbarDom = ref<InstanceType<typeof Scrollbar>>();
 const menuPanelDom = ref<InstanceType<typeof MenuPanel>>();
 const tabDoms = ref<ComponentPublicInstance[]>([]);
 const keepAlivePages = inject<Layout.keepAlivePages>('keepAlivePages');
-const props = withDefaults(defineProps<{
-  withIcons?: boolean
-}>(), {
-  withIcons: false
-});
+const props = withDefaults(
+  defineProps<{
+    withIcons?: boolean;
+  }>(),
+  {
+    withIcons: false,
+  }
+);
 
-onBeforeMount(() => { addTab(); });
+onBeforeMount(() => {
+  addTab();
+});
 
 watch(() => route.path, addTab);
 
 function addTab() {
   const tab: RouteLocationNormalizedLoaded = route;
-  if (tab.meta?.hiddenTab) {return;}
+  if (tab.meta?.hiddenTab) {
+    return;
+  }
   if (tabs.value.every(route => route.path !== tab.path)) {
-    
-/**
+    /**
 
 The 'meta' parameter passed here is the recursively merged result.
 Here, we need to find the meta belonging to this route.
 For details, see: https://router.vuejs.org/en/guide/advanced/meta.html
 */
-    tabs.value.push({ ...tab, meta: tab.matched.find(item => item.path === tab.path)?.meta || tab.meta });
+    tabs.value.push({
+      ...tab,
+      meta: tab.matched.find(item => item.path === tab.path)?.meta || tab.meta,
+    });
   }
   nextTick(() => {
     scrollbarDom.value && tabDoms.value && moveToTab(tab);
@@ -47,20 +56,26 @@ For details, see: https://router.vuejs.org/en/guide/advanced/meta.html
 let lastTabIndex = 0; //Record the last tab index to calculate the position information with the new tab.
 function moveToTab(tab: RouteLocationNormalizedLoaded) {
   const tabIndex = tabs.value.findIndex(item => item.path === tab.path);
-  if (tabIndex === lastTabIndex) {return;}
+  if (tabIndex === lastTabIndex) {
+    return;
+  }
   const tabDom = tabDoms.value?.[tabIndex];
   const { offsetWidth, offsetLeft } = tabDom.$el;
   const scrollbarState = scrollbarDom.value?.scrollbar?.getState();
 
-  scrollbarDom.value?.scrollbar?.scroll({
-    x: lastTabIndex < tabIndex ?
-      (offsetLeft + offsetWidth) < (scrollbarState?.viewportSize.width || 0) ?
-        null :
-        offsetLeft :
-      offsetLeft < (scrollbarState?.overflowAmount.x || 0) ?
-        offsetLeft :
-        null
-  }, 150);
+  scrollbarDom.value?.scrollbar?.scroll(
+    {
+      x:
+        lastTabIndex < tabIndex
+          ? offsetLeft + offsetWidth < (scrollbarState?.viewportSize.width || 0)
+            ? null
+            : offsetLeft
+          : offsetLeft < (scrollbarState?.overflowAmount.x || 0)
+            ? offsetLeft
+            : null,
+    },
+    150
+  );
   lastTabIndex = tabIndex;
 }
 
@@ -78,11 +93,16 @@ function refreshPage(page: RouteLocationNormalizedLoaded) {
 async function closeTab(tab: RouteLocationNormalizedLoaded) {
   if (tab.meta.askBeforeCloseTab) {
     const isClose = await askBeforeCloseTab(tab);
-    if (!isClose) {return;}
+    if (!isClose) {
+      return;
+    }
   }
   deleteKeepAlivePage(tab);
   const closePath = tab.path;
-  tabs.value.splice(tabs.value.findIndex(item => item.path === closePath), 1);
+  tabs.value.splice(
+    tabs.value.findIndex(item => item.path === closePath),
+    1
+  );
   if (tabs.value.length > 0) {
     if (closePath === route.path) {
       const nextTab = tabs.value[tabs.value.length - 1];
@@ -95,16 +115,22 @@ async function closeTab(tab: RouteLocationNormalizedLoaded) {
 }
 
 function askBeforeCloseTab(tab: RouteLocationNormalizedLoaded) {
-  return new Promise((resolve) => {
-    ElMessageBox.confirm(`Confirm closing the page${tab.meta.title} confirmer?`, 'close prompt', {
-      confirmButtonText: 'confirm',
-      cancelButtonText: 'cancel',
-      type: 'warning'
-    }).then(() => {
-      resolve(true);
-    }).catch(() => {
-      resolve(false);
-    });
+  return new Promise(resolve => {
+    ElMessageBox.confirm(
+      `Confirm closing the page${tab.meta.title} confirmer?`,
+      'close prompt',
+      {
+        confirmButtonText: 'confirm',
+        cancelButtonText: 'cancel',
+        type: 'warning',
+      }
+    )
+      .then(() => {
+        resolve(true);
+      })
+      .catch(() => {
+        resolve(false);
+      });
   });
 }
 
@@ -120,7 +146,9 @@ function closeOtherTabs(saveTab: RouteLocationNormalizedLoaded) {
   }
   for (let i = tabs.value.length - 1; i >= 0; i--) {
     const tab = tabs.value[i];
-    if (tab.path === saveTab.path) {continue;}
+    if (tab.path === saveTab.path) {
+      continue;
+    }
     deleteKeepAlivePage(tab);
     tabs.value.splice(i, 1);
   }
@@ -129,7 +157,9 @@ function closeOtherTabs(saveTab: RouteLocationNormalizedLoaded) {
 function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
   // retrieve location information
   const { clientX, clientY } = e;
-  if (!menuPanelDom.value) {return;}
+  if (!menuPanelDom.value) {
+    return;
+  }
   menuPanelDom.value.hidePanel();
   menuPanelDom.value.setContext(tab);
   menuPanelDom.value.setPosition(clientX, clientY);
@@ -138,12 +168,7 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
 </script>
 
 <template>
-  <Scrollbar
-    ref="scrollbarDom"
-    height="2rem"
-    direction="horizontal"
-    :speed="3"
-  >
+  <Scrollbar ref="scrollbarDom" height="2rem" direction="horizontal" :speed="3">
     <div class="tabs">
       <RouterLink
         v-for="tab in tabs"
@@ -156,22 +181,18 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
       >
         <ElIcon
           v-if="props.withIcons && tab.meta.icon"
-            :name="typeof tab.meta.icon === 'string' ? tab.meta.icon : ''"
+          :name="typeof tab.meta.icon === 'string' ? tab.meta.icon : ''"
         >
-          v-if="props.withIcons && tab.meta.icon"
-          >
+          v-if="props.withIcons && tab.meta.icon" >
           <SvgIcon
             v-if="typeof tab.meta.icon === 'string'"
-            :icon-name="(tab.meta.icon as string)"
+            :icon-name="tab.meta.icon as string"
             color="#ffffff"
           />
-          <component
-            :is="tab.meta.icon"
-            v-else
-          />
+          <component :is="tab.meta.icon" v-else />
         </ElIcon>
         <span style="margin: 0 5px">{{ tab.meta.title || 'sans-titre' }}</span>
-        
+
         <CircleClose
           width="1rem"
           height="1rem"
@@ -182,41 +203,25 @@ function showTabMenu(e: MouseEvent, tab: RouteLocationNormalizedLoaded) {
     </div>
   </Scrollbar>
   <MenuPanel ref="menuPanelDom">
-    <ElButton
-      text
-      plain
-      @click="refreshPage(menuPanelDom?.getContext())"
-    >
+    <ElButton text plain @click="refreshPage(menuPanelDom?.getContext())">
       <ElIcon name="icon-refresh">
         <RefreshLeft />
       </ElIcon>
       <span>refresh</span>
     </ElButton>
-    <ElButton
-      text
-      plain
-      @click="closeTab(menuPanelDom?.getContext())"
-    >
+    <ElButton text plain @click="closeTab(menuPanelDom?.getContext())">
       <ElIcon name="icon-close">
         <Close />
       </ElIcon>
       <span>close</span>
     </ElButton>
-    <ElButton
-      text
-      plain
-      @click="closeOtherTabs(menuPanelDom?.getContext())"
-    >
+    <ElButton text plain @click="closeOtherTabs(menuPanelDom?.getContext())">
       <ElIcon name="icon-close">
         <Close />
       </ElIcon>
       <span>close others</span>
     </ElButton>
-    <ElButton
-      text
-      plain
-      @click="closeAllTabs()"
-    >
+    <ElButton text plain @click="closeAllTabs()">
       <ElIcon name="icon-close">
         <Close />
       </ElIcon>

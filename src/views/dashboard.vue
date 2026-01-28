@@ -2,7 +2,6 @@
   <section class="block dashboardContainer">
     <div class="p-4">
       <div class="headerFilterInfoContainer">
-
         <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
         <div class="autoCompleteContainer">
           <CityAutocomplete
@@ -22,7 +21,6 @@
           <NumeroAutocomplete
             v-model="selectedNumeroFull"
             :id-fantoir="selectedCodeIdFantoir"
-   
             @select="handleNumeroSelect"
             @clear="handleNumeroClear"
           />
@@ -43,7 +41,11 @@
             Estimations reçues
           </el-button>
 
-          <el-button type="primary" size="large" @click="dashboardStore.openCustomPropertyDialog()">
+          <el-button
+            type="primary"
+            size="large"
+            @click="dashboardStore.openCustomPropertyDialog()"
+          >
             Créer une propriété personnalisée
           </el-button>
         </div>
@@ -51,28 +53,36 @@
         <!-- SWITCH LISTE / CARDS -->
         <div class="view-controls">
           <div class="layoutContainer">
-<div class="viewSelector">
-  <div class="grid-container" @click="setTableView">
-    <el-icon class="databoard-icon" :class="{ active: viewType === 'table' }">
-      <DataBoard />
-    </el-icon>
-  </div>
+            <div class="viewSelector">
+              <div class="grid-container" @click="setTableView">
+                <el-icon
+                  class="databoard-icon"
+                  :class="{ active: viewType === 'table' }"
+                >
+                  <DataBoard />
+                </el-icon>
+              </div>
 
-  <div class="grid-container" @click="setCardView">
-    <el-icon class="grid-icon" :class="{ active: viewType === 'card' }">
-      <Grid />
-    </el-icon>
-  </div>
+              <div class="grid-container" @click="setCardView">
+                <el-icon
+                  class="grid-icon"
+                  :class="{ active: viewType === 'card' }"
+                >
+                  <Grid />
+                </el-icon>
+              </div>
 
-  <div class="grid-container" @click="setMapView">
-    <el-icon class="grid-icon" :class="{ active: viewType === 'map' }">
-      <Location />
-    </el-icon>
-  </div>
-</div>
+              <div class="grid-container" @click="setMapView">
+                <el-icon
+                  class="grid-icon"
+                  :class="{ active: viewType === 'map' }"
+                >
+                  <Location />
+                </el-icon>
+              </div>
+            </div>
           </div>
         </div>
-
       </div>
 
       <!-- TABLE DES ADRESSES -->
@@ -92,16 +102,15 @@
       />
 
       <MapView
-    v-show="viewType === 'map'"
-  :addresses="addresses"
-  :city-center="dashboardStore.cityCenter"
-  :dpe-points="dashboardStore.dpePoints"
-  @edit-property="openPropertyDialog"
-/>
+        v-show="viewType === 'map'"
+        :addresses="addresses"
+        :city-center="dashboardStore.cityCenter"
+        :dpe-points="dashboardStore.dpePoints"
+        @edit-property="openPropertyDialog"
+      />
 
       <PropertyForm />
       <CustomPropertyDialog />
-
     </div>
   </section>
 </template>
@@ -110,22 +119,22 @@
 /* ------------------------------------
       IMPORTS
 ------------------------------------ */
-import { computed, onMounted, watch } from "vue";
-import { DataBoard, Grid, Location  } from "@element-plus/icons-vue";
+import { computed, onMounted, watch } from 'vue';
+import { DataBoard, Grid, Location } from '@element-plus/icons-vue';
 
 // Stores
-import { usePropertyStore } from "@/stores/propertyHome";
-import { useDashboardStore } from "@/stores/dashboard";
+import { usePropertyStore } from '@/stores/propertyHome';
+import { useDashboardStore } from '@/stores/dashboard';
 
 // Components
-import CityAutocomplete from "./DashboardComponents/CityAutocomplete.vue";
-import StreetAutocomplete from "./DashboardComponents/StreetAutocomplete.vue";
-import NumeroAutocomplete from "./DashboardComponents/NumeroAutocomplete.vue";
-import PropertyTable from "./DashboardComponents/PropertyTable.vue";
-import PropertyTableCard from "./DashboardComponents/PropertyTableCard.vue";
-import PropertyForm from "./DashboardComponents/PropertyDialog.vue";
-import CustomPropertyDialog from "./DashboardComponents/CustomPropertyDialog.vue";
-import MapView from "./DashboardComponents/MapView.vue";
+import CityAutocomplete from './DashboardComponents/CityAutocomplete.vue';
+import StreetAutocomplete from './DashboardComponents/StreetAutocomplete.vue';
+import NumeroAutocomplete from './DashboardComponents/NumeroAutocomplete.vue';
+import PropertyTable from './DashboardComponents/PropertyTable.vue';
+import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
+import PropertyForm from './DashboardComponents/PropertyDialog.vue';
+import CustomPropertyDialog from './DashboardComponents/CustomPropertyDialog.vue';
+import MapView from './DashboardComponents/MapView.vue';
 
 /* ------------------------------------
       STORES
@@ -133,47 +142,57 @@ import MapView from "./DashboardComponents/MapView.vue";
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
 
-
-
 /* ------------------------------------
       WATCHERS AUTOMATIQUES
 ------------------------------------ */
 
 // 🟦 Si la ville change → relancer la recherche (si ville non vide)
-watch(() => dashboardStore.selectedCity, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
-    dashboardStore.querySearchAddress();
+watch(
+  () => dashboardStore.selectedCity,
+  (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      dashboardStore.querySearchAddress();
+    }
   }
-});
+);
 
 // 🟧 Si la rue change → relancer la recherche
-watch(() => dashboardStore.selectedStreet, (newVal, oldVal) => {
-  // Empêcher exécution si c'est juste une sélection identique
-  if (newVal !== oldVal) {
-    dashboardStore.querySearchAddress();
+watch(
+  () => dashboardStore.selectedStreet,
+  (newVal, oldVal) => {
+    // Empêcher exécution si c'est juste une sélection identique
+    if (newVal !== oldVal) {
+      dashboardStore.querySearchAddress();
+    }
   }
-});
+);
 
 // 🟥 Si le numéro change → relancer la recherche
-watch(() => dashboardStore.selectedNumeroFull, (newVal, oldVal) => {
-  if (newVal !== oldVal) {
+watch(
+  () => dashboardStore.selectedNumeroFull,
+  (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      dashboardStore.querySearchAddress();
+    }
+  }
+);
+
+watch(
+  () => dashboardStore.selectedCity,
+  newCity => {
+    if (!newCity) {
+      // Ville supprimée → vider automatiquement
+      dashboardStore.addresses = [];
+      dashboardStore.cityCenter = null;
+      dashboardStore.noResultsFound = false;
+      dashboardStore.isDataLoaded = false;
+      return;
+    }
+
+    // Sinon relancer la recherche automatique
     dashboardStore.querySearchAddress();
   }
-});
-
-watch(() => dashboardStore.selectedCity, (newCity) => {
-  if (!newCity) {
-    // Ville supprimée → vider automatiquement
-    dashboardStore.addresses = [];
-    dashboardStore.cityCenter = null;
-    dashboardStore.noResultsFound = false;
-    dashboardStore.isDataLoaded = false;
-    return; 
-  }
-
-  // Sinon relancer la recherche automatique
-  dashboardStore.querySearchAddress();
-});
+);
 
 /* ------------------------------------
       COMPUTED BINDINGS
@@ -182,60 +201,60 @@ watch(() => dashboardStore.selectedCity, (newCity) => {
 // --- Ville ---
 const selectedCity = computed({
   get: () => dashboardStore.selectedCity,
-  set: (v) => (dashboardStore.selectedCity = v),
+  set: v => (dashboardStore.selectedCity = v),
 });
 
 // --- Rue ---
 const selectedStreet = computed({
   get: () => dashboardStore.selectedStreet,
-  set: (v) => (dashboardStore.selectedStreet = v),
+  set: v => (dashboardStore.selectedStreet = v),
 });
 
 // --- Code INSEE ---
 const selectedCodeInsee = computed({
   get: () => dashboardStore.selectedCodeInsee,
-  set: (v) => (dashboardStore.selectedCodeInsee = v),
+  set: v => (dashboardStore.selectedCodeInsee = v),
 });
 
 // --- ID FANTOIR de la rue (nécessaire pour NuméroAutocomplete) ---
 const selectedCodeIdFantoir = computed({
   get: () => dashboardStore.selectedCodeIdFantoir,
-  set: (v) => (dashboardStore.selectedCodeIdFantoir = v),
+  set: v => (dashboardStore.selectedCodeIdFantoir = v),
 });
 
 // --- Numéro + rep (ex: "40 bis") ---
 const selectedNumeroFull = computed({
   get: () => dashboardStore.selectedNumeroFull,
 
-  set: (v) => {
+  set: v => {
     dashboardStore.selectedNumeroFull = v;
 
     if (!v) {
-      dashboardStore.selectedNumero = "";
-      dashboardStore.selectedRep = "";
+      dashboardStore.selectedNumero = '';
+      dashboardStore.selectedRep = '';
       return;
     }
 
     // Sélection via autocomplete → objet
-    if (typeof v === "object" && v !== null) {
-      dashboardStore.selectedNumero = v.numero || "";
-      dashboardStore.selectedRep = v.rep || "";
+    if (typeof v === 'object' && v !== null) {
+      dashboardStore.selectedNumero = v.numero || '';
+      dashboardStore.selectedRep = v.rep || '';
       return;
     }
 
     // Saisie manuelle -> string
-    if (typeof v === "string") {
-      const parts = (v as string).trim().split(" ");
-      dashboardStore.selectedNumero = parts[0] || "";
-      dashboardStore.selectedRep = parts[1] || "";
+    if (typeof v === 'string') {
+      const parts = (v as string).trim().split(' ');
+      dashboardStore.selectedNumero = parts[0] || '';
+      dashboardStore.selectedRep = parts[1] || '';
     }
-  }
+  },
 });
 
 // --- Vue table / card ---
 const viewType = computed({
   get: () => dashboardStore.viewType,
-  set: (v) => (dashboardStore.viewType = v),
+  set: v => (dashboardStore.viewType = v),
 });
 
 // --- Résultats des adresses ---
@@ -246,7 +265,7 @@ const addresses = computed(() => dashboardStore.addresses);
 ------------------------------------ */
 onMounted(() => {
   if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
-    console.log("Données restaurées depuis le store");
+    console.log('Données restaurées depuis le store');
   }
 });
 
@@ -261,14 +280,14 @@ const handleCitySelect = (city: { value: string; codeInsee?: string }) => {
 const handleCityClear = () => {
   dashboardStore.selectedCity = null;
   dashboardStore.selectedStreet = null;
-  dashboardStore.selectedCodeInsee = "";
-    dashboardStore.selectedCodeIdFantoir = "";   
+  dashboardStore.selectedCodeInsee = '';
+  dashboardStore.selectedCodeIdFantoir = '';
   dashboardStore.selectedStreet = null;
-  dashboardStore.selectedNumero = "";
-  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumero = '';
+  dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
 
-    // ⭐ VIDE TOTALEMENT LES RÉSULTATS
+  // ⭐ VIDE TOTALEMENT LES RÉSULTATS
   dashboardStore.addresses = [];
   dashboardStore.cityCenter = null;
   dashboardStore.noResultsFound = false;
@@ -278,35 +297,34 @@ const handleCityClear = () => {
 const handleStreetSelect = (street: { value: string; idFantoir?: string }) => {
   dashboardStore.selectedStreet = street;
   dashboardStore.selectedCodeIdFantoir = street.idFantoir || '';
-  dashboardStore.selectedNumero = "";
-  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumero = '';
+  dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
 };
 const handleStreetClear = () => {
   dashboardStore.selectedStreet = null;
-  dashboardStore.selectedCodeIdFantoir = "";
-  dashboardStore.selectedNumero = "";
-  dashboardStore.selectedRep = "";
+  dashboardStore.selectedCodeIdFantoir = '';
+  dashboardStore.selectedNumero = '';
+  dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
 };
 
 const handleNumeroSelect = (item: any) => {
   dashboardStore.selectedNumero = item.numero;
-  dashboardStore.selectedRep = item.rep || "";
+  dashboardStore.selectedRep = item.rep || '';
   dashboardStore.selectedNumeroFull = item;
 };
 
 const handleNumeroClear = () => {
-  dashboardStore.selectedNumero = "";
-  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumero = '';
+  dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
 };
 
-
 const handleGroupedStreetClick = (streetRow: any) => {
   const street = {
-    value: streetRow.nom_voie,     // ⭐ CE QUE L'AUTOCOMPLETE AFFICHE
-    idFantoir: streetRow.id_fantoir // ⭐ CE DONT TU AS BESOIN POUR LA SUITE
+    value: streetRow.nom_voie, // ⭐ CE QUE L'AUTOCOMPLETE AFFICHE
+    idFantoir: streetRow.id_fantoir, // ⭐ CE DONT TU AS BESOIN POUR LA SUITE
   };
 
   // Mettre l’objet dans le v-model du StreetAutocomplete
@@ -316,8 +334,8 @@ const handleGroupedStreetClick = (streetRow: any) => {
   dashboardStore.selectedCodeIdFantoir = street.idFantoir;
 
   // Reset numéro
-  dashboardStore.selectedNumero = "";
-  dashboardStore.selectedRep = "";
+  dashboardStore.selectedNumero = '';
+  dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
 
   // Lancer la recherche
@@ -326,12 +344,16 @@ const handleGroupedStreetClick = (streetRow: any) => {
   }, 10);
 };
 
-const handleTableNumeroClick = (row: { nom_voie: string; id_fantoir: string; numero: string; rep?: string }) => {
-
+const handleTableNumeroClick = (row: {
+  nom_voie: string;
+  id_fantoir: string;
+  numero: string;
+  rep?: string;
+}) => {
   // 1️⃣ REMPLIR LA RUE dans l'autocomplete
   dashboardStore.selectedStreet = {
     value: row.nom_voie,
-    idFantoir: row.id_fantoir
+    idFantoir: row.id_fantoir,
   };
 
   // 2️⃣ METTRE l’ID FANTOIR
@@ -340,11 +362,11 @@ const handleTableNumeroClick = (row: { nom_voie: string; id_fantoir: string; num
   // 3️⃣ CONSTRUIRE L’OBJET numeroFull
   const numeroFull = row.rep
     ? { numero: row.numero, rep: row.rep, value: `${row.numero} ${row.rep}` }
-    : { numero: row.numero, rep: "", value: `${row.numero}` };
+    : { numero: row.numero, rep: '', value: `${row.numero}` };
 
   dashboardStore.selectedNumeroFull = numeroFull;
   dashboardStore.selectedNumero = row.numero;
-  dashboardStore.selectedRep = row.rep || "";
+  dashboardStore.selectedRep = row.rep || '';
 
   // 4️⃣ RECHERCHE AUTO
   setTimeout(() => {
@@ -366,9 +388,11 @@ const querySearchEstimation = async () => {
 /* ------------------------------------
       VIEW SWITCH
 ------------------------------------ */
-const setTableView = () => (dashboardStore.viewType = "table");
-const setCardView = () => (dashboardStore.viewType = "card");
-const setMapView = () => {  dashboardStore.viewType = "map";};
+const setTableView = () => (dashboardStore.viewType = 'table');
+const setCardView = () => (dashboardStore.viewType = 'card');
+const setMapView = () => {
+  dashboardStore.viewType = 'map';
+};
 
 /* ------------------------------------
       OUVERTURE FICHE
@@ -438,7 +462,9 @@ const openPropertyDialog = (property: any) => {
 .grid-icon {
   font-size: 20px;
   color: #909399;
-  transition: color 0.3s, transform 0.3s;
+  transition:
+    color 0.3s,
+    transform 0.3s;
 }
 
 .databoard-icon.active,

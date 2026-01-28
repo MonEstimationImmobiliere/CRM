@@ -1,4 +1,3 @@
-
 /**
  * Fichier d'export centralisé pour tous les types de l'application
  */

@@ -20,7 +20,11 @@
       >
         <!-- Résultat affiché : UNE SEULE LIGNE, AVEC highlight -->
         <template #default="{ item }">
-          <div v-html="`${highlightMatch(item.city, displayValue)} - ${highlightMatch(item.value, displayValue)}`" />
+          <div
+            v-html="
+              `${highlightMatch(item.city, displayValue)} - ${highlightMatch(item.value, displayValue)}`
+            "
+          />
         </template>
       </el-autocomplete>
     </DynamicLabelUI>
@@ -28,20 +32,24 @@
 </template>
 
 <script setup lang="ts">
-import { computed } from "vue";
-import { Search } from "@element-plus/icons-vue";
-import axios from "axios";
-import API_URL from "@/utils/API_URL";
-import type { PropType } from "vue";
+import { computed } from 'vue';
+import { Search } from '@element-plus/icons-vue';
+import axios from 'axios';
+import API_URL from '@/utils/API_URL';
+import type { PropType } from 'vue';
 
 const props = defineProps({
   modelValue: {
-    type: Object as PropType<{ city?: string; value?: string; codeInsee?: string } | null>,
+    type: Object as PropType<{
+      city?: string;
+      value?: string;
+      codeInsee?: string;
+    } | null>,
     default: null,
   },
 });
 
-const emit = defineEmits(["update:modelValue", "select", "clear"]);
+const emit = defineEmits(['update:modelValue', 'select', 'clear']);
 
 /* ----------------------------------------------------------
    AFFICHAGE DIRECT DU CHAMP :
@@ -53,10 +61,10 @@ const displayValue = computed({
     if (props.modelValue?.city && props.modelValue?.value) {
       return `${props.modelValue.city} - ${props.modelValue.value}`;
     }
-    return props.modelValue?.value || "";
+    return props.modelValue?.value || '';
   },
-  set: (val) => {
-    emit("update:modelValue", { value: val });
+  set: val => {
+    emit('update:modelValue', { value: val });
   },
 });
 
@@ -68,7 +76,7 @@ const queryCities = (query: string, cb: Function) => {
 
   axios
     .get(`${API_URL}/communes/${query}`)
-    .then((res) => {
+    .then(res => {
       const results = res.data.map((item: any) => ({
         city: item.nom_commune,
         value: item.code_postal,
@@ -83,16 +91,16 @@ const queryCities = (query: string, cb: Function) => {
    Sélection
 ----------------------------------------------------------- */
 const handleSelect = (item: any) => {
-  emit("update:modelValue", item);
-  emit("select", item);
+  emit('update:modelValue', item);
+  emit('select', item);
 };
 
 /* ----------------------------------------------------------
    Clear
 ----------------------------------------------------------- */
 const handleClear = () => {
-  emit("update:modelValue", null);
-  emit("clear");
+  emit('update:modelValue', null);
+  emit('clear');
 };
 
 /* ----------------------------------------------------------

@@ -4,17 +4,18 @@ console.log('Testing CRM integration...');
 // Test 1: Check if the application starts without errors
 setTimeout(() => {
   console.log('✅ Application started successfully');
-  
+
   // Test 2: Check if the reminders route exists
-  const reminderButton = document.querySelector('[data-testid="reminders-button"]') || 
-                        document.querySelector('button:contains("Mes rappels")');
-  
+  const reminderButton =
+    document.querySelector('[data-testid="reminders-button"]') ||
+    document.querySelector('button:contains("Mes rappels")');
+
   if (reminderButton) {
     console.log('✅ Reminders button found');
   } else {
     console.log('⚠️ Reminders button not found - check navigation');
   }
-  
+
   // Test 3: Check if localStorage is working
   try {
     localStorage.setItem('crm_test', 'test_value');
@@ -26,6 +27,6 @@ setTimeout(() => {
   } catch (e) {
     console.log('❌ LocalStorage error:', e.message);
   }
-  
+
   console.log('Integration tests completed');
 }, 2000);

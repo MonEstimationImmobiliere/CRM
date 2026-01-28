@@ -1,10 +1,10 @@
 <script lang="ts" setup>
-import loadingGif from '@/assets/loading.gif'
+import loadingGif from '@/assets/loading.gif';
 </script>
 
 <template>
   <div class="loading-wrapper">
-    <img class="loading-gif" :src="loadingGif" alt="加载中...">
+    <img class="loading-gif" :src="loadingGif" alt="加载中..." />
   </div>
 </template>
 

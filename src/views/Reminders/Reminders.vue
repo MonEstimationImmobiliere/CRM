@@ -63,16 +63,26 @@
         <el-radio-button label="upcoming">À venir</el-radio-button>
         <el-radio-button label="completed">Terminés</el-radio-button>
       </el-radio-group>
-      
+
       <div class="filter-actions">
-        <el-select v-model="typeFilter" placeholder="Type" clearable style="width: 150px;">
+        <el-select
+          v-model="typeFilter"
+          placeholder="Type"
+          clearable
+          style="width: 150px"
+        >
           <el-option label="Appel" value="rappel" />
           <el-option label="Estimation" value="estimation" />
           <el-option label="Visite" value="visite" />
           <el-option label="Autre" value="autre" />
         </el-select>
-        
-        <el-select v-model="priorityFilter" placeholder="Priorité" clearable style="width: 150px;">
+
+        <el-select
+          v-model="priorityFilter"
+          placeholder="Priorité"
+          clearable
+          style="width: 150px"
+        >
           <el-option label="Haute" value="high" />
           <el-option label="Moyenne" value="medium" />
           <el-option label="Basse" value="low" />
@@ -82,9 +92,9 @@
 
     <!-- Add Button -->
     <div class="add-reminder-section">
-      <el-button 
-        type="primary" 
-        size="large" 
+      <el-button
+        type="primary"
+        size="large"
         @click="showCreateDialog = true"
         class="add-reminder-btn"
       >
@@ -100,10 +110,10 @@
           <el-icon class="empty-icon"><Document /></el-icon>
           <h3>Aucun rappel trouvé</h3>
           <p>{{ getEmptyMessage() }}</p>
-          <el-button 
-            type="primary" 
+          <el-button
+            type="primary"
             @click="showCreateDialog = true"
-            style="margin-top: 16px;"
+            style="margin-top: 16px"
           >
             <el-icon><Plus /></el-icon>
             Créer mon premier rappel
@@ -112,80 +122,79 @@
       </el-card>
 
       <div v-else class="reminders-grid">
-        <div 
-          v-for="reminder in filteredReminders" 
-          :key="reminder.id" 
+        <div
+          v-for="reminder in filteredReminders"
+          :key="reminder.id"
           class="reminder-card"
           :class="{
-            'overdue': isReminderOverdue(reminder),
-            'today': isReminderToday(reminder),
+            overdue: isReminderOverdue(reminder),
+            today: isReminderToday(reminder),
             'status-todo': getStatus(reminder) === 'todo',
             'status-progress': getStatus(reminder) === 'progress',
-            'status-completed': getStatus(reminder) === 'completed'
+            'status-completed': getStatus(reminder) === 'completed',
           }"
         >
-
-
           <!-- Card Header -->
           <div class="reminder-card-header">
             <div class="reminder-header-content">
               <!-- Priority, Status and Type Badges -->
               <div class="reminder-badges">
-                <div 
-                  class="priority-badge"
-                  :class="reminder.priority"
-                >
+                <div class="priority-badge" :class="reminder.priority">
                   <el-icon><Flag /></el-icon>
                   {{ getPriorityLabel(reminder.priority) }}
                 </div>
-                <div 
-                  class="status-indicator"
-                  :class="getStatus(reminder)"
-                >
-                  <el-icon v-if="getStatus(reminder) === 'completed'"><Check /></el-icon>
+                <div class="status-indicator" :class="getStatus(reminder)">
+                  <el-icon v-if="getStatus(reminder) === 'completed'"
+                    ><Check
+                  /></el-icon>
                   {{ getStatusLabel(reminder) }}
                 </div>
               </div>
-              
+
               <!-- Title -->
-              <h3 class="reminder-title" :class="{ 'completed-text': getStatus(reminder) === 'completed' }">
+              <h3
+                class="reminder-title"
+                :class="{
+                  'completed-text': getStatus(reminder) === 'completed',
+                }"
+              >
                 {{ reminder.title }}
               </h3>
-              
+
               <!-- Description -->
               <div v-if="reminder.description" class="reminder-description">
                 {{ reminder.description }}
               </div>
             </div>
-            
+
             <!-- Three Dot Menu -->
-            <el-dropdown 
+            <el-dropdown
               @command="handleAction"
               trigger="click"
               placement="bottom-end"
             >
-              <el-button 
-                :icon="MoreFilled" 
-                circle 
-                size="small" 
+              <el-button
+                :icon="MoreFilled"
+                circle
+                size="small"
                 class="more-actions-btn"
                 @click.stop
               />
               <template #dropdown>
                 <el-dropdown-menu>
-                  <el-dropdown-item 
+                  <el-dropdown-item
                     :command="{ action: 'edit', reminder }"
                     :icon="Edit"
                   >
                     Modifier
                   </el-dropdown-item>
-                  <el-dropdown-item 
+                  <el-dropdown-item
                     :command="{ action: 'duplicate', reminder }"
                     :icon="DocumentCopy"
                   >
                     Dupliquer
                   </el-dropdown-item>
-                  <el-dropdown-item 
+                  <el-dropdown-item
                     :command="{ action: 'delete', reminder }"
                     :icon="Delete"
                     divided
@@ -199,8 +208,8 @@
 
           <!-- Type Tag -->
           <div v-if="reminder.type" class="reminder-type-section">
-            <el-tag 
-              :type="getTypeColor(reminder.type)" 
+            <el-tag
+              :type="getTypeColor(reminder.type)"
               size="small"
               class="type-badge"
             >
@@ -212,7 +221,10 @@
           <div class="reminder-content">
             <!-- Date and Property Info -->
             <div class="reminder-meta-info">
-              <div class="reminder-date-info" :class="{ 'overdue-date': isReminderOverdue(reminder) }">
+              <div
+                class="reminder-date-info"
+                :class="{ 'overdue-date': isReminderOverdue(reminder) }"
+              >
                 <el-icon><Calendar /></el-icon>
                 <span class="date-text">{{ formatDate(reminder.date) }}</span>
               </div>
@@ -238,7 +250,7 @@
           <!-- Status Action Buttons -->
           <div class="reminder-status-actions">
             <div class="status-buttons-container">
-              <el-button 
+              <el-button
                 :type="getStatus(reminder) === 'todo' ? 'primary' : ''"
                 :plain="getStatus(reminder) !== 'todo'"
                 size="small"
@@ -247,7 +259,7 @@
               >
                 À faire
               </el-button>
-              <el-button 
+              <el-button
                 :type="getStatus(reminder) === 'progress' ? 'warning' : ''"
                 :plain="getStatus(reminder) !== 'progress'"
                 size="small"
@@ -256,7 +268,7 @@
               >
                 En cours
               </el-button>
-              <el-button 
+              <el-button
                 :type="getStatus(reminder) === 'completed' ? 'success' : ''"
                 :plain="getStatus(reminder) !== 'completed'"
                 size="small"
@@ -272,48 +284,51 @@
     </div>
 
     <!-- Create/Edit Dialog -->
-    <el-dialog 
-      v-model="showCreateDialog" 
+    <el-dialog
+      v-model="showCreateDialog"
       :title="editingReminder ? 'Modifier le rappel' : 'Nouveau rappel'"
       width="600px"
       @close="resetForm"
     >
       <el-form :model="reminderForm" label-width="120px">
         <el-form-item label="Titre" required>
-          <el-input v-model="reminderForm.title" placeholder="Titre du rappel" />
+          <el-input
+            v-model="reminderForm.title"
+            placeholder="Titre du rappel"
+          />
         </el-form-item>
-        
+
         <el-form-item label="Description">
-          <el-input 
-            v-model="reminderForm.description" 
-            type="textarea" 
+          <el-input
+            v-model="reminderForm.description"
+            type="textarea"
             :rows="3"
             placeholder="Description du rappel"
           />
         </el-form-item>
-        
+
         <el-form-item label="Date" required>
-          <el-date-picker 
+          <el-date-picker
             v-model="reminderForm.date"
             type="date"
             placeholder="Sélectionnez une date"
-            style="width: 100%;"
+            style="width: 100%"
             format="DD/MM/YYYY"
             value-format="YYYY-MM-DD"
           />
         </el-form-item>
-        
+
         <el-form-item label="Type">
-          <el-select v-model="reminderForm.type" style="width: 100%;">
+          <el-select v-model="reminderForm.type" style="width: 100%">
             <el-option label="Rappel" value="rappel" />
             <el-option label="Estimation" value="estimation" />
             <el-option label="Visite" value="visite" />
             <el-option label="Autre" value="autre" />
           </el-select>
         </el-form-item>
-        
+
         <el-form-item label="Priorité">
-          <el-select v-model="reminderForm.priority" style="width: 100%;">
+          <el-select v-model="reminderForm.priority" style="width: 100%">
             <el-option label="Haute" value="high" />
             <el-option label="Moyenne" value="medium" />
             <el-option label="Basse" value="low" />
@@ -321,7 +336,7 @@
         </el-form-item>
 
         <el-form-item label="Statut">
-          <el-select v-model="reminderForm.status" style="width: 100%;">
+          <el-select v-model="reminderForm.status" style="width: 100%">
             <el-option label="À faire" value="todo" />
             <el-option label="En cours" value="progress" />
             <el-option label="Terminé" value="completed" />
@@ -332,7 +347,7 @@
           <el-checkbox v-model="reminderForm.sharing" label="Partager avec l'agence" />
         </el-form-item> -->
       </el-form>
-      
+
       <template #footer>
         <el-button @click="showCreateDialog = false">Annuler</el-button>
         <el-button type="primary" @click="saveReminder">
@@ -346,9 +361,20 @@
 <script setup lang="ts">
 import { ref, computed, onMounted } from 'vue';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
-import { 
-  Plus, Warning, Calendar, Clock, Check, Document, 
-  MoreFilled, Edit, Delete, House, User, DocumentCopy, Flag
+import {
+  Plus,
+  Warning,
+  Calendar,
+  Clock,
+  Check,
+  Document,
+  MoreFilled,
+  Edit,
+  Delete,
+  House,
+  User,
+  DocumentCopy,
+  Flag,
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 
@@ -383,14 +409,14 @@ const reminderForm = ref<{
 });
 
 // Computed properties
-const { 
-  todayReminders, 
-  upcomingReminders, 
-  overdueReminders, 
+const {
+  todayReminders,
+  upcomingReminders,
+  overdueReminders,
   completedReminders,
   isReminderOverdue,
   isReminderToday,
-  selectReminder 
+  selectReminder,
 } = remindersStore;
 
 const filteredReminders = computed(() => {
@@ -443,7 +469,13 @@ const toggleComplete = (reminder: Reminder) => {
   }
 };
 
-const handleAction = ({ action, reminder }: { action: string; reminder: Reminder }) => {
+const handleAction = ({
+  action,
+  reminder,
+}: {
+  action: string;
+  reminder: Reminder;
+}) => {
   if (action === 'edit') {
     editReminder(reminder);
   } else if (action === 'delete') {
@@ -495,7 +527,7 @@ const deleteReminder = async (reminder: Reminder) => {
         type: 'warning',
       }
     );
-    
+
     remindersStore.deleteReminder(reminder.id);
     ElMessage.success('Rappel supprimé avec succès');
   } catch {
@@ -551,7 +583,9 @@ const formatDate = (dateString: string) => {
   });
 };
 
-const getPriorityType = (priority: string): 'success' | 'warning' | 'danger' | 'info' => {
+const getPriorityType = (
+  priority: string
+): 'success' | 'warning' | 'danger' | 'info' => {
   const types = { high: 'danger', medium: 'warning', low: 'info' } as const;
   return types[priority as keyof typeof types] || 'info';
 };
@@ -561,22 +595,24 @@ const getPriorityLabel = (priority: string) => {
   return labels[priority as keyof typeof labels] || priority;
 };
 
-const getTypeColor = (type: string): 'success' | 'warning' | 'danger' | 'info' => {
-  const colors = { 
-    rappel: 'info', 
-    estimation: 'success', 
-    visite: 'warning', 
-    autre: 'info' 
+const getTypeColor = (
+  type: string
+): 'success' | 'warning' | 'danger' | 'info' => {
+  const colors = {
+    rappel: 'info',
+    estimation: 'success',
+    visite: 'warning',
+    autre: 'info',
   } as const;
   return colors[type as keyof typeof colors] || 'info';
 };
 
 const getTypeLabel = (type: string) => {
-  const labels = { 
-    rappel: 'Rappel', 
-    estimation: 'Estimation', 
-    visite: 'Visite', 
-    autre: 'Autre' 
+  const labels = {
+    rappel: 'Rappel',
+    estimation: 'Estimation',
+    visite: 'Visite',
+    autre: 'Autre',
   };
   return labels[type as keyof typeof labels] || type;
 };
@@ -586,7 +622,7 @@ const getEmptyMessage = () => {
     case 'overdue':
       return 'Aucun rappel en retard. Excellent !';
     case 'today':
-      return 'Aucun rappel pour aujourd\'hui.';
+      return "Aucun rappel pour aujourd'hui.";
     case 'upcoming':
       return 'Aucun rappel à venir cette semaine.';
     case 'completed':
@@ -612,25 +648,30 @@ const getStatusLabel = (reminder: Reminder): string => {
   const labels = {
     todo: 'À faire',
     progress: 'En cours',
-    completed: 'Terminé'
+    completed: 'Terminé',
   };
   return labels[status];
 };
 
-const getStatusTagType = (reminder: Reminder): 'info' | 'warning' | 'success' => {
+const getStatusTagType = (
+  reminder: Reminder
+): 'info' | 'warning' | 'success' => {
   const status = getStatus(reminder);
   const types: Record<string, 'info' | 'warning' | 'success'> = {
     todo: 'info',
     progress: 'warning',
-    completed: 'success'
+    completed: 'success',
   };
   return types[status] || 'info';
 };
 
-const updateStatus = async (reminder: Reminder, status: 'todo' | 'progress' | 'completed') => {
+const updateStatus = async (
+  reminder: Reminder,
+  status: 'todo' | 'progress' | 'completed'
+) => {
   try {
     await remindersStore.updateReminderStatus(reminder.id, status);
-    
+
     if (status === 'completed') {
       ElMessage.success('Rappel marqué comme terminé');
     } else if (status === 'progress') {
@@ -652,7 +693,7 @@ const getDaysLeftText = (reminder: Reminder): string => {
   if (diffDays < 0) {
     return `${Math.abs(diffDays)} jour${Math.abs(diffDays) > 1 ? 's' : ''} de retard`;
   } else if (diffDays === 0) {
-    return 'Aujourd\'hui';
+    return "Aujourd'hui";
   } else if (diffDays === 1) {
     return 'Demain';
   } else {
@@ -671,10 +712,6 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   if (diffDays <= 3) return 'days-soon';
   return 'days-normal';
 };
-
-
-
-
 </script>
 
 <style scoped>
@@ -835,7 +872,6 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   display: flex;
   flex-direction: column;
   gap: 12px;
-
 }
 
 .reminder-card:hover {
@@ -883,7 +919,9 @@ const getDaysLeftClass = (reminder: Reminder): string => {
   margin-bottom: 8px;
 }
 
-.priority-badge, .type-badge, .status-indicator {
+.priority-badge,
+.type-badge,
+.status-indicator {
   font-weight: 500;
   font-size: 0.75rem;
   padding: 2px 8px;
@@ -1100,17 +1138,17 @@ const getDaysLeftClass = (reminder: Reminder): string => {
     align-items: stretch;
     gap: 16px;
   }
-  
+
   .filter-actions {
     justify-content: space-between;
   }
-  
+
   .stat-content {
     flex-direction: column;
     text-align: center;
     gap: 8px;
   }
-  
+
   .reminders-header {
     flex-direction: column;
     align-items: stretch;

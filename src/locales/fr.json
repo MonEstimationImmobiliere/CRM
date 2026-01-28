@@ -179,9 +179,8 @@
       "underline": "S"
     },
     "transportOrder": {
-     "orderNumber": "N° Dossier"
-     
-      },
+      "orderNumber": "N° Dossier"
+    },
     "unableToDownload": "Le téléchargement a échoué",
     "unsavedChanges": "Modifications non sauvegardées",
     "updateRole": "Modifier le rôle | Modifier le rôle | Modifier les rôles",
@@ -294,7 +293,7 @@
   },
 
   "label": {
-    "name": "Nom" ,
+    "name": "Nom",
     "code": "Code",
     "authorization": "Autorisation",
     "explanation": "Explication",
@@ -323,6 +322,5 @@
     "comment": "Commentaire",
     "created_at": "Créé le",
     "updated_at": "Modifié le"
-
   }
 }

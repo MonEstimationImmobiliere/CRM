@@ -1,20 +1,25 @@
 <script setup lang="ts">
-
-const props = withDefaults(defineProps<{
-  color?: string
-  contentCenter?: boolean
-}>(), {
-  color: 'rgba(0, 0, 0, 0.65)',
-  contentCenter: false
-})
+const props = withDefaults(
+  defineProps<{
+    color?: string;
+    contentCenter?: boolean;
+  }>(),
+  {
+    color: 'rgba(0, 0, 0, 0.65)',
+    contentCenter: false,
+  }
+);
 
 const emit = defineEmits<{
-  (e: 'shadowClick'): void
-}>()
+  (e: 'shadowClick'): void;
+}>();
 </script>
 <template>
   <div class="shadow-wrapper">
-    <div :class="['shadow-content-wrapper', contentCenter && 'flex-center']" @click.self="emit('shadowClick')">
+    <div
+      :class="['shadow-content-wrapper', contentCenter && 'flex-center']"
+      @click.self="emit('shadowClick')"
+    >
       <slot></slot>
     </div>
   </div>

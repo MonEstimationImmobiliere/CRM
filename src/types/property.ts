@@ -1,5 +1,3 @@
-
-
 /**
  * Types de propriétés disponibles
  */
@@ -8,7 +6,14 @@ export type PropertyType = 'maison' | 'appartement' | null;
 /**
  * Types de chauffage
  */
-export type HeatingType = 'electrique' | 'gaz' | 'fioul' | 'bois' | 'pompe_chaleur' | 'autre' | null;
+export type HeatingType =
+  | 'electrique'
+  | 'gaz'
+  | 'fioul'
+  | 'bois'
+  | 'pompe_chaleur'
+  | 'autre'
+  | null;
 
 /**
  * Types de fenêtres
@@ -23,12 +28,27 @@ export type PropertyCondition = 'neuf' | 'bon' | 'moyen' | 'a_renover' | null;
 /**
  * Orientation
  */
-export type PropertyOrientation = 'nord' | 'sud' | 'est' | 'ouest' | 'nord-est' | 'nord-ouest' | 'sud-est' | 'sud-ouest' | null;
+export type PropertyOrientation =
+  | 'nord'
+  | 'sud'
+  | 'est'
+  | 'ouest'
+  | 'nord-est'
+  | 'nord-ouest'
+  | 'sud-est'
+  | 'sud-ouest'
+  | null;
 
 /**
  * Types de toiture
  */
-export type RoofType = 'tuiles' | 'ardoises' | 'zinc' | 'toit_plat' | 'autre' | null;
+export type RoofType =
+  | 'tuiles'
+  | 'ardoises'
+  | 'zinc'
+  | 'toit_plat'
+  | 'autre'
+  | null;
 
 /**
  * Types d'assainissement

@@ -1,54 +1,68 @@
 <script setup lang="ts">
-import { computed } from '@vue/reactivity'
-import { onBeforeMount, provide, reactive, ref } from 'vue'
-import HeadBar from './HeadBar.vue'
-import SideBar from './SideBar.vue'
-import TabsBar from './TabsBar.vue'
-import isMobile from '@/composables/isMobile'
-import Logo from '@/assets/logo.svg'
-import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg'
-import Logo2 from '@/assets/logo.png'
+import { computed } from 'vue';
+import { onBeforeMount, provide, reactive, ref } from 'vue';
+import HeadBar from './HeadBar.vue';
+import SideBar from './SideBar.vue';
+import TabsBar from './TabsBar.vue';
+import isMobile from '@/composables/isMobile';
+import Logo from '@/assets/logo.svg';
+import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg';
+import Logo2 from '@/assets/logo.png';
 
+import type { Layout } from 'types/layout';
 
-import type { Layout } from 'types/layout'
-
-const _isMobile = isMobile()
+const _isMobile = isMobile();
 const sidebarRelated = reactive<Layout.SidebarRelated>({
   collapsed: true,
   width: '15rem',
-  collapsedWidth: '3rem'
-})
+  collapsedWidth: '3rem',
+});
 const loading = reactive<Layout.Loading>({
-  logout: false
-})
-const keepAlivePages = ref<Layout.keepAlivePages>(new Set())
+  logout: false,
+});
+const keepAlivePages = ref<Layout.keepAlivePages>(new Set());
 const getKeepAlivePages = computed(() => {
-  return Array.from(keepAlivePages.value)
-})
+  return Array.from(keepAlivePages.value);
+});
 const asideWidth = computed(() => {
-  return sidebarRelated?.collapsed ? sidebarRelated?.collapsedWidth : sidebarRelated?.width
-})
+  return sidebarRelated?.collapsed
+    ? sidebarRelated?.collapsedWidth
+    : sidebarRelated?.width;
+});
 
 onBeforeMount(() => {
-  setSidebarCollapsed()
-})
+  setSidebarCollapsed();
+});
 
 function setSidebarCollapsed() {
-  sidebarRelated.collapsed = _isMobile.value
+  sidebarRelated.collapsed = _isMobile.value;
 }
 
 // provide layout-related state information for the child components
-provide('sidebarRelated', sidebarRelated)
-provide('keepAlivePages', keepAlivePages.value)
-provide('loading', loading)
+provide('sidebarRelated', sidebarRelated);
+provide('keepAlivePages', keepAlivePages.value);
+provide('loading', loading);
 </script>
 <template>
   <ElContainer style="height: 100%">
     <ElAside v-if="!_isMobile" :width="asideWidth">
-      <div class="shadow-lg" style="display: flex; flex-direction: column; width: 100%; height: 100%;">
+      <div
+        class="shadow-lg"
+        style="display: flex; flex-direction: column; width: 100%; height: 100%"
+      >
         <RouterLink to="/">
-          <el-image :style="{ width: '100%', height: sidebarRelated.collapsed ? '3rem' : '6rem', padding: '0.3rem 0', position: 'sticky', top: '0', zIndex: '100'}"
-            :src="MinimalistHouse" fit="contain" />
+          <el-image
+            :style="{
+              width: '100%',
+              height: sidebarRelated.collapsed ? '3rem' : '6rem',
+              padding: '0.3rem 0',
+              position: 'sticky',
+              top: '0',
+              zIndex: '100',
+            }"
+            :src="MinimalistHouse"
+            fit="contain"
+          />
         </RouterLink>
         <SideBar></SideBar>
       </div>
@@ -56,25 +70,34 @@ provide('loading', loading)
     <ElContainer>
       <ElHeader>
         <HeadBar></HeadBar>
-        <TabsBar :withIcons="true"></TabsBar> 
+        <TabsBar :withIcons="true"></TabsBar>
       </ElHeader>
       <ElMain id="content-window">
-          <Transition name="slide-left" mode="out-in">
-        <RouterView />
+        <Transition name="slide-left" mode="out-in">
+          <RouterView />
         </Transition>
       </ElMain>
     </ElContainer>
   </ElContainer>
   <Teleport to="body">
     <Transition name="slide-right" mode="out-in" appear>
-      <Shadow v-if="_isMobile && !sidebarRelated.collapsed" @shadowClick="sidebarRelated.collapsed = true">
+      <Shadow
+        v-if="_isMobile && !sidebarRelated.collapsed"
+        @shadowClick="sidebarRelated.collapsed = true"
+      >
         <div class="block sidebar-mobile">
           <RouterLink to="/">
             <el-image
-              :style="{ width: sidebarRelated.width, height: sidebarRelated.collapsed ? '3.6rem' : '6.6rem', padding: '0.3rem 0' }"
-              :src="MinimalistHouse" fit="contain" />
+              :style="{
+                width: sidebarRelated.width,
+                height: sidebarRelated.collapsed ? '3.6rem' : '6.6rem',
+                padding: '0.3rem 0',
+              }"
+              :src="MinimalistHouse"
+              fit="contain"
+            />
           </RouterLink>
-          <SideBar style="padding-right: 1rem;"></SideBar>
+          <SideBar style="padding-right: 1rem"></SideBar>
         </div>
       </Shadow>
     </Transition>

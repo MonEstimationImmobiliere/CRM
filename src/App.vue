@@ -1,9 +1,8 @@
 <script setup lang="ts">
-import { ElConfigProvider } from 'element-plus'
-
+import { ElConfigProvider } from 'element-plus';
 </script>
 <template>
-  <el-config-provider >
+  <el-config-provider>
     <RouterView />
   </el-config-provider>
 </template>

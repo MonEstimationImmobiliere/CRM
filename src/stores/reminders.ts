@@ -3,7 +3,13 @@ import { ref, computed, watch } from 'vue';
 import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 import { NotificationService } from '@/utils/notifications';
 import { ReminderService } from '@/api/reminder.service';
-import type { IReminder, IReminderCreate, ReminderType, ReminderPriority, ReminderList } from '@/types/reminder';
+import type {
+  IReminder,
+  IReminderCreate,
+  ReminderType,
+  ReminderPriority,
+  ReminderList,
+} from '@/types/reminder';
 
 /**
  * Interface locale du store avec status additionnel pour le Kanban
@@ -24,36 +30,41 @@ export const useRemindersStore = defineStore('reminders', () => {
       loading.value = true;
       const [userReminders, sharedReminders] = await Promise.all([
         ReminderService.getUserReminders(),
-        ReminderService.getAgencyReminders()
+        ReminderService.getAgencyReminders(),
       ]);
-      
+
       reminders.value = userReminders
         .filter(r => r.id)
         .map(r => ({
           ...r,
           sharing: r.sharing || false,
         }));
-      
+
       agencyReminders.value = sharedReminders
         .filter(r => r.id)
         .map(r => ({
           ...r,
           sharing: r.sharing || false,
         }));
-      
-      // Fallback: also save to localStorage 
+
+      // Fallback: also save to localStorage
       if (LocalStorage.isAvailable()) {
         LocalStorage.set(STORAGE_KEYS.REMINDERS, reminders.value);
       }
     } catch (error) {
-      console.error('Error loading reminders from API, falling back to localStorage:', error);
+      console.error(
+        'Error loading reminders from API, falling back to localStorage:',
+        error
+      );
       // Fallback to localStorage
       if (LocalStorage.isAvailable()) {
-        const savedReminders = LocalStorage.get<Reminder[]>(STORAGE_KEYS.REMINDERS);
+        const savedReminders = LocalStorage.get<Reminder[]>(
+          STORAGE_KEYS.REMINDERS
+        );
         if (savedReminders && Array.isArray(savedReminders)) {
           reminders.value = savedReminders.map(r => ({
             ...r,
-            sharing: r.sharing || false
+            sharing: r.sharing || false,
           }));
         }
       }
@@ -81,7 +92,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   // Initialize store with sample data if none exists
   const initializeStore = async () => {
     await loadReminders();
-    
+
     // Add sample reminders if the store is empty (for development/testing)
     if (reminders.value.length === 0) {
       const today = new Date();
@@ -91,11 +102,12 @@ export const useRemindersStore = defineStore('reminders', () => {
       tomorrow.setDate(tomorrow.getDate() + 1);
       const nextWeek = new Date(today);
       nextWeek.setDate(today.getDate() + 7);
-      
+
       const sampleReminders: IReminderCreate[] = [
         {
           title: "Visite d'estimation",
-          description: "Rendez-vous avec le propriétaire pour évaluer les travaux de rénovation",
+          description:
+            'Rendez-vous avec le propriétaire pour évaluer les travaux de rénovation',
           date: yesterday.toISOString().split('T')[0],
           type: 'estimation',
           priority: 'high',
@@ -104,8 +116,8 @@ export const useRemindersStore = defineStore('reminders', () => {
           completed: false,
         },
         {
-          title: "Rappel de suivi",
-          description: "Contacter le propriétaire pour discuter de la vente",
+          title: 'Rappel de suivi',
+          description: 'Contacter le propriétaire pour discuter de la vente',
           date: today.toISOString().split('T')[0],
           type: 'rappel',
           priority: 'medium',
@@ -114,8 +126,8 @@ export const useRemindersStore = defineStore('reminders', () => {
           completed: false,
         },
         {
-          title: "Visite programmée",
-          description: "Visite avec des acheteurs potentiels",
+          title: 'Visite programmée',
+          description: 'Visite avec des acheteurs potentiels',
           date: tomorrow.toISOString().split('T')[0],
           type: 'visite',
           priority: 'high',
@@ -124,35 +136,35 @@ export const useRemindersStore = defineStore('reminders', () => {
           completed: false,
         },
         {
-          title: "Rappel terminé",
-          description: "Documents transmis au notaire",
+          title: 'Rappel terminé',
+          description: 'Documents transmis au notaire',
           date: yesterday.toISOString().split('T')[0],
           type: 'autre',
           priority: 'low',
           sharing: false,
           property_id: 1,
           completed: true,
-        }
+        },
       ];
-      
+
       for (const reminder of sampleReminders) {
         await addReminder(reminder);
       }
     }
   };
-  
+
   initializeStore();
 
   // Computed properties pour tous les rappels (utilisateur + agence)
   const allReminders = computed(() => [
     ...reminders.value,
-    ...agencyReminders.value
+    ...agencyReminders.value,
   ]);
 
   const todayReminders = computed(() => {
     const today = new Date().toISOString().split('T')[0];
-    return allReminders.value.filter(reminder => 
-      reminder.date === today && !reminder.completed
+    return allReminders.value.filter(
+      reminder => reminder.date === today && !reminder.completed
     );
   });
 
@@ -160,19 +172,19 @@ export const useRemindersStore = defineStore('reminders', () => {
     const today = new Date();
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
-    
+
     return allReminders.value.filter(reminder => {
       const reminderDate = new Date(reminder.date);
-      return reminderDate > today && 
-             reminderDate <= nextWeek && 
-             !reminder.completed;
+      return (
+        reminderDate > today && reminderDate <= nextWeek && !reminder.completed
+      );
     });
   });
 
   const overdueReminders = computed(() => {
     const today = new Date().toISOString().split('T')[0];
-    return allReminders.value.filter(reminder => 
-      reminder.date < today && !reminder.completed
+    return allReminders.value.filter(
+      reminder => reminder.date < today && !reminder.completed
     );
   });
 
@@ -181,19 +193,24 @@ export const useRemindersStore = defineStore('reminders', () => {
   });
 
   const remindersByType = computed(() => {
-    return reminders.value.reduce((acc, reminder) => {
-      if (!acc[reminder.type]) {
-        acc[reminder.type] = [];
-      }
-      acc[reminder.type].push(reminder);
-      return acc;
-    }, {} as Record<string, Reminder[]>);
+    return reminders.value.reduce(
+      (acc, reminder) => {
+        if (!acc[reminder.type]) {
+          acc[reminder.type] = [];
+        }
+        acc[reminder.type].push(reminder);
+        return acc;
+      },
+      {} as Record<string, Reminder[]>
+    );
   });
 
   const remindersByPriority = computed(() => {
     return {
       high: reminders.value.filter(r => r.priority === 'high' && !r.completed),
-      medium: reminders.value.filter(r => r.priority === 'medium' && !r.completed),
+      medium: reminders.value.filter(
+        r => r.priority === 'medium' && !r.completed
+      ),
       low: reminders.value.filter(r => r.priority === 'low' && !r.completed),
     };
   });
@@ -204,23 +221,26 @@ export const useRemindersStore = defineStore('reminders', () => {
       // Essayer d'abord l'API
       const newReminder = await ReminderService.createReminder({
         ...reminderData,
-        sharing: reminderData.sharing || false
+        sharing: reminderData.sharing || false,
       });
-      
+
       const reminderWithDefaults: Reminder = {
         ...newReminder,
         sharing: newReminder.sharing || false,
       };
-      
+
       reminders.value.push(reminderWithDefaults);
-      
+
       // Send notification
       NotificationService.reminderCreated(reminderWithDefaults.title);
-      
+
       return reminderWithDefaults;
     } catch (error) {
-      console.error('Error creating reminder via API, falling back to local:', error);
-      
+      console.error(
+        'Error creating reminder via API, falling back to local:',
+        error
+      );
+
       // Fallback local - créer un reminder temporaire
       const now = new Date().toISOString();
       const localReminder: Reminder = {
@@ -239,19 +259,22 @@ export const useRemindersStore = defineStore('reminders', () => {
         updated_at: now,
       };
       reminders.value.push(localReminder);
-      
+
       // Send notification
       NotificationService.reminderCreated(localReminder.title);
-      
+
       return localReminder;
     }
   };
 
-  const updateReminder = async (id: number, updates: Partial<IReminderCreate>) => {
+  const updateReminder = async (
+    id: number,
+    updates: Partial<IReminderCreate>
+  ) => {
     try {
       // Essayer d'abord l'API
       const updatedReminder = await ReminderService.updateReminder(id, updates);
-      
+
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         reminders.value[index] = {
@@ -259,15 +282,18 @@ export const useRemindersStore = defineStore('reminders', () => {
           ...updatedReminder,
           sharing: updatedReminder.sharing || false,
         };
-        
+
         // Send notification for important updates
         NotificationService.reminderUpdated(reminders.value[index].title);
-        
+
         return reminders.value[index];
       }
     } catch (error) {
-      console.error('Error updating reminder via API, falling back to local:', error);
-      
+      console.error(
+        'Error updating reminder via API, falling back to local:',
+        error
+      );
+
       // Fallback local
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
@@ -276,10 +302,10 @@ export const useRemindersStore = defineStore('reminders', () => {
           ...updates,
           updated_at: new Date().toISOString(),
         };
-        
+
         // Send notification for important updates
         NotificationService.reminderUpdated(reminders.value[index].title);
-        
+
         return reminders.value[index];
       }
     }
@@ -290,29 +316,32 @@ export const useRemindersStore = defineStore('reminders', () => {
     try {
       // Essayer d'abord l'API
       await ReminderService.deleteReminder(id);
-      
+
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         const deletedReminder = reminders.value[index];
         reminders.value.splice(index, 1);
-        
+
         // Send notification
         NotificationService.reminderDeleted(deletedReminder.title);
-        
+
         return true;
       }
     } catch (error) {
-      console.error('Error deleting reminder via API, falling back to local:', error);
-      
+      console.error(
+        'Error deleting reminder via API, falling back to local:',
+        error
+      );
+
       // Fallback local
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         const deletedReminder = reminders.value[index];
         reminders.value.splice(index, 1);
-        
+
         // Send notification
         NotificationService.reminderDeleted(deletedReminder.title);
-        
+
         return true;
       }
     }
@@ -331,7 +360,10 @@ export const useRemindersStore = defineStore('reminders', () => {
     return updateReminder(id, { completed: false });
   };
 
-  const updateReminderStatus = async (id: number, status: 'todo' | 'progress' | 'completed') => {
+  const updateReminderStatus = async (
+    id: number,
+    status: 'todo' | 'progress' | 'completed'
+  ) => {
     const completed = status === 'completed';
     const index = reminders.value.findIndex(r => r.id === id);
     if (index !== -1) {
@@ -353,8 +385,8 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const getRemindersByDateRange = (startDate: string, endDate: string) => {
-    return reminders.value.filter(reminder => 
-      reminder.date >= startDate && reminder.date <= endDate
+    return reminders.value.filter(
+      reminder => reminder.date >= startDate && reminder.date <= endDate
     );
   };
 
@@ -365,8 +397,6 @@ export const useRemindersStore = defineStore('reminders', () => {
   const clearCompletedReminders = () => {
     reminders.value = reminders.value.filter(r => !r.completed);
   };
-
-
 
   // Utility functions
   const getRemindersCount = () => {
@@ -395,10 +425,9 @@ export const useRemindersStore = defineStore('reminders', () => {
     const reminderDate = new Date(reminder.date);
     const nextWeek = new Date();
     nextWeek.setDate(today.getDate() + 7);
-    
+
     return reminderDate > today && reminderDate <= nextWeek;
   };
-
 
   return {
     // State
@@ -406,7 +435,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     agencyReminders,
     loading,
     selectedReminder,
-    
+
     // Computed
     todayReminders,
     upcomingReminders,
@@ -414,7 +443,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     completedReminders,
     remindersByType,
     remindersByPriority,
-    
+
     // Actions
     loadReminders,
     initializeStore,

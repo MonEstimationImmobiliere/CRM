@@ -16,13 +16,18 @@
         class="mb-4"
       />
 
-      <el-form :model="formData" label-width="140px" :rules="rules" ref="formRef">
+      <el-form
+        :model="formData"
+        label-width="140px"
+        :rules="rules"
+        ref="formRef"
+      >
         <!-- Informations d'adresse -->
         <el-card class="mb-4">
           <template #header>
             <span>Informations d'adresse</span>
           </template>
-          
+
           <el-form-item label="Numéro" prop="numero">
             <el-input v-model="formData.numero" placeholder="Ex: 123" />
           </el-form-item>
@@ -36,7 +41,10 @@
           </el-form-item>
 
           <el-form-item label="Appartement">
-            <el-input v-model="formData.numero_appartement" placeholder="Ex: A, B, 101" />
+            <el-input
+              v-model="formData.numero_appartement"
+              placeholder="Ex: A, B, 101"
+            />
           </el-form-item>
 
           <el-form-item label="Code postal" prop="code_postal">
@@ -53,13 +61,20 @@
           <template #header>
             <span>Informations du propriétaire</span>
           </template>
-          
+
           <el-form-item label="Nom du propriétaire" prop="owner">
-            <el-input v-model="formData.owner" placeholder="Nom complet du propriétaire" />
+            <el-input
+              v-model="formData.owner"
+              placeholder="Nom complet du propriétaire"
+            />
           </el-form-item>
 
           <el-form-item label="Email" prop="email">
-            <el-input v-model="formData.email" type="email" placeholder="email@exemple.com" />
+            <el-input
+              v-model="formData.email"
+              type="email"
+              placeholder="email@exemple.com"
+            />
           </el-form-item>
 
           <el-form-item label="Téléphone" prop="phone">
@@ -72,9 +87,12 @@
           <template #header>
             <span>Informations de base</span>
           </template>
-          
+
           <el-form-item label="Type de bien" prop="property_type">
-            <el-select v-model="formData.property_type" placeholder="Sélectionner le type">
+            <el-select
+              v-model="formData.property_type"
+              placeholder="Sélectionner le type"
+            >
               <el-option label="Appartement" value="appartement" />
               <el-option label="Maison" value="maison" />
               <el-option label="Studio" value="studio" />
@@ -87,12 +105,20 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="Surface (m²)" prop="surface">
-                <el-input-number v-model="formData.surface" :min="1" :max="10000" />
+                <el-input-number
+                  v-model="formData.surface"
+                  :min="1"
+                  :max="10000"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="Terrain (m²)">
-                <el-input-number v-model="formData.area" :min="0" :max="100000" />
+                <el-input-number
+                  v-model="formData.area"
+                  :min="0"
+                  :max="100000"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -100,12 +126,20 @@
           <el-row :gutter="20">
             <el-col :span="12">
               <el-form-item label="Nombre de chambres">
-                <el-input-number v-model="formData.bedrooms" :min="0" :max="20" />
+                <el-input-number
+                  v-model="formData.bedrooms"
+                  :min="0"
+                  :max="20"
+                />
               </el-form-item>
             </el-col>
             <el-col :span="12">
               <el-form-item label="Nombre de SDB">
-                <el-input-number v-model="formData.bathrooms" :min="0" :max="10" />
+                <el-input-number
+                  v-model="formData.bathrooms"
+                  :min="0"
+                  :max="10"
+                />
               </el-form-item>
             </el-col>
           </el-row>
@@ -134,29 +168,43 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue'
-import { ElDialog, ElForm, ElFormItem, ElInput, ElInputNumber, ElSelect, ElOption, ElButton, ElCard, ElAlert, ElRow, ElCol, ElMessage } from 'element-plus'
-import { useDashboardStore } from '@/stores/dashboard'
-import { usePropertyStore } from '@/stores/propertyHome'
-import { PropertyService } from '@/api/property.service'
-import type { PropertyData } from '@/types/property'
+import { ref, computed, watch } from 'vue';
+import {
+  ElDialog,
+  ElForm,
+  ElFormItem,
+  ElInput,
+  ElInputNumber,
+  ElSelect,
+  ElOption,
+  ElButton,
+  ElCard,
+  ElAlert,
+  ElRow,
+  ElCol,
+  ElMessage,
+} from 'element-plus';
+import { useDashboardStore } from '@/stores/dashboard';
+import { usePropertyStore } from '@/stores/propertyHome';
+import { PropertyService } from '@/api/property.service';
+import type { PropertyData } from '@/types/property';
 
-const dashboardStore = useDashboardStore()
-  const { selectedCity } = useDashboardStore();
+const dashboardStore = useDashboardStore();
+const { selectedCity } = useDashboardStore();
 
-const propertyStore = usePropertyStore()
+const propertyStore = usePropertyStore();
 
-const formRef = ref()
-const saving = ref(false)
+const formRef = ref();
+const saving = ref(false);
 
 const dialogVisible = computed({
   get: () => dashboardStore.showCustomPropertyDialog,
-  set: (value) => {
+  set: value => {
     if (!value) {
-      dashboardStore.closeCustomPropertyDialog()
+      dashboardStore.closeCustomPropertyDialog();
     }
-  }
-})
+  },
+});
 
 const formData = ref<PropertyData>({
   id_fantoir_long: '',
@@ -210,50 +258,70 @@ const formData = ref<PropertyData>({
   numero_appartement: '',
   code_postal: '',
   city: '',
-  is_custom: true
-})
+  is_custom: true,
+});
 
 const rules = {
   owner: [
-    { required: true, message: 'Le nom du propriétaire est requis', trigger: 'blur' }
+    {
+      required: true,
+      message: 'Le nom du propriétaire est requis',
+      trigger: 'blur',
+    },
   ],
   email: [
-    { required: true, message: 'L\'email est requis', trigger: 'blur' },
-    { type: 'email' as const, message: 'Format d\'email invalide', trigger: 'blur' }
+    { required: true, message: "L'email est requis", trigger: 'blur' },
+    {
+      type: 'email' as const,
+      message: "Format d'email invalide",
+      trigger: 'blur',
+    },
   ],
   phone: [
-    { required: true, message: 'Le téléphone est requis', trigger: 'blur' }
+    { required: true, message: 'Le téléphone est requis', trigger: 'blur' },
   ],
   property_type: [
-    { required: true, message: 'Le type de bien est requis', trigger: 'change' }
+    {
+      required: true,
+      message: 'Le type de bien est requis',
+      trigger: 'change',
+    },
   ],
   surface: [
     { required: true, message: 'La surface est requise', trigger: 'blur' },
-    { type: 'number' as const, min: 1, message: 'La surface doit être supérieure à 0', trigger: 'blur' }
-  ]
-}
+    {
+      type: 'number' as const,
+      min: 1,
+      message: 'La surface doit être supérieure à 0',
+      trigger: 'blur',
+    },
+  ],
+};
 
 // Pré-remplir les informations d'adresse à partir de la recherche
-watch(() => dashboardStore.showCustomPropertyDialog, (newValue) => {
-  if (newValue) {
-    const searchParams = dashboardStore.lastSearchParams
-    if (searchParams) {
-      formData.value.nom_voie = searchParams.street?.value || ''
-      formData.value.code_postal = searchParams.city?.value || ''
-      formData.value.city = searchParams.city?.value || ''
-      // L'id_fantoir_long sera généré par le store en fonction des données saisies
-      formData.value.id_fantoir_long = ''
+watch(
+  () => dashboardStore.showCustomPropertyDialog,
+  newValue => {
+    if (newValue) {
+      const searchParams = dashboardStore.lastSearchParams;
+      if (searchParams) {
+        formData.value.nom_voie = searchParams.street?.value || '';
+        formData.value.code_postal = searchParams.city?.value || '';
+        formData.value.city = searchParams.city?.value || '';
+        // L'id_fantoir_long sera généré par le store en fonction des données saisies
+        formData.value.id_fantoir_long = '';
+      }
     }
   }
-})
+);
 
 const handleClose = () => {
-  dashboardStore.closeCustomPropertyDialog()
-  resetForm()
-}
+  dashboardStore.closeCustomPropertyDialog();
+  resetForm();
+};
 
 const resetForm = () => {
-  formRef.value?.resetFields()
+  formRef.value?.resetFields();
   formData.value = {
     id_fantoir_long: '',
     id_fantoir: '',
@@ -306,41 +374,40 @@ const resetForm = () => {
     numero_appartement: '',
     code_postal: '',
     city: '',
-    is_custom: true
-  }
-}
+    is_custom: true,
+  };
+};
 
 const handleSave = async () => {
   try {
-    const valid = await formRef.value.validate()
-    if (!valid) return
+    const valid = await formRef.value.validate();
+    if (!valid) return;
 
-    saving.value = true
-    console.log('Données du formulaire:', formData.value)
+    saving.value = true;
+    console.log('Données du formulaire:', formData.value);
 
     formData.value.city = selectedCity?.value || '';
 
     // Créer la propriété personnalisée via le store dashboard
     const createdProperty = await dashboardStore.createCustomProperty({
       ...formData.value,
-      favorite: formData.value.favorite ? 'true' : undefined
-    } as any)
-    
-    ElMessage.success('Propriété personnalisée créée avec succès!')
-    
+      favorite: formData.value.favorite ? 'true' : undefined,
+    } as any);
+
+    ElMessage.success('Propriété personnalisée créée avec succès!');
+
     // Fermer le dialog
-    handleClose()
-    
+    handleClose();
+
     // Optionnellement, ouvrir le dialog de propriété pour éditer plus de détails
-    propertyStore.selectProperty(createdProperty)
-    
+    propertyStore.selectProperty(createdProperty);
   } catch (error) {
-    console.error('Erreur lors de la création de la propriété:', error)
-    ElMessage.error('Erreur lors de la création de la propriété')
+    console.error('Erreur lors de la création de la propriété:', error);
+    ElMessage.error('Erreur lors de la création de la propriété');
   } finally {
-    saving.value = false
+    saving.value = false;
   }
-}
+};
 </script>
 
 <style scoped>

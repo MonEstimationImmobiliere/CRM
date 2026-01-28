@@ -6,32 +6,32 @@
           <el-icon class="reminder-icon"><Bell /></el-icon>
           <h3>Rappels</h3>
         </div>
-        
+
         <div class="reminder-stats">
           <div class="stat-item overdue" v-if="overdueCount > 0">
             <span class="count">{{ overdueCount }}</span>
             <span class="label">En retard</span>
           </div>
-          
+
           <div class="stat-item today" v-if="todayCount > 0">
             <span class="count">{{ todayCount }}</span>
             <span class="label">Aujourd'hui</span>
           </div>
-          
+
           <div class="stat-item upcoming" v-if="upcomingCount > 0">
             <span class="count">{{ upcomingCount }}</span>
             <span class="label">À venir</span>
           </div>
-          
+
           <div class="stat-item empty" v-if="totalPendingCount === 0">
             <span class="message">Aucun rappel en attente</span>
           </div>
         </div>
-        
+
         <div class="reminder-actions">
-          <el-button 
-            type="primary" 
-            size="small" 
+          <el-button
+            type="primary"
+            size="small"
             @click="navigateToReminders"
             :disabled="totalPendingCount === 0"
           >
@@ -57,7 +57,9 @@ const remindersStore = useRemindersStore();
 const overdueCount = computed(() => remindersStore.overdueReminders.length);
 const todayCount = computed(() => remindersStore.todayReminders.length);
 const upcomingCount = computed(() => remindersStore.upcomingReminders.length);
-const totalPendingCount = computed(() => overdueCount.value + todayCount.value + upcomingCount.value);
+const totalPendingCount = computed(
+  () => overdueCount.value + todayCount.value + upcomingCount.value
+);
 
 // Methods
 const navigateToReminders = () => {
@@ -181,13 +183,13 @@ const navigateToReminders = () => {
     flex-direction: column;
     gap: 8px;
   }
-  
+
   .stat-item {
     flex-direction: row;
     justify-content: space-between;
     padding: 12px;
   }
-  
+
   .count {
     font-size: 1rem;
   }

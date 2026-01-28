@@ -5,8 +5,8 @@
       <div class="header-controls">
         <div class="filters-container">
           <div class="city-filter">
-            <el-select 
-              v-model="selectedCity" 
+            <el-select
+              v-model="selectedCity"
               placeholder="Filtrer par ville"
               clearable
               size="large"
@@ -21,8 +21,8 @@
             </el-select>
           </div>
           <div class="type-filter">
-            <el-select 
-              v-model="selectedPropertyType" 
+            <el-select
+              v-model="selectedPropertyType"
               placeholder="Filtrer par type"
               clearable
               size="large"
@@ -38,23 +38,31 @@
           </div>
         </div>
         <div class="header-stats">
-          <el-tag size="large" type="info">{{ filteredFavorites.length }} favori(s)</el-tag>
+          <el-tag size="large" type="info"
+            >{{ filteredFavorites.length }} favori(s)</el-tag
+          >
         </div>
       </div>
-      
+
       <div class="view-controls">
         <div class="layoutContainer">
           <el-row :gutter="20">
             <el-col :span="12">
               <div class="grid-container" @click="setTableView">
-                <el-icon class="databoard-icon" :class="{ active: favoritesViewType === 'table' }">
+                <el-icon
+                  class="databoard-icon"
+                  :class="{ active: favoritesViewType === 'table' }"
+                >
                   <DataBoard />
                 </el-icon>
               </div>
             </el-col>
             <el-col :span="12">
               <div class="grid-container" @click="setCardView">
-                <el-icon class="grid-icon" :class="{ active: favoritesViewType === 'card' }">
+                <el-icon
+                  class="grid-icon"
+                  :class="{ active: favoritesViewType === 'card' }"
+                >
                   <Grid />
                 </el-icon>
               </div>
@@ -64,7 +72,10 @@
       </div>
     </div>
 
-    <div v-if="filteredFavorites.length === 0 && favorites.length > 0" class="empty-state">
+    <div
+      v-if="filteredFavorites.length === 0 && favorites.length > 0"
+      class="empty-state"
+    >
       <el-empty description="Aucune propriété trouvée pour ces filtres">
         <el-button type="primary" @click="clearFilters">
           Effacer les filtres
@@ -81,8 +92,8 @@
     </div>
 
     <!-- Table View -->
-    <FavoritesTable 
-      v-if="favoritesViewType === 'table' && filteredFavorites.length > 0" 
+    <FavoritesTable
+      v-if="favoritesViewType === 'table' && filteredFavorites.length > 0"
       :favorites="filteredFavorites"
       @edit-property="openPropertyDialog"
       @toggle-favorite="toggleFavorite"
@@ -90,7 +101,7 @@
     />
 
     <!-- Card View -->
-    <FavoritesCards 
+    <FavoritesCards
       v-else-if="favoritesViewType === 'card' && filteredFavorites.length > 0"
       :favorites="filteredFavorites"
       @edit-property="openPropertyDialog"
@@ -108,7 +119,13 @@ import { computed, onMounted, ref } from 'vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
-import { StarFilled, Edit, Plus, DataBoard, Grid } from '@element-plus/icons-vue';
+import {
+  StarFilled,
+  Edit,
+  Plus,
+  DataBoard,
+  Grid,
+} from '@element-plus/icons-vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
@@ -139,7 +156,10 @@ onMounted(async () => {
 const availableCities = computed(() => {
   const cities = favorites.value
     .map(property => property.city || null)
-    .filter((city): city is string => city !== null && city !== undefined && city !== '') // Filtrer les valeurs nulles/undefined
+    .filter(
+      (city): city is string =>
+        city !== null && city !== undefined && city !== ''
+    ) // Filtrer les valeurs nulles/undefined
     .filter((city, index, array) => array.indexOf(city) === index) // Supprimer les doublons
     .sort(); // Trier alphabétiquement
   return cities;
@@ -150,69 +170,74 @@ const availablePropertyTypes = computed(() => {
   const types = favorites.value
     .map(property => property.property_type || null)
     .filter((type, index, array) => array.indexOf(type) === index); // Supprimer les doublons
-  
+
   // Séparer les types valides et les valeurs nulles/undefined/vides
   const validTypes = types
-    .filter((type): type is string => type !== null && type !== undefined && type !== '')
+    .filter(
+      (type): type is string =>
+        type !== null && type !== undefined && type !== ''
+    )
     .sort(); // Trier alphabétiquement
-  
-  const hasNullTypes = types.some(type => type === null || type === undefined || type === '');
-  
+
+  const hasNullTypes = types.some(
+    type => type === null || type === undefined || type === ''
+  );
+
   // Ajouter "Non renseigné" si il y a des propriétés sans type
   const result = [...validTypes];
   if (hasNullTypes) {
     result.push('Non renseigné');
   }
-  
+
   return result;
 });
-
 
 // Computed pour les favoris filtrés
 const filteredFavorites = computed(() => {
   let filtered = favorites.value;
-  
+
   // Filtre par ville
   if (selectedCity.value) {
-    filtered = filtered.filter(property => 
-      (property.city || null) === selectedCity.value
+    filtered = filtered.filter(
+      property => (property.city || null) === selectedCity.value
     );
   }
-  
+
   // Filtre par type de propriété
   if (selectedPropertyType.value) {
     if (selectedPropertyType.value === 'Non renseigné') {
       // Filtrer les propriétés sans type (null, undefined, ou chaîne vide)
-      filtered = filtered.filter(property => 
-        !property.property_type || property.property_type === ''
+      filtered = filtered.filter(
+        property => !property.property_type || property.property_type === ''
       );
     } else {
       // Filtrer par type de propriété spécifique
-      filtered = filtered.filter(property => 
-        property.property_type === selectedPropertyType.value
+      filtered = filtered.filter(
+        property => property.property_type === selectedPropertyType.value
       );
     }
   }
-  
+
   return filtered;
 });
-
 
 const formatPrice = (price: number | undefined) => {
   if (!price) return 'Non renseigné';
   return new Intl.NumberFormat('fr-FR', {
     style: 'currency',
     currency: 'EUR',
-    maximumFractionDigits: 0
+    maximumFractionDigits: 0,
   }).format(price);
 };
 
 const toggleFavorite = async (propertyData: any) => {
   try {
-    const newFavoriteState = await store.toggleFavorite(propertyData.id_fantoir_long);
+    const newFavoriteState = await store.toggleFavorite(
+      propertyData.id_fantoir_long
+    );
     ElMessage({
-      message: newFavoriteState 
-        ? 'Propriété ajoutée aux favoris' 
+      message: newFavoriteState
+        ? 'Propriété ajoutée aux favoris'
         : 'Propriété retirée des favoris',
       type: newFavoriteState ? 'success' : 'info',
       duration: 2000,
@@ -243,9 +268,10 @@ const clearFilters = () => {
 const createReminderForProperty = (property: any) => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
-  
-  const propertyAddress = `${property.numero || ''} ${property.nom_voie || ''}`.trim();
-  
+
+  const propertyAddress =
+    `${property.numero || ''} ${property.nom_voie || ''}`.trim();
+
   remindersStore.addReminder({
     title: `Rappel - ${propertyAddress || 'Propriété'}`,
     description: 'Rappel rapide depuis les favoris',
@@ -256,7 +282,7 @@ const createReminderForProperty = (property: any) => {
     property_id: property.id || 0,
     completed: false,
   });
-  
+
   ElMessage({
     message: 'Rappel créé avec succès !',
     type: 'success',
@@ -302,7 +328,8 @@ const setCardView = () => {
   gap: 12px;
 }
 
-.city-filter, .type-filter {
+.city-filter,
+.type-filter {
   display: flex;
   align-items: center;
 }
@@ -362,7 +389,9 @@ const setCardView = () => {
 .grid-icon {
   font-size: 20px;
   color: #909399;
-  transition: color 0.3s, transform 0.3s;
+  transition:
+    color 0.3s,
+    transform 0.3s;
 }
 
 .databoard-icon:hover,

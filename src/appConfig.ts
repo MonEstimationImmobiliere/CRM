@@ -1,28 +1,28 @@
-import { EnvType, SwitchType } from "types/app"
+import { EnvType, SwitchType } from 'types/app';
 
 /**
  * app
  */
-export const appTitle = 'boiler plate'
+export const appTitle = 'boiler plate';
 
 /**
- * mock api：on，off  
+ * mock api：on，off
  */
-export const mock: SwitchType = 'on'
+export const mock: SwitchType = 'on';
 
 /**
  * mock namespace，url
  */
-export const mockNamespace: boolean = true
+export const mockNamespace: boolean = true;
 
 /**
  * mock
  * appConfig mock ‘on’mock
  */
-export const mockEnv: EnvType[] = ['development', 'staging', 'production']
+export const mockEnv: EnvType[] = ['development', 'staging', 'production'];
 
 /**
- * 
+ *
  */
 export enum transitions {
   fade = 'fade',

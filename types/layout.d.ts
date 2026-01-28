@@ -1,11 +1,11 @@
 export namespace Layout {
   interface SidebarRelated {
-    collapsed: boolean,
-    width: string,
-    collapsedWidth: string
+    collapsed: boolean;
+    width: string;
+    collapsedWidth: string;
   }
   interface Loading {
-    logout: boolean
+    logout: boolean;
   }
-  type keepAlivePages = Set<string>
+  type keepAlivePages = Set<string>;
 }

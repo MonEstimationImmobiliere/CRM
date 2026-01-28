@@ -1,16 +1,32 @@
 /* Utilitaires CSS Apple-inspired */
 
 /* Espacements */
-.p-apple { padding: var(--apple-spacing); }
-.p-apple-sm { padding: calc(var(--apple-spacing) / 2); }
-.p-apple-lg { padding: calc(var(--apple-spacing) * 2); }
-.m-apple { margin: var(--apple-spacing); }
-.m-apple-sm { margin: calc(var(--apple-spacing) / 2); }
-.m-apple-lg { margin: calc(var(--apple-spacing) * 2); }
+.p-apple {
+  padding: var(--apple-spacing);
+}
+.p-apple-sm {
+  padding: calc(var(--apple-spacing) / 2);
+}
+.p-apple-lg {
+  padding: calc(var(--apple-spacing) * 2);
+}
+.m-apple {
+  margin: var(--apple-spacing);
+}
+.m-apple-sm {
+  margin: calc(var(--apple-spacing) / 2);
+}
+.m-apple-lg {
+  margin: calc(var(--apple-spacing) * 2);
+}
 
 /* Bordures arrondies */
-.rounded-apple { border-radius: var(--apple-radius); }
-.rounded-apple-sm { border-radius: var(--apple-radius-small); }
+.rounded-apple {
+  border-radius: var(--apple-radius);
+}
+.rounded-apple-sm {
+  border-radius: var(--apple-radius-small);
+}
 
 /* Effets de verre */
 .glass {
@@ -220,11 +236,21 @@
 }
 
 /* Délais d'animation échelonnés */
-.delay-100 { animation-delay: 0.1s; }
-.delay-200 { animation-delay: 0.2s; }
-.delay-300 { animation-delay: 0.3s; }
-.delay-400 { animation-delay: 0.4s; }
-.delay-500 { animation-delay: 0.5s; }
+.delay-100 {
+  animation-delay: 0.1s;
+}
+.delay-200 {
+  animation-delay: 0.2s;
+}
+.delay-300 {
+  animation-delay: 0.3s;
+}
+.delay-400 {
+  animation-delay: 0.4s;
+}
+.delay-500 {
+  animation-delay: 0.5s;
+}
 
 /* Responsive helpers */
 @media (max-width: 768px) {
@@ -233,16 +259,16 @@
   .grid-apple-4 {
     grid-template-columns: 1fr;
   }
-  
+
   .flex-apple-between {
     flex-direction: column;
     align-items: stretch;
   }
-  
+
   .text-apple-title {
     font-size: 1.5rem;
   }
-  
+
   .text-apple-subtitle {
     font-size: 1.125rem;
   }
@@ -263,20 +289,34 @@
 }
 
 @keyframes shimmer {
-  0% { background-position: -200% 0; }
-  100% { background-position: 200% 0; }
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
 }
 
 /* Dividers Apple */
 .divider-apple {
   height: 1px;
-  background: linear-gradient(90deg, transparent, var(--apple-border), transparent);
+  background: linear-gradient(
+    90deg,
+    transparent,
+    var(--apple-border),
+    transparent
+  );
   margin: var(--apple-spacing) 0;
 }
 
 .divider-apple-vertical {
   width: 1px;
-  background: linear-gradient(180deg, transparent, var(--apple-border), transparent);
+  background: linear-gradient(
+    180deg,
+    transparent,
+    var(--apple-border),
+    transparent
+  );
   margin: 0 var(--apple-spacing);
 }
 

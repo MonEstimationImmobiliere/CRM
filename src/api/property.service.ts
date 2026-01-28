@@ -1,16 +1,18 @@
 import apiService from '@/api/apiRequests';
 import type { PropertyData, IProperty, PropertyList } from '@/types/property';
-import type { IAddressGrouped, IAddressDetail, AddressGroupedList, AddressDetailList } from '@/types/address';
-
-
-
-
+import type {
+  IAddressGrouped,
+  IAddressDetail,
+  AddressGroupedList,
+  AddressDetailList,
+} from '@/types/address';
 
 export const PropertyService = {
-
   async getPropertyById(idFantoir: string): Promise<PropertyData> {
     try {
-      const { data } = await apiService.get<PropertyData>(`/property/show/${encodeURIComponent(idFantoir)}`);
+      const { data } = await apiService.get<PropertyData>(
+        `/property/show/${encodeURIComponent(idFantoir)}`
+      );
       return data;
     } catch (error) {
       console.error('Error fetching property details:', error);
@@ -20,7 +22,10 @@ export const PropertyService = {
 
   async createProperty(property: PropertyData): Promise<PropertyData> {
     try {
-      const response = await apiService.post<PropertyData>(`/property/create`, property);
+      const response = await apiService.post<PropertyData>(
+        `/property/create`,
+        property
+      );
       return response.data;
     } catch (error) {
       console.error('Error creating property:', error);
@@ -28,9 +33,15 @@ export const PropertyService = {
     }
   },
 
-  async updateProperty(propertyId: number, property: PropertyData): Promise<PropertyData> {
+  async updateProperty(
+    propertyId: number,
+    property: PropertyData
+  ): Promise<PropertyData> {
     try {
-      const response = await apiService.post<{ property: PropertyData }>(`/property/update/${encodeURIComponent(propertyId)}`, property);
+      const response = await apiService.post<{ property: PropertyData }>(
+        `/property/update/${encodeURIComponent(propertyId)}`,
+        property
+      );
       return response.data.property;
     } catch (error) {
       console.error('Error updating property:', error);
@@ -40,18 +51,20 @@ export const PropertyService = {
 
   async deleteProperty(propertyId: number): Promise<void> {
     try {
-      await apiService.delete<void>(`/property/delete/${encodeURIComponent(propertyId)}`);
+      await apiService.delete<void>(
+        `/property/delete/${encodeURIComponent(propertyId)}`
+      );
     } catch (error) {
       console.error('Error deleting property:', error);
       throw error;
     }
   },
 
-
-
   async getAddressesByCodeInsee(codeInsee: string): Promise<IAddressDetail[]> {
     try {
-      const response = await apiService.get<IAddressDetail[]>(`/address-city/${encodeURIComponent(codeInsee)}`);
+      const response = await apiService.get<IAddressDetail[]>(
+        `/address-city/${encodeURIComponent(codeInsee)}`
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching code insee:', error);
@@ -59,9 +72,13 @@ export const PropertyService = {
     }
   },
 
-  async getAddressesGroupedByCodeInsee(codeInsee: string): Promise<AddressGroupedList> {
+  async getAddressesGroupedByCodeInsee(
+    codeInsee: string
+  ): Promise<AddressGroupedList> {
     try {
-      const response = await apiService.get<AddressGroupedList>(`/address-city-grouped/${encodeURIComponent(codeInsee)}`);
+      const response = await apiService.get<AddressGroupedList>(
+        `/address-city-grouped/${encodeURIComponent(codeInsee)}`
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching code insee:', error);
@@ -69,9 +86,14 @@ export const PropertyService = {
     }
   },
 
-  async getAddressesByFantoir(idFantoir: string, type: string): Promise<AddressDetailList> {
+  async getAddressesByFantoir(
+    idFantoir: string,
+    type: string
+  ): Promise<AddressDetailList> {
     try {
-      const response = await apiService.get<AddressDetailList>(`/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`);
+      const response = await apiService.get<AddressDetailList>(
+        `/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`
+      );
       return response.data;
     } catch (error) {
       console.error('Error fetching addresses:', error);
@@ -79,7 +101,11 @@ export const PropertyService = {
     }
   },
 
-  async getAddressesByNumero(idFantoir: string, numero: string, rep?: string): Promise<IAddressDetail[]> {
+  async getAddressesByNumero(
+    idFantoir: string,
+    numero: string,
+    rep?: string
+  ): Promise<IAddressDetail[]> {
     try {
       const url = rep
         ? `/address-number/${encodeURIComponent(idFantoir)}/${encodeURIComponent(numero)}/${encodeURIComponent(rep)}`
@@ -88,7 +114,7 @@ export const PropertyService = {
       const response = await apiService.get<IAddressDetail[]>(url);
       return response.data;
     } catch (error) {
-      console.error("Error fetching addresses by numero:", error);
+      console.error('Error fetching addresses by numero:', error);
       throw error;
     }
   },
@@ -96,7 +122,9 @@ export const PropertyService = {
   // Gestion des favoris
   async removeFromFavorites(propertyId: string): Promise<void> {
     try {
-      await apiService.delete(`/property/${encodeURIComponent(propertyId)}/favorite`);
+      await apiService.delete(
+        `/property/${encodeURIComponent(propertyId)}/favorite`
+      );
     } catch (error) {
       console.error('Error removing property from favorites:', error);
       throw error;
@@ -119,7 +147,7 @@ export const PropertyService = {
       const response = await apiService.post<PropertyData>(`/property/create`, {
         ...property,
         is_custom: true,
-        id_fantoir: property.id_fantoir || ''
+        id_fantoir: property.id_fantoir || '',
       });
       return response.data;
     } catch (error) {
@@ -127,5 +155,4 @@ export const PropertyService = {
       throw error;
     }
   },
-
 };

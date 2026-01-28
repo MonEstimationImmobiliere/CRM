@@ -1,4 +1,4 @@
-import type { Id } from "./common";
+import type { Id } from './common';
 
 export interface IUser {
   id: number;
@@ -32,29 +32,29 @@ export interface IUserAccessRole {
 }
 
 export enum EUserApplication {
-  AndroidApp = "AndroidApp",
-  WindowsApp = "WindowsApp",
-  Dashboard = "Dashboard",
-  XamarinApp = "XamarinApp",
-  eECFWindowsApp = "eECFWindowsApp",
-  DashboardEECF = "DashboardEECF",
-  Other = "Other"
+  AndroidApp = 'AndroidApp',
+  WindowsApp = 'WindowsApp',
+  Dashboard = 'Dashboard',
+  XamarinApp = 'XamarinApp',
+  eECFWindowsApp = 'eECFWindowsApp',
+  DashboardEECF = 'DashboardEECF',
+  Other = 'Other',
 }
 
 export enum EUserGlobalRole {
-  Admin = "Admin",
-  CompanyUser = "CompanyUser",
-  Accountant = "Accountant"
+  Admin = 'Admin',
+  CompanyUser = 'CompanyUser',
+  Accountant = 'Accountant',
 }
 
 export enum EUserAccessRole {
-  Owner = "Owner",
-  Admin = "Admin",
-  Employee = "Employee",
-  VigileAdmin = "VigileAdmin",
-  Vigile = "Vigile",
-  CustomerService= "CustomerService",
-  DematITAdmin = "DematITAdmin"
+  Owner = 'Owner',
+  Admin = 'Admin',
+  Employee = 'Employee',
+  VigileAdmin = 'VigileAdmin',
+  Vigile = 'Vigile',
+  CustomerService = 'CustomerService',
+  DematITAdmin = 'DematITAdmin',
 }
 
 export interface IUserLastAppVersions {
@@ -77,7 +77,7 @@ export interface IUsersFilters {
   page: number;
   limit: number;
   term?: string;
-  orderBy?: "lastAccess" | "new";
+  orderBy?: 'lastAccess' | 'new';
 }
 
 export interface IUserUpdateHistoryNote {
@@ -93,4 +93,3 @@ export interface IUserAccessRoleOption {
   label: string;
   value: EUserAccessRole;
 }
-

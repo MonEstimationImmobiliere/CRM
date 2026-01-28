@@ -18,7 +18,7 @@ export class LocalStorage {
         timestamp: Date.now(),
         expiry: options?.expiry ? Date.now() + options.expiry : null,
       };
-      
+
       localStorage.setItem(key, JSON.stringify(item));
       return true;
     } catch (error) {
@@ -36,7 +36,7 @@ export class LocalStorage {
       if (!item) return null;
 
       const parsed = JSON.parse(item);
-      
+
       // Check if item has expired
       if (parsed.expiry && Date.now() > parsed.expiry) {
         localStorage.removeItem(key);

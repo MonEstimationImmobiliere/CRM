@@ -1,12 +1,12 @@
 <template>
   <section class="mapContainer">
     <!-- Sidebar Component -->
-    <SideBarMapView 
+    <SideBarMapView
       @mode-change="handleModeChange"
       @sidebar-toggle="handleSidebarToggle"
-      :addresses="(addresses as any)"
+      :addresses="addresses as any"
     />
-    
+
     <!-- Map -->
     <div class="map-wrapper">
       <div id="map" class="map"></div>
@@ -15,31 +15,34 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, nextTick, ref, computed, onUnmounted } from "vue";
-import maplibregl from "maplibre-gl";
-import "maplibre-gl/dist/maplibre-gl.css";
-import { useDashboardStore } from "@/stores/dashboard";
-import { useRemindersStore } from "@/stores/reminders";
-import SideBarMapView from "./SideBarMapView.vue";
+import { onMounted, watch, nextTick, ref, computed, onUnmounted } from 'vue';
+import maplibregl from 'maplibre-gl';
+import 'maplibre-gl/dist/maplibre-gl.css';
+import { useDashboardStore } from '@/stores/dashboard';
+import { useRemindersStore } from '@/stores/reminders';
+import SideBarMapView from './SideBarMapView.vue';
 
 /* -------------------------------------
    PROPS & EMITS
 ------------------------------------- */
 import type { IAddressDetail, IAddressGrouped } from '@/types/address';
 
-type Address = IAddressDetail | IAddressGrouped | {
-  lat: string | number;
-  lon: string | number;
-  numero?: string;
-  rep?: string;
-  nom_voie?: string;
-  code_postal?: string;
-  nom_commune?: string;
-  id_fantoir?: string;
-  id_fantoir_long?: string;
-  total_adresses?: number;
-  [key: string]: any;
-};
+type Address =
+  | IAddressDetail
+  | IAddressGrouped
+  | {
+      lat: string | number;
+      lon: string | number;
+      numero?: string;
+      rep?: string;
+      nom_voie?: string;
+      code_postal?: string;
+      nom_commune?: string;
+      id_fantoir?: string;
+      id_fantoir_long?: string;
+      total_adresses?: number;
+      [key: string]: any;
+    };
 
 interface CityCenter {
   lat: number;
@@ -62,7 +65,6 @@ const emit = defineEmits<{
   (e: 'edit-property', property: Address): void;
 }>();
 
-
 const dashboard = useDashboardStore();
 const remindersStore = useRemindersStore();
 console.log('📍 MapView store addresses:', dashboard.addresses);
@@ -82,16 +84,19 @@ const COLORS = {
   rappel: '#06b6d4',
   favoris: '#f97316',
   dpe: '#10b981',
-  none: '#d1d5db'
+  none: '#d1d5db',
 };
 
 // Computed: Set des property_id ayant un rappel
 const reminderPropertyIds = computed(() => {
-  const allReminders = [...remindersStore.reminders, ...remindersStore.agencyReminders];
+  const allReminders = [
+    ...remindersStore.reminders,
+    ...remindersStore.agencyReminders,
+  ];
   return new Set(allReminders.map(r => r.property_id));
 });
 
-const MAPTILER_KEY = "qnb10ErHP2vBlMq3fo5B";
+const MAPTILER_KEY = 'qnb10ErHP2vBlMq3fo5B';
 const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
 /* -------------------------------------
@@ -113,34 +118,36 @@ function handleSidebarToggle(open: boolean) {
 function getPointColor(address: Address, mode: string): string {
   // Cast to any for dynamic property access since Address can be multiple types
   const addr = address as any;
-  
+
   switch (mode) {
     case 'prospection':
       // Prospection: basé sur la présence de données CRM
-      const hasProspectionData = addr.date_maj !== null || 
-                                  (addr.nombre_ventes && addr.nombre_ventes > 0) || 
-                                  (addr.nombre_estimations && addr.nombre_estimations > 0);
+      const hasProspectionData =
+        addr.date_maj !== null ||
+        (addr.nombre_ventes && addr.nombre_ventes > 0) ||
+        (addr.nombre_estimations && addr.nombre_estimations > 0);
       return hasProspectionData ? COLORS.prospection : COLORS.none;
-    
+
     case 'estimation':
       // Estimation: basé sur dernier_prix_estime
-      return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0 
-        ? COLORS.estimation 
+      return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
+        ? COLORS.estimation
         : COLORS.none;
-    
+
     case 'rappel':
       // Rappel: vérifie si l'adresse a un rappel dans le store reminders
-      const hasReminder = addr.id !== null && reminderPropertyIds.value.has(addr.id);
+      const hasReminder =
+        addr.id !== null && reminderPropertyIds.value.has(addr.id);
       return hasReminder ? COLORS.rappel : COLORS.none;
-    
+
     case 'favoris':
       // Favoris: basé sur address.favorite === 'true'
       return addr.favorite === 'true' ? COLORS.favoris : COLORS.none;
-    
+
     case 'dpe':
       // DPE: logique à compléter selon les données disponibles
       return COLORS.none;
-    
+
     default:
       return COLORS.none;
   }
@@ -154,39 +161,39 @@ onMounted(async () => {
   await remindersStore.loadReminders();
 
   map = new maplibregl.Map({
-    container: "map",
+    container: 'map',
     style: STYLE,
     center: [2.35, 48.85],
-    zoom: 13
+    zoom: 13,
   });
 
   map.addControl(new maplibregl.NavigationControl());
 
-  map.on("load", () => {
+  map.on('load', () => {
     mapLoaded = true;
 
     // Source DVF (points)
-    map!.addSource("dvf_points", {
-      type: "geojson",
-      data: emptyGeoJSON()
+    map!.addSource('dvf_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
     });
 
     // Layer points avec couleur dynamique
     map!.addLayer({
-      id: "dvf-dots",
-      type: "circle",
-      source: "dvf_points",
+      id: 'dvf-dots',
+      type: 'circle',
+      source: 'dvf_points',
       paint: {
-        "circle-radius": 7,
-        "circle-color": COLORS.none,
-        "circle-stroke-width": 2,
-        "circle-stroke-color": "#ffffff"
-      }
+        'circle-radius': 7,
+        'circle-color': COLORS.none,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
     });
 
     setupWatchers();
     setupPopupClick();
-    
+
     // Appliquer les couleurs initiales
     updatePointsWithColors();
   });
@@ -196,11 +203,11 @@ onMounted(async () => {
    CLICK POPUP (3 modes : ville / rue / numéro)
 ------------------------------------- */
 function setupPopupClick() {
-  map!.on("click", "dvf-dots", (e) => {
+  map!.on('click', 'dvf-dots', e => {
     const f = e.features?.[0];
     if (!f) return;
     const p = f.properties;
-    
+
     // Get coordinates safely
     const geom = f.geometry as GeoJSON.Point;
     const coords = geom.coordinates;
@@ -219,23 +226,25 @@ function setupPopupClick() {
       showPopup(f, html);
 
       setTimeout(() => {
-        document.getElementById("map-view-street")?.addEventListener("click", (ev) => {
-          ev.preventDefault();
+        document
+          .getElementById('map-view-street')
+          ?.addEventListener('click', ev => {
+            ev.preventDefault();
 
-          dashboard.selectedStreet = {
-            value: p.nom_voie,
-            idFantoir: p.id_fantoir
-          };
+            dashboard.selectedStreet = {
+              value: p.nom_voie,
+              idFantoir: p.id_fantoir,
+            };
 
-          dashboard.selectedCodeIdFantoir = p.id_fantoir;
-          dashboard.selectedNumero = "";
-          dashboard.selectedRep = "";
-          dashboard.selectedNumeroFull = null;
+            dashboard.selectedCodeIdFantoir = p.id_fantoir;
+            dashboard.selectedNumero = '';
+            dashboard.selectedRep = '';
+            dashboard.selectedNumeroFull = null;
 
-          dashboard.querySearchAddress();
+            dashboard.querySearchAddress();
 
-          flyTo(coords[0], coords[1], 16);
-        });
+            flyTo(coords[0], coords[1], 16);
+          });
       }, 50);
 
       return;
@@ -256,21 +265,23 @@ function setupPopupClick() {
       showPopup(f, html);
 
       setTimeout(() => {
-        document.getElementById("map-view-num")?.addEventListener("click", (ev) => {
-          ev.preventDefault();
+        document
+          .getElementById('map-view-num')
+          ?.addEventListener('click', ev => {
+            ev.preventDefault();
 
-          dashboard.selectedNumeroFull = {
-            numero: p.numero,
-            rep: p.rep || "",
-            value: p.rep ? `${p.numero} ${p.rep}` : `${p.numero}`
-          };
+            dashboard.selectedNumeroFull = {
+              numero: p.numero,
+              rep: p.rep || '',
+              value: p.rep ? `${p.numero} ${p.rep}` : `${p.numero}`,
+            };
 
-          dashboard.selectedNumero = p.numero;
-          dashboard.selectedRep = p.rep || "";
-          dashboard.querySearchAddress();
+            dashboard.selectedNumero = p.numero;
+            dashboard.selectedRep = p.rep || '';
+            dashboard.querySearchAddress();
 
-          flyTo(coords[0], coords[1], 19);
-        });
+            flyTo(coords[0], coords[1], 19);
+          });
       }, 50);
 
       return;
@@ -281,7 +292,7 @@ function setupPopupClick() {
     ---------------------------------- */
     if (props.addresses.length === 1) {
       const html = `
-        <b>${p.numero || ""} ${p.rep || ""} ${p.nom_voie}</b><br>
+        <b>${p.numero || ''} ${p.rep || ''} ${p.nom_voie}</b><br>
         ${p.code_postal} ${p.nom_commune}<br><br>
         <a href="#" id="map-open-property">Ouvrir la fiche</a>
       `;
@@ -289,14 +300,16 @@ function setupPopupClick() {
       showPopup(f, html);
 
       setTimeout(() => {
-        document.getElementById("map-open-property")?.addEventListener("click", (ev) => {
-          ev.preventDefault();
+        document
+          .getElementById('map-open-property')
+          ?.addEventListener('click', ev => {
+            ev.preventDefault();
 
-          const property = props.addresses[0];
+            const property = props.addresses[0];
 
-          // Émettre l'événement via l'emit au lieu du CustomEvent
-          emit('edit-property', property);
-        });
+            // Émettre l'événement via l'emit au lieu du CustomEvent
+            emit('edit-property', property);
+          });
       }, 50);
 
       return;
@@ -327,15 +340,15 @@ function updatePoints() {
   const features = props.addresses
     .filter(a => a.lat && a.lon)
     .map(a => ({
-      type: "Feature",
+      type: 'Feature',
       geometry: {
-        type: "Point",
-        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))]
+        type: 'Point',
+        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
       },
-      properties: { ...a }
+      properties: { ...a },
     }));
 
-  setSourceData("dvf_points", features);
+  setSourceData('dvf_points', features);
 }
 
 /**
@@ -345,10 +358,10 @@ function updatePointsWithColors() {
   if (!mapLoaded || !map) return;
 
   const mode = currentMode.value;
-  
+
   // Construire l'expression de couleur match pour chaque point
   const colorExpression: any[] = ['match', ['get', 'id_fantoir_long']];
-  
+
   for (const address of props.addresses) {
     const addr = address as any;
     const id = addr.id_fantoir_long || addr.id_fantoir;
@@ -357,10 +370,10 @@ function updatePointsWithColors() {
       colorExpression.push(id, color);
     }
   }
-  
+
   // Couleur par défaut (fallback)
   colorExpression.push(COLORS.none);
-  
+
   // Appliquer l'expression de couleur au layer
   try {
     map.setPaintProperty('dvf-dots', 'circle-color', colorExpression);
@@ -413,20 +426,22 @@ function flyTo(lon: number | string, lat: number | string, zoom: number) {
   map!.flyTo({
     center: [parseFloat(String(lon)), parseFloat(String(lat))],
     zoom,
-    speed: 1.1
+    speed: 1.1,
   });
 }
 
 function emptyGeoJSON(): GeoJSON.FeatureCollection {
-  return { type: "FeatureCollection" as const, features: [] };
+  return { type: 'FeatureCollection' as const, features: [] };
 }
 
 function setSourceData(sourceName: string, features: any[]) {
-  const src = map!.getSource(sourceName) as maplibregl.GeoJSONSource | undefined;
+  const src = map!.getSource(sourceName) as
+    | maplibregl.GeoJSONSource
+    | undefined;
   if (src) {
     src.setData({
-      type: "FeatureCollection",
-      features
+      type: 'FeatureCollection',
+      features,
     });
   }
 }
@@ -435,7 +450,6 @@ function setSourceData(sourceName: string, features: any[]) {
    WATCHERS (sync carte <-> dashboard)
 ------------------------------------- */
 
-
 function closePopup() {
   if (currentPopup) {
     currentPopup.remove();
@@ -443,41 +457,60 @@ function closePopup() {
   }
 }
 
-
 function setupWatchers() {
   // Watcher sur les props.addresses
-  watch(() => props.addresses, () => {
-    updatePoints();
-    updatePointsWithColors();
-    recenterMap();
-  }, { deep: true, immediate: true });
+  watch(
+    () => props.addresses,
+    () => {
+      updatePoints();
+      updatePointsWithColors();
+      recenterMap();
+    },
+    { deep: true, immediate: true }
+  );
 
   // Watcher sur props.cityCenter
-  watch(() => props.cityCenter, () => {
-    recenterMap();
-  });
+  watch(
+    () => props.cityCenter,
+    () => {
+      recenterMap();
+    }
+  );
 
   // Watcher sur les reminders pour mettre à jour les couleurs en mode rappel
-  watch(() => [remindersStore.reminders, remindersStore.agencyReminders], () => {
-    if (currentMode.value === 'rappel') {
-      updatePointsWithColors();
+  watch(
+    () => [remindersStore.reminders, remindersStore.agencyReminders],
+    () => {
+      if (currentMode.value === 'rappel') {
+        updatePointsWithColors();
+      }
+    },
+    { deep: true }
+  );
+
+  watch(
+    () => dashboard.selectedStreet,
+    () => {
+      closePopup();
+      recenterMap();
     }
-  }, { deep: true });
+  );
 
-watch(() => dashboard.selectedStreet, () => {
-  closePopup();
-  recenterMap();
-});
+  watch(
+    () => dashboard.selectedNumeroFull,
+    () => {
+      closePopup();
+      recenterMap();
+    }
+  );
 
-watch(() => dashboard.selectedNumeroFull, () => {
-  closePopup();
-  recenterMap();
-});
-
-watch(() => dashboard.selectedCity, () => {
-  closePopup();
-  recenterMap();
-});
+  watch(
+    () => dashboard.selectedCity,
+    () => {
+      closePopup();
+      recenterMap();
+    }
+  );
 }
 </script>
 

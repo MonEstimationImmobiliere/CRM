@@ -6,109 +6,115 @@
 @import url('./_apple-utilities.css');
 
 * {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
 }
 
 body {
-    color: var(--apple-text-primary);
-    font-size: 14px;
-    font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue', Arial, sans-serif;
-    font-weight: 400;
-    line-height: 1.6;
-    background: linear-gradient(135deg, var(--apple-bg-primary) 0%, var(--apple-bg-secondary) 100%);
-    min-height: 100vh;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    overflow-x: hidden;
+  color: var(--apple-text-primary);
+  font-size: 14px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto,
+    'Helvetica Neue', Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  background: linear-gradient(
+    135deg,
+    var(--apple-bg-primary) 0%,
+    var(--apple-bg-secondary) 100%
+  );
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
 }
 
 #app {
-    width: 100vw;
-    height: 100vh;
-    display: flex;
-    flex-direction: column;
+  width: 100vw;
+  height: 100vh;
+  display: flex;
+  flex-direction: column;
 }
 
 a,
 a:focus,
 a:hover {
-    cursor: pointer;
-    color: var(--apple-accent);
-    text-decoration: none;
-    transition: var(--apple-transition);
+  cursor: pointer;
+  color: var(--apple-accent);
+  text-decoration: none;
+  transition: var(--apple-transition);
 }
 
 a:hover {
-    opacity: 0.8;
+  opacity: 0.8;
 }
 
 .block {
-    background: var(--apple-card-bg);
-    backdrop-filter: var(--backdrop-blur);
-    -webkit-backdrop-filter: var(--backdrop-blur);
-    border: 1px solid var(--apple-border);
-    border-radius: var(--apple-radius);
-    padding: var(--apple-spacing);
-    box-shadow: var(--apple-shadow);
-    transition: var(--apple-transition);
-    margin: calc(var(--apple-spacing) / 2);
+  background: var(--apple-card-bg);
+  backdrop-filter: var(--backdrop-blur);
+  -webkit-backdrop-filter: var(--backdrop-blur);
+  border: 1px solid var(--apple-border);
+  border-radius: var(--apple-radius);
+  padding: var(--apple-spacing);
+  box-shadow: var(--apple-shadow);
+  transition: var(--apple-transition);
+  margin: calc(var(--apple-spacing) / 2);
 }
 
 .block:hover {
-    box-shadow: var(--apple-shadow-hover);
-    transform: translateY(-2px);
+  box-shadow: var(--apple-shadow-hover);
+  transform: translateY(-2px);
 }
 
 .flex-center {
-    display: flex;
-    justify-content: center;
-    align-items: center;
+  display: flex;
+  justify-content: center;
+  align-items: center;
 }
 
 .border {
-    border: 1px solid var(--apple-border);
+  border: 1px solid var(--apple-border);
 }
 
 .shadow-sm {
-    box-shadow: 0.1rem 0.2rem 0.2rem rgba(0, 0, 0, .1);
+  box-shadow: 0.1rem 0.2rem 0.2rem rgba(0, 0, 0, 0.1);
 }
 
 .shadow {
-    box-shadow: 0.3rem 0.6rem 0.78rem rgba(0, 0, 0, .08);
+  box-shadow: 0.3rem 0.6rem 0.78rem rgba(0, 0, 0, 0.08);
 }
 
 .shadow-lg {
-    box-shadow: 0.5rem 1rem 1.28rem rgba(0, 0, 0, .05);
+  box-shadow: 0.5rem 1rem 1.28rem rgba(0, 0, 0, 0.05);
 }
 
 @media screen and (min-width: 2201px) {
-    html {
-        font-size: 18px;
-    }
+  html {
+    font-size: 18px;
+  }
 }
 
 @media screen and (max-width: 2200px) {
-    html {
-        font-size: 17px;
-    }
+  html {
+    font-size: 17px;
+  }
 }
 
 @media screen and (max-width: 1900px) {
-    html {
-        font-size: 16px;
-    }
+  html {
+    font-size: 16px;
+  }
 }
 
 @media screen and (max-width: 1600px) {
-    html {
-        font-size: 15px;
-    }
+  html {
+    font-size: 15px;
+  }
 }
 
 @media screen and (max-width: 1300px) {
-    html {
-        font-size: 14px;
-    }
+  html {
+    font-size: 14px;
+  }
 }

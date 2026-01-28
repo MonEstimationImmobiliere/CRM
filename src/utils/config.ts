@@ -6,11 +6,10 @@ import { AxiosInstance } from 'axios';
 const baseURL = 'insérer url de lapi ici';
 
 export const getAPI = (): AxiosInstance => {
-    // const headers: { [key: string]: string } = {};
+  // const headers: { [key: string]: string } = {};
 
-    return axios.create({
-        baseURL,
-        // headers,
-    });
+  return axios.create({
+    baseURL,
+    // headers,
+  });
 };
-
