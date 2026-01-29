@@ -63,7 +63,11 @@
                 </el-icon>
               </div>
 
-              <div class="grid-container" @click="setCardView">
+              <div
+                class="grid-container"
+                @click="setCardView"
+                :class="{ disabled: isCityOnly }"
+              >
                 <el-icon
                   class="grid-icon"
                   :class="{ active: viewType === 'card' }"
@@ -89,7 +93,8 @@
       <PropertyTable
         v-if="viewType === 'table' && addresses.length > 0"
         :addresses="addresses"
-        @edit-property="openPropertyDialog"
+        :city-only="isCityOnly"
+        @edit-property="handleEditProperty"
         @select-street="handleGroupedStreetClick"
         @select-numero="handleTableNumeroClick"
       />
@@ -110,7 +115,7 @@
       />
 
       <PropertyForm />
-      <CustomPropertyDialog />
+      <CreateCustomPropertyDialog />
     </div>
   </section>
 </template>
@@ -127,13 +132,14 @@ import { usePropertyStore } from '@/stores/propertyHome';
 import { useDashboardStore } from '@/stores/dashboard';
 
 // Components
-import CityAutocomplete from './DashboardComponents/CityAutocomplete.vue';
-import StreetAutocomplete from './DashboardComponents/StreetAutocomplete.vue';
-import NumeroAutocomplete from './DashboardComponents/NumeroAutocomplete.vue';
+import CityAutocomplete from './DashboardComponents/Input/CityAutocomplete.vue';
+import StreetAutocomplete from './DashboardComponents/Input/StreetAutocomplete.vue';
+import NumeroAutocomplete from './DashboardComponents/Input/NumeroAutocomplete.vue';
 import PropertyTable from './DashboardComponents/PropertyTable.vue';
 import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog.vue';
-import CustomPropertyDialog from './DashboardComponents/CustomPropertyDialog.vue';
+import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
+import PropertyDialog from './DashboardComponents/PropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
 
 /* ------------------------------------
@@ -163,6 +169,10 @@ watch(
     // Empêcher exécution si c'est juste une sélection identique
     if (newVal !== oldVal) {
       dashboardStore.querySearchAddress();
+      // Si on vide la rue et qu'on est en mode card, revenir en mode table
+      if (!newVal && dashboardStore.viewType === 'card') {
+        dashboardStore.viewType = 'table';
+      }
     }
   }
 );
@@ -259,6 +269,15 @@ const viewType = computed({
 
 // --- Résultats des adresses ---
 const addresses = computed(() => dashboardStore.addresses);
+
+// --- Vérifier si seulement la ville est sélectionnée (pas de rue ni numéro) ---
+const isCityOnly = computed(() => {
+  return (
+    dashboardStore.selectedCity !== null &&
+    !dashboardStore.selectedStreet &&
+    !dashboardStore.selectedNumeroFull
+  );
+});
 
 /* ------------------------------------
       LIFECYCLE
@@ -389,7 +408,11 @@ const querySearchEstimation = async () => {
       VIEW SWITCH
 ------------------------------------ */
 const setTableView = () => (dashboardStore.viewType = 'table');
-const setCardView = () => (dashboardStore.viewType = 'card');
+const setCardView = () => {
+  if (!isCityOnly.value) {
+    dashboardStore.viewType = 'card';
+  }
+};
 const setMapView = () => {
   dashboardStore.viewType = 'map';
 };
@@ -397,6 +420,14 @@ const setMapView = () => {
 /* ------------------------------------
       OUVERTURE FICHE
 ------------------------------------ */
+const handleEditProperty = (property: any) => {
+  // Ne pas ouvrir la fiche si seulement la ville est sélectionnée
+  if (isCityOnly.value) {
+    return;
+  }
+  openPropertyDialog(property);
+};
+
 const openPropertyDialog = (property: any) => {
   store.selectProperty({
     ...store.defaultPropertyData,
@@ -471,5 +502,11 @@ const openPropertyDialog = (property: any) => {
 .grid-icon.active {
   color: #337ecc;
   transform: scale(1.1);
+}
+
+.grid-container.disabled {
+  opacity: 0.4;
+  cursor: not-allowed;
+  pointer-events: none;
 }
 </style>

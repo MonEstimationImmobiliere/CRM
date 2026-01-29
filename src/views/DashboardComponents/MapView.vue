@@ -15,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, watch, nextTick, ref, computed, onUnmounted } from 'vue';
+import { onMounted, watch, nextTick, ref, computed } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useDashboardStore } from '@/stores/dashboard';
@@ -62,7 +62,7 @@ const props = defineProps<{
 }>();
 
 const emit = defineEmits<{
-  (e: 'edit-property', property: Address): void;
+  'edit-property': [property: Address];
 }>();
 
 const dashboard = useDashboardStore();
@@ -120,13 +120,14 @@ function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
 
   switch (mode) {
-    case 'prospection':
+    case 'prospection': {
       // Prospection: basé sur la présence de données CRM
       const hasProspectionData =
         addr.date_maj !== null ||
         (addr.nombre_ventes && addr.nombre_ventes > 0) ||
         (addr.nombre_estimations && addr.nombre_estimations > 0);
       return hasProspectionData ? COLORS.prospection : COLORS.none;
+    }
 
     case 'estimation':
       // Estimation: basé sur dernier_prix_estime
@@ -134,11 +135,12 @@ function getPointColor(address: Address, mode: string): string {
         ? COLORS.estimation
         : COLORS.none;
 
-    case 'rappel':
+    case 'rappel': {
       // Rappel: vérifie si l'adresse a un rappel dans le store reminders
       const hasReminder =
         addr.id !== null && reminderPropertyIds.value.has(addr.id);
       return hasReminder ? COLORS.rappel : COLORS.none;
+    }
 
     case 'favoris':
       // Favoris: basé sur address.favorite === 'true'
@@ -209,7 +211,7 @@ function setupPopupClick() {
     const p = f.properties;
 
     // Get coordinates safely
-    const geom = f.geometry as GeoJSON.Point;
+    const geom = f.geometry as { type: 'Point'; coordinates: [number, number] };
     const coords = geom.coordinates;
 
     /* ---------------------------------
@@ -430,8 +432,8 @@ function flyTo(lon: number | string, lat: number | string, zoom: number) {
   });
 }
 
-function emptyGeoJSON(): GeoJSON.FeatureCollection {
-  return { type: 'FeatureCollection' as const, features: [] };
+function emptyGeoJSON() {
+  return { type: 'FeatureCollection' as const, features: [] as any[] };
 }
 
 function setSourceData(sourceName: string, features: any[]) {

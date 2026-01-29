@@ -140,7 +140,12 @@
       </template>
     </el-table-column>
 
-    <el-table-column fixed="right" label="Actions" min-width="140">
+    <el-table-column
+      fixed="right"
+      label="Actions"
+      min-width="140"
+      v-if="!cityOnly"
+    >
       <template #default="{ row }">
         <div class="action-buttons">
           <el-button
@@ -232,14 +237,22 @@ const store = usePropertyStore();
 
 const dashboardStore = useDashboardStore();
 
-defineProps({
+const props = defineProps({
   addresses: {
     type: Array,
     default: () => [],
   },
+  cityOnly: {
+    type: Boolean,
+    default: false,
+  },
 });
 
 const handleRowClick = (row: any) => {
+  // Ne pas ouvrir la fiche si seulement la ville est sélectionnée
+  if (props.cityOnly) {
+    return;
+  }
   emit('edit-property', row);
 };
 

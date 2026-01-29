@@ -6,6 +6,11 @@ import type { PropertyData } from '@/types/property';
 const defaultPropertyData: PropertyData = {
   id_fantoir_long: '',
   id_fantoir: '',
+  code_postal: '',
+  city: '',
+  nom_voie: '',
+  numero: '',
+  rep: '',
   owner: '',
   email: '',
   phone: '',

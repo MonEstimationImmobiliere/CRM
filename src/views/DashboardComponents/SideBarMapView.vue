@@ -1,6 +1,5 @@
 <template>
-  <div class="sidebar-wrapper">
-    <aside class="sidebar" :class="{ 'sidebar-closed': !sidebarOpen }">
+    <aside class="sidebar">
       <div class="sidebar-content">
         <div class="mode-controls">
           <h3>Mode d'affichage</h3>
@@ -18,11 +17,6 @@
       </div>
     </aside>
 
-    <!-- Toggle Button -->
-    <button class="sidebar-toggle" @click="sidebarOpen = !sidebarOpen">
-      {{ sidebarOpen ? '←' : '→' }}
-    </button>
-  </div>
 </template>
 
 <script setup lang="ts">
@@ -81,63 +75,64 @@ onUnmounted(() => {
 </script>
 
 <style scoped>
-.sidebar-wrapper {
-  position: relative;
-  z-index: 20;
-}
-
 .sidebar {
-  width: 320px;
-  background: white;
-  box-shadow: 2px 0 10px rgba(0, 0, 0, 0.1);
-  z-index: 20;
-  transition: margin-left 0.3s ease;
-  border-right: 1px solid #e5e7eb;
-  height: 100%;
-  overflow: hidden;
-}
-
-.sidebar-closed {
-  margin-left: -320px;
+  padding: 20px;
+  width: 240px;
 }
 
 .sidebar-content {
-  padding: 1.5rem;
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
-  height: 100%;
-  overflow-y: auto;
+  gap: 16px;
 }
 
-.sidebar-toggle {
-  position: absolute;
-  top: 1rem;
-  left: 320px;
-  z-index: 30;
-  background: white;
-  border: 1px solid #d1d5db;
-  border-radius: 0.5rem;
-  width: 2.5rem;
-  height: 2.5rem;
-  cursor: pointer;
-  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
-  transition: left 0.3s ease;
-}
 
-.sidebar-closed + .sidebar-toggle {
-  left: 0;
-}
 
-.mode-controls h3,
-.city-controls h3,
-.street-search h3,
-.stats-section h3,
-.legend-section h3,
-.debug-section h3 {
-  margin: 0 0 1rem 0;
-  font-size: 1rem;
+.mode-controls h3 {
+  font-size: 13px;
   font-weight: 600;
-  color: #374151;
+  color: #86868b;
+  text-transform: uppercase;
+  letter-spacing: 0.5px;
+  margin: 0 0 12px 0;
+
+}
+
+.mode-buttons {
+  display: flex;
+  gap: 8px;
+  flex-direction: column;
+}
+
+.mode-btn {
+  padding: 10px 18px;
+  border: none;
+  border-radius: 12px;
+  background: #f5f5f7;
+  color: #1d1d1f;
+  font-size: 14px;
+  font-weight: 500;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+}
+
+.mode-btn:hover {
+  background: #e8e8ed;
+  transform: scale(1.02);
+}
+
+.mode-btn:active {
+  transform: scale(0.98);
+}
+
+.mode-btn.active {
+  background: #0071e3;
+  color: #ffffff;
+  box-shadow: 0 2px 8px rgba(0, 113, 227, 0.3);
+}
+
+.mode-btn.active:hover {
+  background: #0077ed;
 }
 </style>

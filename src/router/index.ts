@@ -49,19 +49,19 @@ export const routes: Array<RouteRecordRaw> = [
     ],
   },
 
-  {
-    ...ROUTES.Settings,
-    component: Layout,
-    //redirect: '/customer/index',
-    children: [
-      {
-        path: '',
-        name: 'settings',
-        component: () => import('@/views/settings/settings.vue'),
-        meta: { title: 'Paramètres', icon: Link, askBeforeCloseTab: true },
-      },
-    ],
-  },
+  // {
+  //   ...ROUTES.Settings,
+  //   component: Layout,
+  //   //redirect: '/customer/index',
+  //   children: [
+  //     {
+  //       path: '',
+  //       name: 'settings',
+  //       component: () => import('@/views/settings/settings.vue'),
+  //       meta: { title: 'Paramètres', icon: Link, askBeforeCloseTab: true },
+  //     },
+  //   ],
+  // },
 
   {
     ...ROUTES.Login,

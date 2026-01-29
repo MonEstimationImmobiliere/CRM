@@ -186,7 +186,6 @@ import {
 } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
 import { usePropertyStore } from '@/stores/propertyHome';
-import { PropertyService } from '@/api/property.service';
 import type { PropertyData } from '@/types/property';
 
 const dashboardStore = useDashboardStore();

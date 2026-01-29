@@ -1,392 +1,3 @@
-<script setup lang="ts">
-import { computed, ref } from 'vue';
-import {
-  ElDialog,
-  ElForm,
-  ElIcon,
-  ElFormItem,
-  ElInput,
-  ElInputNumber,
-  ElRadioGroup,
-  ElRadioButton,
-  ElCheckbox,
-  ElRow,
-  ElCol,
-  ElButton,
-  ElSelect,
-  ElOption,
-  ElCard,
-  ElDrawer,
-  ElDatePicker,
-  ElDropdown,
-  ElDropdownMenu,
-  ElDropdownItem,
-  ElMessage,
-  ElTag,
-  ElTabs,
-  ElTabPane,
-} from 'element-plus';
-import { usePropertyStore } from '../../stores/propertyHome';
-import { useRemindersStore } from '../../stores/reminders';
-import { useDashboardStore } from '../../stores/dashboard';
-import {
-  CircleCloseFilled,
-  Star,
-  StarFilled,
-  Warning,
-  Calendar,
-  Clock,
-  Check,
-} from '@element-plus/icons-vue';
-
-const store = usePropertyStore();
-const remindersStore = useRemindersStore();
-const dashboardStore = useDashboardStore();
-const { selectedCity } = useDashboardStore();
-
-const visible = computed<boolean>({
-  get: () => store.isDialogVisible,
-  set: (value: boolean) => store.setDialogVisible(value),
-});
-
-const isEditing = computed<boolean>(() => !!store.selectedProperty?.id);
-
-const dialogTitle = computed<string>(() => {
-  if (!store.selectedProperty) return 'Nouvelle propriété';
-
-  const id = store.selectedProperty?.id;
-  const favorite = store.selectedProperty.favorite || '';
-  const idFantoir = store.selectedProperty.id_fantoir || '';
-  const idFantoirLong = store.selectedProperty.id_fantoir_long || '';
-  const codePostal = store.selectedProperty.code_postal || '';
-  const city = store.selectedProperty.city || '';
-  const numero = store.selectedProperty.numero || '';
-  const rep = store.selectedProperty.rep
-    ? ` ${store.selectedProperty.rep}`
-    : '';
-  const voie = store.selectedProperty.nom_voie || '';
-  const appart = store.selectedProperty.numero_appartement
-    ? ` - Appartement ${store.selectedProperty.numero_appartement}`
-    : '';
-
-  return `${id}\n${codePostal} ${city}(${idFantoir})\n${numero}${rep} - ${voie}${appart}(${idFantoirLong})\nfavorite : ${favorite}`;
-});
-
-const emailFormatter = (value: string): string => value.toLowerCase();
-const emailParser = (value: string): string => value.trim();
-
-const phoneFormatter = (value: string): string =>
-  value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
-const phoneParser = (value: string): string =>
-  value.replace(/\D/g, '').substring(0, 10);
-
-const closeDialog = (): void => {
-  store.setDialogVisible(false);
-  store.selectProperty(null);
-};
-
-const saveProperty = async (): Promise<void> => {
-  if (store.selectedProperty) {
-    const filteredProperty = store.selectedProperty as any;
-    console.log('Saving property:', filteredProperty);
-    delete filteredProperty.comment_rappel;
-    try {
-      if (isEditing.value) {
-        await store.saveProperty(filteredProperty);
-      } else {
-        filteredProperty.city = selectedCity?.value || '';
-        await store.saveProperty(filteredProperty);
-      }
-
-      // Refresh the dashboard data after successful save
-      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
-        await dashboardStore.querySearchAddress();
-      }
-
-      closeDialog();
-    } catch (error) {
-      console.error('Error saving property:', error);
-    }
-  }
-};
-
-// Fonction pour désactiver les dates antérieures à aujourd'hui
-const disabledDate = (time: Date): boolean => {
-  const today = new Date();
-  today.setHours(0, 0, 0, 0);
-  return time.getTime() < today.getTime();
-};
-
-// Computed pour gérer la date de rappel avec conversion de type
-const reminderDate = computed({
-  get: () => store.selectedProperty?.date_rappel || '',
-  set: (value: string) => {
-    if (store.selectedProperty) {
-      store.selectedProperty.date_rappel = value;
-    }
-  },
-});
-
-// Variables pour la gestion du rappel unique
-const showReminderDialog = ref(false);
-const reminderForm = ref({
-  title: '',
-  description: '',
-  date: '',
-  type: 'rappel' as 'rappel' | 'estimation' | 'visite' | 'autre',
-  priority: 'medium' as 'low' | 'medium' | 'high',
-  sharing: false,
-});
-
-// Variable pour l'onglet actif
-const activeTab = ref('contact');
-
-// Ouvrir la modal de création de rappel
-const openReminderDialog = () => {
-  if (!store.selectedProperty?.id_fantoir_long) return;
-
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  const propertyAddress =
-    `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-
-  // Pré-remplir le formulaire avec des valeurs par défaut
-  reminderForm.value = {
-    title: `Rappel - ${propertyAddress || 'Propriété'}`,
-    description: '',
-    date: tomorrow.toISOString().split('T')[0],
-    type: 'rappel',
-    priority: 'medium',
-    sharing: false,
-  };
-
-  showReminderDialog.value = true;
-};
-
-// Réinitialiser le formulaire de rappel
-const resetReminderForm = () => {
-  reminderForm.value = {
-    title: '',
-    description: '',
-    date: '',
-    type: 'rappel',
-    priority: 'medium',
-    sharing: false,
-  };
-};
-
-// Sauvegarder le rappel
-const saveReminder = () => {
-  if (!store.selectedProperty?.id_fantoir_long) return;
-
-  if (!reminderForm.value.title || !reminderForm.value.date) {
-    ElMessage({
-      message: 'Veuillez remplir au moins le titre et la date.',
-      type: 'warning',
-      duration: 3000,
-    });
-    return;
-  }
-
-  console.log('Saving reminder with data:', store.selectedProperty);
-
-  remindersStore.addReminder({
-    title: reminderForm.value.title,
-    description: reminderForm.value.description,
-    date: reminderForm.value.date,
-    type: reminderForm.value.type,
-    priority: reminderForm.value.priority,
-    sharing: reminderForm.value.sharing,
-    property_id: store.selectedProperty.id ?? 0,
-    completed: false,
-  });
-
-  ElMessage({
-    message: 'Rappel créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
-
-  showReminderDialog.value = false;
-  resetReminderForm();
-};
-
-// Sauvegarder le rappel et en créer un autre
-const saveReminderAndAddAnother = () => {
-  if (!store.selectedProperty?.id_fantoir_long) return;
-
-  if (!reminderForm.value.title || !reminderForm.value.date) {
-    ElMessage({
-      message: 'Veuillez remplir au moins le titre et la date.',
-      type: 'warning',
-      duration: 3000,
-    });
-    return;
-  }
-
-  remindersStore.addReminder({
-    title: reminderForm.value.title,
-    description: reminderForm.value.description,
-    date: reminderForm.value.date,
-    type: reminderForm.value.type,
-    priority: reminderForm.value.priority,
-    sharing: reminderForm.value.sharing,
-    property_id: store.selectedProperty.id ?? 0,
-    completed: false,
-  });
-
-  ElMessage({
-    message: 'Rappel créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
-
-  // Réinitialiser le formulaire mais garder la modal ouverte
-  const propertyAddress =
-    `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
-  const today = new Date();
-  const tomorrow = new Date(today);
-  tomorrow.setDate(tomorrow.getDate() + 1);
-
-  reminderForm.value = {
-    title: `Rappel - ${propertyAddress || 'Propriété'}`,
-    description: '',
-    date: tomorrow.toISOString().split('T')[0],
-    type: 'rappel',
-    priority: 'medium',
-    sharing: false,
-  };
-};
-
-// Computed properties pour les rappels de la propriété
-const propertyReminders = computed(() => {
-  const propertyId = store.selectedProperty?.id ?? 0;
-  return remindersStore.getRemindersByProperty(propertyId);
-});
-
-const sortedPropertyReminders = computed(() => {
-  return [...propertyReminders.value].sort((a, b) => {
-    // Trier par date puis par priorité
-    if (a.date !== b.date) {
-      return b.date.localeCompare(a.date); // Plus récent en premier
-    }
-    const priorityOrder = { high: 3, medium: 2, low: 1 };
-    return priorityOrder[b.priority] - priorityOrder[a.priority];
-  });
-});
-
-const overdueCounts = computed(() => {
-  return propertyReminders.value.filter(r =>
-    remindersStore.isReminderOverdue(r)
-  ).length;
-});
-
-const todayCounts = computed(() => {
-  return propertyReminders.value.filter(
-    r => remindersStore.isReminderToday(r) && !r.completed
-  ).length;
-});
-
-const pendingCounts = computed(() => {
-  return propertyReminders.value.filter(
-    r =>
-      !r.completed &&
-      !remindersStore.isReminderOverdue(r) &&
-      !remindersStore.isReminderToday(r)
-  ).length;
-});
-
-const completedCounts = computed(() => {
-  return propertyReminders.value.filter(r => r.completed).length;
-});
-
-// Fonctions utilitaires
-const toggleReminderComplete = (reminder: any) => {
-  if (reminder.completed) {
-    remindersStore.completeReminder(reminder.id);
-    ElMessage.success('Rappel marqué comme terminé');
-  } else {
-    remindersStore.uncompleteReminder(reminder.id);
-    ElMessage.info('Rappel marqué comme non terminé');
-  }
-};
-
-const getPriorityType = (
-  priority: string
-): 'success' | 'warning' | 'danger' | 'info' => {
-  const types = { high: 'danger', medium: 'warning', low: 'info' } as const;
-  return types[priority as keyof typeof types] || 'info';
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
-  return labels[priority as keyof typeof labels] || priority;
-};
-
-const getTypeColor = (
-  type: string
-): 'success' | 'warning' | 'danger' | 'info' => {
-  const colors = {
-    rappel: 'info',
-    estimation: 'success',
-    visite: 'warning',
-    autre: 'info',
-  } as const;
-  return colors[type as keyof typeof colors] || 'info';
-};
-
-const getTypeLabel = (type: string) => {
-  const labels = {
-    rappel: 'Rappel',
-    estimation: 'Estimation',
-    visite: 'Visite',
-    autre: 'Autre',
-  };
-  return labels[type as keyof typeof labels] || type;
-};
-
-const formatReminderDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-};
-
-// Gestion des favoris
-const toggleFavorite = async () => {
-  if (!store.selectedProperty?.id_fantoir_long) {
-    console.log('No id_fantoir_long, returning early');
-    return;
-  }
-
-  try {
-    const newFavoriteState = await store.toggleFavorite(
-      store.selectedProperty.id_fantoir_long
-    );
-    ElMessage({
-      message: newFavoriteState
-        ? 'Propriété ajoutée aux favoris'
-        : 'Propriété retirée des favoris',
-      type: newFavoriteState ? 'success' : 'info',
-      duration: 2000,
-    });
-  } catch (error) {
-    console.log('Error in toggleFavorite:', error);
-    ElMessage({
-      message:
-        "La fiche du logement n'est pas encore créée. Veuillez la créer avant de l'ajouter aux favoris.",
-      type: 'error',
-      duration: 3000,
-    });
-  }
-};
-</script>
-
 <template>
   <el-drawer
     v-model="visible"
@@ -1117,6 +728,394 @@ const toggleFavorite = async () => {
     </div>
   </el-dialog>
 </template>
+
+<script setup lang="ts">
+import { computed, ref } from 'vue';
+import {
+  ElDialog,
+  ElForm,
+  ElIcon,
+  ElFormItem,
+  ElInput,
+  ElInputNumber,
+  ElRadioGroup,
+  ElRadioButton,
+  ElCheckbox,
+  ElRow,
+  ElCol,
+  ElButton,
+  ElSelect,
+  ElOption,
+  ElCard,
+  ElDrawer,
+  ElDatePicker,
+  ElDropdown,
+  ElDropdownMenu,
+  ElDropdownItem,
+  ElMessage,
+  ElTag,
+  ElTabs,
+  ElTabPane,
+} from 'element-plus';
+import { usePropertyStore } from '../../stores/propertyHome';
+import { useRemindersStore } from '../../stores/reminders';
+import { useDashboardStore } from '../../stores/dashboard';
+import {
+  CircleCloseFilled,
+  Star,
+  StarFilled,
+  Warning,
+  Calendar,
+  Clock,
+  Check,
+} from '@element-plus/icons-vue';
+
+const store = usePropertyStore();
+const remindersStore = useRemindersStore();
+const dashboardStore = useDashboardStore();
+const { selectedCity } = useDashboardStore();
+
+const visible = computed<boolean>({
+  get: () => store.isDialogVisible,
+  set: (value: boolean) => store.setDialogVisible(value),
+});
+
+const isEditing = computed<boolean>(() => !!store.selectedProperty?.id);
+
+console.log('propertyDialog store.selectedProperty:', store.selectedProperty);
+
+const dialogTitle = computed<string>(() => {
+  if (!store.selectedProperty) return 'Nouvelle propriété';
+
+  const codePostal = store.selectedProperty.code_postal || '';
+  // Récupérer la ville depuis le store dashboard (input sélectionné) - city contient le nom de la ville
+  const city =
+    (dashboardStore.selectedCity as any)?.city ||
+    store.selectedProperty.city ||
+    '';
+  const numero = store.selectedProperty.numero || '';
+  const rep = store.selectedProperty.rep
+    ? ` ${store.selectedProperty.rep}`
+    : '';
+  const voie = store.selectedProperty.nom_voie || '';
+
+  return `${numero}${rep} ${voie}, ${codePostal} ${city}`;
+});
+
+const emailFormatter = (value: string): string => value.toLowerCase();
+const emailParser = (value: string): string => value.trim();
+
+const phoneFormatter = (value: string): string =>
+  value.replace(/\D/g, '').replace(/(\d{2})(?=\d)/g, '$1 ');
+const phoneParser = (value: string): string =>
+  value.replace(/\D/g, '').substring(0, 10);
+
+const closeDialog = (): void => {
+  store.setDialogVisible(false);
+  store.selectProperty(null);
+};
+
+const saveProperty = async (): Promise<void> => {
+  if (store.selectedProperty) {
+    const filteredProperty = store.selectedProperty as any;
+    console.log('Saving property:', filteredProperty);
+    delete filteredProperty.comment_rappel;
+    try {
+      if (isEditing.value) {
+        await store.saveProperty(filteredProperty);
+      } else {
+        filteredProperty.city = selectedCity?.value || '';
+        await store.saveProperty(filteredProperty);
+      }
+
+      // Refresh the dashboard data after successful save
+      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+        await dashboardStore.querySearchAddress();
+      }
+
+      closeDialog();
+    } catch (error) {
+      console.error('Error saving property:', error);
+    }
+  }
+};
+
+// Fonction pour désactiver les dates antérieures à aujourd'hui
+const disabledDate = (time: Date): boolean => {
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return time.getTime() < today.getTime();
+};
+
+// Computed pour gérer la date de rappel avec conversion de type
+const reminderDate = computed({
+  get: () => store.selectedProperty?.date_rappel || '',
+  set: (value: string) => {
+    if (store.selectedProperty) {
+      store.selectedProperty.date_rappel = value;
+    }
+  },
+});
+
+// Variables pour la gestion du rappel unique
+const showReminderDialog = ref(false);
+const reminderForm = ref({
+  title: '',
+  description: '',
+  date: '',
+  type: 'rappel' as 'rappel' | 'estimation' | 'visite' | 'autre',
+  priority: 'medium' as 'low' | 'medium' | 'high',
+  sharing: false,
+});
+
+// Variable pour l'onglet actif
+const activeTab = ref('contact');
+
+// Ouvrir la modal de création de rappel
+const openReminderDialog = () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  const propertyAddress =
+    `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+
+  // Pré-remplir le formulaire avec des valeurs par défaut
+  reminderForm.value = {
+    title: `Rappel - ${propertyAddress || 'Propriété'}`,
+    description: '',
+    date: tomorrow.toISOString().split('T')[0],
+    type: 'rappel',
+    priority: 'medium',
+    sharing: false,
+  };
+
+  showReminderDialog.value = true;
+};
+
+// Réinitialiser le formulaire de rappel
+const resetReminderForm = () => {
+  reminderForm.value = {
+    title: '',
+    description: '',
+    date: '',
+    type: 'rappel',
+    priority: 'medium',
+    sharing: false,
+  };
+};
+
+// Sauvegarder le rappel
+const saveReminder = () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+
+  if (!reminderForm.value.title || !reminderForm.value.date) {
+    ElMessage({
+      message: 'Veuillez remplir au moins le titre et la date.',
+      type: 'warning',
+      duration: 3000,
+    });
+    return;
+  }
+
+  console.log('Saving reminder with data:', store.selectedProperty);
+
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id ?? 0,
+    completed: false,
+  });
+
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+
+  showReminderDialog.value = false;
+  resetReminderForm();
+};
+
+// Sauvegarder le rappel et en créer un autre
+const saveReminderAndAddAnother = () => {
+  if (!store.selectedProperty?.id_fantoir_long) return;
+
+  if (!reminderForm.value.title || !reminderForm.value.date) {
+    ElMessage({
+      message: 'Veuillez remplir au moins le titre et la date.',
+      type: 'warning',
+      duration: 3000,
+    });
+    return;
+  }
+
+  remindersStore.addReminder({
+    title: reminderForm.value.title,
+    description: reminderForm.value.description,
+    date: reminderForm.value.date,
+    type: reminderForm.value.type,
+    priority: reminderForm.value.priority,
+    sharing: reminderForm.value.sharing,
+    property_id: store.selectedProperty.id ?? 0,
+    completed: false,
+  });
+
+  ElMessage({
+    message: 'Rappel créé avec succès !',
+    type: 'success',
+    duration: 3000,
+  });
+
+  // Réinitialiser le formulaire mais garder la modal ouverte
+  const propertyAddress =
+    `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim();
+  const today = new Date();
+  const tomorrow = new Date(today);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+
+  reminderForm.value = {
+    title: `Rappel - ${propertyAddress || 'Propriété'}`,
+    description: '',
+    date: tomorrow.toISOString().split('T')[0],
+    type: 'rappel',
+    priority: 'medium',
+    sharing: false,
+  };
+};
+
+// Computed properties pour les rappels de la propriété
+const propertyReminders = computed(() => {
+  const propertyId = store.selectedProperty?.id ?? 0;
+  return remindersStore.getRemindersByProperty(propertyId);
+});
+
+const sortedPropertyReminders = computed(() => {
+  return [...propertyReminders.value].sort((a, b) => {
+    // Trier par date puis par priorité
+    if (a.date !== b.date) {
+      return b.date.localeCompare(a.date); // Plus récent en premier
+    }
+    const priorityOrder = { high: 3, medium: 2, low: 1 };
+    return priorityOrder[b.priority] - priorityOrder[a.priority];
+  });
+});
+
+const overdueCounts = computed(() => {
+  return propertyReminders.value.filter(r =>
+    remindersStore.isReminderOverdue(r)
+  ).length;
+});
+
+const todayCounts = computed(() => {
+  return propertyReminders.value.filter(
+    r => remindersStore.isReminderToday(r) && !r.completed
+  ).length;
+});
+
+const pendingCounts = computed(() => {
+  return propertyReminders.value.filter(
+    r =>
+      !r.completed &&
+      !remindersStore.isReminderOverdue(r) &&
+      !remindersStore.isReminderToday(r)
+  ).length;
+});
+
+const completedCounts = computed(() => {
+  return propertyReminders.value.filter(r => r.completed).length;
+});
+
+// Fonctions utilitaires
+const toggleReminderComplete = (reminder: any) => {
+  if (reminder.completed) {
+    remindersStore.completeReminder(reminder.id);
+    ElMessage.success('Rappel marqué comme terminé');
+  } else {
+    remindersStore.uncompleteReminder(reminder.id);
+    ElMessage.info('Rappel marqué comme non terminé');
+  }
+};
+
+const getPriorityType = (
+  priority: string
+): 'success' | 'warning' | 'danger' | 'info' => {
+  const types = { high: 'danger', medium: 'warning', low: 'info' } as const;
+  return types[priority as keyof typeof types] || 'info';
+};
+
+const getPriorityLabel = (priority: string) => {
+  const labels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
+  return labels[priority as keyof typeof labels] || priority;
+};
+
+const getTypeColor = (
+  type: string
+): 'success' | 'warning' | 'danger' | 'info' => {
+  const colors = {
+    rappel: 'info',
+    estimation: 'success',
+    visite: 'warning',
+    autre: 'info',
+  } as const;
+  return colors[type as keyof typeof colors] || 'info';
+};
+
+const getTypeLabel = (type: string) => {
+  const labels = {
+    rappel: 'Rappel',
+    estimation: 'Estimation',
+    visite: 'Visite',
+    autre: 'Autre',
+  };
+  return labels[type as keyof typeof labels] || type;
+};
+
+const formatReminderDate = (dateString: string) => {
+  const date = new Date(dateString);
+  return date.toLocaleDateString('fr-FR', {
+    weekday: 'long',
+    year: 'numeric',
+    month: 'long',
+    day: 'numeric',
+  });
+};
+
+// Gestion des favoris
+const toggleFavorite = async () => {
+  if (!store.selectedProperty?.id_fantoir_long) {
+    console.log('No id_fantoir_long, returning early');
+    return;
+  }
+
+  try {
+    const newFavoriteState = await store.toggleFavorite(
+      store.selectedProperty.id_fantoir_long
+    );
+    ElMessage({
+      message: newFavoriteState
+        ? 'Propriété ajoutée aux favoris'
+        : 'Propriété retirée des favoris',
+      type: newFavoriteState ? 'success' : 'info',
+      duration: 2000,
+    });
+  } catch (error) {
+    console.log('Error in toggleFavorite:', error);
+    ElMessage({
+      message:
+        "La fiche du logement n'est pas encore créée. Veuillez la créer avant de l'ajouter aux favoris.",
+      type: 'error',
+      duration: 3000,
+    });
+  }
+};
+</script>
 
 <style scoped>
 .el-drawer.ltr {
