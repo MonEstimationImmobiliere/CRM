@@ -1,6 +1,5 @@
 import { i18n } from '@/locales';
 import type { IRoute } from '@/types/route';
-import { Link, HomeFilled, Connection } from '@element-plus/icons-vue';
 
 export enum ERouteName {
   Dashboard = 'Dashboard',

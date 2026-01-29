@@ -35,27 +35,16 @@ export const useRemindersStore = defineStore('reminders', () => {
 
       reminders.value = userReminders
         .filter(r => r.id)
-        .map(r => ({
-          ...r,
-          sharing: r.sharing || false,
-        }));
+        .map(r => ({ ...r, sharing: r.sharing || false }));
 
       agencyReminders.value = sharedReminders
         .filter(r => r.id)
-        .map(r => ({
-          ...r,
-          sharing: r.sharing || false,
-        }));
+        .map(r => ({ ...r, sharing: r.sharing || false }));
 
-      // Fallback: also save to localStorage
       if (LocalStorage.isAvailable()) {
         LocalStorage.set(STORAGE_KEYS.REMINDERS, reminders.value);
       }
-    } catch (error) {
-      console.error(
-        'Error loading reminders from API, falling back to localStorage:',
-        error
-      );
+    } catch {
       // Fallback to localStorage
       if (LocalStorage.isAvailable()) {
         const savedReminders = LocalStorage.get<Reminder[]>(
@@ -218,7 +207,6 @@ export const useRemindersStore = defineStore('reminders', () => {
   // Actions
   const addReminder = async (reminderData: IReminderCreate) => {
     try {
-      // Essayer d'abord l'API
       const newReminder = await ReminderService.createReminder({
         ...reminderData,
         sharing: reminderData.sharing || false,
@@ -230,18 +218,10 @@ export const useRemindersStore = defineStore('reminders', () => {
       };
 
       reminders.value.push(reminderWithDefaults);
-
-      // Send notification
       NotificationService.reminderCreated(reminderWithDefaults.title);
-
       return reminderWithDefaults;
-    } catch (error) {
-      console.error(
-        'Error creating reminder via API, falling back to local:',
-        error
-      );
-
-      // Fallback local - créer un reminder temporaire
+    } catch {
+      // Fallback local
       const now = new Date().toISOString();
       const localReminder: Reminder = {
         id: Date.now(),
@@ -259,10 +239,7 @@ export const useRemindersStore = defineStore('reminders', () => {
         updated_at: now,
       };
       reminders.value.push(localReminder);
-
-      // Send notification
       NotificationService.reminderCreated(localReminder.title);
-
       return localReminder;
     }
   };
@@ -272,9 +249,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     updates: Partial<IReminderCreate>
   ) => {
     try {
-      // Essayer d'abord l'API
       const updatedReminder = await ReminderService.updateReminder(id, updates);
-
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         reminders.value[index] = {
@@ -282,18 +257,10 @@ export const useRemindersStore = defineStore('reminders', () => {
           ...updatedReminder,
           sharing: updatedReminder.sharing || false,
         };
-
-        // Send notification for important updates
         NotificationService.reminderUpdated(reminders.value[index].title);
-
         return reminders.value[index];
       }
-    } catch (error) {
-      console.error(
-        'Error updating reminder via API, falling back to local:',
-        error
-      );
-
+    } catch {
       // Fallback local
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
@@ -302,10 +269,7 @@ export const useRemindersStore = defineStore('reminders', () => {
           ...updates,
           updated_at: new Date().toISOString(),
         };
-
-        // Send notification for important updates
         NotificationService.reminderUpdated(reminders.value[index].title);
-
         return reminders.value[index];
       }
     }
@@ -314,36 +278,17 @@ export const useRemindersStore = defineStore('reminders', () => {
 
   const deleteReminder = async (id: number) => {
     try {
-      // Essayer d'abord l'API
       await ReminderService.deleteReminder(id);
+    } catch {
+      // Continue with local deletion even if API fails
+    }
 
-      const index = reminders.value.findIndex(r => r.id === id);
-      if (index !== -1) {
-        const deletedReminder = reminders.value[index];
-        reminders.value.splice(index, 1);
-
-        // Send notification
-        NotificationService.reminderDeleted(deletedReminder.title);
-
-        return true;
-      }
-    } catch (error) {
-      console.error(
-        'Error deleting reminder via API, falling back to local:',
-        error
-      );
-
-      // Fallback local
-      const index = reminders.value.findIndex(r => r.id === id);
-      if (index !== -1) {
-        const deletedReminder = reminders.value[index];
-        reminders.value.splice(index, 1);
-
-        // Send notification
-        NotificationService.reminderDeleted(deletedReminder.title);
-
-        return true;
-      }
+    const index = reminders.value.findIndex(r => r.id === id);
+    if (index !== -1) {
+      const deletedReminder = reminders.value[index];
+      reminders.value.splice(index, 1);
+      NotificationService.reminderDeleted(deletedReminder.title);
+      return true;
     }
     return false;
   };

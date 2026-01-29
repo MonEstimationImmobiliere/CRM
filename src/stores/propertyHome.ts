@@ -66,46 +66,24 @@ export const usePropertyStore = defineStore('property', () => {
   function addProperty(property: PropertyData) {
     const newProperty = {
       ...property,
-      id: Date.now(), // Simple way to generate unique IDs
+      id: Date.now(),
     };
     properties.value.push(newProperty);
   }
 
-  /*const saveProperty = async (property: PropertyData) => {
-    try {
-      if (property.id) {
-        const updatedProperty = await PropertyService.updateProperty(property.id, property);
-        updatePropertyInStore(updatedProperty);
-      } else {
-        const response = await PropertyService.createProperty(property);
-        addProperty({ ...property, id: response.id });
-      }
-    } catch (error) {
-      console.error("Erreur lors de la sauvegarde de la propriété :", error);
-    }
-  };*/
-
   const saveProperty = async (property: PropertyData) => {
-    try {
-      let saved;
+    let saved;
 
-      if (property.id) {
-        // UPDATE
-        saved = await PropertyService.updateProperty(property.id, property);
-        updatePropertyInStore(saved);
-      } else {
-        // CREATE
-        const created = await PropertyService.createProperty(property);
-
-        saved = { ...property, id: created.id };
-        addProperty(saved);
-      }
-
-      return saved; // <-- important !
-    } catch (error) {
-      console.error('Erreur lors de la sauvegarde de la propriété :', error);
-      throw error;
+    if (property.id) {
+      saved = await PropertyService.updateProperty(property.id, property);
+      updatePropertyInStore(saved);
+    } else {
+      const created = await PropertyService.createProperty(property);
+      saved = { ...property, id: created.id };
+      addProperty(saved);
     }
+
+    return saved;
   };
 
   // Fonction pour mettre à jour une propriété dans le store après sauvegarde
@@ -139,7 +117,6 @@ export const usePropertyStore = defineStore('property', () => {
   }
 
   function updateProperty(property: PropertyData) {
-    // Chercher par id_fantoir_long d'abord (identifiant principal), puis par id
     const index = properties.value.findIndex(
       p =>
         p.id_fantoir_long === property.id_fantoir_long || p.id === property.id
@@ -149,15 +126,8 @@ export const usePropertyStore = defineStore('property', () => {
       properties.value[index] = {
         ...properties.value[index],
         ...property,
-        favorite: Boolean(property.favorite), // Normaliser le booléen
+        favorite: Boolean(property.favorite),
       };
-    } else {
-      console.log(
-        'Property not found for update, id_fantoir_long:',
-        property.id_fantoir_long,
-        'id:',
-        property.id
-      );
     }
   }
 
@@ -167,23 +137,17 @@ export const usePropertyStore = defineStore('property', () => {
         const data = await PropertyService.getPropertyById(
           property.id_fantoir_long
         );
-        console.log(
-          'Données récupérées pour la propriété sélectionnée :',
-          data
-        );
-        // Convertir les valeurs numériques en booléens pour favorite
         const normalizedData = {
           ...defaultPropertyData,
           ...data,
-          favorite: Boolean(data.favorite), // Convertir 0/1 en false/true
+          favorite: Boolean(data.favorite),
         };
         selectedProperty.value = normalizedData;
-      } catch (error) {
-        console.error('Erreur lors du chargement de la propriété :', error);
+      } catch {
         selectedProperty.value = {
           ...defaultPropertyData,
           ...(property || {}),
-        }; // fallback si erreur
+        };
       }
     } else {
       selectedProperty.value = { ...defaultPropertyData, ...(property || {}) };
@@ -212,62 +176,48 @@ export const usePropertyStore = defineStore('property', () => {
     id_fantoir_long: string,
     sourceRow: any = null
   ) => {
-    console.warn('=== toggleFavorite START ===', id_fantoir_long);
+    let existing = null;
 
     try {
-      let existing = null;
-
-      // 1. Récupérer la propriété si elle existe
-      try {
-        existing = await PropertyService.getPropertyById(id_fantoir_long);
-      } catch (err: any) {
-        if (err.response?.status === 404) {
-          existing = null;
-        } else {
-          throw err;
-        }
+      existing = await PropertyService.getPropertyById(id_fantoir_long);
+    } catch (err: any) {
+      if (err.response?.status !== 404) {
+        throw err;
       }
-
-      let property: any;
-
-      if (!existing) {
-        // 2. Création avec enrichissement depuis row
-        property = {
-          ...defaultPropertyData,
-          ...sourceRow, // <----- ENRICHISSEMENT ICI !
-          id_fantoir_long,
-          id_fantoir: sourceRow?.id_fantoir || '',
-          code_postal: sourceRow?.code_postal || '',
-          city: sourceRow?.city || '',
-          nom_commune: sourceRow?.nom_commune || '',
-          nom_voie: sourceRow?.nom_voie || '',
-          numero: sourceRow?.numero || '',
-          rep: sourceRow?.rep || '',
-          numero_appartement: sourceRow?.numero_appartement || '',
-          surface: sourceRow?.surface || 0,
-          favorite: true,
-        };
-
-        const created = await PropertyService.createProperty(property);
-        property.id = created.id;
-      } else {
-        // 3. Toggle normal si elle existe
-        property = {
-          ...existing,
-          favorite: !existing.favorite,
-        };
-
-        await PropertyService.updateProperty(property.id, property);
-      }
-
-      // 4. Mise à jour store Pinia
-      updatePropertyInStore(property);
-
-      return property.favorite;
-    } catch (error) {
-      console.error('toggleFavorite ERROR:', error);
-      throw error;
     }
+
+    let property: any;
+
+    if (!existing) {
+      property = {
+        ...defaultPropertyData,
+        ...sourceRow,
+        id_fantoir_long,
+        id_fantoir: sourceRow?.id_fantoir || '',
+        code_postal: sourceRow?.code_postal || '',
+        city: sourceRow?.city || '',
+        nom_commune: sourceRow?.nom_commune || '',
+        nom_voie: sourceRow?.nom_voie || '',
+        numero: sourceRow?.numero || '',
+        rep: sourceRow?.rep || '',
+        numero_appartement: sourceRow?.numero_appartement || '',
+        surface: sourceRow?.surface || 0,
+        favorite: true,
+      };
+
+      const created = await PropertyService.createProperty(property);
+      property.id = created.id;
+    } else {
+      property = {
+        ...existing,
+        favorite: !existing.favorite,
+      };
+
+      await PropertyService.updateProperty(property.id, property);
+    }
+
+    updatePropertyInStore(property);
+    return property.favorite;
   };
 
   const isFavorite = (propertyId: string): boolean => {
@@ -278,50 +228,39 @@ export const usePropertyStore = defineStore('property', () => {
   };
 
   const loadFavoritesProperties = async () => {
-    try {
-      const favoriteProperties = await PropertyService.getFavorites();
+    const favoriteProperties = await PropertyService.getFavorites();
 
-      // D'abord, remettre à false tous les favoris existants dans le store
-      properties.value.forEach(property => {
-        if (property.favorite) {
-          property.favorite = false;
-        }
-      });
+    // Reset existing favorites
+    properties.value.forEach(property => {
+      if (property.favorite) {
+        property.favorite = false;
+      }
+    });
 
-      // Ensuite, traiter les favoris récupérés de l'API
-      favoriteProperties.forEach(property => {
-        const normalizedProperty = {
-          ...defaultPropertyData,
-          ...property,
-          numero: String(property.numero ?? ''), // Convertir numero en string
-          favorite: true, // S'assurer que toutes les propriétés récupérées sont marquées comme favorites
-        };
+    // Process favorites from API
+    favoriteProperties.forEach(property => {
+      const normalizedProperty = {
+        ...defaultPropertyData,
+        ...property,
+        numero: String(property.numero ?? ''),
+        favorite: true,
+      };
 
-        // Vérifier si la propriété existe déjà dans le store
-        const existingIndex = properties.value.findIndex(
-          p => p.id_fantoir_long === property.id_fantoir_long
-        );
-
-        if (existingIndex !== -1) {
-          // Mettre à jour la propriété existante en préservant certaines données locales
-          properties.value[existingIndex] = {
-            ...properties.value[existingIndex],
-            ...normalizedProperty,
-          } as (typeof properties.value)[number];
-        } else {
-          // Ajouter la nouvelle propriété au store
-          properties.value.push(
-            normalizedProperty as (typeof properties.value)[number]
-          );
-        }
-      });
-    } catch (error) {
-      console.error(
-        'Erreur lors du chargement des propriétés favorites :',
-        error
+      const existingIndex = properties.value.findIndex(
+        p => p.id_fantoir_long === property.id_fantoir_long
       );
-      throw error;
-    }
+
+      if (existingIndex !== -1) {
+        properties.value[existingIndex] = {
+          ...properties.value[existingIndex],
+          ...normalizedProperty,
+        } as (typeof properties.value)[number];
+      } else {
+        properties.value.push(
+          normalizedProperty as (typeof properties.value)[number]
+        );
+      }
+    });
   };
 
   const setFavoritesViewType = (viewType: 'table' | 'card') => {

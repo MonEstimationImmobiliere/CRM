@@ -85,45 +85,34 @@ export const useDashboardStore = defineStore('dashboard', {
     ---------------------------------------------- */
     async fetchDPE() {
       try {
-        // Vérification c
-        // ode INSEE
         const codeInsee =
           this.selectedCodeInsee ||
           this.selectedCity?.codeInsee ||
           this.selectedCity?.code_insee;
 
         if (!codeInsee) {
-          console.warn('Aucun code INSEE → pas de DPE.');
           this.dpePoints = [];
           return;
         }
 
-        const to = '2025-11-30'; // date de fin (exclusif)
-
-        const from = '2025-11-01'; // date de début
+        const to = '2025-11-30';
+        const from = '2025-11-01';
 
         const url =
           `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
-          //`?code_insee_ban_eq=${codeInsee}` +
           `?code_departement_ban_eq=14` +
           `&date_etablissement_dpe_gte=${from}` +
           `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
           `&size=5000`;
 
-        //const url = "https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines?code_insee_ban_eq=14456&date_etablissement_dpe_gte=2025-11-01&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe&size=5000";
-
-        console.log('🌍 URL DPE :', url);
-
         const response = await fetch(url);
         const json = await response.json();
 
         if (!json.results) {
-          console.warn('⚠️ Aucun résultat DPE');
           this.dpePoints = [];
           return;
         }
 
-        // Extraction des points
         this.dpePoints = json.results
           .filter((r: IDpeResult) => r._geopoint)
           .map((r: IDpeResult) => {
@@ -137,10 +126,7 @@ export const useDashboardStore = defineStore('dashboard', {
               date: r.date_etablissement_dpe,
             };
           });
-
-        console.log('✅ DPE chargés :', this.dpePoints.length);
-      } catch (error) {
-        console.error('❌ Erreur fetch DPE :', error);
+      } catch {
         this.dpePoints = [];
       }
     },
@@ -246,58 +232,40 @@ export const useDashboardStore = defineStore('dashboard', {
         this.isDataLoaded = true;
         this.noResultsFound = this.addresses.length === 0;
 
-        /* ------------------------------------------------
-        🔥 4️⃣ LOAD DPE
-    ------------------------------------------------ */
         await this.fetchDPE();
-      } catch (error) {
-        console.error('❌ Error fetching addresses:', error);
+      } catch {
         this.noResultsFound = true;
       }
     },
-    /* ---------------------------------------------
-         MODES SPÉCIAUX
-    ---------------------------------------------- */
+
     async querySearchEstimation() {
       if (!this.selectedCodeIdFantoir) return;
 
-      try {
-        this.addresses = await PropertyService.getAddressesByFantoir(
-          this.selectedCodeIdFantoir,
-          'estimation'
-        );
-        this.isDataLoaded = true;
-      } catch (error) {
-        console.error('Error fetching estimations:', error);
-      }
+      this.addresses = await PropertyService.getAddressesByFantoir(
+        this.selectedCodeIdFantoir,
+        'estimation'
+      );
+      this.isDataLoaded = true;
     },
 
     async querySearchRappel() {
       if (!this.selectedCodeIdFantoir) return;
 
-      try {
-        this.addresses = await PropertyService.getAddressesByFantoir(
-          this.selectedCodeIdFantoir,
-          'rappel'
-        );
-        this.isDataLoaded = true;
-      } catch (error) {
-        console.error('Error fetching rappel:', error);
-      }
+      this.addresses = await PropertyService.getAddressesByFantoir(
+        this.selectedCodeIdFantoir,
+        'rappel'
+      );
+      this.isDataLoaded = true;
     },
 
     async querySearchMaj() {
       if (!this.selectedCodeIdFantoir) return;
 
-      try {
-        this.addresses = await PropertyService.getAddressesByFantoir(
-          this.selectedCodeIdFantoir,
-          'maj'
-        );
-        this.isDataLoaded = true;
-      } catch (error) {
-        console.error('Error fetching maj:', error);
-      }
+      this.addresses = await PropertyService.getAddressesByFantoir(
+        this.selectedCodeIdFantoir,
+        'maj'
+      );
+      this.isDataLoaded = true;
     },
 
     /* ---------------------------------------------
@@ -357,31 +325,25 @@ export const useDashboardStore = defineStore('dashboard', {
         numero_appartement?: string;
       }
     ) {
-      try {
-        let id_fantoir_long = this.selectedCodeIdFantoir;
+      let id_fantoir_long = this.selectedCodeIdFantoir;
 
-        if (propertyData.numero) id_fantoir_long += `_${propertyData.numero}`;
-        if (propertyData.rep) id_fantoir_long += `_${propertyData.rep}`;
-        if (propertyData.numero_appartement)
-          id_fantoir_long += `_${propertyData.numero_appartement}`;
+      if (propertyData.numero) id_fantoir_long += `_${propertyData.numero}`;
+      if (propertyData.rep) id_fantoir_long += `_${propertyData.rep}`;
+      if (propertyData.numero_appartement)
+        id_fantoir_long += `_${propertyData.numero_appartement}`;
 
-        const propertyWithFantoir = {
-          ...propertyData,
-          id_fantoir: this.selectedCodeIdFantoir,
-          id_fantoir_long: id_fantoir_long,
-        };
+      const propertyWithFantoir = {
+        ...propertyData,
+        id_fantoir: this.selectedCodeIdFantoir,
+        id_fantoir_long: id_fantoir_long,
+      };
 
-        const createdProperty = await PropertyService.createCustomProperty(
-          propertyWithFantoir as any
-        );
+      const createdProperty = await PropertyService.createCustomProperty(
+        propertyWithFantoir as any
+      );
 
-        await this.querySearchAddress();
-
-        return createdProperty;
-      } catch (error) {
-        console.error('Error creating custom property:', error);
-        throw error;
-      }
+      await this.querySearchAddress();
+      return createdProperty;
     },
 
     openCustomPropertyDialog() {

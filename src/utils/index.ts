@@ -35,24 +35,3 @@ export function getCookie(key: string) {
 export function removeCookie(key: string) {
   setCookie(key, '', -1);
 }
-
-/**
- * @param ms sleep time (milliseconds)
- * @returns Promise<unknown>
- */
-export function sleep(ms: number) {
-  return new Promise(resolve => {
-    setTimeout(() => {
-      resolve('wake up');
-    }, ms);
-  });
-}
-
-/**
- *
- * @param arr Array<any>
- * @returns random item from an array
- */
-export function randomPick(arr: Array<any>) {
-  return arr[Math.floor(Math.random() * arr.length)];
-}
