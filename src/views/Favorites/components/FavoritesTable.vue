@@ -28,7 +28,7 @@
       <el-table-column label="Ville" prop="city" sortable min-width="120">
         <template #default="{ row }">
           <div class="city-info">
-            <span class="city-name">{{ row.city || 'Non renseigné' }}</span>
+            <span class="city-name">{{ getPropertyCity(row) }}</span>
           </div>
         </template>
       </el-table-column>
@@ -137,6 +137,7 @@
 
 <script setup lang="ts">
 import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
+import { useDashboardStore } from '@/stores/dashboard';
 
 interface Props {
   favorites: any[];
@@ -149,6 +150,8 @@ const emit = defineEmits([
   'toggle-favorite',
   'create-reminder',
 ]);
+
+const dashboardStore = useDashboardStore();
 
 const getRowClass = () => {
   return 'favorite-row';
@@ -182,6 +185,15 @@ const formatPrice = (price: number | undefined) => {
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(price);
+};
+
+// Helper function to get city with fallback logic
+const getPropertyCity = (property: any): string => {
+  return (
+    property.city ||
+    (dashboardStore.selectedCity as any)?.city ||
+    'Non renseigné'
+  );
 };
 </script>
 

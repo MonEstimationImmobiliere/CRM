@@ -60,7 +60,7 @@
             <h3 class="address-title">
               {{ property.numero }} {{ property.nom_voie }}
             </h3>
-            <p class="city-name">{{ property.city || 'Non renseigné' }}</p>
+            <p class="city-name">{{ getPropertyCity(property) }}</p>
           </div>
           <el-button
             type="danger"
@@ -151,6 +151,7 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Search, Sort, StarFilled, Edit, Plus } from '@element-plus/icons-vue';
+import { useDashboardStore } from '@/stores/dashboard';
 
 interface Props {
   favorites: any[];
@@ -158,6 +159,7 @@ interface Props {
 
 const props = defineProps<Props>();
 const router = useRouter();
+const dashboardStore = useDashboardStore();
 
 const emit = defineEmits([
   'edit-property',
@@ -252,6 +254,15 @@ const formatPrice = (price: number | undefined) => {
     currency: 'EUR',
     maximumFractionDigits: 0,
   }).format(price);
+};
+
+// Helper function to get city with fallback logic
+const getPropertyCity = (property: any): string => {
+  return (
+    property.city ||
+    (dashboardStore.selectedCity as any)?.city ||
+    'Non renseigné'
+  );
 };
 </script>
 
