@@ -1,110 +1,109 @@
 <template>
   <section class="block dashboardContainer">
-      <div class="headerFilterInfoContainer">
-        <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
-        <div class="autoCompleteContainer">
-          <CityAutocomplete
-            v-model="selectedCity"
-            @select="handleCitySelect"
-            @clear="handleCityClear"
-          />
+    <div class="headerFilterInfoContainer">
+      <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
+      <div class="autoCompleteContainer">
+        <CityAutocomplete
+          v-model="selectedCity"
+          @select="handleCitySelect"
+          @clear="handleCityClear"
+        />
 
-          <StreetAutocomplete
-            v-model="selectedStreet"
-            :code-insee="selectedCodeInsee"
-            @select="handleStreetSelect"
-            @clear="handleStreetClear"
-          />
+        <StreetAutocomplete
+          v-model="selectedStreet"
+          :code-insee="selectedCodeInsee"
+          @select="handleStreetSelect"
+          @clear="handleStreetClear"
+        />
 
-          <NumeroAutocomplete
-            v-model="selectedNumeroFull"
-            :id-fantoir="selectedCodeIdFantoir"
-            @select="handleNumeroSelect"
-            @clear="handleNumeroClear"
-          />
-        </div>
+        <NumeroAutocomplete
+          v-model="selectedNumeroFull"
+          :id-fantoir="selectedCodeIdFantoir"
+          @select="handleNumeroSelect"
+          @clear="handleNumeroClear"
+        />
+      </div>
 
-        <!-- BOUTONS -->
-        <div class="validationButtonContainer">
+      <!-- BOUTONS -->
+      <div class="validationButtonContainer">
+        <Button type="primary" @click="querySearchEstimation">
+          Estimations reçues
+        </Button>
 
-          <Button type="primary" @click="querySearchEstimation">
-            Estimations reçues
-          </Button>
+        <Button
+          type="primary"
+          @click="dashboardStore.openCustomPropertyDialog()"
+        >
+          Créer une propriété personnalisée
+        </Button>
+      </div>
 
-          <Button
-            type="primary"
-            @click="dashboardStore.openCustomPropertyDialog()"
-          >
-            Créer une propriété personnalisée
-          </Button>
-        </div>
-
-        <!-- SWITCH LISTE / CARDS -->
-        <div class="view-controls">
-          <div class="layoutContainer">
-            <div class="viewSelector">
-              <div class="grid-container" @click="setTableView">
-                <el-icon
-                  class="databoard-icon"
-                  :class="{ active: viewType === 'table' }"
-                >
-                  <DataBoard />
-                </el-icon>
-              </div>
-
-              <div
-                class="grid-container"
-                @click="setCardView"
-                :class="{ disabled: isCityOnly }"
+      <!-- SWITCH LISTE / CARDS -->
+      <div class="view-controls">
+        <div class="layoutContainer">
+          <div class="viewSelector">
+            <div class="grid-container" @click="setTableView">
+              <el-icon
+                class="databoard-icon"
+                :class="{ active: viewType === 'table' }"
               >
-                <el-icon
-                  class="grid-icon"
-                  :class="{ active: viewType === 'card' }"
-                >
-                  <Grid />
-                </el-icon>
-              </div>
+                <DataBoard />
+              </el-icon>
+            </div>
 
-              <div class="grid-container" @click="setMapView">
-                <el-icon
-                  class="grid-icon"
-                  :class="{ active: viewType === 'map' }"
-                >
-                  <Location />
-                </el-icon>
-              </div>
+            <div
+              class="grid-container"
+              @click="setCardView"
+              :class="{ disabled: isCityOnly }"
+            >
+              <el-icon
+                class="grid-icon"
+                :class="{ active: viewType === 'card' }"
+              >
+                <Grid />
+              </el-icon>
+            </div>
+
+            <div class="grid-container" @click="setMapView">
+              <el-icon
+                class="grid-icon"
+                :class="{ active: viewType === 'map' }"
+              >
+                <Location />
+              </el-icon>
             </div>
           </div>
         </div>
       </div>
+    </div>
 
-      <!-- TABLE DES ADRESSES -->
-      <PropertyTable
-        v-if="viewType === 'table' && addresses.length > 0"
-        :addresses="addresses"
-        :city-only="isCityOnly"
-        @edit-property="handleEditProperty"
-        @select-street="handleGroupedStreetClick"
-        @select-numero="handleTableNumeroClick"
-      />
+    <!-- TABLE DES ADRESSES -->
+    <PropertyTable
+      v-if="viewType === 'table' && addresses.length > 0"
+      :addresses="addresses"
+      :city-only="isCityOnly"
+      @edit-property="handleEditProperty"
+      @select-street="handleGroupedStreetClick"
+      @select-numero="handleTableNumeroClick"
+    />
 
-      <!-- MODE CARD -->
-      <PropertyTableCard
-        v-else-if="viewType === 'card' && addresses.length > 0"
-        :addresses="addresses"
-        @edit-property="openPropertyDialog"
-      />
+    <!-- MODE CARD -->
+    <PropertyTableCard
+      v-else-if="viewType === 'card' && addresses.length > 0"
+      :addresses="addresses"
+      @edit-property="openPropertyDialog"
+    />
 
-      <MapView
-        v-show="viewType === 'map'"
-        :addresses="addresses"
-        :city-center="dashboardStore.cityCenter"
-        :dpe-points="dashboardStore.dpePoints"
-        @edit-property="openPropertyDialog"
-      />
+    <MapView
+      v-show="viewType === 'map'"
+      :addresses="addresses"
+      :city-center="dashboardStore.cityCenter"
+      :dpe-points="dashboardStore.dpePoints"
+      @edit-property="openPropertyDialog"
+    />
 
-      <PropertyForm />
-      <CreateCustomPropertyDialog />
+    <PropertyForm />
+    <CreateCustomPropertyDialog />
   </section>
 </template>
 
@@ -127,7 +126,6 @@ import PropertyTable from './DashboardComponents/PropertyTable.vue';
 import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
-import PropertyDialog from './DashboardComponents/PropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
 import Button from '@/components/OwnReusableComponents/button/Button.vue';
 
@@ -272,9 +270,7 @@ const isCityOnly = computed(() => {
       LIFECYCLE
 ------------------------------------ */
 onMounted(() => {
-  if (dashboardStore.isDataLoaded && dashboardStore.addresses.length > 0) {
-    console.log('Données restaurées depuis le store');
-  }
+  // Les données sont restaurées automatiquement depuis le store si déjà chargées
 });
 
 /* ------------------------------------

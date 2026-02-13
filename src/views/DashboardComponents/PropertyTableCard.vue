@@ -265,11 +265,6 @@ const handleSortClick = (criteria: 'price' | 'size' | 'bedrooms'): void => {
 
 // Gestion des favoris
 const toggleFavorite = async (propertyId: string) => {
-  console.log(
-    'toggleFavorite called in PropertyTableCard with:',
-    propertyId,
-    typeof propertyId
-  );
   try {
     const newFavoriteState = await store.toggleFavorite(propertyId);
     ElMessage({
@@ -280,7 +275,6 @@ const toggleFavorite = async (propertyId: string) => {
       duration: 2000,
     });
   } catch (error) {
-    console.log('Error in PropertyTableCard toggleFavorite:', error);
     ElMessage({
       message: 'Erreur lors de la modification des favoris',
       type: 'error',

@@ -1,22 +1,21 @@
 <template>
-    <aside class="sidebar">
-      <div class="sidebar-content">
-        <div class="mode-controls">
-          <h3>Mode d'affichage</h3>
-          <div class="mode-buttons">
-            <button
-              v-for="mode in selectPropertyToDisplay"
-              :key="mode.value"
-              :class="['mode-btn', { active: currentMode === mode.value }]"
-              @click="setMode(mode.value)"
-            >
-              {{ mode.label }}
-            </button>
-          </div>
+  <aside class="sidebar">
+    <div class="sidebar-content">
+      <div class="mode-controls">
+        <h3>Mode d'affichage</h3>
+        <div class="mode-buttons">
+          <button
+            v-for="mode in selectPropertyToDisplay"
+            :key="mode.value"
+            :class="['mode-btn', { active: currentMode === mode.value }]"
+            @click="setMode(mode.value)"
+          >
+            {{ mode.label }}
+          </button>
         </div>
       </div>
-    </aside>
-
+    </div>
+  </aside>
 </template>
 
 <script setup lang="ts">
@@ -32,8 +31,6 @@ const emit = defineEmits<{
 const props = defineProps<{
   addresses: IAddressDetail[];
 }>();
-
-console.log('📍 MapView props.addresses dans SideBar:', props.addresses);
 
 // État réactif
 const sidebarOpen = ref(true);
@@ -86,8 +83,6 @@ onUnmounted(() => {
   gap: 16px;
 }
 
-
-
 .mode-controls h3 {
   font-size: 13px;
   font-weight: 600;
@@ -95,7 +90,6 @@ onUnmounted(() => {
   text-transform: uppercase;
   letter-spacing: 0.5px;
   margin: 0 0 12px 0;
-
 }
 
 .mode-buttons {
@@ -114,7 +108,9 @@ onUnmounted(() => {
   font-weight: 500;
   cursor: pointer;
   transition: all 0.2s ease;
-  font-family: -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto, sans-serif;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Text', 'Segoe UI', Roboto,
+    sans-serif;
 }
 
 .mode-btn:hover {

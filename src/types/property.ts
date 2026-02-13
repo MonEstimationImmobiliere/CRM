@@ -66,10 +66,14 @@ export interface IProperty {
   code_insee: string;
   code_postal: string;
   nom_voie: string;
-  numero: number;
+  numero: number | string;
   rep: string | null;
   city: string | null;
   apart_number: string | null;
+  /** Alias historique pour apart_number */
+  numero_appartement?: string;
+  /** Nom de la commune (utilisé par certaines vues) */
+  nom_commune?: string;
   property_type: PropertyType;
   surface: number;
   area: number | null;
@@ -118,6 +122,8 @@ export interface IProperty {
   owner: string | null;
   price: number | null;
   comment: string | null;
+  /** Commentaire de rappel (champ legacy) */
+  comment_rappel?: string;
   update_by: number | null;
   date_rappel: string | null;
   code_agence: string;
@@ -127,138 +133,27 @@ export interface IProperty {
   favorite: boolean;
   /** Indique si le bien est loué */
   rented: boolean;
+  /** Indique si le bien est créé manuellement */
+  is_custom?: boolean;
 }
 
 /**
- * Interface pour la création/mise à jour d'une propriété
+ * Interface pour la création/mise à jour d'une propriété.
+ * Tous les champs sont optionnels (formulaire partiel).
  */
-export interface IPropertyFormData {
-  id?: number;
-  id_fantoir_long?: string;
-  id_fantoir?: string;
-  code_insee?: string;
-  code_postal?: string;
-  nom_voie?: string;
-  numero?: number;
-  rep?: string | null;
-  city?: string | null;
-  apart_number?: string | null;
-  property_type?: PropertyType;
-  surface?: number;
-  area?: number | null;
-  floor_number?: number | null;
-  total_floors?: number | null;
-  year_built?: number | null;
-  year_buy?: number | null;
-  property_condition?: PropertyCondition;
-  orientation?: PropertyOrientation;
-  rooms?: number | null;
-  bedrooms?: number | null;
-  bathrooms?: number;
-  fitted_kitchen?: boolean;
-  equipped_kitchen?: boolean;
-  american_kitchen?: boolean;
-  scullery?: boolean;
-  heating_type?: HeatingType;
-  window?: string | null;
-  window_type?: WindowType;
-  shutter?: string | null;
-  cheminee?: boolean;
-  district_heating?: boolean;
-  patio?: boolean;
-  garage?: number;
-  pool?: boolean;
-  veranda?: boolean;
-  garden?: boolean;
-  parking?: boolean;
-  basement?: boolean;
-  dependency?: boolean;
-  carport?: number;
-  kitchen_ext?: boolean;
-  property_tax?: number | null;
-  roof?: RoofType;
-  adjoining?: boolean;
-  sanitation?: SanitationType;
-  ground?: boolean;
-  charge?: number | null;
-  elevator?: boolean;
-  balcony?: boolean;
-  cellar?: boolean;
-  bike_room?: boolean;
-  guardian?: boolean;
-  email?: string | null;
-  phone?: string | null;
-  owner?: string | null;
-  price?: number | null;
-  comment?: string | null;
-  favorite?: boolean;
-  rented?: boolean;
-}
+export type IPropertyFormData = Partial<IProperty>;
 
 /**
- * @deprecated Utiliser IProperty à la place
- * Ancienne interface pour la compatibilité
+ * @deprecated Utiliser IProperty à la place.
+ * Alias conservé pour compatibilité ascendante.
  */
-export interface PropertyData {
+export type PropertyData = Partial<IProperty> & {
   id_fantoir_long: string;
-  id_fantoir?: string;
-  numero?: string;
-  rep?: string;
-  nom_voie?: string;
-  numero_appartement?: string;
-  code_postal?: string;
-  city?: string;
-  nom_commune?: string;
   owner: string;
   email: string;
   phone: string;
-  property_type: string;
-  year_built: number;
-  year_buy: number;
-  surface: number;
-  area: number;
-  orientation: string;
-  property_condition: string;
-  bedrooms: number;
-  bathrooms: number;
-  fitted_kitchen: boolean;
-  equipped_kitchen: boolean;
-  american_kitchen: boolean;
-  scullery: boolean;
-  heating_type: string;
-  window: string;
-  window_type: string;
-  shutter: string;
-  cheminee: boolean;
-  district_heating: boolean;
-  patio: boolean;
-  Garage: boolean;
-  pool: boolean;
-  veranda: boolean;
-  garden: boolean;
-  parking: boolean;
-  Carport: boolean;
-  kitchen_ext: boolean;
-  elevator: boolean;
-  balcony: boolean;
-  cellar: boolean;
-  bike_room: boolean;
-  guardian: boolean;
-  roof: string;
-  adjoining: boolean;
-  basement: boolean;
-  dependency: boolean;
-  ground: boolean;
   comment: string;
-  date_rappel: string | null;
-  comment_rappel?: string;
-  id?: number;
-  price?: number;
-  is_custom?: boolean;
-  user_id?: number;
-  agency_id?: number;
-  favorite?: boolean;
-}
+};
 
 /**
  * Liste de propriétés (favoris)

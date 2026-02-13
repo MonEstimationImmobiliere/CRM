@@ -1,100 +1,124 @@
-import { removeCookie, setCookie } from '@/utils';
 import { defineStore } from 'pinia';
-import { Stores } from 'types/stores';
+import { ref } from 'vue';
 import apiService from '@/api/apiRequests';
 
-export const userStore = defineStore('user', {
-  state: (): Stores.user => ({
-    name: '',
-    token: '',
-    id: null,
-    email: '',
-    phone: '',
-    avatar: null,
-    status: 'active',
-  }),
+interface LoginResponse {
+  user: {
+    name: string;
+    email: string;
+    phone: string;
+    avatar: string | null;
+    status: string;
+    id: number | null;
+  };
+  token: string;
+}
 
-  actions: {
-    async login(email: string, password: string) {
-      interface LoginResponse {
-        user: {
-          name: string;
-          email: string;
-          phone: string;
-          avatar: string | null;
-          status: string;
-          id: number | null;
-        };
-        token: string;
+interface UserInfo {
+  name: string;
+  email: string;
+  phone: string;
+  avatar: string | null;
+  status: 'active' | 'inactive';
+  id: number | null;
+}
+
+export const useUserStore = defineStore('user', () => {
+  // State
+  const name = ref('');
+  const token = ref('');
+  const id = ref<number | null>(null);
+  const email = ref('');
+  const phone = ref('');
+  const avatar = ref<string | null>(null);
+  const status = ref<'active' | 'inactive'>('active');
+
+  // Actions
+  async function login(userEmail: string, password: string) {
+    const response = await apiService.post<LoginResponse>('/login', {
+      email: userEmail,
+      password,
+    });
+
+    if (response?.data) {
+      name.value = response.data.user.name || '';
+      email.value = response.data.user.email || '';
+      phone.value = response.data.user.phone || '';
+      token.value = response.data.token || '';
+      id.value = response.data.user.id || null;
+
+      if (token.value) {
+        apiService.setToken(token.value);
       }
 
-      const response = await apiService.post<LoginResponse>('/login', {
-        email,
-        password,
-      });
+      return {
+        status: 200,
+        data: response.data,
+        message: 'Login successful',
+      };
+    }
 
-      if (response?.data) {
-        this.name = response.data.user.name || '';
-        this.email = response.data.user.email || '';
-        this.phone = response.data.user.phone || '';
-        this.token = response.data.token || '';
-        this.id = response.data.user.id || null;
+    throw new Error('Invalid response format');
+  }
 
-        if (this.token) {
-          apiService.setToken(this.token);
-          setCookie('token', this.token, 7);
-        }
+  async function logout() {
+    try {
+      await apiService.get('/user/logout');
+    } finally {
+      resetState();
+      apiService.removeToken();
+    }
+  }
 
-        return {
-          status: 200,
-          data: response.data,
-          message: 'Login successful',
-        };
-      }
+  async function getUserInfo(userToken: string): Promise<void> {
+    const response = await apiService.get<UserInfo>('/user/info', {
+      params: { token: userToken },
+    });
 
-      throw new Error('Invalid response format');
-    },
+    if (response?.data) {
+      const { data } = response;
+      name.value = data.name;
+      email.value = data.email;
+      phone.value = data.phone;
+      avatar.value = data.avatar;
+      status.value = data.status;
+      id.value = data.id;
+      token.value = userToken;
+      apiService.setToken(userToken);
+    }
+  }
 
-    async logout() {
-      try {
-        await apiService.get('/user/logout');
-      } finally {
-        this.resetState();
-        apiService.removeToken();
-        removeCookie('token');
-      }
-    },
+  function resetState() {
+    name.value = '';
+    token.value = '';
+    id.value = null;
+    email.value = '';
+    phone.value = '';
+    avatar.value = null;
+    status.value = 'active';
+  }
 
-    async getUserInfo(token: string): Promise<void> {
-      const response = await apiService.get<Stores.user>('/user/info', {
-        params: { token },
-      });
+  function setUserId(newId: number | null) {
+    id.value = newId;
+  }
 
-      if (response?.data) {
-        const { data } = response;
-        this.name = data.name;
-        this.email = data.email;
-        this.phone = data.phone;
-        this.avatar = data.avatar;
-        this.status = data.status;
-        this.id = data.id;
-        this.token = token;
-        setCookie('token', this.token);
-      }
-    },
-
-    resetState() {
-      this.name = '';
-      this.token = '';
-      this.id = null;
-      this.email = '';
-      this.phone = '';
-      this.avatar = null;
-      this.status = 'active';
-    },
-
-    setUserId(id: number | null) {
-      this.id = id;
-    },
-  },
+  return {
+    // State
+    name,
+    token,
+    id,
+    email,
+    phone,
+    avatar,
+    status,
+    // Actions
+    login,
+    logout,
+    getUserInfo,
+    resetState,
+    setUserId,
+  };
 });
+
+// Alias rétro-compatible — à supprimer dans un futur sprint
+export const userStore = useUserStore;

@@ -31,7 +31,6 @@ export const ReminderService = {
     id: number,
     reminder: Partial<IReminderUpdate>
   ): Promise<IReminder> {
-    console.log('id and reminder', id, reminder);
     const response = await apiService.put<IReminder>(
       `/reminders/${id}`,
       reminder

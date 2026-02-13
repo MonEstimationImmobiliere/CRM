@@ -2,7 +2,7 @@ import { router } from './router';
 import NProgress from 'nprogress';
 import 'nprogress/nprogress.css';
 import { appTitle } from './appConfig';
-import { getCookie, removeCookie } from './utils';
+import apiService from './api/apiRequests';
 import { userStore } from './stores/user';
 import { ElMessage } from 'element-plus';
 
@@ -18,28 +18,35 @@ router.beforeEach(async (to, from, next) => {
   // Définir le titre de la page
   document.title = `${to.meta.title}-${appTitle}`;
 
-  // Le chemin est dans la liste blanche, autoriser le passage
-  if (whitelist.includes(to.path)) {
-    next();
-  } else {
-    // Check if there is a token
-    const token = getCookie('token');
-    const user = userStore();
+  const token = apiService.getToken();
+  const user = userStore();
 
-    if (!token) {
-      next('/login');
-    } else if (!user.token) {
-      try {
-        await user.getUserInfo(token);
-        next();
-      } catch (_) {
-        ElMessage.error('Token expiré, veuillez vous reconnecter.');
-        removeCookie('token');
-        next('/login');
-      }
+  // Pages accessibles sans authentification
+  if (whitelist.includes(to.path)) {
+    // Si l'utilisateur est déjà connecté et va sur /login → rediriger vers /
+    if (to.path === '/login' && (token || user.token)) {
+      next('/');
     } else {
       next();
     }
+    return;
+  }
+
+  // Pages protégées — vérification du token
+  if (!token) {
+    next('/login');
+  } else if (!user.token) {
+    // Token dans le cookie mais pas encore en mémoire → récupérer les infos user
+    try {
+      await user.getUserInfo(token);
+      next();
+    } catch (_) {
+      ElMessage.error('Token expiré, veuillez vous reconnecter.');
+      apiService.removeToken();
+      next('/login');
+    }
+  } else {
+    next();
   }
 });
 

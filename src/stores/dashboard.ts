@@ -1,7 +1,7 @@
 // src/stores/dashboard.ts
 import { defineStore } from 'pinia';
+import { ref } from 'vue';
 import { PropertyService } from '@/api/property.service';
-import apiService from '@/api/apiRequests';
 import type { IAddressGrouped, IAddressDetail } from '@/types/address';
 import type { IDpeResult } from '@/types/dpe';
 
@@ -55,303 +55,287 @@ interface DpePoint {
   date: string;
 }
 
-export const useDashboardStore = defineStore('dashboard', {
-  state: () => ({
-    selectedCity: null as SelectedCity | null,
-    selectedStreet: null as SelectedStreet | null,
-    selectedCodeInsee: '',
-    selectedCodeIdFantoir: '',
-    addresses: [] as (IAddressGrouped | IAddressDetail)[],
-    cityCenter: null as null | { lat: number; lon: number },
-    viewType: 'table',
-    lastSearchParams: null as SearchParams | null,
-    isDataLoaded: false,
-    showCustomPropertyDialog: false,
-    noResultsFound: false,
+export const useDashboardStore = defineStore('dashboard', () => {
+  // State
+  const selectedCity = ref<SelectedCity | null>(null);
+  const selectedStreet = ref<SelectedStreet | null>(null);
+  const selectedCodeInsee = ref('');
+  const selectedCodeIdFantoir = ref('');
+  const addresses = ref<(IAddressGrouped | IAddressDetail)[]>([]);
+  const cityCenter = ref<{ lat: number; lon: number } | null>(null);
+  const viewType = ref('table');
+  const lastSearchParams = ref<SearchParams | null>(null);
+  const isDataLoaded = ref(false);
+  const showCustomPropertyDialog = ref(false);
+  const noResultsFound = ref(false);
+  const selectedNumero = ref('');
+  const selectedRep = ref('');
+  const selectedNumeroFull = ref<SelectedNumeroFull | null>(null);
+  const dpePoints = ref<DpePoint[]>([]);
+  const markers = ref<Record<string, any>>({});
 
-    selectedNumero: '',
-    selectedRep: '',
-    selectedNumeroFull: null as SelectedNumeroFull | null,
+  // --- Helpers ---
 
-    dpePoints: [] as DpePoint[],
+  /** Calcule le centre géographique d'une liste d'adresses */
+  function computeCenter(addressList: (IAddressGrouped | IAddressDetail)[]) {
+    if (addressList.length === 0) return null;
+    const lats = addressList.map(a => Number(a.lat));
+    const lons = addressList.map(a => Number(a.lon));
+    return {
+      lat: lats.reduce((a, b) => a + b, 0) / lats.length,
+      lon: lons.reduce((a, b) => a + b, 0) / lons.length,
+    };
+  }
 
-    // Marqueurs de la carte (clé = id_fantoir_long, valeur = instance du marqueur MapLibre)
-    markers: {} as Record<string, any>,
-  }),
+  // --- Actions ---
 
-  actions: {
-    /* ---------------------------------------------
-         🔥 CHARGEMENT DES DPE PAR CODE INSEE
-    ---------------------------------------------- */
-    async fetchDPE() {
-      try {
-        const codeInsee =
-          this.selectedCodeInsee ||
-          this.selectedCity?.codeInsee ||
-          this.selectedCity?.code_insee;
+  async function fetchDPE() {
+    try {
+      const codeInsee =
+        selectedCodeInsee.value ||
+        selectedCity.value?.codeInsee ||
+        selectedCity.value?.code_insee;
 
-        if (!codeInsee) {
-          this.dpePoints = [];
-          return;
-        }
-
-        const to = '2025-11-30';
-        const from = '2025-11-01';
-
-        const url =
-          `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
-          `?code_departement_ban_eq=14` +
-          `&date_etablissement_dpe_gte=${from}` +
-          `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
-          `&size=5000`;
-
-        const response = await fetch(url);
-        const json = await response.json();
-
-        if (!json.results) {
-          this.dpePoints = [];
-          return;
-        }
-
-        this.dpePoints = json.results
-          .filter((r: IDpeResult) => r._geopoint)
-          .map((r: IDpeResult) => {
-            const [lat, lon] = r._geopoint.split(',').map(Number);
-            return {
-              lat,
-              lon,
-              adresse: r.adresse_ban,
-              etiquette: r.etiquette_dpe,
-              type: r.type_batiment,
-              date: r.date_etablissement_dpe,
-            };
-          });
-      } catch {
-        this.dpePoints = [];
+      if (!codeInsee) {
+        dpePoints.value = [];
+        return;
       }
-    },
 
-    /* ---------------------------------------------
-         🔥 RECHERCHE PRINCIPALE
-    ---------------------------------------------- */
-    async querySearchAddress() {
-      try {
-        /* ------------------------------------------------
-        🟦 0️⃣ CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
-    ------------------------------------------------ */
-        if (
-          this.selectedCity &&
-          !this.selectedStreet &&
-          !this.selectedNumero &&
-          !this.selectedRep
-        ) {
-          this.addresses = await PropertyService.getAddressesGroupedByCodeInsee(
-            this.selectedCodeInsee
-          );
+      const to = '2025-11-30';
+      const from = '2025-11-01';
 
-          // 📍 Centrage carte
-          if (this.addresses.length > 0) {
-            const lats = this.addresses.map(a => Number(a.lat));
-            const lons = this.addresses.map(a => Number(a.lon));
+      const url =
+        `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
+        `?code_departement_ban_eq=14` +
+        `&date_etablissement_dpe_gte=${from}` +
+        `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
+        `&size=5000`;
 
-            this.cityCenter = {
-              lat: lats.reduce((a, b) => a + b, 0) / lats.length,
-              lon: lons.reduce((a, b) => a + b, 0) / lons.length,
-            };
-          } else {
-            this.cityCenter = null;
-          }
+      const response = await fetch(url);
+      const json = await response.json();
 
-          this.lastSearchParams = {
-            city: this.selectedCity,
-            street: null,
-            codeInsee: this.selectedCodeInsee,
-            codeIdFantoir: null,
-            numero: null,
-            rep: null,
+      if (!json.results) {
+        dpePoints.value = [];
+        return;
+      }
+
+      dpePoints.value = json.results
+        .filter((r: IDpeResult) => r._geopoint)
+        .map((r: IDpeResult) => {
+          const [lat, lon] = r._geopoint.split(',').map(Number);
+          return {
+            lat,
+            lon,
+            adresse: r.adresse_ban,
+            etiquette: r.etiquette_dpe,
+            type: r.type_batiment,
+            date: r.date_etablissement_dpe,
           };
+        });
+    } catch {
+      dpePoints.value = [];
+    }
+  }
 
-          this.isDataLoaded = true;
-          this.noResultsFound = this.addresses.length === 0;
+  async function querySearchAddress() {
+    try {
+      // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
+      if (
+        selectedCity.value &&
+        !selectedStreet.value &&
+        !selectedNumero.value &&
+        !selectedRep.value
+      ) {
+        addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
+          selectedCodeInsee.value
+        );
 
-          await this.fetchDPE();
-          return; // ⛔ ON STOPPE ICI
-        }
+        cityCenter.value = computeCenter(addresses.value);
 
-        /* ------------------------------------------------
-        🟧 1️⃣ CAS RUE / NUMÉRO
-    ------------------------------------------------ */
-
-        // Impossible sans FANTOIR
-        if (!this.selectedCodeIdFantoir) return;
-
-        // 1. S'il y a un numéro → route numéro
-        if (this.selectedNumero) {
-          this.addresses = await PropertyService.getAddressesByNumero(
-            this.selectedCodeIdFantoir,
-            this.selectedNumero,
-            this.selectedRep || undefined
-          );
-        }
-
-        // 2. Rue seule → route SANS type (mode normal)
-        else {
-          this.addresses = await PropertyService.getAddressesByFantoir(
-            this.selectedCodeIdFantoir,
-            'adress'
-          );
-        }
-
-        /* ------------------------------------------------
-        📍 2️⃣ CENTRAGE CARTE
-    ------------------------------------------------ */
-        if (this.addresses.length > 0) {
-          const lats = this.addresses.map(a => Number(a.lat));
-          const lons = this.addresses.map(a => Number(a.lon));
-
-          this.cityCenter = {
-            lat: lats.reduce((a, b) => a + b, 0) / lats.length,
-            lon: lons.reduce((a, b) => a + b, 0) / lons.length,
-          };
-        } else {
-          this.cityCenter = null;
-        }
-
-        /* ------------------------------------------------
-        📝 3️⃣ SAVE PARAMS
-    ------------------------------------------------ */
-        this.lastSearchParams = {
-          city: this.selectedCity,
-          street: this.selectedStreet,
-          codeInsee: this.selectedCodeInsee,
-          codeIdFantoir: this.selectedCodeIdFantoir,
-          numero: this.selectedNumero,
-          rep: this.selectedRep,
+        lastSearchParams.value = {
+          city: selectedCity.value,
+          street: null,
+          codeInsee: selectedCodeInsee.value,
+          codeIdFantoir: null,
+          numero: null,
+          rep: null,
         };
 
-        this.isDataLoaded = true;
-        this.noResultsFound = this.addresses.length === 0;
+        isDataLoaded.value = true;
+        noResultsFound.value = addresses.value.length === 0;
 
-        await this.fetchDPE();
-      } catch {
-        this.noResultsFound = true;
+        await fetchDPE();
+        return;
       }
-    },
 
-    async querySearchEstimation() {
-      if (!this.selectedCodeIdFantoir) return;
+      // CAS RUE / NUMÉRO — Impossible sans FANTOIR
+      if (!selectedCodeIdFantoir.value) return;
 
-      this.addresses = await PropertyService.getAddressesByFantoir(
-        this.selectedCodeIdFantoir,
-        'estimation'
-      );
-      this.isDataLoaded = true;
-    },
-
-    async querySearchRappel() {
-      if (!this.selectedCodeIdFantoir) return;
-
-      this.addresses = await PropertyService.getAddressesByFantoir(
-        this.selectedCodeIdFantoir,
-        'rappel'
-      );
-      this.isDataLoaded = true;
-    },
-
-    async querySearchMaj() {
-      if (!this.selectedCodeIdFantoir) return;
-
-      this.addresses = await PropertyService.getAddressesByFantoir(
-        this.selectedCodeIdFantoir,
-        'maj'
-      );
-      this.isDataLoaded = true;
-    },
-
-    /* ---------------------------------------------
-         UPDATE PROPERTY
-    ---------------------------------------------- */
-    updateAddress(property: IAddressDetail) {
-      const index = this.addresses.findIndex(
-        a =>
-          'id_fantoir_long' in a &&
-          a.id_fantoir_long === property.id_fantoir_long
-      );
-
-      if (index !== -1) {
-        this.addresses[index] = {
-          ...this.addresses[index],
-          ...property,
-        };
+      if (selectedNumero.value) {
+        addresses.value = await PropertyService.getAddressesByNumero(
+          selectedCodeIdFantoir.value,
+          selectedNumero.value,
+          selectedRep.value || undefined
+        );
       } else {
-        this.addresses.push(property);
+        addresses.value = await PropertyService.getAddressesByFantoir(
+          selectedCodeIdFantoir.value,
+          'adress'
+        );
       }
-    },
 
-    /* ---------------------------------------------
-         PARAMÈTRES
-    ---------------------------------------------- */
-    setSearchParams(
-      city: SelectedCity | null,
-      street: SelectedStreet | null,
-      codeInsee: string,
-      codeIdFantoir: string
-    ) {
-      this.selectedCity = city;
-      this.selectedStreet = street;
-      this.selectedCodeInsee = codeInsee;
-      this.selectedCodeIdFantoir = codeIdFantoir;
-    },
+      cityCenter.value = computeCenter(addresses.value);
 
-    clearSearchData() {
-      this.selectedCity = null;
-      this.selectedStreet = null;
-      this.selectedCodeInsee = '';
-      this.selectedCodeIdFantoir = '';
-      this.addresses = [];
-      this.isDataLoaded = false;
-      this.lastSearchParams = null;
-      this.noResultsFound = false;
-      this.showCustomPropertyDialog = false;
-    },
-
-    /* ---------------------------------------------
-         CUSTOM PROPERTY
-    ---------------------------------------------- */
-    async createCustomProperty(
-      propertyData: Partial<IAddressDetail> & {
-        numero?: string;
-        rep?: string;
-        numero_appartement?: string;
-      }
-    ) {
-      let id_fantoir_long = this.selectedCodeIdFantoir;
-
-      if (propertyData.numero) id_fantoir_long += `_${propertyData.numero}`;
-      if (propertyData.rep) id_fantoir_long += `_${propertyData.rep}`;
-      if (propertyData.numero_appartement)
-        id_fantoir_long += `_${propertyData.numero_appartement}`;
-
-      const propertyWithFantoir = {
-        ...propertyData,
-        id_fantoir: this.selectedCodeIdFantoir,
-        id_fantoir_long: id_fantoir_long,
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value,
+        numero: selectedNumero.value,
+        rep: selectedRep.value,
       };
 
-      const createdProperty = await PropertyService.createCustomProperty(
-        propertyWithFantoir as any
-      );
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
 
-      await this.querySearchAddress();
-      return createdProperty;
-    },
+      await fetchDPE();
+    } catch {
+      noResultsFound.value = true;
+    }
+  }
 
-    openCustomPropertyDialog() {
-      this.showCustomPropertyDialog = true;
-    },
+  async function querySearchEstimation() {
+    if (!selectedCodeIdFantoir.value) return;
+    addresses.value = await PropertyService.getAddressesByFantoir(
+      selectedCodeIdFantoir.value,
+      'estimation'
+    );
+    isDataLoaded.value = true;
+  }
 
-    closeCustomPropertyDialog() {
-      this.showCustomPropertyDialog = false;
-    },
-  },
+  async function querySearchRappel() {
+    if (!selectedCodeIdFantoir.value) return;
+    addresses.value = await PropertyService.getAddressesByFantoir(
+      selectedCodeIdFantoir.value,
+      'rappel'
+    );
+    isDataLoaded.value = true;
+  }
+
+  async function querySearchMaj() {
+    if (!selectedCodeIdFantoir.value) return;
+    addresses.value = await PropertyService.getAddressesByFantoir(
+      selectedCodeIdFantoir.value,
+      'maj'
+    );
+    isDataLoaded.value = true;
+  }
+
+  function updateAddress(property: IAddressDetail) {
+    const index = addresses.value.findIndex(
+      a =>
+        'id_fantoir_long' in a && a.id_fantoir_long === property.id_fantoir_long
+    );
+
+    if (index !== -1) {
+      addresses.value[index] = {
+        ...addresses.value[index],
+        ...property,
+      };
+    } else {
+      addresses.value.push(property);
+    }
+  }
+
+  function setSearchParams(
+    city: SelectedCity | null,
+    street: SelectedStreet | null,
+    codeInsee: string,
+    codeIdFantoir: string
+  ) {
+    selectedCity.value = city;
+    selectedStreet.value = street;
+    selectedCodeInsee.value = codeInsee;
+    selectedCodeIdFantoir.value = codeIdFantoir;
+  }
+
+  function clearSearchData() {
+    selectedCity.value = null;
+    selectedStreet.value = null;
+    selectedCodeInsee.value = '';
+    selectedCodeIdFantoir.value = '';
+    addresses.value = [];
+    isDataLoaded.value = false;
+    lastSearchParams.value = null;
+    noResultsFound.value = false;
+    showCustomPropertyDialog.value = false;
+  }
+
+  async function createCustomProperty(
+    propertyData: Partial<IAddressDetail> & {
+      numero?: string;
+      rep?: string;
+      numero_appartement?: string;
+    }
+  ) {
+    let id_fantoir_long = selectedCodeIdFantoir.value;
+
+    if (propertyData.numero) id_fantoir_long += `_${propertyData.numero}`;
+    if (propertyData.rep) id_fantoir_long += `_${propertyData.rep}`;
+    if (propertyData.numero_appartement)
+      id_fantoir_long += `_${propertyData.numero_appartement}`;
+
+    const propertyWithFantoir = {
+      ...propertyData,
+      id_fantoir: selectedCodeIdFantoir.value,
+      id_fantoir_long: id_fantoir_long,
+    };
+
+    const createdProperty = await PropertyService.createCustomProperty(
+      propertyWithFantoir as any
+    );
+
+    await querySearchAddress();
+    return createdProperty;
+  }
+
+  function openCustomPropertyDialog() {
+    showCustomPropertyDialog.value = true;
+  }
+
+  function closeCustomPropertyDialog() {
+    showCustomPropertyDialog.value = false;
+  }
+
+  return {
+    // State
+    selectedCity,
+    selectedStreet,
+    selectedCodeInsee,
+    selectedCodeIdFantoir,
+    addresses,
+    cityCenter,
+    viewType,
+    lastSearchParams,
+    isDataLoaded,
+    showCustomPropertyDialog,
+    noResultsFound,
+    selectedNumero,
+    selectedRep,
+    selectedNumeroFull,
+    dpePoints,
+    markers,
+    // Actions
+    fetchDPE,
+    querySearchAddress,
+    querySearchEstimation,
+    querySearchRappel,
+    querySearchMaj,
+    updateAddress,
+    setSearchParams,
+    clearSearchData,
+    createCustomProperty,
+    openCustomPropertyDialog,
+    closeCustomPropertyDialog,
+  };
 });

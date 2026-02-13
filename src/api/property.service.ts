@@ -1,5 +1,5 @@
 import apiService from '@/api/apiRequests';
-import type { PropertyData, PropertyList } from '@/types/property';
+import type { IProperty, PropertyList } from '@/types/property';
 import type {
   IAddressDetail,
   AddressGroupedList,
@@ -7,15 +7,15 @@ import type {
 } from '@/types/address';
 
 export const PropertyService = {
-  async getPropertyById(idFantoir: string): Promise<PropertyData> {
-    const { data } = await apiService.get<PropertyData>(
+  async getPropertyById(idFantoir: string): Promise<IProperty> {
+    const { data } = await apiService.get<IProperty>(
       `/property/show/${encodeURIComponent(idFantoir)}`
     );
     return data;
   },
 
-  async createProperty(property: PropertyData): Promise<PropertyData> {
-    const response = await apiService.post<PropertyData>(
+  async createProperty(property: Partial<IProperty>): Promise<IProperty> {
+    const response = await apiService.post<IProperty>(
       `/property/create`,
       property
     );
@@ -24,9 +24,9 @@ export const PropertyService = {
 
   async updateProperty(
     propertyId: number,
-    property: PropertyData
-  ): Promise<PropertyData> {
-    const response = await apiService.post<{ property: PropertyData }>(
+    property: Partial<IProperty>
+  ): Promise<IProperty> {
+    const response = await apiService.post<{ property: IProperty }>(
       `/property/update/${encodeURIComponent(propertyId)}`,
       property
     );
@@ -89,8 +89,8 @@ export const PropertyService = {
     return response.data;
   },
 
-  async createCustomProperty(property: PropertyData): Promise<PropertyData> {
-    const response = await apiService.post<PropertyData>(`/property/create`, {
+  async createCustomProperty(property: Partial<IProperty>): Promise<IProperty> {
+    const response = await apiService.post<IProperty>(`/property/create`, {
       ...property,
       is_custom: true,
       id_fantoir: property.id_fantoir || '',

@@ -171,20 +171,18 @@ const availablePropertyTypes = computed(() => {
     .map(property => property.property_type || null)
     .filter((type, index, array) => array.indexOf(type) === index); // Supprimer les doublons
 
-  // Séparer les types valides et les valeurs nulles/undefined/vides
+  // Séparer les types valides et les valeurs nulles/undefined
   const validTypes = types
     .filter(
-      (type): type is string =>
-        type !== null && type !== undefined && type !== ''
+      (type): type is NonNullable<typeof type> =>
+        type !== null && type !== undefined
     )
     .sort(); // Trier alphabétiquement
 
-  const hasNullTypes = types.some(
-    type => type === null || type === undefined || type === ''
-  );
+  const hasNullTypes = types.some(type => type === null || type === undefined);
 
   // Ajouter "Non renseigné" si il y a des propriétés sans type
-  const result = [...validTypes];
+  const result: string[] = [...validTypes];
   if (hasNullTypes) {
     result.push('Non renseigné');
   }
@@ -206,10 +204,8 @@ const filteredFavorites = computed(() => {
   // Filtre par type de propriété
   if (selectedPropertyType.value) {
     if (selectedPropertyType.value === 'Non renseigné') {
-      // Filtrer les propriétés sans type (null, undefined, ou chaîne vide)
-      filtered = filtered.filter(
-        property => !property.property_type || property.property_type === ''
-      );
+      // Filtrer les propriétés sans type (null ou undefined)
+      filtered = filtered.filter(property => !property.property_type);
     } else {
       // Filtrer par type de propriété spécifique
       filtered = filtered.filter(

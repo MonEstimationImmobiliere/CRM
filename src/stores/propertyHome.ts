@@ -1,9 +1,9 @@
 import { defineStore } from 'pinia';
 import { ref, computed } from 'vue';
 import { PropertyService } from '@/api';
-import type { PropertyData } from '@/types/property';
+import type { IProperty } from '@/types/property';
 
-const defaultPropertyData: PropertyData = {
+const defaultPropertyData: Partial<IProperty> = {
   id_fantoir_long: '',
   id_fantoir: '',
   code_postal: '',
@@ -14,39 +14,39 @@ const defaultPropertyData: PropertyData = {
   owner: '',
   email: '',
   phone: '',
-  property_type: '',
+  property_type: null,
   year_built: new Date().getFullYear(),
   year_buy: new Date().getFullYear(),
   surface: 0,
   area: 0,
-  orientation: '',
-  property_condition: '',
+  orientation: null,
+  property_condition: null,
   bedrooms: 0,
   bathrooms: 0,
   fitted_kitchen: false,
   equipped_kitchen: false,
   american_kitchen: false,
   scullery: false,
-  heating_type: '',
+  heating_type: null,
   window: '',
-  window_type: '',
+  window_type: null,
   shutter: '',
   cheminee: false,
   district_heating: false,
   patio: false,
-  Garage: false,
+  garage: 0,
   pool: false,
   veranda: false,
   garden: false,
   parking: false,
-  Carport: false,
+  carport: 0,
   kitchen_ext: false,
   elevator: false,
   balcony: false,
   cellar: false,
   bike_room: false,
   guardian: false,
-  roof: '',
+  roof: null,
   adjoining: false,
   basement: false,
   dependency: false,
@@ -58,12 +58,12 @@ const defaultPropertyData: PropertyData = {
 };
 
 export const usePropertyStore = defineStore('property', () => {
-  const properties = ref<PropertyData[]>([]);
-  const selectedProperty = ref<PropertyData | null>(null);
+  const properties = ref<Partial<IProperty>[]>([]);
+  const selectedProperty = ref<Partial<IProperty> | null>(null);
   const isDialogVisible = ref<boolean>(false);
   const favoritesViewType = ref<'table' | 'card'>('card');
 
-  function addProperty(property: PropertyData) {
+  function addProperty(property: Partial<IProperty>) {
     const newProperty = {
       ...property,
       id: Date.now(),
@@ -71,7 +71,7 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.push(newProperty);
   }
 
-  const saveProperty = async (property: PropertyData) => {
+  const saveProperty = async (property: Partial<IProperty>) => {
     let saved;
 
     if (property.id) {
@@ -87,7 +87,7 @@ export const usePropertyStore = defineStore('property', () => {
   };
 
   // Fonction pour mettre à jour une propriété dans le store après sauvegarde
-  function updatePropertyInStore(updatedProperty: PropertyData) {
+  function updatePropertyInStore(updatedProperty: Partial<IProperty>) {
     // Chercher par id_fantoir_long d'abord (pour les favoris), puis par id
     const index = properties.value.findIndex(
       p =>
@@ -116,7 +116,7 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value = properties.value.filter(p => p.id !== id);
   }
 
-  function updateProperty(property: PropertyData) {
+  function updateProperty(property: Partial<IProperty>) {
     const index = properties.value.findIndex(
       p =>
         p.id_fantoir_long === property.id_fantoir_long || p.id === property.id
@@ -131,7 +131,9 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  const selectProperty = async (property: PropertyData | null | undefined) => {
+  const selectProperty = async (
+    property: Partial<IProperty> | null | undefined
+  ) => {
     if (property?.id_fantoir_long) {
       try {
         const data = await PropertyService.getPropertyById(

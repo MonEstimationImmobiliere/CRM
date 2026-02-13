@@ -17,12 +17,6 @@ export * from './reminder';
 // Types DPE
 export * from './dpe';
 
-// Types utilisateur
-export * from './user';
-
-// Types de services API
-export * from './services';
-
 // Types dashboard (compatibilité)
 export * from './dashboard';
 

@@ -67,7 +67,6 @@ const emit = defineEmits<{
 
 const dashboard = useDashboardStore();
 const remindersStore = useRemindersStore();
-console.log('📍 MapView store addresses:', dashboard.addresses);
 
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
@@ -104,12 +103,11 @@ const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILE
 ------------------------------------- */
 function handleModeChange(mode: string) {
   currentMode.value = mode;
-  console.log('🔄 Mode changed to:', mode);
   updatePointsWithColors();
 }
 
-function handleSidebarToggle(open: boolean) {
-  console.log('📂 Sidebar toggled:', open);
+function handleSidebarToggle(_open: boolean) {
+  // Prévu pour des futures fonctionnalités (ex: resize map)
 }
 
 /**
@@ -379,7 +377,6 @@ function updatePointsWithColors() {
   // Appliquer l'expression de couleur au layer
   try {
     map.setPaintProperty('dvf-dots', 'circle-color', colorExpression);
-    console.log('🎨 Colors updated for mode:', mode);
   } catch (error) {
     console.error('❌ Error updating colors:', error);
     // Fallback: couleur statique

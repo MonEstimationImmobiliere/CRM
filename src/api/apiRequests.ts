@@ -42,7 +42,7 @@ class ApiService {
 
   setToken(token: string): void {
     this.token = token;
-    setCookie('token', token);
+    setCookie('token', token, 7);
   }
 
   getToken(): string | null {

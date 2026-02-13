@@ -3,7 +3,6 @@ import Layout from '@/layout/index.vue';
 import { Link } from '@element-plus/icons-vue';
 import type { RouteRecordRaw } from 'vue-router';
 import { ROUTES } from '@/router/routes';
-import { userStore } from '@/stores/user';
 
 const routerHistory = createWebHistory(import.meta.env.BASE_URL);
 
@@ -94,19 +93,4 @@ export const router = createRouter({
   history: routerHistory,
   scrollBehavior: (): { top: number } => ({ top: 0 }),
   routes,
-});
-router.beforeEach((to, from, next) => {
-  const store = userStore();
-  const isAuthenticated = !!store.token;
-
-  // If route requires authentication and user is not logged in
-  if (to.path !== '/login' && !isAuthenticated) {
-    next({ path: '/login' });
-  }
-  // If user is logged in and trying to access login page
-  else if (to.path === '/login' && isAuthenticated) {
-    next({ path: '/' });
-  } else {
-    next();
-  }
 });

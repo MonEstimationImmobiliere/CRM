@@ -56,9 +56,9 @@ const props = defineProps({
 });
 
 const confirmEvent = () => {
-  console.log('confirm!');
+  // Confirmation handled by parent via emit
 };
 const cancelEvent = () => {
-  console.log('cancel!');
+  // Cancellation handled by parent via emit
 };
 </script>
