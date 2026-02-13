@@ -1,11 +1,9 @@
 <template>
   <section class="block dashboardContainer">
-    <div class="p-4">
       <div class="headerFilterInfoContainer">
         <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
         <div class="autoCompleteContainer">
           <CityAutocomplete
-            class="autoCompleteButton"
             v-model="selectedCity"
             @select="handleCitySelect"
             @clear="handleCityClear"
@@ -28,26 +26,17 @@
 
         <!-- BOUTONS -->
         <div class="validationButtonContainer">
-          <!--<el-button
-            type="primary"
-            size="large"
-            @click="querySearchAddress"
-            :disabled="true"
-          >
-            Afficher
-          </el-button>-->
 
-          <el-button type="primary" size="large" @click="querySearchEstimation">
+          <Button type="primary" @click="querySearchEstimation">
             Estimations reçues
-          </el-button>
+          </Button>
 
-          <el-button
+          <Button
             type="primary"
-            size="large"
             @click="dashboardStore.openCustomPropertyDialog()"
           >
             Créer une propriété personnalisée
-          </el-button>
+          </Button>
         </div>
 
         <!-- SWITCH LISTE / CARDS -->
@@ -116,7 +105,6 @@
 
       <PropertyForm />
       <CreateCustomPropertyDialog />
-    </div>
   </section>
 </template>
 
@@ -141,6 +129,7 @@ import PropertyForm from './DashboardComponents/PropertyDialog.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import PropertyDialog from './DashboardComponents/PropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
+import Button from '@/components/OwnReusableComponents/button/Button.vue';
 
 /* ------------------------------------
       STORES
@@ -441,22 +430,27 @@ const openPropertyDialog = (property: any) => {
 <style scoped>
 .headerFilterInfoContainer {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   flex-direction: row;
   justify-content: space-between;
 }
+
 .autoCompleteContainer {
   display: flex;
+  align-items: center;
+  justify-content: center;
   gap: 20px;
 }
 
 .validationButtonContainer {
-  gap: 10px;
+  gap: 20px;
   display: flex;
 }
 
 .view-controls {
-  margin-bottom: 24px;
+  background-color: #eeeeee;
+  padding: 20px;
+  border-radius: 35px;
 }
 
 .viewSelector {

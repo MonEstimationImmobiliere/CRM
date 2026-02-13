@@ -13,7 +13,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, defineProps } from 'vue';
+import { ref, computed } from 'vue';
 
 interface Props {
   modelValue?: string | number;
@@ -47,7 +47,6 @@ const isDisabled = computed(() => props.disabled);
 <style scoped>
 .dynamic-label-wrapper {
   position: relative;
-  margin-bottom: 1.5rem;
 }
 
 .dynamic-label-wrapper label {

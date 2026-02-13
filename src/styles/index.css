@@ -118,3 +118,128 @@ a:hover {
     font-size: 14px;
   }
 }
+
+/* Unified Theme System - Remplace les anciens thèmes student/employee */
+
+@import './general-design-tokens.css';
+@import './component-design-token.css';
+
+body {
+  /* ===================================
+   * LAYOUT VARIABLES
+   * =================================== */
+  --student-topbar-height: 80px;
+  --employee-topbar-height: 180px;
+
+  /* ===================================
+   * BRAND COLORS - Modern Theme (ex-light student)
+   * =================================== */
+  --ion-logo-color-one: #ab0926;
+  --ion-logo-color-two: #091667;
+  --ion-color-primary: #366fff;
+  --ion-color-primary-dark: #091667;
+  --ion-color-primary-rgb: 9, 22, 103;
+
+  --ion-color-secondary: #9c222b;
+  --ion-color-secondary-rgb: 156, 34, 43;
+
+  --ion-color-tertiary: #091667;
+  --ion-color-tertiary-rgb: 44, 49, 111;
+
+  /* ===================================
+   * BACKGROUND COLORS - Modern Theme
+   * =================================== */
+  --ion-background-color: #fff;
+  --ion-background-color-rgb: 000, 000, 000;
+
+  --ion-background-color-primary: #f2f2f2;
+  --ion-background-color-secondary: #f8f9fa;
+  --ion-background-color-tertiary: #f0f0f0;
+  --ion-background-color-quaternary: #e9ecef;
+  --ion-background-color-fourth: #f8f9fa;
+
+  --ion-background-color-selected: #f2f2f2;
+
+  --ion-background-shadow-rgb: 000, 000, 000, 0.1;
+
+  --ion-background-layout: #f2f2f2;
+
+  --ion-background-liquid-glass-rgb: 9, 22, 103, 0.29;
+  --ion-background-liquid-glass-droplink-rgb: 000, 000, 000, 0.176;
+  --ion-background-liquid-glass-shadow-rgb: 9, 22, 103, 1;
+
+  --ion-toolbar-background: #ffffff;
+  --ion-background-overlay-rgb: 0, 0, 0, 0.8;
+
+  --ion-background-color-test: #eba7a7;
+
+  /* ===================================
+   * TEXT COLORS - Modern Theme
+   * =================================== */
+  --ion-text-color: #1e1e1e;
+  --ion-text-color-rgb: 30, 30, 30;
+  --ion-text-color-contrast: #ffffff;
+  --ion-text-color-primary: #091667;
+  --ion-text-color-secondary: #6c757d;
+  --ion-text-color-tertiary: #adb5bd;
+  --ion-text-color-disabled: #dee2e6;
+  --ion-text-color-hover: #f6f6f6;
+  --ion-text-color-selected-animation: #f6f6f6;
+  --ion-text-color-link: #2d5bc6;
+
+  /* ===================================
+   * COMPONENT COLORS - Modern Theme
+   * =================================== */
+  --ion-card-background: #ffffff;
+  --ion-card-border-color: #e9ecef;
+  --ion-card-color: #2c316f;
+
+  /* ===================================
+   * INPUT COLORS - Modern Theme
+   * =================================== */
+  --ion-input-background: #fafafa;
+  --ion-input-border-color: #ddd;
+  --ion-input-border-color-hover: #303030;
+  --ion-input-border-color-focus: #091667;
+  --ion-input-color: #2c316f;
+  --ion-input-placeholder-color: #6c757d;
+  --ion-input-background-hover: #091667;
+  --ion-input-background-animation-hover: #091667;
+  --ion-input-background-animation-border-rgb: 33, 5, 72;
+
+  /* ===================================
+   * BUTTON COLORS - Modern Theme
+   * =================================== */
+  --ion-button-background: #0057ff;
+  --ion-button-color: #ffffff;
+  --ion-button-border-color: #0057ff;
+  --ion-button-background-hover: #4c4c4c;
+
+  /* ===================================
+   * ICON COLORS - Modern Theme
+   * =================================== */
+  --ion-icon-color: #6c757d;
+  --ion-icon-color-primary: #091667;
+  --ion-icon-color-primary-contrast: #ffffff;
+  --ion-icon-color-secondary: #9c222b;
+  --ion-icon-color-disabled: #dee2e6;
+  --ion-icon-color-hover: #fff;
+  --ion-icon-checked: #303030;
+  --ion-icon-background-color: #e9e9e9;
+
+  /* ===================================
+   * OPACITY VARIANTS - Modern Theme
+   * =================================== */
+  --ion-overlay-background-alpha: 0.4;
+  --ion-backdrop-color: rgba(0, 0, 0, 0.4);
+
+  /* ===================================
+   * AGENDA ITEMS - Modern Theme
+   * =================================== */
+  --ion-agenda-appointment-background: #024c5d;
+  --ion-agenda-course-background: #3042a0;
+  --ion-agenda-exam-background: #ab0926;
+  --ion-agenda-personal-background: #025d2f;
+  --ion-agenda-session-background: #6c7ce0;
+  --ion-agenda-item-text-color: #ffffff;
+}

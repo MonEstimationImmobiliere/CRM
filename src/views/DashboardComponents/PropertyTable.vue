@@ -142,6 +142,7 @@
 
     <el-table-column
       fixed="right"
+      class-name="action-column-right"
       label="Actions"
       min-width="140"
       v-if="!cityOnly"
@@ -185,7 +186,7 @@ import soleilNuage from '@/assets/soleil-nuage.png';
 import nuage from '@/assets/nuage.png';
 import nuagePluie from '@/assets/nuage-pluie.png';
 import orage from '@/assets/orage.png';
-import { Setting, Star, StarFilled } from '@element-plus/icons-vue';
+import { Star, StarFilled } from '@element-plus/icons-vue';
 import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
@@ -329,80 +330,146 @@ const toggleFavorite = async (row: any) => {
 </script>
 
 <style scoped>
+.TableContainer {
+  border-radius: 12px;
+  overflow: hidden;
+  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  width: 100%;
+}
+
+:deep(.el-table) {
+  border-radius: 12px;
+}
+
+:deep(.el-table__header th) {
+  background: #667eea;
+
+  color: white;
+  font-weight: 600;
+  border: none;
+  padding: 16px 12px;
+}
+
+:deep(.action-column-right) {
+  background-color: #4e64c6 !important;
+}
+
+:deep(.el-table__fixed-right) {
+  background-color: #667eea;
+}
+
+:deep(.el-table__fixed-right .el-table__header th) {
+  background-color: #667eea !important;
+}
+
 :deep(.el-table__body-wrapper) {
   padding: 10px 0;
 }
 
+:deep(.el-table__body tr:hover) {
+  background-color: #f8fafc;
+}
+
 :deep(.el-table__row.custom-row) {
   cursor: pointer;
-
   background-color: white;
   border-radius: 12px;
   box-shadow: 0 0 0 transparent;
-  transition:
-    box-shadow 0.3s ease,
-    transform 0.2s ease;
-  margin-bottom: 10px; /* ne fonctionne pas sur tr, mais on contourne avec box-shadow + padding */
+  transition: all 0.3s ease;
+  margin-bottom: 10px;
 }
 
 :deep(.el-table__row.custom-row:hover) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4);
+  background-color: #f1f5f9 !important;
   transform: translateY(-2px);
-  background-color: #f5f7fa;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
 }
 
 :deep(.el-table__row.custom-row > td) {
   background-color: transparent !important;
-  border: none;
-  padding-top: 16px;
-  padding-bottom: 16px;
-
-  /* Taille du texte */
-  font-size: 16px; /* Ajuste à ta convenance */
-  font-weight: 500; /* Optionnel pour un style plus lisible */
-  color: #333;
+  border-bottom: 1px solid #e2e8f0;
+  padding: 16px 12px;
+  font-size: 16px;
+  font-weight: 500;
+  color: #1e293b;
   font-family: 'Segoe UI', sans-serif;
-}
-
-.TableContainer {
-  border-radius: 8px;
-  border: 1px solid #e4e7ed;
-  width: 100%;
 }
 
 .icon-maison {
   font-size: 24px;
-  color: green;
+  color: #059669;
 }
 
 .icon-appartement {
   font-size: 24px;
-  color: blue;
+  color: #3b82f6;
 }
 
 .icon-immeuble {
   font-size: 24px;
-  color: brown;
+  color: #d97706;
 }
 
 .icon-inconnu {
   font-size: 24px;
-  color: black;
+  color: #64748b;
 }
 
 .action-buttons {
   display: flex;
   gap: 8px;
   align-items: center;
+  justify-content: center;
+}
+
+:deep(.el-button) {
+  border-radius: 8px;
+  transition: all 0.3s ease;
+}
+
+:deep(.el-button:hover) {
+  transform: translateY(-2px);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
 }
 
 .rueClickable {
-  color: #337ecc;
+  color: #3b82f6;
   cursor: pointer;
   font-weight: 600;
+  transition: color 0.2s ease;
 }
 
 .rueClickable:hover {
   text-decoration: underline;
+  color: #2563eb;
+}
+
+.numeroClickable {
+  color: #3b82f6;
+  font-weight: 600;
+  font-size: 16px;
+  cursor: pointer;
+  transition: color 0.2s ease;
+}
+
+.numeroClickable:hover {
+  text-decoration: underline;
+  color: #2563eb;
+}
+
+/* Mobile responsiveness */
+@media (max-width: 768px) {
+  .TableContainer {
+    font-size: 14px;
+  }
+
+  :deep(.el-table__row.custom-row > td) {
+    padding: 12px 8px;
+  }
+
+  .action-buttons {
+    flex-direction: column;
+    gap: 4px;
+  }
 }
 </style>

@@ -28,7 +28,7 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { computed, watch } from 'vue';
 import { Search } from '@element-plus/icons-vue';
 import axios from 'axios';
 import API_URL from '@/utils/API_URL';
@@ -124,9 +124,4 @@ watch(
   }
 );
 </script>
-
-<style scoped lang="scss">
-.floating-label-wrapper {
-  margin-bottom: 1.5rem;
-}
-</style>
+<style scoped></style>

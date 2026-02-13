@@ -542,6 +542,7 @@ const saveReminder = () => {
   }
 
   if (editingReminder.value) {
+    console.log('editingReminder.value.id', editingReminder.value.id);
     remindersStore.updateReminder(editingReminder.value.id, {
       ...reminderForm.value,
       completed: reminderForm.value.status === 'completed',

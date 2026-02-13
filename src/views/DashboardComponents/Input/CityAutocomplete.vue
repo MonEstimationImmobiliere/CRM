@@ -1,34 +1,32 @@
 <template>
-  <div class="floating-label-wrapper">
-    <DynamicLabelUI
+  <DynamicLabelUI
+    v-model="displayValue"
+    text="Ville"
+    color="#aaa"
+    activeColor="#409EFF"
+  >
+    <el-autocomplete
+      id="autocomplete"
+      size="large"
       v-model="displayValue"
-      text="Ville"
-      color="#aaa"
-      activeColor="#409EFF"
+      :fetch-suggestions="queryCities"
+      :debounce="400"
+      :suffix-icon="Search"
+      clearable
+      placeholder=""
+      @clear="handleClear"
+      @select="handleSelect"
     >
-      <el-autocomplete
-        id="autocomplete"
-        size="large"
-        v-model="displayValue"
-        :fetch-suggestions="queryCities"
-        :debounce="400"
-        :suffix-icon="Search"
-        clearable
-        placeholder=""
-        @clear="handleClear"
-        @select="handleSelect"
-      >
-        <!-- Résultat affiché : UNE SEULE LIGNE, AVEC highlight -->
-        <template #default="{ item }">
-          <div
-            v-html="
-              `${highlightMatch(item.city, displayValue)} - ${highlightMatch(item.value, displayValue)}`
-            "
-          />
-        </template>
-      </el-autocomplete>
-    </DynamicLabelUI>
-  </div>
+      <!-- Résultat affiché : UNE SEULE LIGNE, AVEC highlight -->
+      <template #default="{ item }">
+        <div
+          v-html="
+            `${highlightMatch(item.city, displayValue)} - ${highlightMatch(item.value, displayValue)}`
+          "
+        />
+      </template>
+    </el-autocomplete>
+  </DynamicLabelUI>
 </template>
 
 <script setup lang="ts">
@@ -120,8 +118,4 @@ const highlightMatch = (value: string, query: string) => {
 };
 </script>
 
-<style scoped>
-.floating-label-wrapper {
-  margin-bottom: 1.5rem;
-}
-</style>
+<style scoped></style>

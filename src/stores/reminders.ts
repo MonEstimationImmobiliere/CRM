@@ -249,7 +249,14 @@ export const useRemindersStore = defineStore('reminders', () => {
     updates: Partial<IReminderCreate>
   ) => {
     try {
-      const updatedReminder = await ReminderService.updateReminder(id, updates);
+      // Strip local-only 'status' field before sending to API
+      const { status: _status, ...apiUpdates } =
+        updates as Partial<IReminderCreate> & { status?: string };
+
+      const updatedReminder = await ReminderService.updateReminder(
+        id,
+        apiUpdates
+      );
       const index = reminders.value.findIndex(r => r.id === id);
       if (index !== -1) {
         reminders.value[index] = {
@@ -273,7 +280,6 @@ export const useRemindersStore = defineStore('reminders', () => {
         return reminders.value[index];
       }
     }
-    return null;
   };
 
   const deleteReminder = async (id: number) => {

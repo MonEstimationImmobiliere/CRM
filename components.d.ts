@@ -7,6 +7,7 @@ export {}
 /* prettier-ignore */
 declare module 'vue' {
   export interface GlobalComponents {
+    Button: typeof import('./src/components/OwnReusableComponents/button/Button.vue')['default']
     ConfirmationDialog: typeof import('./src/components/OwnReusableComponents/ConfirmationDialog.vue')['default']
     Dialog: typeof import('./src/components/Dialog.vue')['default']
     DynamicLabelUI: typeof import('./src/components/OwnReusableComponents/DynamicLabelUI.vue')['default']
