@@ -66,3 +66,28 @@ export function isToday(date: string): boolean {
   const today = new Date().toISOString().split('T')[0];
   return date === today;
 }
+
+/** Ordre de priorité pour le tri (high = 3, medium = 2, low = 1) */
+const PRIORITY_ORDER: Record<string, number> = { high: 3, medium: 2, low: 1 };
+
+/**
+ * Trie un tableau de rappels par date puis par priorité.
+ * @param reminders  tableau de rappels
+ * @param dateOrder  'asc' (plus ancien d'abord) ou 'desc' (plus récent d'abord)
+ */
+export function sortReminders<T extends { date: string; priority: string }>(
+  reminders: T[],
+  dateOrder: 'asc' | 'desc' = 'asc'
+): T[] {
+  return [...reminders].sort((a, b) => {
+    if (a.date !== b.date) {
+      const cmp = a.date.localeCompare(b.date);
+      return dateOrder === 'asc' ? cmp : -cmp;
+    }
+    return (
+      ()
+    
+      (PRIORITY_ORDER[b.priority] ?? 0) - (PRIORITY_ORDER[a.priority] ?? 0)
+    );
+  });
+}

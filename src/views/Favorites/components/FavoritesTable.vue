@@ -139,8 +139,11 @@
 
 <script setup lang="ts">
 import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
-import { useDashboardStore } from '@/stores/dashboard';
 import { formatPrice } from '@/helpers/intl';
+import {
+  getPropertyTypeTagType,
+  getPropertyCity,
+} from '@/utils/propertyHelpers';
 
 interface Props {
   favorites: any[];
@@ -154,40 +157,12 @@ const emit = defineEmits([
   'create-reminder',
 ]);
 
-const dashboardStore = useDashboardStore();
-
 const getRowClass = () => {
   return 'favorite-row';
 };
 
 const handleRowClick = (row: any) => {
   emit('edit-property', row);
-};
-
-const getPropertyTypeTagType = (propertyType: string | undefined) => {
-  if (!propertyType) return '';
-
-  switch (propertyType.toLowerCase()) {
-    case 'maison':
-      return 'success';
-    case 'appartement':
-      return 'info';
-    case 'immeuble':
-      return 'warning';
-    case 'terrain':
-      return 'danger';
-    default:
-      return '';
-  }
-};
-
-// Helper function to get city with fallback logic
-const getPropertyCity = (property: any): string => {
-  return (
-    property.city ||
-    (dashboardStore.selectedCity as any)?.city ||
-    'Non renseigné'
-  );
 };
 </script>
 

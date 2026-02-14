@@ -63,9 +63,9 @@
           class="reminder-item"
           :class="{
             overdue:
-              remindersStore.isReminderOverdue(reminder) && !reminder.completed,
-            today:
-              remindersStore.isReminderToday(reminder) && !reminder.completed,
+              isOverdue(reminder.date, reminder.completed) &&
+             
+              !rem day: isToday(reminder.date) && !reminder.completed,
             completed: reminder.completed,
           }"
         >
@@ -90,13 +90,13 @@
             </div>
           </div>
 
-          <div class="remin der-footer">
+          <div class="reminder-footer">
             <div class="reminder-date-info">
               <el-icon><Calendar /></el-icon>
               <span>{{ formatReminderDate(reminder.date) }}</span>
               <el-tag
                 v-if="
-                  remindersStore.isReminderOverdue(reminder) &&
+                  isOverdue(reminder.date, reminder.completed) &&
                   !reminder.completed
                 "
                 type="danger"
@@ -105,13 +105,7 @@
                 En retard
               </el-tag>
               <el-tag
-                v-else-if="
-                  remindersStore.isReminderToday(reminder) &&
-                  !reminder.completed
-                "
-                type="warning"
-                size="small"
-              >
+                v-else-if="pe="warning" ze="small"
                 Aujourd'hui
               </el-tag>
             </div>
@@ -142,6 +136,9 @@ import {
   getTypeColor,
   getTypeLabel,
   formatReminderDate,
+  isOverdue,
+  isToday,
+  sortReminders,
 } from '@/utils/reminderHelpers';
 
 const props = defineProps<{
@@ -157,42 +154,22 @@ const reminders = computed(() =>
 );
 
 // Rappels triés : par date (plus récent en premier), puis par priorité
-const sortedReminders = computed(() =>
-  [...reminders.value].sort((a, b) => {
-    if (a.date !== b.date) return b.date.localeCompare(a.date);
-    const priorityOrder = { high: 3, medium: 2, low: 1 };
-    return priorityOrder[b.priority] - priorityOrder[a.priority];
-  })
-);
+const sortedReminders = computed(() => sortReminders(reminders.value, 'desc'));
 
 // Counts
-const overdueCounts = computed(
-  () => reminders.value.filter(r => remindersStore.isReminderOverdue(r)).length
-);
+const overdueCounts = computed( () => reminders.value.filter(r => isOv);
 const todayCounts = computed(
-  () =>
-    reminders.value.filter(
-      r => remindersStore.isReminderToday(r) && !r.completed
-    ).length
+  () => reminders.value.filter(r => isToday(r.date) && !r.completed).length
 );
 const pendingCounts = computed(
   () =>
     reminders.value.filter(
-      r =>
-        !r.completed &&
-        !remindersStore.isReminderOverdue(r) &&
-        !remindersStore.isReminderToday(r)
-    ).length
-);
-const completedCounts = computed(
+      r ).lengtht completedCounts = computed(
   () => reminders.value.filter(r => r.completed).length
 );
 
 function handleToggleComplete(reminder: Reminder) {
-  if (reminder.completed) {
-    remindersStore.completeReminder(reminder.id);
-    ElMessage.success('Rappel marqué comme terminé');
-  } else {
+  if (remiindersStore.compessage.success('Rappel marqué commee {
     remindersStore.uncompleteReminder(reminder.id);
     ElMessage.info('Rappel marqué comme non terminé');
   }
@@ -245,12 +222,9 @@ function handleToggleComplete(reminder: Reminder) {
 /* Summary */
 .reminders-summary {
   margin-bottom: 20px;
-  padding: 1 6px;
-
+  padding: 16px;
   background-color: #f8fafc;
-
-  border-radius: 8 px;
-
+  border-radius: 8px;
   border: 1px solid #e2e8f0;
 }
 
@@ -268,8 +242,7 @@ function handleToggleComplete(reminder: Reminder) {
   padding: 8px 12px;
   background-color: white;
   border-radius: 6px;
-  box-shadow: 0 1px 3px rgba (0, 0, 0, 0.1);
-
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
   font-size: 14px;
   font-weight: 500;
 }
@@ -335,7 +308,7 @@ function handleToggleComplete(reminder: Reminder) {
 
 .reminder-item.completed .reminder-title {
   text-decoration: line-through;
-  color: #9ca 3af;
+  color: #9ca3af;
 }
 
 .reminder-item.completed .reminder-description {
@@ -343,7 +316,7 @@ function handleToggleComplete(reminder: Reminder) {
   text-decoration: line-through;
 }
 
-.reminder-ite m.completed .remi nder-date-info {
+.reminder-item.completed .reminder-date-info {
   color: #9ca3af;
 }
 

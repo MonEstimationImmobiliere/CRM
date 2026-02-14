@@ -9,6 +9,8 @@ interface ImportMetaEnv {
   readonly VITE_API_URL: string;
   /** Activer le système de mocks ("true" | "false") */
   readonly VITE_MOCK_ENABLED: string;
+  /** Clé API MapTiler */
+  readonly VITE_MAPTILER_KEY: string;
   /** Titre de l'application */
   readonly VITE_APP_TITLE: string;
 }

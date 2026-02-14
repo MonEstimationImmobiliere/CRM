@@ -146,29 +146,36 @@ function validate(): boolean {
 async function handleSave(keepOpen: boolean) {
   if (!validate()) return;
 
-  await remindersStore.addReminder({
-    title: form.value.title,
-    description: form.value.description,
-    date: form.value.date,
-    type: form.value.type,
-    priority: form.value.priority,
-    sharing: form.value.sharing,
-    property_id: props.propertyId,
-    completed: false,
-  });
+  try {
+    await remindersStore.addReminder({
+      title: form.value.title,
+      description: form.value.description,
+      date: form.value.date,
+      type: form.value.type,
+      priority: form.value.priority,
+      sharing: form.value.sharing,
+      property_id: props.propertyId,
+      completed: false,
+    });
 
-  ElMessage({
-    message: 'Rappel créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
+    ElMessage({
+      message: 'Rappel créé avec succès !',
+      type: 'success',
+      duration: 3000,
+    });
 
-  if (keepOpen) {
-    // Réinitialiser mais garder ouvert
-    form.value = getDefaultForm();
-  } else {
-    visible.value = false;
-    resetForm();
+    if (keepOpen) {
+      form.value = getDefaultForm();
+    } else {
+      visible.value = false;
+      resetForm();
+    }
+  } catch {
+    ElMessage({
+      message: 'Erreur lors de la création du rappel',
+      type: 'error',
+      duration: 3000,
+    });
   }
 }
 </script>

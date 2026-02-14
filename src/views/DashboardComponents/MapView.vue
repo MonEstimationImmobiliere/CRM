@@ -95,7 +95,9 @@ const reminderPropertyIds = computed(() => {
   return new Set(allReminders.map(r => r.property_id));
 });
 
-const MAPTILER_KEY = 'qnb10ErHP2vBlMq3fo5B';
+const MAPTILER_KEY =
+ 
+  import.meta.env.VITE_MAPTILER_KEY ?? 'qnb10ErHP2vBlMq3fo5B';
 const STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
 /* -------------------------------------

@@ -3,6 +3,10 @@ import { ref, computed, watch } from 'vue';
 import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 import { NotificationService } from '@/utils/notifications';
 import { ReminderService } from '@/api/reminder.service';
+import {
+  isOverdue as helperIsOverdue,
+  isToday as helperIsToday,
+} from '@/utils/reminderHelpers';
 import type {
   IReminder,
   IReminderCreate,
@@ -178,7 +182,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   });
 
   const completedReminders = computed(() => {
-    return reminders.value.filter(reminder => reminder.completed);
+    return allReminders.value.filter(reminder => reminder.completed);
   });
 
   const remindersByType = computed(() => {
@@ -362,13 +366,11 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const isReminderOverdue = (reminder: Reminder) => {
-    const today = new Date().toISOString().split('T')[0];
-    return reminder.date < today && !reminder.completed;
+    return helperIsOverdue(reminder.date, reminder.completed);
   };
 
   const isReminderToday = (reminder: Reminder) => {
-    const today = new Date().toISOString().split('T')[0];
-    return reminder.date === today;
+    return helperIsToday(reminder.date);
   };
 
   const isReminderUpcoming = (reminder: Reminder) => {

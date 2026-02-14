@@ -103,11 +103,7 @@
             <div class="detail-item">
               <span class="label">Prix estimé</span>
               <span class="value price">{{
-               
-             
-                formatPrice(property.price, 'Non renseigné')
-              }}</span>
-            </div>
+                v>
           </div>
         </div>
 
@@ -155,8 +151,14 @@
 import { ref, computed } from 'vue';
 import { useRouter } from 'vue-router';
 import { Search, Sort, StarFilled, Edit, Plus } from '@element-plus/icons-vue';
-import { useDashboardStore } from '@/stores/dashboard';
 import { formatPrice } from '@/helpers/intl';
+import {
+  getPropertyTypeTagType,
+  getPro
+ pertyCity,
+ ,
+
+} from '@/utils/propertyHelpers';
 
 interface Props {
   favorites: any[];
@@ -164,7 +166,6 @@ interface Props {
 
 const props = defineProps<Props>();
 const router = useRouter();
-const dashboardStore = useDashboardStore();
 
 const emit = defineEmits([
   'edit-property',
@@ -233,32 +234,6 @@ const handleSortClick = (field: string) => {
     sortBy.value = field;
     sortOrder.value = 'asc';
   }
-};
-
-const getPropertyTypeTagType = (propertyType: string | undefined) => {
-  if (!propertyType) return '';
-
-  switch (propertyType.toLowerCase()) {
-    case 'maison':
-      return 'success';
-    case 'appartement':
-      return 'info';
-    case 'immeuble':
-      return 'warning';
-    case 'terrain':
-      return 'danger';
-    default:
-      return '';
-  }
-};
-
-// Helper function to get city with fallback logic
-const getPropertyCity = (property: any): string => {
-  return (
-    property.city ||
-    (dashboardStore.selectedCity as any)?.city ||
-    'Non renseigné'
-  );
 };
 </script>
 

@@ -119,17 +119,10 @@ import { computed, onMounted, ref } from 'vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
-import {
-  StarFilled,
-  Edit,
-  Plus,
-  DataBoard,
-  Grid,
-} from '@element-plus/icons-vue';
+import { DataBoard, Grid } from '@element-plus/icons-vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
-import { on } from 'events';
 
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
@@ -252,29 +245,37 @@ const clearFilters = () => {
   selectedPropertyType.value = '';
 };
 
-const createReminderForProperty = (property: any) => {
+const createReminderForProperty = async (property: any) => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
   const propertyAddress =
     `${property.numero || ''} ${property.nom_voie || ''}`.trim();
 
-  remindersStore.addReminder({
-    title: `Rappel - ${propertyAddress || 'Propriété'}`,
-    description: 'Rappel rapide depuis les favoris',
-    date: tomorrow.toISOString().split('T')[0],
-    type: 'rappel',
-    priority: 'medium',
-    sharing: false,
-    property_id: property.id || 0,
-    completed: false,
-  });
+  try {
+    await remindersStore.addReminder({
+      title: `Rappel - ${propertyAddress || 'Propriété'}`,
+      description: 'Rappel rapide depuis les favoris',
+      date: tomorrow.toISOString().split('T')[0],
+      type: 'rappel',
+      priority: 'medium',
+      sharing: false,
+      property_id: property.id || 0,
+      completed: false,
+    });
 
-  ElMessage({
-    message: 'Rappel créé avec succès !',
-    type: 'success',
-    duration: 3000,
-  });
+    ElMessage({
+      message: 'Rappel créé avec succès !',
+      type: 'success',
+      duration: 3000,
+    });
+  } catch {
+    ElMessage({
+      message: 'Erreur lors de la création du rappel',
+      type: 'error',
+      duration: 3000,
+    });
+  }
 };
 
 const setTableView = () => {
