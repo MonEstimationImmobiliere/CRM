@@ -183,6 +183,7 @@ import {
 } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
+import { formatPrice } from '@/helpers/intl';
 
 const store = usePropertyStore();
 
@@ -245,14 +246,6 @@ const sortedProperties = computed(() => {
     return sortOrder.value === 'asc' ? comparison : -comparison;
   });
 });
-
-const formatPrice = (price: number): string => {
-  return new Intl.NumberFormat('en-US', {
-    style: 'currency',
-    currency: 'USD',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
 
 const handleSortClick = (criteria: 'price' | 'size' | 'bedrooms'): void => {
   if (sortBy.value === criteria) {

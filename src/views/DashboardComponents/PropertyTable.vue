@@ -191,7 +191,12 @@ import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
-
+import {
+  formatDateShort as formatDate,
+  formatPrice,
+  formatSurface as formatMetrage,
+  isDatePassed,
+} from '@/helpers/intl';
 import { ref } from 'vue';
 const selectedId = ref<string | null>(null);
 
@@ -280,33 +285,6 @@ const getRowClass = (row: any) => {
   return row.id_fantoir_long === selectedId.value
     ? 'custom-row selected-row'
     : 'custom-row';
-};
-
-const formatDate = (dateStr: string | null) => {
-  if (!dateStr) return '';
-  const date = new Date(dateStr);
-  const day = String(date.getDate()).padStart(2, '0');
-  const month = String(date.getMonth() + 1).padStart(2, '0');
-  const year = date.getFullYear();
-  return `${day}-${month}-${year}`;
-};
-
-const formatPrice = (value: number | null) => {
-  if (!value) return '';
-  return `${Math.round(value).toLocaleString('fr-FR')} €`;
-};
-
-const isDatePassed = (dateStr: string | Date | null): boolean => {
-  if (!dateStr) return false;
-  const date = new Date(dateStr);
-  const today = new Date();
-  today.setHours(0, 0, 0, 0); // ignore heure/minute
-  return date < today;
-};
-
-const formatMetrage = (value: number | null) => {
-  if (!value) return '';
-  return `${Math.round(value).toLocaleString('fr-FR')} m²`;
 };
 
 const toggleFavorite = async (row: any) => {

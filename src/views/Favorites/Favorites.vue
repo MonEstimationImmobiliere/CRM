@@ -217,15 +217,6 @@ const filteredFavorites = computed(() => {
   return filtered;
 });
 
-const formatPrice = (price: number | undefined) => {
-  if (!price) return 'Non renseigné';
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(price);
-};
-
 const toggleFavorite = async (propertyData: any) => {
   try {
     const newFavoriteState = await store.toggleFavorite(

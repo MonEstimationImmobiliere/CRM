@@ -377,6 +377,13 @@ import {
   Flag,
 } from '@element-plus/icons-vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
+import {
+  formatReminderDate as formatDate,
+  getPriorityType,
+  getPriorityLabel,
+  getTypeColor,
+  getTypeLabel,
+} from '@/utils/reminderHelpers';
 
 const remindersStore = useRemindersStore();
 
@@ -571,50 +578,6 @@ const resetForm = () => {
     sharing: false,
     property_id: 0,
   };
-};
-
-const formatDate = (dateString: string) => {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
-};
-
-const getPriorityType = (
-  priority: string
-): 'success' | 'warning' | 'danger' | 'info' => {
-  const types = { high: 'danger', medium: 'warning', low: 'info' } as const;
-  return types[priority as keyof typeof types] || 'info';
-};
-
-const getPriorityLabel = (priority: string) => {
-  const labels = { high: 'Haute', medium: 'Moyenne', low: 'Basse' };
-  return labels[priority as keyof typeof labels] || priority;
-};
-
-const getTypeColor = (
-  type: string
-): 'success' | 'warning' | 'danger' | 'info' => {
-  const colors = {
-    rappel: 'info',
-    estimation: 'success',
-    visite: 'warning',
-    autre: 'info',
-  } as const;
-  return colors[type as keyof typeof colors] || 'info';
-};
-
-const getTypeLabel = (type: string) => {
-  const labels = {
-    rappel: 'Rappel',
-    estimation: 'Estimation',
-    visite: 'Visite',
-    autre: 'Autre',
-  };
-  return labels[type as keyof typeof labels] || type;
 };
 
 const getEmptyMessage = () => {

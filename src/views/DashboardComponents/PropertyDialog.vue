@@ -485,7 +485,9 @@
         <!-- Tab Rappels -->
         <el-tab-pane label="Rappels" name="reminders">
           <PropertyReminderList
-           l-tab-pane>
+            :property-id="store.selectedProperty?.id ?? 0"
+          />
+        </el-tab-pane>
       </el-tabs>
 
       <div class="dialog-footer">

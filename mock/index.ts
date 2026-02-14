@@ -1,5 +1,4 @@
 import Mock from 'mockjs';
-import { mockNamespace } from '@/appConfig';
 import { MockApi } from './mockapi';
 import QueryString from 'qs';
 
@@ -8,22 +7,18 @@ interface GlobModule {
 }
 
 function collectApis(): MockApi.obj[] {
-  const mockApis = [];
+  const mockApis: MockApi.obj[] = [];
   const apiModules = import.meta.glob('./api/*.ts', { eager: true });
-  if (mockNamespace) {
-    for (const [filePath, apiModule] of Object.entries(apiModules)) {
-      const apis: MockApi.obj[] = (apiModule as GlobModule).default;
-      apis.forEach(
-        api =>
-          (api.url = filePath.replace(/^.+([\/\\].*)\.ts$/, '$1') + api.url)
-      );
-      mockApis.push(...(apiModule as GlobModule).default);
-    }
-  } else {
-    for (const [, apiModule] of Object.entries(apiModules)) {
-      mockApis.push(...(apiModule as GlobModule).default);
-    }
+
+  for (const [filePath, apiModule] of Object.entries(apiModules)) {
+    const apis: MockApi.obj[] = (apiModule as GlobModule).default;
+    // Prefix chaque URL mock avec le nom du fichier (namespace)
+    apis.forEach(
+      api => (api.url = filePath.replace(/^.+([\/\\].*)\.ts$/, '$1') + api.url)
+    );
+    mockApis.push(...apis);
   }
+
   return mockApis;
 }
 

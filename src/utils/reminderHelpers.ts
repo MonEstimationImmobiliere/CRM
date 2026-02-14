@@ -1,3 +1,5 @@
+import { formatDateFull } from '@/helpers/intl';
+
 /**
  * Utilitaires partagés pour les rappels (labels, couleurs, formatage de dates).
  * Utilisés dans PropertyDialog, PropertyReminderList, Reminders.vue, etc.
@@ -50,13 +52,7 @@ export function getTypeLabel(type: string): string {
 
 /** Formate une date ISO en texte long français (ex: "lundi 3 mars 2025") */
 export function formatReminderDate(dateString: string): string {
-  const date = new Date(dateString);
-  return date.toLocaleDateString('fr-FR', {
-    weekday: 'long',
-    year: 'numeric',
-    month: 'long',
-    day: 'numeric',
-  });
+  return formatDateFull(dateString);
 }
 
 /** Retourne true si la date du rappel est avant aujourd'hui et non complété */

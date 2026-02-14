@@ -103,7 +103,9 @@
       >
         <template #default="{ row }">
           <div class="price-info">
-            <span class="price-value">{{ formatPrice(row.price) }}</span>
+            <span class="price-value">{{
+              formatPrice(row.price, 'Non renseigné')
+            }}</span>
           </div>
         </template>
       </el-table-column>
@@ -138,6 +140,7 @@
 <script setup lang="ts">
 import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
 import { useDashboardStore } from '@/stores/dashboard';
+import { formatPrice } from '@/helpers/intl';
 
 interface Props {
   favorites: any[];
@@ -176,15 +179,6 @@ const getPropertyTypeTagType = (propertyType: string | undefined) => {
     default:
       return '';
   }
-};
-
-const formatPrice = (price: number | undefined) => {
-  if (!price) return 'Non renseigné';
-  return new Intl.NumberFormat('fr-FR', {
-    style: 'currency',
-    currency: 'EUR',
-    maximumFractionDigits: 0,
-  }).format(price);
 };
 
 // Helper function to get city with fallback logic
