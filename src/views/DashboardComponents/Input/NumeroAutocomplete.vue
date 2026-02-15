@@ -52,23 +52,21 @@ const displayValue = computed({
 /* ----------------------------------
       AUTOCOMPLETE API
 ----------------------------------- */
-const queryNumero = async (query: string, cb: (results: any[]) => void) => {
-  if (!query || !props.idFantoir) return cb([]);
+const queryNumero = async (query: string) => {
+  if (!query || !props.idFantoir) return [];
 
   try {
     const url = `${API_URL}/address-number-search/${props.idFantoir}/${query}`;
     const res = await apiService.get(url);
 
-    const results = (res.data as any[]).map((item: any) => ({
+    return (res.data as any[]).map((item: any) => ({
       numero: item.numero,
       rep: item.rep || '',
       value: item.rep ? `${item.numero} ${item.rep}` : String(item.numero),
     }));
-
-    cb(results);
   } catch (e) {
     console.error('Erreur queryNumero:', e);
-    cb([]);
+    return [];
   }
 };
 

@@ -183,34 +183,12 @@ import {
 } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
-import { formatPrice } from '@/helpers/intl';
+import type { IAddressDetail } from '@/types/address';
 
 const store = usePropertyStore();
 
-interface Property {
-  id_fantoir_long: number;
-  id_fantoir: string;
-  numero: string;
-  rep: string;
-  nom_voie: string;
-  code_insee: string;
-  type_bien: string;
-  surface: number;
-  dernier_prix_vente: number | null;
-  dernier_prix_estime: number | null;
-  date_derniere_vente: string | null;
-  date_derniere_estimation: string | null;
-  nombre_ventes: number;
-  nombre_estimations: number;
-  bedrooms: number;
-  bathrooms: number;
-  image: string | null;
-  code_postal: string;
-  nom_commune: string;
-}
-
 const props = defineProps<{
-  addresses: Property[];
+  addresses: IAddressDetail[];
 }>();
 
 // const emit = defineEmits<{
@@ -238,9 +216,9 @@ const sortedProperties = computed(() => {
     if (sortBy.value === 'price') {
       comparison = (a.dernier_prix_vente ?? 0) - (b.dernier_prix_vente ?? 0);
     } else if (sortBy.value === 'size') {
-      comparison = a.surface - b.surface;
+      comparison = (a.surface ?? 0) - (b.surface ?? 0);
     } else if (sortBy.value === 'bedrooms') {
-      comparison = a.bedrooms - b.bedrooms;
+      comparison = (a.bedrooms ?? 0) - (b.bedrooms ?? 0);
     }
 
     return sortOrder.value === 'asc' ? comparison : -comparison;
@@ -280,21 +258,21 @@ const isFavorite = (propertyId: string): boolean => {
   return store.isFavorite(propertyId);
 };
 
-const onImageError = (event: Event) => {
-  const target = event.target as HTMLImageElement;
-  const fallback = target.getAttribute('data-fallback');
-  if (fallback && target.src !== fallback) {
-    target.src = fallback;
-  }
-};
+// const onImageError = (event: Event) => {
+//   const target = event.target as HTMLImageElement;
+//   const fallback = target.getAttribute('data-fallback');
+//   if (fallback && target.src !== fallback) {
+//     target.src = fallback;
+//   }
+// };
 
-const getStreetViewUrl = (property: any): string => {
-  const address = `${property.numero} ${property.nom_voie}, ${property.code_postal} ${property.nom_commune}`;
-  const encodedAddress = encodeURIComponent(address);
-  const apiKey = 'AIzaSyCCtzXZLQQLM6edZnbCPjWViCwS_ttYDFU'; // Remplace par ta vraie clé API
+// const getStreetViewUrl = (property: any): string => {
+//   const address = `${property.numero} ${property.nom_voie}, ${property.code_postal} ${property.nom_commune}`;
+//   const encodedAddress = encodeURIComponent(address);
+//   const apiKey = 'AIzaSyCCtzXZLQQLM6edZnbCPjWViCwS_ttYDFU'; // Remplace par ta vraie clé API
 
-  return `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${encodedAddress}&key=${apiKey}`;
-};
+//   return `https://maps.googleapis.com/maps/api/streetview?size=600x300&location=${encodedAddress}&key=${apiKey}`;
+// };
 </script>
 
 <style scoped>

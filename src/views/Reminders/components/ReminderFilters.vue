@@ -2,7 +2,7 @@
   <div class="reminders-filters">
     <el-radio-group
       :model-value="activeFilter"
-      @update:model-value="$emit('update:activeFilter', $event)"
+      @update:model-value="$emit('update:activeFilter', String($event))"
       size="large"
     >
       <el-radio-button label="all">Tous</el-radio-button>

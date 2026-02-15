@@ -90,7 +90,7 @@
     <!-- MODE CARD -->
     <PropertyTableCard
       v-else-if="viewType === 'card' && addresses.length > 0"
-      :addresses="addresses"
+      :addresses="addresses as IAddressDetail[]"
       @edit-property="openPropertyDialog"
     />
 
@@ -117,6 +117,7 @@ import { DataBoard, Grid, Location } from '@element-plus/icons-vue';
 // Stores
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useDashboardStore } from '@/stores/dashboard';
+import type { IAddressDetail } from '@/types/address';
 
 // Components
 import CityAutocomplete from './DashboardComponents/Input/CityAutocomplete.vue';
@@ -221,10 +222,10 @@ const selectedCodeIdFantoir = computed({
 
 // --- Numéro + rep (ex: "40 bis") ---
 const selectedNumeroFull = computed({
-  get: () => dashboardStore.selectedNumeroFull,
+  get: () => dashboardStore.selectedNumeroFull || undefined,
 
   set: v => {
-    dashboardStore.selectedNumeroFull = v;
+    dashboardStore.selectedNumeroFull = v || null;
 
     if (!v) {
       dashboardStore.selectedNumero = '';
@@ -381,9 +382,9 @@ const handleTableNumeroClick = (row: {
       RECHERCHE
 ------------------------------------ */
 
-const querySearchAddress = async () => {
-  await dashboardStore.querySearchAddress();
-};
+// const querySearchAddress = async () => {
+//   await dashboardStore.querySearchAddress();
+// };
 
 const querySearchEstimation = async () => {
   await dashboardStore.querySearchEstimation();

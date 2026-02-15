@@ -44,6 +44,7 @@ export interface IAddressDetail {
   date_rappel: string | null;
   dernier_prix_estime: number | null;
   id: number | null;
+  bathrooms: number | null;
 }
 
 /**

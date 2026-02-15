@@ -102,7 +102,12 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <el-form-item label="Année de construction">
                   <el-input-number
-                    v-model="store.selectedProperty.year_built"
+                    :model-value="
+                      store.selectedProperty.year_built ?? undefined
+                    "
+                    @update:model-value="
+                      v => (store.selectedProperty!.year_built = v ?? null)
+                    "
                     :min="1800"
                     :max="new Date().getFullYear()"
                     size="large"
@@ -112,7 +117,10 @@
 
                 <el-form-item label="Année d'acquisition">
                   <el-input-number
-                    v-model="store.selectedProperty.year_buy"
+                    :model-value="store.selectedProperty.year_buy ?? undefined"
+                    @update:model-value="
+                      v => (store.selectedProperty!.year_buy = v ?? null)
+                    "
                     :min="1800"
                     :max="new Date().getFullYear()"
                     size="large"
@@ -137,7 +145,10 @@
 
                 <el-form-item label="Surface du terrain">
                   <el-input-number
-                    v-model="store.selectedProperty.area"
+                    :model-value="store.selectedProperty.area ?? undefined"
+                    @update:model-value="
+                      v => (store.selectedProperty!.area = v ?? null)
+                    "
                     :min="0"
                     :precision="2"
                     :step="1"
@@ -157,7 +168,11 @@
             <div class="card-content">
               <el-form-item label="Orientation">
                 <el-radio-group
-                  v-model="store.selectedProperty.orientation"
+                  :model-value="store.selectedProperty.orientation ?? ''"
+                  @update:model-value="
+                    v =>
+                      (store.selectedProperty!.orientation = (v || null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="Nord">Nord</el-radio-button>
@@ -169,7 +184,12 @@
 
               <el-form-item label="État général">
                 <el-radio-group
-                  v-model="store.selectedProperty.property_condition"
+                  :model-value="store.selectedProperty.property_condition ?? ''"
+                  @update:model-value="
+                    v =>
+                      (store.selectedProperty!.property_condition = (v ||
+                        null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="Travaux à réaliser"
@@ -187,7 +207,10 @@
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <el-form-item label="Chambres">
                   <el-input-number
-                    v-model="store.selectedProperty.bedrooms"
+                    :model-value="store.selectedProperty.bedrooms ?? undefined"
+                    @update:model-value="
+                      v => (store.selectedProperty!.bedrooms = v ?? null)
+                    "
                     :min="0"
                     size="large"
                     class="w-full"
@@ -239,7 +262,12 @@
             <div class="card-content">
               <el-form-item label="Type de chauffage">
                 <el-select
-                  v-model="store.selectedProperty.heating_type"
+                  :model-value="store.selectedProperty.heating_type ?? ''"
+                  @update:model-value="
+                    v =>
+                      (store.selectedProperty!.heating_type = (v ||
+                        null) as any)
+                  "
                   size="large"
                   class="w-full"
                 >
@@ -254,7 +282,10 @@
 
               <el-form-item label="Type de fenêtres">
                 <el-radio-group
-                  v-model="store.selectedProperty.window"
+                  :model-value="store.selectedProperty.window ?? ''"
+                  @update:model-value="
+                    v => (store.selectedProperty!.window = (v || null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="Simple"
@@ -271,7 +302,11 @@
 
               <el-form-item label="Matériau fenêtres">
                 <el-radio-group
-                  v-model="store.selectedProperty.window_type"
+                  :model-value="store.selectedProperty.window_type ?? ''"
+                  @update:model-value="
+                    v =>
+                      (store.selectedProperty!.window_type = (v || null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="PVC">PVC</el-radio-button>
@@ -282,7 +317,10 @@
 
               <el-form-item label="Type de volets">
                 <el-radio-group
-                  v-model="store.selectedProperty.shutter"
+                  :model-value="store.selectedProperty.shutter ?? ''"
+                  @update:model-value="
+                    v => (store.selectedProperty!.shutter = (v || null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="roulant_elec"
@@ -385,7 +423,10 @@
             <div class="card-content">
               <el-form-item label="Type de toit">
                 <el-radio-group
-                  v-model="store.selectedProperty.roof"
+                  :model-value="store.selectedProperty.roof ?? ''"
+                  @update:model-value="
+                    v => (store.selectedProperty!.roof = (v || null) as any)
+                  "
                   size="large"
                 >
                   <el-radio-button label="tuile">Tuile</el-radio-button>
@@ -438,7 +479,10 @@
             <div class="card-content">
               <el-form-item label="Prix estimé (€)">
                 <el-input-number
-                  v-model="store.selectedProperty.price"
+                  :model-value="store.selectedProperty.price ?? undefined"
+                  @update:model-value="
+                    v => (store.selectedProperty!.price = v ?? null)
+                  "
                   :min="0"
                   :step="1000"
                   :precision="0"
