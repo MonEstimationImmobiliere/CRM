@@ -186,7 +186,67 @@ import {
 } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
 import { usePropertyStore } from '@/stores/propertyHome';
-import type { IProperty } from '@/types/property';
+
+/** Type dédié au formulaire de création de propriété personnalisée.
+ *  Certains champs diffèrent de IProperty :
+ *  - les enums (property_type, orientation…) acceptent '' comme valeur initiale
+ *  - garage / carport sont des booléens dans le formulaire
+ */
+interface ICustomPropertyForm {
+  id_fantoir_long: string;
+  id_fantoir: string;
+  owner: string;
+  email: string;
+  phone: string;
+  property_type: string;
+  year_built: number;
+  year_buy: number;
+  surface: number;
+  area: number;
+  orientation: string;
+  property_condition: string;
+  bedrooms: number;
+  bathrooms: number;
+  fitted_kitchen: boolean;
+  equipped_kitchen: boolean;
+  american_kitchen: boolean;
+  scullery: boolean;
+  heating_type: string;
+  window: string;
+  window_type: string;
+  shutter: string;
+  cheminee: boolean;
+  district_heating: boolean;
+  patio: boolean;
+  garage: boolean;
+  pool: boolean;
+  veranda: boolean;
+  garden: boolean;
+  parking: boolean;
+  carport: boolean;
+  kitchen_ext: boolean;
+  elevator: boolean;
+  balcony: boolean;
+  cellar: boolean;
+  bike_room: boolean;
+  guardian: boolean;
+  roof: string;
+  adjoining: boolean;
+  basement: boolean;
+  dependency: boolean;
+  ground: boolean;
+  comment: string;
+  date_rappel: string | null;
+  comment_rappel: string;
+  numero: string;
+  rep: string;
+  nom_voie: string;
+  numero_appartement: string;
+  code_postal: string;
+  city: string;
+  is_custom: boolean;
+  favorite?: boolean;
+}
 
 const dashboardStore = useDashboardStore();
 const { selectedCity } = useDashboardStore();
@@ -205,45 +265,45 @@ const dialogVisible = computed({
   },
 });
 
-const formData = ref<Partial<IProperty>>({
+const formData = ref<ICustomPropertyForm>({
   id_fantoir_long: '',
   id_fantoir: '',
   owner: '',
   email: '',
   phone: '',
-  property_type: null,
+  property_type: '',
   year_built: new Date().getFullYear(),
   year_buy: new Date().getFullYear(),
   surface: 0,
   area: 0,
-  orientation: null,
-  property_condition: null,
+  orientation: '',
+  property_condition: '',
   bedrooms: 0,
   bathrooms: 0,
   fitted_kitchen: false,
   equipped_kitchen: false,
   american_kitchen: false,
   scullery: false,
-  heating_type: null,
+  heating_type: '',
   window: '',
-  window_type: null,
+  window_type: '',
   shutter: '',
   cheminee: false,
   district_heating: false,
   patio: false,
-  garage: 0,
+  garage: false,
   pool: false,
   veranda: false,
   garden: false,
   parking: false,
-  carport: 0,
+  carport: false,
   kitchen_ext: false,
   elevator: false,
   balcony: false,
   cellar: false,
   bike_room: false,
   guardian: false,
-  roof: null,
+  roof: '',
   adjoining: false,
   basement: false,
   dependency: false,
@@ -327,39 +387,39 @@ const resetForm = () => {
     owner: '',
     email: '',
     phone: '',
-    property_type: null,
+    property_type: '',
     year_built: new Date().getFullYear(),
     year_buy: new Date().getFullYear(),
     surface: 0,
     area: 0,
-    orientation: null,
-    property_condition: null,
+    orientation: '',
+    property_condition: '',
     bedrooms: 0,
     bathrooms: 0,
     fitted_kitchen: false,
     equipped_kitchen: false,
     american_kitchen: false,
     scullery: false,
-    heating_type: null,
+    heating_type: '',
     window: '',
-    window_type: null,
+    window_type: '',
     shutter: '',
     cheminee: false,
     district_heating: false,
     patio: false,
-    garage: 0,
+    garage: false,
     pool: false,
     veranda: false,
     garden: false,
     parking: false,
-    carport: 0,
+    carport: false,
     kitchen_ext: false,
     elevator: false,
     balcony: false,
     cellar: false,
     bike_room: false,
     guardian: false,
-    roof: null,
+    roof: '',
     adjoining: false,
     basement: false,
     dependency: false,

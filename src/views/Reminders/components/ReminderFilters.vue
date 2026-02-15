@@ -1,10 +1,6 @@
 <template>
   <div class="reminders-filters">
     <el-radio-group
-     
-     
-     
-    
       :model-value="activeFilter"
       @update:model-value="$emit('update:activeFilter', $event)"
       size="large"
@@ -24,7 +20,7 @@
         clearable
         class="filter-select"
       >
-        <el-option label="Appel" value="rappel" />
+        <el-option label="Rappel" value="rappel" />
         <el-option label="Estimation" value="estimation" />
         <el-option label="Visite" value="visite" />
         <el-option label="Autre" value="autre" />

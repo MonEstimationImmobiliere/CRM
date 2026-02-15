@@ -52,7 +52,11 @@
         :key="property.id_fantoir_long"
         class="favorite-card"
         shadow="hover"
+        tabindex="0"
+        role="button"
+        :aria-label="`${property.numero || ''} ${property.nom_voie || ''} — ${getPropertyCity(property)}`"
         @click="$emit('edit-property', property)"
+        @keydown.enter="$emit('edit-property', property)"
       >
         <!-- Card Header -->
         <div class="card-header">
@@ -66,6 +70,7 @@
             type="danger"
             size="small"
             circle
+            aria-label="Retirer des favoris"
             @click.stop="$emit('toggle-favorite', property)"
             class="favorite-button"
           >
@@ -103,7 +108,9 @@
             <div class="detail-item">
               <span class="label">Prix estimé</span>
               <span class="value price">{{
-                v>
+                formatPrice(property.price, 'Non renseigné')
+              }}</span>
+            </div>
           </div>
         </div>
 
@@ -149,15 +156,11 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { useRouter } from 'vue-router';
 import { Search, Sort, StarFilled, Edit, Plus } from '@element-plus/icons-vue';
 import { formatPrice } from '@/helpers/intl';
 import {
   getPropertyTypeTagType,
-  getPro
- pertyCity,
- ,
-
+  getPropertyCity,
 } from '@/utils/propertyHelpers';
 
 interface Props {
@@ -165,7 +168,6 @@ interface Props {
 }
 
 const props = defineProps<Props>();
-const router = useRouter();
 
 const emit = defineEmits([
   'edit-property',

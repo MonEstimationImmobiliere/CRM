@@ -85,8 +85,6 @@ export function sortReminders<T extends { date: string; priority: string }>(
       return dateOrder === 'asc' ? cmp : -cmp;
     }
     return (
-      ()
-    
       (PRIORITY_ORDER[b.priority] ?? 0) - (PRIORITY_ORDER[a.priority] ?? 0)
     );
   });

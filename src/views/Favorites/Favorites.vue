@@ -10,7 +10,7 @@
               placeholder="Filtrer par ville"
               clearable
               size="large"
-              style="width: 200px"
+              class="filter-select"
             >
               <el-option
                 v-for="city in availableCities"
@@ -26,7 +26,7 @@
               placeholder="Filtrer par type"
               clearable
               size="large"
-              style="width: 200px"
+              class="filter-select"
             >
               <el-option
                 v-for="type in availablePropertyTypes"
@@ -48,7 +48,15 @@
         <div class="layoutContainer">
           <el-row :gutter="20">
             <el-col :span="12">
-              <div class="grid-container" @click="setTableView">
+              <div
+                class="grid-container"
+                role="button"
+                tabindex="0"
+                aria-label="Vue tableau"
+                :aria-pressed="favoritesViewType === 'table'"
+                @click="setTableView"
+                @keydown.enter="setTableView"
+              >
                 <el-icon
                   class="databoard-icon"
                   :class="{ active: favoritesViewType === 'table' }"
@@ -58,7 +66,15 @@
               </div>
             </el-col>
             <el-col :span="12">
-              <div class="grid-container" @click="setCardView">
+              <div
+                class="grid-container"
+                role="button"
+                tabindex="0"
+                aria-label="Vue cartes"
+                :aria-pressed="favoritesViewType === 'card'"
+                @click="setCardView"
+                @keydown.enter="setCardView"
+              >
                 <el-icon
                   class="grid-icon"
                   :class="{ active: favoritesViewType === 'card' }"
@@ -320,6 +336,10 @@ const setCardView = () => {
 .type-filter {
   display: flex;
   align-items: center;
+}
+
+.filter-select {
+  width: 200px;
 }
 
 .header-stats {

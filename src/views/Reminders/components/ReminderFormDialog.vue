@@ -6,9 +6,12 @@
     @update:model-value="$emit('update:visible', $event)"
     @close="resetForm"
   >
-    <el-form :model="form" label-width="120px">
-      <el-form-item label="Titre" required>
-        <el-input/-form-item> l-form-item label="Description">
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+      <el-form-item label="Titre" prop="title">
+        <el-input v-model="form.title" placeholder="Titre du rappel" />
+      </el-form-item>
+
+      <el-form-item label="Description">
         <el-input
           v-model="form.description"
           type="textarea"
@@ -17,7 +20,7 @@
         />
       </el-form-item>
 
-      <el-form-item label="Date" required>
+      <el-form-item label="Date" prop="date">
         <el-date-picker
           v-model="form.date"
           type="date"
@@ -25,6 +28,7 @@
           class="full-width"
           format="DD/MM/YYYY"
           value-format="YYYY-MM-DD"
+          :disabled-date="disabledDate"
         />
       </el-form-item>
 
@@ -56,7 +60,7 @@
 
     <template #footer>
       <el-button @click="$emit('update:visible', false)">Annuler</el-button>
-      <el-button type="primary" @click="handleSave">
+      <el-button type="primary" :loading="saving" @click="handleSave">
         {{ editingReminder ? 'Sauvegarder' : 'Créer' }}
       </el-button>
     </template>
@@ -65,6 +69,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import type { FormInstance, FormRules } from 'element-plus';
 import type { Reminder } from '@/stores/reminders';
 
 export interface ReminderFormData {
@@ -81,12 +86,27 @@ export interface ReminderFormData {
 const props = defineProps<{
   visible: boolean;
   editingReminder: Reminder | null;
+  saving?: boolean;
 }>();
 
 const emit = defineEmits<{
   'update:visible': [value: boolean];
   save: [form: ReminderFormData, editingReminder: Reminder | null];
 }>();
+
+const formRef = ref<FormInstance>();
+
+const rules: FormRules<ReminderFormData> = {
+  title: [
+    { required: true, message: 'Le titre est requis', trigger: 'blur' },
+    {
+      min: 2,
+      message: 'Le titre doit contenir au moins 2 caractères',
+      trigger: 'blur',
+    },
+  ],
+  date: [{ required: true, message: 'La date est requise', trigger: 'change' }],
+};
 
 const getEmptyForm = (): ReminderFormData => ({
   title: '',
@@ -101,13 +121,21 @@ const getEmptyForm = (): ReminderFormData => ({
 
 const form = ref<ReminderFormData>(getEmptyForm());
 
+/** Interdit les dates passées (sauf en édition si la date est déjà passée) */
+function disabledDate(time: Date): boolean {
+  if (props.editingReminder) return false;
+  const today = new Date();
+  today.setHours(0, 0, 0, 0);
+  return time.getTime() < today.getTime();
+}
+
 // Populate form when editing a reminder
 watch(
   () => props.editingReminder,
   reminder => {
     if (reminder) {
       form.value = {
-       tite: reminder.title,
+        title: reminder.title,
         description: reminder.description || '',
         date: reminder.date,
         type: reminder.type,
@@ -123,11 +151,17 @@ watch(
 );
 
 const resetForm = () => {
+  formRef.value?.resetFields();
   form.value = getEmptyForm();
 };
 
-const handleSave = () => {
-  emit('save', { ...form.value }, props.editingReminder);
+const handleSave = async () => {
+  if (!formRef.value) return;
+  await formRef.value.validate(valid => {
+    if (valid) {
+      emit('save', { ...form.value }, props.editingReminder);
+    }
+  });
 };
 </script>
 

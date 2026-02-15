@@ -34,9 +34,6 @@ export function getPropertyCity(property: {
 
   const dashboardStore = useDashboardStore();
   const selectedCity = dashboardStore.selectedCity as Record<
-    
-   
-  
     string,
     unknown
   > | null;

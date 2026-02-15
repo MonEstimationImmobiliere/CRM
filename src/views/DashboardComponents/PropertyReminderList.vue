@@ -6,7 +6,7 @@
       <h3>Aucun rappel pour cette propriété</h3>
       <p>
         Créez votre premier rappel pour cette propriété en utilisant le bouton
-        bouton un rappel" ci-dessous.
+        "Ajouter un rappel" ci-dessous.
       </p>
     </div>
   </el-card>
@@ -64,8 +64,8 @@
           :class="{
             overdue:
               isOverdue(reminder.date, reminder.completed) &&
-             
-              !rem day: isToday(reminder.date) && !reminder.completed,
+              !reminder.completed,
+            today: isToday(reminder.date) && !reminder.completed,
             completed: reminder.completed,
           }"
         >
@@ -105,7 +105,10 @@
                 En retard
               </el-tag>
               <el-tag
-                v-else-if="pe="warning" ze="small"
+                v-else-if="isToday(reminder.date) && !reminder.completed"
+                type="warning"
+                size="small"
+              >
                 Aujourd'hui
               </el-tag>
             </div>
@@ -157,19 +160,31 @@ const reminders = computed(() =>
 const sortedReminders = computed(() => sortReminders(reminders.value, 'desc'));
 
 // Counts
-const overdueCounts = computed( () => reminders.value.filter(r => isOv);
+const overdueCounts = computed(
+  () =>
+   
+      
+    reminders.value.filter(r => isOverdue(r.date, r.completed) && !r.completed)
+      .length
+);
 const todayCounts = computed(
   () => reminders.value.filter(r => isToday(r.date) && !r.completed).length
 );
 const pendingCounts = computed(
   () =>
     reminders.value.filter(
-      r ).lengtht completedCounts = computed(
+      r => !r.completed && !isOverdue(r.date, r.completed) && !isToday(r.date)
+    ).length
+);
+const completedCounts = computed(
   () => reminders.value.filter(r => r.completed).length
 );
 
 function handleToggleComplete(reminder: Reminder) {
-  if (remiindersStore.compessage.success('Rappel marqué commee {
+  if (reminder.completed) {
+    remindersStore.completeReminder(reminder.id);
+    ElMessage.success('Rappel marqué comme terminé');
+  } else {
     remindersStore.uncompleteReminder(reminder.id);
     ElMessage.info('Rappel marqué comme non terminé');
   }

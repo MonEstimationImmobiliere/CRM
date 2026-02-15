@@ -49,6 +49,7 @@
           circle
           size="small"
           class="more-actions-btn"
+          aria-label="Actions du rappel"
           @click.stop
         />
         <template #dropdown>
@@ -94,8 +95,6 @@
         <div
           class="reminder-date-info"
           :class="{
-           ,
-         
             'overdue-date': isOverdue(reminder.date, reminder.completed),
           }"
         >
@@ -189,9 +188,6 @@ const props = defineProps<{
 }>();
 
 defineEmits<{
-    
-   ,
-  
   action: [command: ActionCommand];
   'update-status': [
     reminder: Reminder,
@@ -202,11 +198,7 @@ defineEmits<{
 // Status helpers
 const status = computed((): 'todo' | 'progress' | 'completed' => {
   if (props.reminder.status) return props.reminder.status;
-  if (props.remind
-e   r.completed) ret
-   urn 'completed';
-   ,
- 
+  if (props.reminder.completed) return 'completed';
   return 'todo';
 });
 
@@ -214,15 +206,12 @@ const statusLabel = computed(() => {
   const labels = {
     todo: 'À faire',
     progress: 'En cours',
-    completed: 'Ter
-    miné',
-  
+    completed: 'Terminé',
   };
   return labels[status.value];
 });
 
-// Days left
-    helpers
+// Days left helpers
 const diffDays = computed(() => {
   const today = new Date();
   const reminderDate = new Date(props.reminder.date);
@@ -374,7 +363,8 @@ const daysLeftClass = computed(() => {
   border-radius: 6px;
 }
 
-.reminder-card:hover .more-actions-btn {
+.reminder-card:hover .more-actions-btn,
+.more-actions-btn:focus-visible {
   opacity: 1;
 }
 

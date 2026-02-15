@@ -6,8 +6,8 @@
     :close-on-click-modal="false"
     @close="resetForm"
   >
-    <el-form :model="form" label-width="120px">
-      <el-form-item label="Titre" required>
+    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
+      <el-form-item label="Titre" prop="title">
         <el-input v-model="form.title" placeholder="Titre du rappel" />
       </el-form-item>
 
@@ -20,12 +20,12 @@
         />
       </el-form-item>
 
-      <el-form-item label="Date" required>
+      <el-form-item label="Date" prop="date">
         <el-date-picker
           v-model="form.date"
           type="date"
           placeholder="Sélectionnez une date"
-          style="width: 100%"
+          class="full-width"
           format="DD/MM/YYYY"
           value-format="YYYY-MM-DD"
           :disabled-date="disabledDate"
@@ -33,7 +33,7 @@
       </el-form-item>
 
       <el-form-item label="Type">
-        <el-select v-model="form.type" style="width: 100%">
+        <el-select v-model="form.type" class="full-width">
           <el-option label="Rappel" value="rappel" />
           <el-option label="Estimation" value="estimation" />
           <el-option label="Visite" value="visite" />
@@ -42,7 +42,7 @@
       </el-form-item>
 
       <el-form-item label="Priorité">
-        <el-select v-model="form.priority" style="width: 100%">
+        <el-select v-model="form.priority" class="full-width">
           <el-option label="Haute" value="high" />
           <el-option label="Moyenne" value="medium" />
           <el-option label="Basse" value="low" />
@@ -56,7 +56,7 @@
 
     <template #footer>
       <el-button @click="visible = false">Annuler</el-button>
-      <el-button type="primary" @click="handleSave(false)">
+      <el-button type="primary" :loading="saving" @click="handleSave(false)">
         Créer le rappel
       </el-button>
     </template>
@@ -65,7 +65,7 @@
       <p class="reminder-actions-hint">
         Vous souhaitez ajouter un autre rappel sur ce bien ?
       </p>
-      <el-button type="primary" @click="handleSave(true)">
+      <el-button type="primary" :loading="saving" @click="handleSave(true)">
         Créer et ajouter un autre
       </el-button>
     </div>
@@ -75,6 +75,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { ElMessage } from 'element-plus';
+import type { FormInstance, FormRules } from 'element-plus';
 import { useRemindersStore } from '@/stores/reminders';
 
 interface ReminderFormData {
@@ -96,6 +97,21 @@ const props = defineProps<{
 const visible = defineModel<boolean>({ default: false });
 
 const remindersStore = useRemindersStore();
+
+const formRef = ref<FormInstance>();
+const saving = ref(false);
+
+const rules: FormRules<ReminderFormData> = {
+  title: [
+    { required: true, message: 'Le titre est requis', trigger: 'blur' },
+    {
+      min: 2,
+      message: 'Le titre doit contenir au moins 2 caractères',
+      trigger: 'blur',
+    },
+  ],
+  date: [{ required: true, message: 'La date est requise', trigger: 'change' }],
+};
 
 function getDefaultForm(): ReminderFormData {
   const today = new Date();
@@ -128,55 +144,43 @@ function disabledDate(time: Date): boolean {
 }
 
 function resetForm() {
+  formRef.value?.resetFields();
   form.value = getDefaultForm();
 }
 
-function validate(): boolean {
-  if (!form.value.title || !form.value.date) {
-    ElMessage({
-      message: 'Veuillez remplir au moins le titre et la date.',
-      type: 'warning',
-      duration: 3000,
-    });
-    return false;
-  }
-  return true;
-}
-
 async function handleSave(keepOpen: boolean) {
-  if (!validate()) return;
+  if (!formRef.value) return;
 
-  try {
-    await remindersStore.addReminder({
-      title: form.value.title,
-      description: form.value.description,
-      date: form.value.date,
-      type: form.value.type,
-      priority: form.value.priority,
-      sharing: form.value.sharing,
-      property_id: props.propertyId,
-      completed: false,
-    });
+  await formRef.value.validate(async valid => {
+    if (!valid) return;
 
-    ElMessage({
-      message: 'Rappel créé avec succès !',
-      type: 'success',
-      duration: 3000,
-    });
+    saving.value = true;
+    try {
+      await remindersStore.addReminder({
+        title: form.value.title,
+        description: form.value.description,
+        date: form.value.date,
+        type: form.value.type,
+        priority: form.value.priority,
+        sharing: form.value.sharing,
+        property_id: props.propertyId,
+        completed: false,
+      });
 
-    if (keepOpen) {
-      form.value = getDefaultForm();
-    } else {
-      visible.value = false;
-      resetForm();
+      ElMessage.success('Rappel créé avec succès !');
+
+      if (keepOpen) {
+        form.value = getDefaultForm();
+      } else {
+        visible.value = false;
+        resetForm();
+      }
+    } catch {
+      ElMessage.error('Erreur lors de la création du rappel');
+    } finally {
+      saving.value = false;
     }
-  } catch {
-    ElMessage({
-      message: 'Erreur lors de la création du rappel',
-      type: 'error',
-      duration: 3000,
-    });
-  }
+  });
 }
 </script>
 
@@ -194,5 +198,9 @@ async function handleSave(keepOpen: boolean) {
   color: #666;
   font-size: 14px;
   margin-bottom: 10px;
+}
+
+.full-width {
+  width: 100%;
 }
 </style>

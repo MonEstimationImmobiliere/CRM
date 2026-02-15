@@ -65,6 +65,7 @@
     <ReminderFormDialog
       v-model:visible="showCreateDialog"
       :editing-reminder="editingReminder"
+      :saving="saving"
       @save="saveReminder"
     />
   </div>
@@ -91,6 +92,7 @@ const typeFilter = ref('');
 const priorityFilter = ref('');
 const showCreateDialog = ref(false);
 const editingReminder = ref<Reminder | null>(null);
+const saving = ref(false);
 
 // Store destructuring
 const {
@@ -138,17 +140,9 @@ const emptyMessage = computed(() => {
     completed: 'Aucun rappel terminé.',
   };
   return (
-    (
-  )
     messages[activeFilter.value] ?? 'Commencez par créer votre premier rappel.'
   );
 });
-
- 
- ,
-
- 
- ;
 
 // Action handler from ReminderCard dropdown
 const handleAction = ({
@@ -184,10 +178,6 @@ const duplicateReminder = async (reminder: Reminder) => {
   } catch {
     ElMessage.error('Erreur lors de la duplication du rappel');
   }
-       
-       
-       ,
-     
 };
 
 const deleteReminder = async (reminder: Reminder) => {
@@ -197,10 +187,7 @@ const deleteReminder = async (reminder: Reminder) => {
       'Confirmation',
       {
         confirmButtonText: 'Supprimer',
-        cancelButtonText: 'A
-  nnuler',
- 
-
+        cancelButtonText: 'Annuler',
         type: 'warning',
       }
     );
@@ -211,16 +198,12 @@ const deleteReminder = async (reminder: Reminder) => {
   }
 };
 
-// Save handler from ReminderFormDialog
+// Save handler from ReminderFormDialog (validation is done in the dialog)
 const saveReminder = async (
   form: ReminderFormData,
   editing: Reminder | null
 ) => {
-  if (!form.title || !form.date) {
-    ElMessage.error('Veuillez remplir tous les champs requis');
-    return;
-  }
-
+  saving.value = true;
   try {
     const payload = { ...form, completed: form.status === 'completed' };
 
@@ -233,11 +216,12 @@ const saveReminder = async (
     }
 
     showCreateDialog.value = false;
-     
-      editingReminder.value = null;
-    } catch {
-      ElMessage.error('Erreur lors de la sauvegarde du rappel');
-    }
+    editingReminder.value = null;
+  } catch {
+    ElMessage.error('Erreur lors de la sauvegarde du rappel');
+  } finally {
+    saving.value = false;
+  }
 };
 
 // Status update from ReminderCard buttons
