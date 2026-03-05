@@ -86,9 +86,9 @@
             <div class="card-content">
               <el-form-item label="Type de bien">
                 <el-radio-group
-                  :model-value="store.selectedProperty.property_type ?? ''"
+                  :model-value="store.selectedProperty?.property_type ?? ''"
                   @update:model-value="
-                    store.selectedProperty.property_type = $event as any
+                    store.selectedProperty!.property_type = $event as any
                   "
                   size="large"
                 >

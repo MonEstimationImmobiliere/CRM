@@ -27,6 +27,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   const agencyReminders = ref<Reminder[]>([]);
   const loading = ref(false);
   const selectedReminder = ref<Reminder | null>(null);
+  const remindersViewType = ref<'table' | 'card'>('table');
 
   // Load reminders from API
   const loadReminders = async () => {
@@ -382,12 +383,17 @@ export const useRemindersStore = defineStore('reminders', () => {
     return reminderDate > today && reminderDate <= nextWeek;
   };
 
+  const setRemindersViewType = (viewType: 'table' | 'card') => {
+    remindersViewType.value = viewType;
+  };
+
   return {
     // State
     reminders,
     agencyReminders,
     loading,
     selectedReminder,
+    remindersViewType,
 
     // Computed
     todayReminders,
@@ -416,5 +422,6 @@ export const useRemindersStore = defineStore('reminders', () => {
     isReminderOverdue,
     isReminderToday,
     isReminderUpcoming,
+    setRemindersViewType,
   };
 });

@@ -59,16 +59,30 @@
     </el-form>
 
     <template #footer>
-      <el-button @click="$emit('update:visible', false)">Annuler</el-button>
-      <el-button type="primary" :loading="saving" @click="handleSave">
-        {{ editingReminder ? 'Sauvegarder' : 'Créer' }}
-      </el-button>
+      <div class="dialog-footer">
+        <el-button @click="$emit('update:visible', false)">Annuler</el-button>
+        <div class="footer-right">
+          <el-button
+            v-if="editingReminder && editingReminder.property_id"
+            type="info"
+            plain
+            @click="$emit('open-property', editingReminder!.property_id)"
+          >
+            <el-icon><House /></el-icon>
+            Voir la propriété
+          </el-button>
+          <el-button type="primary" :loading="saving" @click="handleSave">
+            {{ editingReminder ? 'Sauvegarder' : 'Créer' }}
+          </el-button>
+        </div>
+      </div>
     </template>
   </el-dialog>
 </template>
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
+import { House } from '@element-plus/icons-vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import type { Reminder } from '@/stores/reminders';
 
@@ -92,6 +106,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean];
   save: [form: ReminderFormData, editingReminder: Reminder | null];
+  'open-property': [propertyId: number];
 }>();
 
 const formRef = ref<FormInstance>();
@@ -168,5 +183,17 @@ const handleSave = async () => {
 <style scoped>
 .full-width {
   width: 100%;
+}
+
+.dialog-footer {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+}
+
+.footer-right {
+  display: flex;
+  gap: 8px;
 }
 </style>

@@ -1,16 +1,31 @@
 <template>
   <div class="reminders-page">
+    <!-- Header bar: title + add button + view toggle -->
     <div class="reminders-header">
       <h1>Mes Rappels</h1>
+
+      <div class="header-right">
+        <el-button
+          type="primary"
+          @click="showCreateDialog = true"
+          class="add-reminder-btn"
+        >
+          <el-icon><Plus /></el-icon>
+          Nouveau rappel
+        </el-button>
+
+        <ViewToggle v-model="currentRemindersView" :options="viewOptions" />
+      </div>
     </div>
 
     <!-- Statistics Cards -->
-    <ReminderStatsBar
+
+    <!-- <ReminderStatsBar
       :overdue-count="overdueReminders.length"
       :today-count="todayReminders.length"
       :upcoming-count="upcomingReminders.length"
       :completed-count="completedReminders.length"
-    />
+    /> -->
 
     <!-- Filters -->
     <ReminderFilters
@@ -18,19 +33,6 @@
       v-model:type-filter="typeFilter"
       v-model:priority-filter="priorityFilter"
     />
-
-    <!-- Add Button -->
-    <div class="add-reminder-section">
-      <el-button
-        type="primary"
-        size="large"
-        @click="showCreateDialog = true"
-        class="add-reminder-btn"
-      >
-        <el-icon><Plus /></el-icon>
-        Nouveau rappel
-      </el-button>
-    </div>
 
     <!-- Reminders List -->
     <div class="reminders-list">
@@ -50,7 +52,16 @@
         </div>
       </el-card>
 
-      <div v-else class="reminders-grid">
+      <!-- Table View -->
+      <RemindersTable
+        v-else-if="currentRemindersView === 'table'"
+        :reminders="filteredReminders"
+        @action="handleAction"
+        @update-status="updateStatus"
+      />
+
+      <!-- Card View -->
+      <div v-else-if="currentRemindersView === 'card'" class="reminders-grid">
         <ReminderCard
           v-for="reminder in filteredReminders"
           :key="reminder.id"
@@ -67,24 +78,33 @@
       :editing-reminder="editingReminder"
       :saving="saving"
       @save="saveReminder"
+      @open-property="openPropertyById"
     />
+
+    <!-- Property Dialog -->
+    <PropertyForm />
   </div>
 </template>
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
+import { usePropertyStore } from '@/stores/propertyHome';
 import { Plus, Document } from '@element-plus/icons-vue';
+import { DataBoard, Grid } from '@element-plus/icons-vue';
+import ViewToggle from '@/components/ViewToggle.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { sortReminders } from '@/utils/reminderHelpers';
 
-import ReminderStatsBar from './components/ReminderStatsBar.vue';
 import ReminderFilters from './components/ReminderFilters.vue';
 import ReminderCard from './components/ReminderCard.vue';
+import RemindersTable from './components/RemindersTable.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
+import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
 import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
 const remindersStore = useRemindersStore();
+const propertyStore = usePropertyStore();
 
 // Reactive state
 const activeFilter = ref('all');
@@ -244,45 +264,82 @@ const updateStatus = async (
     ElMessage.error('Erreur lors de la mise à jour du statut');
   }
 };
+
+const viewOptions = [
+  { value: 'table', label: 'Vue tableau', icon: DataBoard },
+  { value: 'card', label: 'Vue cartes', icon: Grid },
+];
+
+const currentRemindersView = computed({
+  get: () => remindersStore.remindersViewType,
+  set: (v: string) =>
+    remindersStore.setRemindersViewType(v as 'table' | 'card'),
+});
+
+const openPropertyById = async (propertyId: number) => {
+  try {
+    // Find the property in the store by numeric id
+    const property = propertyStore.properties.find(
+      (p: any) => p.id === propertyId
+    );
+
+    if (property?.id_fantoir_long) {
+      await propertyStore.selectProperty(property);
+    } else {
+      // Fallback: create a minimal property object so the dialog can fetch it
+      await propertyStore.selectProperty({
+        ...propertyStore.defaultPropertyData,
+        id: propertyId,
+      });
+    }
+
+    showCreateDialog.value = false;
+    propertyStore.setDialogVisible(true);
+  } catch {
+    ElMessage.error("Impossible d'ouvrir la fiche de la propriété");
+  }
+};
 </script>
 
 <style scoped>
 .reminders-page {
   padding: 20px;
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
+/* ── Header ──────────────────────────────── */
 .reminders-header {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  margin-bottom: 20px;
 }
 
 .reminders-header h1 {
   margin: 0;
-  color: #1f2937;
-  font-size: 2rem;
-  font-weight: 600;
+  color: #1e293b;
+  font-size: 1.75rem;
+  font-weight: 700;
 }
 
-.add-reminder-section {
+.header-right {
   display: flex;
-  justify-content: center;
-  margin-bottom: 32px;
+  align-items: center;
+  gap: 16px;
 }
 
 .add-reminder-btn {
-  padding: 12px 32px;
   border-radius: 8px;
-  font-size: 1rem;
   font-weight: 600;
-  min-width: 180px;
 }
 
+/* ── List area ───────────────────────────── */
 .reminders-list {
   min-height: 400px;
 }
 
+/* ── Empty state ─────────────────────────── */
 .empty-state {
   text-align: center;
   padding: 80px 20px;
@@ -314,14 +371,14 @@ const updateStatus = async (
   margin-bottom: 0;
 }
 
+/* ── Card grid ───────────────────────────── */
 .reminders-grid {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 24px;
-  max-width: 1200px;
-  margin: 0 auto;
 }
 
+/* ── Responsive ──────────────────────────── */
 @media (max-width: 768px) {
   .reminders-page {
     padding: 16px;
@@ -333,14 +390,17 @@ const updateStatus = async (
     gap: 16px;
   }
 
+  .header-right {
+    justify-content: space-between;
+  }
+
   .reminders-grid {
     grid-template-columns: 1fr;
     gap: 16px;
   }
 
   .add-reminder-btn {
-    width: 100%;
-    min-width: auto;
+    flex: 1;
   }
 }
 

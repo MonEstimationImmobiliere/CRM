@@ -44,48 +44,7 @@
         </div>
       </div>
 
-      <div class="view-controls">
-        <div class="layoutContainer">
-          <el-row :gutter="20">
-            <el-col :span="12">
-              <div
-                class="grid-container"
-                role="button"
-                tabindex="0"
-                aria-label="Vue tableau"
-                :aria-pressed="favoritesViewType === 'table'"
-                @click="setTableView"
-                @keydown.enter="setTableView"
-              >
-                <el-icon
-                  class="databoard-icon"
-                  :class="{ active: favoritesViewType === 'table' }"
-                >
-                  <DataBoard />
-                </el-icon>
-              </div>
-            </el-col>
-            <el-col :span="12">
-              <div
-                class="grid-container"
-                role="button"
-                tabindex="0"
-                aria-label="Vue cartes"
-                :aria-pressed="favoritesViewType === 'card'"
-                @click="setCardView"
-                @keydown.enter="setCardView"
-              >
-                <el-icon
-                  class="grid-icon"
-                  :class="{ active: favoritesViewType === 'card' }"
-                >
-                  <Grid />
-                </el-icon>
-              </div>
-            </el-col>
-          </el-row>
-        </div>
-      </div>
+      <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
     </div>
 
     <div
@@ -136,6 +95,7 @@ import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
 import { DataBoard, Grid } from '@element-plus/icons-vue';
+import ViewToggle from '@/components/ViewToggle.vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
@@ -294,13 +254,15 @@ const createReminderForProperty = async (property: any) => {
   }
 };
 
-const setTableView = () => {
-  store.setFavoritesViewType('table');
-};
+const viewOptions = [
+  { value: 'table', label: 'Vue tableau', icon: DataBoard },
+  { value: 'card', label: 'Vue cartes', icon: Grid },
+];
 
-const setCardView = () => {
-  store.setFavoritesViewType('card');
-};
+const currentFavoritesView = computed({
+  get: () => store.favoritesViewType,
+  set: (v: string) => store.setFavoritesViewType(v as 'table' | 'card'),
+});
 </script>
 
 <style scoped>
@@ -362,54 +324,5 @@ const setCardView = () => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 24px;
-}
-
-.view-controls {
-  margin-bottom: 24px;
-}
-
-.layoutContainer {
-  display: flex;
-  justify-content: center;
-  max-width: 200px;
-  margin: 0 auto;
-}
-
-.grid-container {
-  cursor: pointer;
-  padding: 8px 12px;
-  border: 2px solid #337ecc;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.grid-container:hover {
-  background-color: #f5f7fa;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(51, 126, 204, 0.2);
-}
-
-.databoard-icon,
-.grid-icon {
-  font-size: 20px;
-  color: #909399;
-  transition:
-    color 0.3s,
-    transform 0.3s;
-}
-
-.databoard-icon:hover,
-.grid-icon:hover {
-  transform: scale(1.1);
-}
-
-.databoard-icon.active,
-.grid-icon.active {
-  color: #337ecc;
-  transform: scale(1.1);
 }
 </style>

@@ -39,42 +39,7 @@
       </div>
 
       <!-- SWITCH LISTE / CARDS -->
-      <div class="view-controls">
-        <div class="layoutContainer">
-          <div class="viewSelector">
-            <div class="grid-container" @click="setTableView">
-              <el-icon
-                class="databoard-icon"
-                :class="{ active: viewType === 'table' }"
-              >
-                <DataBoard />
-              </el-icon>
-            </div>
-
-            <div
-              class="grid-container"
-              @click="setCardView"
-              :class="{ disabled: isCityOnly }"
-            >
-              <el-icon
-                class="grid-icon"
-                :class="{ active: viewType === 'card' }"
-              >
-                <Grid />
-              </el-icon>
-            </div>
-
-            <div class="grid-container" @click="setMapView">
-              <el-icon
-                class="grid-icon"
-                :class="{ active: viewType === 'map' }"
-              >
-                <Location />
-              </el-icon>
-            </div>
-          </div>
-        </div>
-      </div>
+      <ViewToggle v-model="viewType" :options="viewOptions" />
     </div>
 
     <!-- TABLE DES ADRESSES -->
@@ -113,6 +78,7 @@
 ------------------------------------ */
 import { computed, onMounted, watch } from 'vue';
 import { DataBoard, Grid, Location } from '@element-plus/icons-vue';
+import ViewToggle from '@/components/ViewToggle.vue';
 
 // Stores
 import { usePropertyStore } from '@/stores/propertyHome';
@@ -393,15 +359,16 @@ const querySearchEstimation = async () => {
 /* ------------------------------------
       VIEW SWITCH
 ------------------------------------ */
-const setTableView = () => (dashboardStore.viewType = 'table');
-const setCardView = () => {
-  if (!isCityOnly.value) {
-    dashboardStore.viewType = 'card';
-  }
-};
-const setMapView = () => {
-  dashboardStore.viewType = 'map';
-};
+const viewOptions = computed(() => [
+  { value: 'table', label: 'Vue tableau', icon: DataBoard },
+  {
+    value: 'card',
+    label: 'Vue cartes',
+    icon: Grid,
+    disabled: isCityOnly.value,
+  },
+  { value: 'map', label: 'Vue carte', icon: Location },
+]);
 
 /* ------------------------------------
       OUVERTURE FICHE
@@ -430,6 +397,7 @@ const openPropertyDialog = (property: any) => {
   align-items: center;
   flex-direction: row;
   justify-content: space-between;
+  margin-bottom: 20px;
 }
 
 .autoCompleteContainer {
@@ -442,62 +410,5 @@ const openPropertyDialog = (property: any) => {
 .validationButtonContainer {
   gap: 20px;
   display: flex;
-}
-
-.view-controls {
-  background-color: #eeeeee;
-  padding: 20px;
-  border-radius: 35px;
-}
-
-.viewSelector {
-  display: flex;
-  gap: 12px;
-  align-items: center;
-}
-.layoutContainer {
-  display: flex;
-  justify-content: center;
-  max-width: 200px;
-  margin: 0 auto;
-}
-
-.grid-container {
-  cursor: pointer;
-  padding: 8px 12px;
-  border: 2px solid #337ecc;
-  border-radius: 8px;
-  display: flex;
-  justify-content: center;
-  align-items: center;
-  transition: all 0.3s ease;
-  background: white;
-}
-
-.grid-container:hover {
-  background-color: #f5f7fa;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(51, 126, 204, 0.2);
-}
-
-.databoard-icon,
-.grid-icon {
-  font-size: 20px;
-  color: #909399;
-  transition:
-    color 0.3s,
-    transform 0.3s;
-}
-
-.databoard-icon.active,
-.grid-icon.active {
-  color: #337ecc;
-  transform: scale(1.1);
-}
-
-.grid-container.disabled {
-  opacity: 0.4;
-  cursor: not-allowed;
-  pointer-events: none;
 }
 </style>
