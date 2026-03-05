@@ -361,12 +361,12 @@ const querySearchEstimation = async () => {
 ------------------------------------ */
 const viewOptions = computed(() => [
   { value: 'table', label: 'Vue tableau', icon: DataBoard },
-  {
-    value: 'card',
-    label: 'Vue cartes',
-    icon: Grid,
-    disabled: isCityOnly.value,
-  },
+  // {
+  //   value: 'card',
+  //   label: 'Vue cartes',
+  //   icon: Grid,
+  //   disabled: isCityOnly.value,
+  // },
   { value: 'map', label: 'Vue carte', icon: Location },
 ]);
 

@@ -67,6 +67,11 @@
   margin: 0;
 }
 
+.el-dialog {
+  border-radius: 35px !important;
+  overflow: hidden;
+}
+
 .el-dialog__header {
   margin: 0;
   padding: 1rem;
