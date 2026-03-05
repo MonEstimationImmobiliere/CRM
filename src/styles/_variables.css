@@ -27,4 +27,42 @@
   --glass-bg: rgba(255, 255, 255, 0.25);
   --glass-border: rgba(255, 255, 255, 0.18);
   --backdrop-blur: blur(20px);
+
+  /* Shared component tokens */
+  --page-padding: 24px;
+  --page-title-color: #1e293b;
+  --page-title-size: 1.75rem;
+  --page-title-weight: 700;
+
+  --card-radius: 12px;
+  --card-border: 1px solid rgba(229, 231, 235, 0.5);
+  --card-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --card-shadow-hover: 0 4px 12px rgba(0, 0, 0, 0.15);
+  --card-bg: rgba(255, 255, 255, 0.9);
+  --card-bg-hover: rgba(255, 255, 255, 0.95);
+  --card-padding: 20px;
+
+  --grid-gap: 24px;
+  --grid-min-col: 350px;
+
+  --table-radius: 12px;
+  --table-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  --table-header-bg: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  --table-row-hover: #f1f5f9;
+  --table-cell-padding: 16px 12px;
+  --table-border-color: #e2e8f0;
+
+  --action-gap: 8px;
+  --btn-radius: 8px;
+  --btn-hover-translate: translateY(-2px);
+  --btn-hover-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+
+  --search-input-radius: 12px;
+  --search-input-width: 350px;
+  --search-input-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  --search-input-focus-color: #3b82f6;
+
+  --sort-btn-radius: 8px;
+
+  --empty-state-min-height: 400px;
 }

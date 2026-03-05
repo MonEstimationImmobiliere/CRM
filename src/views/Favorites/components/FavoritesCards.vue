@@ -255,62 +255,62 @@ const handleSortClick = (field: string) => {
 
 .search-container {
   flex: 1;
-  max-width: 400px;
+  max-width: var(--search-input-width);
 }
 
 .search-input {
-  border-radius: 12px;
+  border-radius: var(--search-input-radius);
 }
 
 :deep(.search-input .el-input__wrapper) {
-  border-radius: 12px;
-  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+  border-radius: var(--search-input-radius);
+  box-shadow: var(--search-input-shadow);
   border: 2px solid transparent;
   transition: all 0.3s ease;
 }
 
 :deep(.search-input .el-input__wrapper:hover) {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow-hover);
 }
 
 :deep(.search-input .el-input__wrapper.is-focus) {
-  border-color: #3b82f6;
+  border-color: var(--search-input-focus-color);
   box-shadow: 0 4px 12px rgba(59, 130, 246, 0.25);
 }
 
 .sort-controls {
   display: flex;
-  gap: 8px;
+  gap: var(--action-gap);
 }
 
 :deep(.sort-controls .el-button) {
-  border-radius: 8px;
+  border-radius: var(--sort-btn-radius);
   transition: all 0.3s ease;
 }
 
 .favorites-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-col), 1fr));
+  gap: var(--grid-gap);
   padding: 0 8px;
 }
 
 .favorite-card {
   cursor: pointer;
   transition: all 0.3s ease;
-  border-radius: 16px;
+  border-radius: var(--card-radius);
   overflow: hidden;
-  border: 2px solid transparent;
+  border: var(--card-border);
   background: linear-gradient(145deg, #ffffff 0%, #f8fafc 100%);
 }
 
 :deep(.favorite-card .el-card__body) {
-  padding: 24px;
+  padding: var(--card-padding);
 }
 
 .favorite-card:hover {
-  transform: translateY(-4px);
-  box-shadow: 0 12px 24px rgba(0, 0, 0, 0.15);
+  transform: var(--btn-hover-translate);
+  box-shadow: var(--card-shadow-hover);
   border-color: #e2e8f0;
 }
 
@@ -400,27 +400,27 @@ const handleSortClick = (field: string) => {
 
 .card-actions {
   display: flex;
-  gap: 12px;
+  gap: var(--action-gap);
   justify-content: flex-end;
   margin-top: 12px;
 }
 
 .action-button {
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   font-weight: 500;
   transition: all 0.3s ease;
 }
 
 .action-button:hover {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: var(--btn-hover-translate);
+  box-shadow: var(--btn-hover-shadow);
 }
 
 .empty-state {
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 300px;
+  min-height: var(--empty-state-min-height);
 }
 
 /* Mobile responsiveness */

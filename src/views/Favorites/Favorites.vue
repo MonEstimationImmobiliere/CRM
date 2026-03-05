@@ -267,7 +267,9 @@ const currentFavoritesView = computed({
 
 <style scoped>
 .favorites-page {
-  padding: 24px;
+  padding: var(--page-padding);
+  max-width: 1400px;
+  margin: 0 auto;
 }
 
 .favorites-header {
@@ -279,7 +281,9 @@ const currentFavoritesView = computed({
 
 .favorites-header h1 {
   margin: 0;
-  color: #1f2937;
+  color: var(--page-title-color);
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .header-controls {
@@ -317,7 +321,7 @@ const currentFavoritesView = computed({
   display: flex;
   justify-content: center;
   align-items: center;
-  min-height: 400px;
+  min-height: var(--empty-state-min-height);
 }
 
 .favorites-grid {

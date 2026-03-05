@@ -172,13 +172,13 @@ const handleRowClick = (row: any) => {
 }
 
 .modern-favorites-table {
-  border-radius: 12px;
+  border-radius: var(--table-radius);
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--table-shadow);
 }
 
 :deep(.el-table) {
-  border-radius: 12px;
+  border-radius: var(--table-radius);
 }
 
 :deep(.el-table tr) {
@@ -186,7 +186,7 @@ const handleRowClick = (row: any) => {
 }
 
 :deep(.el-table__header) {
-  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  background: var(--table-header-bg);
 }
 
 :deep(.el-table__header th) {
@@ -194,7 +194,7 @@ const handleRowClick = (row: any) => {
   color: white;
   font-weight: 600;
   border: none;
-  padding: 16px 12px;
+  padding: var(--table-cell-padding);
 }
 
 :deep(.el-table__body tr:hover) {
@@ -207,14 +207,14 @@ const handleRowClick = (row: any) => {
 }
 
 :deep(.favorite-row:hover) {
-  background-color: #f1f5f9 !important;
-  transform: translateY(-1px);
+  background-color: var(--table-row-hover) !important;
+  transform: var(--btn-hover-translate);
   box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 :deep(.el-table__body td) {
-  padding: 16px 12px;
-  border-bottom: 1px solid #e2e8f0;
+  padding: var(--table-cell-padding);
+  border-bottom: 1px solid var(--table-border-color);
 }
 
 .city-info,
@@ -253,18 +253,18 @@ const handleRowClick = (row: any) => {
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--action-gap);
   justify-content: center;
 }
 
 :deep(.el-button) {
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   transition: all 0.3s ease;
 }
 
 :deep(.el-button:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: var(--btn-hover-translate);
+  box-shadow: var(--btn-hover-shadow);
 }
 
 :deep(.el-tag) {

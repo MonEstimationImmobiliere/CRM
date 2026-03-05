@@ -303,7 +303,7 @@ const openPropertyById = async (propertyId: number) => {
 
 <style scoped>
 .reminders-page {
-  padding: 20px;
+  padding: var(--page-padding);
   max-width: 1400px;
   margin: 0 auto;
 }
@@ -318,9 +318,9 @@ const openPropertyById = async (propertyId: number) => {
 
 .reminders-header h1 {
   margin: 0;
-  color: #1e293b;
-  font-size: 1.75rem;
-  font-weight: 700;
+  color: var(--page-title-color);
+  font-size: var(--page-title-size);
+  font-weight: var(--page-title-weight);
 }
 
 .header-right {
@@ -330,13 +330,13 @@ const openPropertyById = async (propertyId: number) => {
 }
 
 .add-reminder-btn {
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   font-weight: 600;
 }
 
 /* ── List area ───────────────────────────── */
 .reminders-list {
-  min-height: 400px;
+  min-height: var(--empty-state-min-height);
 }
 
 /* ── Empty state ─────────────────────────── */
@@ -345,7 +345,7 @@ const openPropertyById = async (propertyId: number) => {
   padding: 80px 20px;
   background: linear-gradient(135deg, #f8fafc 0%, #f1f5f9 100%);
   border: 2px dashed #cbd5e1;
-  border-radius: 12px;
+  border-radius: var(--card-radius);
 }
 
 .empty-content {
@@ -374,8 +374,8 @@ const openPropertyById = async (propertyId: number) => {
 /* ── Card grid ───────────────────────────── */
 .reminders-grid {
   display: grid;
-  grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
-  gap: 24px;
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-col), 1fr));
+  gap: var(--grid-gap);
 }
 
 /* ── Responsive ──────────────────────────── */

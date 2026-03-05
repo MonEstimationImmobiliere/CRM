@@ -1,6 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router';
 import Layout from '@/layout/index.vue';
-import { Link } from '@element-plus/icons-vue';
+import { Search, Bell, Star } from '@element-plus/icons-vue';
 import type { RouteRecordRaw } from 'vue-router';
 import { ROUTES } from '@/router/routes';
 
@@ -16,7 +16,7 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: '',
         component: () => import('@/views/dashboard.vue'),
-        meta: { title: 'Prospection', icon: Link },
+        meta: { title: 'Prospection', icon: Search },
       },
     ],
   },
@@ -30,7 +30,7 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: '',
         component: () => import('@/views/Reminders/Reminders.vue'),
-        meta: { title: 'Mes Rappels', icon: Link },
+        meta: { title: 'Mes Rappels', icon: Bell },
       },
     ],
   },
@@ -43,7 +43,7 @@ export const routes: Array<RouteRecordRaw> = [
       {
         path: '',
         component: () => import('@/views/Favorites/Favorites.vue'),
-        meta: { title: 'Favoris', icon: Link },
+        meta: { title: 'Favoris', icon: Star },
       },
     ],
   },

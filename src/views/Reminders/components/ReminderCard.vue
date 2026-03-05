@@ -240,25 +240,25 @@ const daysLeftClass = computed(() => {
 
 <style scoped>
 .reminder-card {
-  background: rgba(255, 255, 255, 0.9);
+  background: var(--card-bg);
   backdrop-filter: blur(8px);
-  border-radius: 12px;
-  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
-  border: 1px solid rgba(229, 231, 235, 0.5);
+  border-radius: var(--card-radius);
+  box-shadow: var(--card-shadow);
+  border: var(--card-border);
   transition: all 0.2s ease;
   overflow: hidden;
   position: relative;
-  padding: 20px;
+  padding: var(--card-padding);
   display: flex;
   flex-direction: column;
   gap: 12px;
 }
 
 .reminder-card:hover {
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  box-shadow: var(--card-shadow-hover);
   border-color: #e5e7eb;
-  background: rgba(255, 255, 255, 0.95);
-  transform: translateY(-2px);
+  background: var(--card-bg-hover);
+  transform: var(--btn-hover-translate);
 }
 
 .reminder-card.status-todo {
@@ -493,7 +493,7 @@ const daysLeftClass = computed(() => {
   flex: 1;
   font-size: 0.75rem;
   font-weight: 500;
-  border-radius: 6px;
+  border-radius: var(--btn-radius);
   transition: all 0.2s ease;
   padding: 6px 8px;
   min-height: 32px;

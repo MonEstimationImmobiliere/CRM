@@ -195,7 +195,6 @@ import {
   formatDateShort as formatDate,
   formatPrice,
   formatSurface as formatMetrage,
-  isDatePassed,
 } from '@/helpers/intl';
 import { ref } from 'vue';
 const selectedId = ref<string | null>(null);
@@ -309,23 +308,27 @@ const toggleFavorite = async (row: any) => {
 
 <style scoped>
 .TableContainer {
-  border-radius: 12px;
+  border-radius: var(--table-radius);
   overflow: hidden;
-  box-shadow: 0 2px 12px rgba(0, 0, 0, 0.1);
+  box-shadow: var(--table-shadow);
   width: 100%;
 }
 
 :deep(.el-table) {
-  border-radius: 12px;
+  border-radius: var(--table-radius);
 }
 
 :deep(.el-table__header th) {
-  background: #667eea;
+  background: #3e94c5 !important;
 
   color: white;
   font-weight: 600;
   border: none;
-  padding: 16px 12px;
+  padding: var(--table-cell-padding);
+}
+
+:deep(.el-table__header) {
+  background: var(--table-header-bg);
 }
 
 :deep(.action-column-right) {
@@ -358,18 +361,18 @@ const toggleFavorite = async (row: any) => {
 }
 
 :deep(.el-table__row.custom-row:hover) {
-  background-color: #f1f5f9 !important;
-  transform: translateY(-2px);
-  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+  background-color: var(--table-row-hover) !important;
+  transform: var(--btn-hover-translate);
+  box-shadow: var(--card-shadow-hover);
 }
 
 :deep(.el-table__row.custom-row > td) {
   background-color: transparent !important;
-  border-bottom: 1px solid #e2e8f0;
-  padding: 16px 12px;
+  border-bottom: 1px solid var(--table-border-color);
+  padding: var(--table-cell-padding);
   font-size: 16px;
   font-weight: 500;
-  color: #1e293b;
+  color: var(--page-title-color);
   font-family: 'Segoe UI', sans-serif;
 }
 
@@ -395,19 +398,19 @@ const toggleFavorite = async (row: any) => {
 
 .action-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--action-gap);
   align-items: center;
   justify-content: center;
 }
 
 :deep(.el-button) {
-  border-radius: 8px;
+  border-radius: var(--btn-radius);
   transition: all 0.3s ease;
 }
 
 :deep(.el-button:hover) {
-  transform: translateY(-2px);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.15);
+  transform: var(--btn-hover-translate);
+  box-shadow: var(--btn-hover-shadow);
 }
 
 .rueClickable {

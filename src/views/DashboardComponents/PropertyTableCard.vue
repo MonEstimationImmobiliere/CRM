@@ -75,12 +75,12 @@
             <div class="property-features">
               <div class="feature">
                 <el-icon><House /></el-icon>
-                <span>{{ property.bedrooms }} Beds</span>
+                <span>{{ property.bedrooms }} Chambre(s)</span>
               </div>
 
               <div class="feature">
                 <el-icon><ToiletPaper /></el-icon>
-                <span>{{ property.bathrooms }} Baths</span>
+                <span>{{ property.bathrooms }} SdB</span>
               </div>
 
               <div class="feature">
@@ -120,7 +120,7 @@
 
           <div class="price-history">
             <p class="history-title">
-              <el-icon><Timer /></el-icon> Price History
+              <el-icon><Timer /></el-icon> Historique des prix
             </p>
             <div class="history-items">
               <div class="history-item">
@@ -155,7 +155,7 @@
               class="view-details-button"
               @click="emit('edit-property', property)"
             >
-              View Details
+              Voir le détail
             </el-button>
           </div>
         </div>
@@ -163,7 +163,7 @@
     </div>
 
     <div v-if="sortedProperties.length === 0" class="no-results">
-      <p>No properties found matching your search criteria.</p>
+      <p>Aucune propriété trouvée pour ces critères de recherche.</p>
     </div>
   </div>
 </template>
@@ -314,13 +314,13 @@ const isFavorite = (propertyId: string): boolean => {
 
 @media (min-width: 640px) {
   .search-input {
-    width: 300px;
+    width: var(--search-input-width);
   }
 }
 
 .sort-buttons {
   display: flex;
-  gap: 8px;
+  gap: var(--action-gap);
   width: 100%;
 }
 
@@ -336,39 +336,15 @@ const isFavorite = (propertyId: string): boolean => {
 
 .property-grid {
   display: grid;
-  grid-template-columns: repeat(1, 1fr);
-  gap: 24px;
-}
-
-@media (min-width: 768px) {
-  .property-grid {
-    grid-template-columns: repeat(2, 1fr);
-  }
-}
-
-@media (min-width: 850px) {
-  .property-grid {
-    grid-template-columns: repeat(3, 1fr);
-  }
-}
-
-@media (min-width: 1290px) {
-  .property-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
-}
-
-@media (min-width: 1590px) {
-  .property-grid {
-    grid-template-columns: repeat(4, 1fr);
-  }
+  grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-col), 1fr));
+  gap: var(--grid-gap);
 }
 
 .property-card {
   overflow: hidden;
   transition: all 0.3s;
   background-color: #fafafa;
-  border-radius: 12px;
+  border-radius: var(--card-radius);
   /* border: 1px solid #337ecc; */
 }
 
@@ -479,11 +455,15 @@ const isFavorite = (propertyId: string): boolean => {
 
 .card-actions {
   display: flex;
-  gap: 8px;
+  gap: var(--action-gap);
   align-items: center;
 }
 
 .no-results {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  min-height: var(--empty-state-min-height);
   text-align: center;
   padding: 40px 0;
   color: #909399;
