@@ -43,14 +43,22 @@
     </div>
 
     <!-- TABLE DES ADRESSES -->
-    <PropertyTable
-      v-if="viewType === 'table' && addresses.length > 0"
-      :addresses="addresses"
-      :city-only="isCityOnly"
-      @edit-property="handleEditProperty"
-      @select-street="handleGroupedStreetClick"
-      @select-numero="handleTableNumeroClick"
-    />
+    <div
+      v-if="viewType === 'table'"
+      v-loading="isLoading"
+      element-loading-text="Chargement des adresses..."
+      element-loading-background="rgba(255, 255, 255, 0.8)"
+      :style="{ minHeight: isLoading ? '200px' : 'auto' }"
+    >
+      <PropertyTable
+        v-if="addresses.length > 0"
+        :addresses="addresses"
+        :city-only="isCityOnly"
+        @edit-property="handleEditProperty"
+        @select-street="handleGroupedStreetClick"
+        @select-numero="handleTableNumeroClick"
+      />
+    </div>
 
     <!-- MODE CARD -->
     <PropertyTableCard
@@ -223,6 +231,9 @@ const viewType = computed({
 
 // --- Résultats des adresses ---
 const addresses = computed(() => dashboardStore.addresses);
+
+// --- Loading ---
+const isLoading = computed(() => dashboardStore.isLoading);
 
 // --- Vérifier si seulement la ville est sélectionnée (pas de rue ni numéro) ---
 const isCityOnly = computed(() => {
@@ -398,6 +409,10 @@ const openPropertyDialog = (property: any) => {
   flex-direction: row;
   justify-content: space-between;
   margin-bottom: 20px;
+  background: var(--apple-card-bg);
+  padding: 20px;
+  border-radius: var(--apple-radius);
+  box-shadow: var(--apple-shadow);
 }
 
 .autoCompleteContainer {

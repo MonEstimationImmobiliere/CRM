@@ -66,6 +66,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const viewType = ref('table');
   const lastSearchParams = ref<SearchParams | null>(null);
   const isDataLoaded = ref(false);
+  const isLoading = ref(false);
   const showCustomPropertyDialog = ref(false);
   const noResultsFound = ref(false);
   const selectedNumero = ref('');
@@ -139,6 +140,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   async function querySearchAddress() {
     try {
+      isLoading.value = true;
       // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
       if (
         selectedCity.value &&
@@ -201,6 +203,8 @@ export const useDashboardStore = defineStore('dashboard', () => {
       await fetchDPE();
     } catch {
       noResultsFound.value = true;
+    } finally {
+      isLoading.value = false;
     }
   }
 
@@ -318,6 +322,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     viewType,
     lastSearchParams,
     isDataLoaded,
+    isLoading,
     showCustomPropertyDialog,
     noResultsFound,
     selectedNumero,

@@ -51,21 +51,21 @@ a:hover {
 }
 
 .block {
-  background: var(--apple-card-bg);
+  background: #f6f6f6;
   backdrop-filter: var(--backdrop-blur);
   -webkit-backdrop-filter: var(--backdrop-blur);
-  border: 1px solid var(--apple-border);
-  border-radius: var(--apple-radius);
+  /* border: 1px solid var(--apple-border); */
+  /* border-radius: var(--apple-radius); */
   padding: var(--apple-spacing);
-  box-shadow: var(--apple-shadow);
+  /* box-shadow: var(--apple-shadow); */
   transition: var(--apple-transition);
   margin: calc(var(--apple-spacing) / 2);
 }
 
-.block:hover {
+/* .block:hover {
   box-shadow: var(--apple-shadow-hover);
   transform: translateY(-2px);
-}
+} */
 
 .flex-center {
   display: flex;

@@ -56,9 +56,13 @@ onUnmounted(() => document.removeEventListener('keydown', handleGlobalKeydown));
 .sidebar {
   padding: 20px;
   width: 240px;
+  background-color: var(--apple-card-bg);
+  border-radius: 35px 0 0 35px;
 }
 
 .sidebar-content {
+  padding-top: 10px;
+
   display: flex;
   flex-direction: column;
   gap: 16px;
