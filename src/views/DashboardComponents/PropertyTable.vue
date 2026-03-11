@@ -4,8 +4,14 @@
 </div>-->
 
   <div class="property-table-container">
+    <TopBarMapView
+      v-if="!cityOnly"
+      :addresses="addresses as any"
+      :active-mode="dashboardStore.filterMode"
+      @mode-change="handleFilterModeChange"
+    />
     <el-table
-      :data="addresses"
+      :data="filteredAddresses"
       class="modern-property-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
       height="80vh"
@@ -202,12 +208,14 @@ import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
+import { useRemindersStore } from '@/stores/reminders';
+import TopBarMapView from './TopBarMapView.vue';
 import {
   formatDateShort as formatDate,
   formatPrice,
   formatSurface as formatMetrage,
 } from '@/helpers/intl';
-import { ref } from 'vue';
+import { ref, computed, onMounted } from 'vue';
 const selectedId = ref<string | null>(null);
 
 const emit = defineEmits(['select-street', 'select-numero', 'edit-property']);
@@ -252,6 +260,48 @@ function getWeatherLabel(dateRappel: string | null): string {
 const store = usePropertyStore();
 
 const dashboardStore = useDashboardStore();
+const remindersStore = useRemindersStore();
+
+onMounted(() => {
+  remindersStore.loadReminders();
+});
+
+const filteredAddresses = computed(() => {
+  const mode = dashboardStore.filterMode;
+  if (!mode) return props.addresses;
+
+  return props.addresses.filter((address: any) => {
+    switch (mode) {
+      case 'prospection':
+        return (
+          address.date_maj !== null ||
+          (address.nombre_ventes && address.nombre_ventes > 0) ||
+          (address.nombre_estimations && address.nombre_estimations > 0)
+        );
+      case 'estimation':
+        return (
+          address.dernier_prix_estime !== null &&
+          address.dernier_prix_estime > 0
+        );
+      case 'rappel': {
+        const allReminders = [
+          ...remindersStore.reminders,
+          ...remindersStore.agencyReminders,
+        ];
+        const reminderIds = new Set(allReminders.map(r => r.property_id));
+        return address.id !== null && reminderIds.has(address.id);
+      }
+      case 'favoris':
+        return address.favorite === 'true' || address.favorite === true;
+      default:
+        return true;
+    }
+  });
+});
+
+const handleFilterModeChange = (mode: string) => {
+  dashboardStore.filterMode = dashboardStore.filterMode === mode ? null : mode;
+};
 
 const props = defineProps({
   addresses: {

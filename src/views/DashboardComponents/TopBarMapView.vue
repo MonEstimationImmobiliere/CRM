@@ -17,22 +17,27 @@
 </template>
 
 <script setup lang="ts">
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import type { IAddressDetail } from '@/types/address';
 import { MAP_MODES, COLORS, type MapDisplayMode } from '@/utils/mapConstants';
 
-defineProps<{
+const props = defineProps<{
   addresses: IAddressDetail[];
+  activeMode?: string | null;
 }>();
 
 const emit = defineEmits<{
   'mode-change': [mode: string];
 }>();
 
-const currentMode = ref<MapDisplayMode>('prospection');
+const internalMode = ref<MapDisplayMode>('prospection');
+
+const currentMode = computed(() =>
+  props.activeMode !== undefined ? props.activeMode : internalMode.value
+);
 
 const setMode = (mode: string) => {
-  currentMode.value = mode as MapDisplayMode;
+  internalMode.value = mode as MapDisplayMode;
   emit('mode-change', mode);
 };
 </script>

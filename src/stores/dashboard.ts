@@ -74,6 +74,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const selectedNumeroFull = ref<SelectedNumeroFull | null>(null);
   const dpePoints = ref<DpePoint[]>([]);
   const markers = ref<Record<string, any>>({});
+  const filterMode = ref<string | null>(null);
 
   // --- Helpers ---
 
@@ -330,6 +331,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     selectedNumeroFull,
     dpePoints,
     markers,
+    filterMode,
     // Actions
     fetchDPE,
     querySearchAddress,

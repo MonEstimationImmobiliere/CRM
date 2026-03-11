@@ -4,6 +4,7 @@
     <TopBarMapView
       @mode-change="handleModeChange"
       :addresses="addresses as any"
+      :active-mode="dashboard.filterMode"
     />
 
     <!-- Map -->
@@ -14,7 +15,7 @@
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch, nextTick, ref, computed } from 'vue';
+import { onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useDashboardStore } from '@/stores/dashboard';
@@ -26,7 +27,6 @@ import {
   MAP_STYLE,
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
-  type MapDisplayMode,
 } from '@/utils/mapConstants';
 
 /* -------------------------------------
@@ -63,8 +63,8 @@ const remindersStore = useRemindersStore();
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
 
-// Current display mode
-const currentMode = ref<MapDisplayMode>('prospection');
+// Current display mode - synced with store
+const currentMode = computed(() => dashboard.filterMode || 'prospection');
 
 // Popup composable
 const popups = useMapPopups({
@@ -87,7 +87,7 @@ const reminderPropertyIds = computed(() => {
    SIDEBAR EVENT HANDLERS
 ------------------------------------- */
 function handleModeChange(mode: string) {
-  currentMode.value = mode as MapDisplayMode;
+  dashboard.filterMode = dashboard.filterMode === mode ? null : mode;
   updatePointsWithColors();
 }
 
@@ -298,6 +298,11 @@ function setupWatchers() {
   watch(
     () => props.cityCenter,
     () => recenterMap()
+  );
+
+  watch(
+    () => dashboard.filterMode,
+    () => updatePointsWithColors()
   );
 
   watch(
