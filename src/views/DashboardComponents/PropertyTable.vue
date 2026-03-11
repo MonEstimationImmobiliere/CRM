@@ -340,7 +340,7 @@ const toggleFavorite = async (row: any) => {
 }
 
 :deep(.el-table__header) {
-  background: #eeeeee;
+  background: #f7f7f7;
 }
 
 :deep(.el-table__header th) {

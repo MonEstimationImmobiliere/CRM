@@ -1,7 +1,7 @@
 <template>
   <section class="mapContainer">
-    <!-- Sidebar Component -->
-    <SideBarMapView
+    <!-- TopBar Filters -->
+    <TopBarMapView
       @mode-change="handleModeChange"
       :addresses="addresses as any"
     />
@@ -19,7 +19,7 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
-import SideBarMapView from './SideBarMapView.vue';
+import TopBarMapView from './TopBarMapView.vue';
 import { useMapPopups, type MapAddress } from '@/composables/useMapPopups';
 import {
   COLORS,
@@ -337,6 +337,7 @@ function setupWatchers() {
 <style scoped>
 .mapContainer {
   display: flex;
+  flex-direction: column;
   width: 100%;
   height: calc(100vh - 80px);
   position: relative;

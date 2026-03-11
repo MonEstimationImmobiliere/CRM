@@ -301,7 +301,7 @@ const getRowClass = (r: Reminder): string => {
   letter-spacing: 0.06em;
   text-transform: uppercase;
   color: #303030;
-  background: #eeeeee;
+  background: #f7f7f7;
   border-bottom: 1px solid #c4c3c3;
   white-space: nowrap;
   user-select: none;
