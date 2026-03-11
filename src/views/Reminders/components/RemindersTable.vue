@@ -278,7 +278,7 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .table-wrapper {
-  border: 1px solid #e5e7eb;
+  border: 1px solid #c4c3c3;
   border-radius: var(--table-radius);
   overflow: hidden;
   background: #fff;
@@ -295,14 +295,14 @@ const getRowClass = (r: Reminder): string => {
 /* ── Header ──────────────────────────────────── */
 .rt-th {
   text-align: left;
-  padding: 12px 14px;
-  font-size: 0.7rem;
-  font-weight: 700;
+  padding: var(--table-cell-padding);
+  font-size: 0.75rem;
+  font-weight: 600;
   letter-spacing: 0.06em;
   text-transform: uppercase;
-  color: #94a3b8;
-  background: #fafbfc;
-  border-bottom: 1px solid #e5e7eb;
+  color: #303030;
+  background: #eeeeee;
+  border-bottom: 1px solid #c4c3c3;
   white-space: nowrap;
   user-select: none;
 }
@@ -317,8 +317,9 @@ const getRowClass = (r: Reminder): string => {
 
 /* ── Rows ────────────────────────────────────── */
 .rt-row {
-  transition: background-color 0.15s ease;
-  border-bottom: 1px solid #f1f5f9;
+  transition: all 0.3s ease;
+  cursor: pointer;
+  border-bottom: 1px solid var(--table-border-color);
 }
 
 .rt-row:last-child {
@@ -326,7 +327,9 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .rt-row:hover {
-  background-color: #f8faff;
+  background-color: var(--table-row-hover) !important;
+  transform: var(--btn-hover-translate);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .rt-row--overdue {
@@ -334,7 +337,9 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .rt-row--overdue:hover {
-  background-color: #fff0f0;
+  background-color: #fff0f0 !important;
+  transform: var(--btn-hover-translate);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .rt-row--today {
@@ -342,7 +347,9 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .rt-row--today:hover {
-  background-color: #fffceb;
+  background-color: #fffceb !important;
+  transform: var(--btn-hover-translate);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
 .rt-row--done {
@@ -355,7 +362,7 @@ const getRowClass = (r: Reminder): string => {
 
 /* ── Cells ───────────────────────────────────── */
 .rt-cell {
-  padding: 14px 14px;
+  padding: var(--table-cell-padding);
   vertical-align: middle;
   font-size: 0.875rem;
 }
@@ -366,12 +373,12 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .rt-cell--actions {
-  padding: 14px 8px;
+  padding: var(--table-cell-padding);
   text-align: center;
 }
 
 .rt-cell--progress {
-  padding: 14px 10px;
+  padding: var(--table-cell-padding);
 }
 
 /* ── Priority strip ──────────────────────────── */
@@ -409,7 +416,7 @@ const getRowClass = (r: Reminder): string => {
 }
 
 .rt-title {
-  font-weight: 600;
+  font-weight: 500;
   color: #1e293b;
   font-size: 0.875rem;
   white-space: nowrap;

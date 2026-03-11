@@ -25,7 +25,7 @@
       </div>
 
       <!-- BOUTONS -->
-      <div class="validationButtonContainer">
+      <!-- <div class="validationButtonContainer">
         <Button type="primary" @click="querySearchEstimation">
           Estimations reçues
         </Button>
@@ -36,7 +36,7 @@
         >
           Créer une propriété personnalisée
         </Button>
-      </div>
+      </div> -->
 
       <!-- SWITCH LISTE / CARDS -->
       <ViewToggle v-model="viewType" :options="viewOptions" />

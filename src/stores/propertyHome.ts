@@ -61,7 +61,7 @@ export const usePropertyStore = defineStore('property', () => {
   const properties = ref<Partial<IProperty>[]>([]);
   const selectedProperty = ref<Partial<IProperty> | null>(null);
   const isDialogVisible = ref<boolean>(false);
-  const favoritesViewType = ref<'table' | 'card'>('card');
+  const favoritesViewType = ref<'table' | 'card'>('table');
 
   function addProperty(property: Partial<IProperty>) {
     const newProperty = {

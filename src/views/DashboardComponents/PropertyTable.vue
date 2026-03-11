@@ -3,180 +3,191 @@
   {{ addresses }}
 </div>-->
 
-  <el-table
-    :data="addresses"
-    class="TableContainer"
-    :default-sort="{ prop: 'numero', order: 'ascending' }"
-    height="80vh"
-    :row-class-name="getRowClass"
-    @row-click="handleRowClick"
-  >
-    <el-table-column label="Ville" prop="city" sortable min-width="120">
-      <template #default="{ row }">
-        {{ row.nom_commune }} {{ row.codePostal }}
-      </template>
-    </el-table-column>
-
-    <el-table-column
-      label="N°"
-      prop="numero"
-      sortable
-      min-width="100"
-      :sort-method="sortByNumeroAndRep"
-      :sort-orders="['ascending', 'descending']"
+  <div class="property-table-container">
+    <el-table
+      :data="addresses"
+      class="modern-property-table"
+      :default-sort="{ prop: 'numero', order: 'ascending' }"
+      height="80vh"
+      :row-class-name="getRowClass"
+      @row-click="handleRowClick"
     >
-      <template #default="{ row }">
-        <span class="numeroClickable" @click.stop="handleNumeroClick(row)">
-          {{ row.numero }} {{ row.rep || '' }}
-        </span>
-      </template>
-    </el-table-column>
+      <el-table-column label="Ville" prop="city" sortable min-width="100">
+        <template #default="{ row }">
+          {{ row.nom_commune }} {{ row.codePostal }}
+        </template>
+      </el-table-column>
 
-    <el-table-column label="Rue" prop="nom_voie" sortable min-width="120">
-      <template #default="{ row }">
-        <span class="rueClickable" @click.stop="handleStreetClick(row)">
-          {{ row.nom_voie }}</span
-        >
-      </template>
-    </el-table-column>
+      <el-table-column
+        label="N°"
+        prop="numero"
+        sortable
+        min-width="80"
+        :sort-method="sortByNumeroAndRep"
+        :sort-orders="['ascending', 'descending']"
+      >
+        <template #default="{ row }">
+          <span class="numeroClickable" @click.stop="handleNumeroClick(row)">
+            {{ row.numero }} {{ row.rep || '' }}
+          </span>
+        </template>
+      </el-table-column>
 
-    <el-table-column label="Type" prop="type_bien" sortable min-width="100">
-      <template #default="{ row }">
-        <!--  {{ row.type_bien }} {{ row.apart_number || '' }}-->
+      <el-table-column label="Rue" prop="nom_voie" sortable min-width="120">
+        <template #default="{ row }">
+          <span class="rueClickable" @click.stop="handleStreetClick(row)">
+            {{ row.nom_voie }}</span
+          >
+        </template>
+      </el-table-column>
 
-        <el-icon class="icon-maison" v-if="row.type_bien === 'Maison'"
-          ><House
-        /></el-icon>
-        <el-icon
-          class="icon-appartement"
-          v-else-if="row.type_bien === 'Appartement'"
-          ><OfficeBuilding
-        /></el-icon>
-        <el-icon class="icon-immeuble" v-else-if="row.type_bien === 'Immeuble'"
-          ><OfficeBuilding
-        /></el-icon>
-        <el-icon class="icon-inconnu" v-else><QuestionFilled /></el-icon>
-        <span v-if="row.apart_number">/{{ row.apart_number }}</span>
-      </template>
-    </el-table-column>
+      <el-table-column label="Type" prop="type_bien" sortable min-width="80">
+        <template #default="{ row }">
+          <!--  {{ row.type_bien }} {{ row.apart_number || '' }}-->
 
-    <el-table-column
-      label="Surface"
-      prop="surface_reelle_bati"
-      sortable
-      min-width="100"
-    >
-      <template #default="{ row }">
-        {{ formatMetrage(row.surface) }}
-      </template>
-    </el-table-column>
+          <el-icon class="icon-maison" v-if="row.type_bien === 'Maison'"
+            ><House
+          /></el-icon>
+          <el-icon
+            class="icon-appartement"
+            v-else-if="row.type_bien === 'Appartement'"
+            ><OfficeBuilding
+          /></el-icon>
+          <el-icon
+            class="icon-immeuble"
+            v-else-if="row.type_bien === 'Immeuble'"
+            ><OfficeBuilding
+          /></el-icon>
+          <el-icon class="icon-inconnu" v-else><QuestionFilled /></el-icon>
+          <span v-if="row.apart_number">/{{ row.apart_number }}</span>
+        </template>
+      </el-table-column>
 
-    <el-table-column
-      label="Dernière vente"
-      prop="date_derniere_vente"
-      sortable
-      min-width="120"
-    >
-      <template #default="{ row }">
-        <!-- {{ row.date_derniere_vente }}<span v-if="row.nombre_ventes"> ({{ row.nombre_ventes }})</span> -->
+      <el-table-column
+        label="Surface"
+        prop="surface_reelle_bati"
+        sortable
+        min-width="90"
+      >
+        <template #default="{ row }">
+          {{ formatMetrage(row.surface) }}
+        </template>
+      </el-table-column>
 
-        {{ formatDate(row.date_derniere_vente) }}
-      </template>
-    </el-table-column>
+      <el-table-column
+        label="Dernière vente"
+        prop="date_derniere_vente"
+        sortable
+        min-width="120"
+      >
+        <template #default="{ row }">
+          <!-- {{ row.date_derniere_vente }}<span v-if="row.nombre_ventes"> ({{ row.nombre_ventes }})</span> -->
 
-    <el-table-column
-      label="Prix vendu"
-      prop="dernier_prix_vente"
-      sortable
-      min-width="120"
-    >
-      <template #default="{ row }">
-        {{ formatPrice(row.dernier_prix_vente) }}
-      </template>
-    </el-table-column>
+          {{ formatDate(row.date_derniere_vente) }}
+        </template>
+      </el-table-column>
 
-    <el-table-column
-      label="Prix Estimé"
-      prop="dernier_prix_estime"
-      sortable
-      min-width="120"
-    >
-      <template #default="{ row }">
-        <span
-          :style="{ color: row.price ? 'green' : 'blue', fontWeight: 'bold' }"
-        >
-          {{ formatPrice(row.price || row.dernier_prix_estime) }}
-        </span>
-      </template>
-    </el-table-column>
+      <el-table-column
+        label="Prix vendu"
+        prop="dernier_prix_vente"
+        sortable
+        min-width="100"
+      >
+        <template #default="{ row }">
+          {{ formatPrice(row.dernier_prix_vente) }}
+        </template>
+      </el-table-column>
 
-    <el-table-column
-      label="Contact"
-      prop="date_rappel"
-      sortable
-      min-width="120"
-    >
-      <template #default="{ row }">
-        <div style="display: flex; align-items: center; gap: 6px">
-          <img
-            :src="getWeatherIcon(row.date_rappel)"
-            alt="météo"
-            width="24"
-            height="24"
-            style="display: block; margin-right: 6px"
-          />
+      <el-table-column
+        label="Prix Estimé"
+        prop="dernier_prix_estime"
+        sortable
+        min-width="100"
+      >
+        <template #default="{ row }">
           <span
-            style="line-height: 1"
-            :style="{
-              color: getWeatherLabel(row.date_rappel).includes('eviter')
-                ? 'red'
-                : getWeatherLabel(row.date_rappel).includes('mois')
-                  ? 'orange'
-                  : 'green',
-            }"
-            >{{ getWeatherLabel(row.date_rappel) }}</span
+            :style="{ color: row.price ? 'green' : 'blue', fontWeight: 400 }"
           >
-        </div>
-      </template>
-    </el-table-column>
+            {{ formatPrice(row.price || row.dernier_prix_estime) }}
+          </span>
+        </template>
+      </el-table-column>
 
-    <el-table-column
-      fixed="right"
-      class-name="action-column-right"
-      label="Actions"
-      min-width="140"
-      v-if="!cityOnly"
-    >
-      <template #default="{ row }">
-        <div class="action-buttons">
-          <el-button
-            @click.stop="toggleFavorite(row)"
-            :type="
-              row.favorite === 'true' || row.favorite === true
-                ? 'warning'
-                : 'default'
+      <el-table-column
+        label="Contact"
+        prop="date_rappel"
+        sortable
+        min-width="120"
+      >
+        <template #default="{ row }">
+          <div
+            style="
+              display: flex;
+              align-items: center;
+              gap: 6px;
+              font-weight: 400;
             "
-            size="small"
-            circle
           >
-            <el-icon>
-              <StarFilled
-                v-if="row.favorite === 'true' || row.favorite === true"
-              />
-              <Star v-else />
-            </el-icon>
-          </el-button>
-          <el-button
-            type="primary"
-            size="small"
-            @click="$emit('edit-property', row)"
-          >
-            Ouvrir
-          </el-button>
-        </div>
-      </template>
-    </el-table-column>
-  </el-table>
+            <img
+              :src="getWeatherIcon(row.date_rappel)"
+              alt="météo"
+              width="24"
+              height="24"
+              style="display: block; margin-right: 6px"
+            />
+            <span
+              style="line-height: 1"
+              :style="{
+                color: getWeatherLabel(row.date_rappel).includes('eviter')
+                  ? 'red'
+                  : getWeatherLabel(row.date_rappel).includes('mois')
+                    ? 'orange'
+                    : 'green',
+              }"
+              >{{ getWeatherLabel(row.date_rappel) }}</span
+            >
+          </div>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        fixed="right"
+        class-name="action-column-right"
+        label="Actions"
+        min-width="140"
+        v-if="!cityOnly"
+      >
+        <template #default="{ row }">
+          <div class="action-buttons">
+            <el-button
+              @click.stop="toggleFavorite(row)"
+              :type="
+                row.favorite === 'true' || row.favorite === true
+                  ? 'danger'
+                  : 'default'
+              "
+              size="small"
+              circle
+            >
+              <el-icon>
+                <StarFilled
+                  v-if="row.favorite === 'true' || row.favorite === true"
+                />
+                <Star v-else />
+              </el-icon>
+            </el-button>
+            <el-button
+              type="primary"
+              size="small"
+              @click="$emit('edit-property', row)"
+            >
+              Ouvrir
+            </el-button>
+          </div>
+        </template>
+      </el-table-column>
+    </el-table>
+  </div>
 </template>
 
 <script setup lang="ts">
@@ -307,44 +318,36 @@ const toggleFavorite = async (row: any) => {
 </script>
 
 <style scoped>
-.TableContainer {
+.property-table-container {
+  padding: 16px 0;
+}
+
+.modern-property-table {
   border-radius: var(--table-radius);
   overflow: hidden;
   box-shadow: var(--table-shadow);
-  width: 100%;
+  border: 1px solid #c4c3c3;
+  font-weight: 600;
+  color: #303030;
 }
 
 :deep(.el-table) {
   border-radius: var(--table-radius);
 }
 
-:deep(.el-table__header th) {
-  background: #3e94c5 !important;
-
-  color: white;
-  font-weight: 600;
-  border: none;
-  padding: var(--table-cell-padding);
+:deep(.el-table tr) {
+  background-color: transparent;
 }
 
 :deep(.el-table__header) {
-  background: var(--table-header-bg);
+  background: #eeeeee;
 }
 
-:deep(.action-column-right) {
-  background-color: #4e64c6 !important;
-}
-
-:deep(.el-table__fixed-right) {
-  background-color: #667eea;
-}
-
-:deep(.el-table__fixed-right .el-table__header th) {
-  background-color: #667eea !important;
-}
-
-:deep(.el-table__body-wrapper) {
-  padding: 10px 0;
+:deep(.el-table__header th) {
+  background: transparent !important;
+  color: #303030;
+  font-weight: 600;
+  padding: var(--table-cell-padding);
 }
 
 :deep(.el-table__body tr:hover) {
@@ -352,28 +355,19 @@ const toggleFavorite = async (row: any) => {
 }
 
 :deep(.el-table__row.custom-row) {
-  cursor: pointer;
-  background-color: white;
-  border-radius: 12px;
-  box-shadow: 0 0 0 transparent;
   transition: all 0.3s ease;
-  margin-bottom: 10px;
+  cursor: pointer;
 }
 
 :deep(.el-table__row.custom-row:hover) {
   background-color: var(--table-row-hover) !important;
   transform: var(--btn-hover-translate);
-  box-shadow: var(--card-shadow-hover);
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
 }
 
-:deep(.el-table__row.custom-row > td) {
-  background-color: transparent !important;
-  border-bottom: 1px solid var(--table-border-color);
+:deep(.el-table__body td) {
   padding: var(--table-cell-padding);
-  font-size: 16px;
-  font-weight: 500;
-  color: var(--page-title-color);
-  font-family: 'Segoe UI', sans-serif;
+  border-bottom: 1px solid var(--table-border-color);
 }
 
 .icon-maison {

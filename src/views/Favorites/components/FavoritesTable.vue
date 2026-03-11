@@ -175,6 +175,7 @@ const handleRowClick = (row: any) => {
   border-radius: var(--table-radius);
   overflow: hidden;
   box-shadow: var(--table-shadow);
+  border: 1px solid #c4c3c3;
 }
 
 :deep(.el-table) {
@@ -186,14 +187,13 @@ const handleRowClick = (row: any) => {
 }
 
 :deep(.el-table__header) {
-  background: var(--table-header-bg);
+  background: #eeeeee;
 }
 
 :deep(.el-table__header th) {
   background: transparent !important;
-  color: white;
+  color: #303030;
   font-weight: 600;
-  border: none;
   padding: var(--table-cell-padding);
 }
 
