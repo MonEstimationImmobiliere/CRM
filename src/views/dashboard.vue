@@ -38,6 +38,17 @@
         </Button>
       </div> -->
 
+<!-- NOUVEAU CHAMP RECHERCHE PROPRIETAIRE -->
+<div class="ownerSearchContainer">
+  <el-input
+    v-model="selectedOwnerName"
+    clearable
+    placeholder="Nom du propriétaire"
+    @keyup.enter="dashboardStore.querySearchAddress()"
+  />
+</div>
+
+
       <!-- SWITCH LISTE / CARDS -->
       <ViewToggle v-model="viewType" :options="viewOptions" />
     </div>
@@ -166,9 +177,30 @@ watch(
   }
 );
 
+let ownerSearchTimeout: ReturnType<typeof setTimeout> | null = null;
+
+watch(
+  () => dashboardStore.selectedOwnerName,
+  (newVal, oldVal) => {
+    if (newVal !== oldVal) {
+      if (ownerSearchTimeout) {
+        clearTimeout(ownerSearchTimeout);
+      }
+
+      ownerSearchTimeout = setTimeout(() => {
+        dashboardStore.querySearchAddress();
+      }, 400);
+    }
+  }
+);
 /* ------------------------------------
       COMPUTED BINDINGS
 ------------------------------------ */
+
+const selectedOwnerName = computed({
+  get: () => dashboardStore.selectedOwnerName,
+  set: v => (dashboardStore.selectedOwnerName = v),
+});
 
 // --- Ville ---
 const selectedCity = computed({
@@ -413,6 +445,7 @@ const openPropertyDialog = (property: any) => {
   padding: 20px;
   border-radius: var(--apple-radius);
   box-shadow: var(--apple-shadow);
+  gap: 20px;
 }
 
 .autoCompleteContainer {
@@ -425,5 +458,19 @@ const openPropertyDialog = (property: any) => {
 .validationButtonContainer {
   gap: 20px;
   display: flex;
+}
+
+.filtersLeftContainer {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  flex: 1;
+  min-width: 0;
+}
+
+.ownerSearchContainer {
+  flex: 1;
+  min-width: 260px;
+  max-width: 520px;
 }
 </style>

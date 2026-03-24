@@ -41,6 +41,7 @@ interface SearchParams {
   codeIdFantoir: string | null;
   numero: string | null;
   rep: string | null;
+  ownerName: string | null;
 }
 
 /**
@@ -75,6 +76,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const dpePoints = ref<DpePoint[]>([]);
   const markers = ref<Record<string, any>>({});
   const filterMode = ref<string | null>(null);
+  const selectedOwnerName = ref('');
 
   // --- Helpers ---
 
@@ -140,52 +142,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   async function querySearchAddress() {
-    try {
-      isLoading.value = true;
-      // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
-      if (
-        selectedCity.value &&
-        !selectedStreet.value &&
-        !selectedNumero.value &&
-        !selectedRep.value
-      ) {
-        addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
-          selectedCodeInsee.value
-        );
+  try {
+    isLoading.value = true;
 
-        cityCenter.value = computeCenter(addresses.value);
+    const ownerName = selectedOwnerName.value.trim();
 
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: null,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: null,
-          numero: null,
-          rep: null,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-
-        await fetchDPE();
-        return;
-      }
-
-      // CAS RUE / NUMÉRO — Impossible sans FANTOIR
-      if (!selectedCodeIdFantoir.value) return;
-
-      if (selectedNumero.value) {
-        addresses.value = await PropertyService.getAddressesByNumero(
-          selectedCodeIdFantoir.value,
-          selectedNumero.value,
-          selectedRep.value || undefined
-        );
-      } else {
-        addresses.value = await PropertyService.getAddressesByFantoir(
-          selectedCodeIdFantoir.value,
-          'adress'
-        );
-      }
+    // ===========================
+    // PRIORITE 1 : PROPRIETAIRE
+    // ===========================
+    if (ownerName) {
+      addresses.value = await PropertyService.getAddressesByOwner(ownerName);
 
       cityCenter.value = computeCenter(addresses.value);
 
@@ -193,21 +159,93 @@ export const useDashboardStore = defineStore('dashboard', () => {
         city: selectedCity.value,
         street: selectedStreet.value,
         codeInsee: selectedCodeInsee.value,
-        codeIdFantoir: selectedCodeIdFantoir.value,
-        numero: selectedNumero.value,
-        rep: selectedRep.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+      return;
+    }
+
+    // ===========================
+    // PRIORITE 2 : RECHERCHE CLASSIQUE
+    // ===========================
+    // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
+    if (
+      selectedCity.value &&
+      !selectedStreet.value &&
+      !selectedNumero.value &&
+      !selectedRep.value
+    ) {
+      addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
+        selectedCodeInsee.value
+      );
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: null,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: null,
+        numero: null,
+        rep: null,
+        ownerName: null,
       };
 
       isDataLoaded.value = true;
       noResultsFound.value = addresses.value.length === 0;
 
       await fetchDPE();
-    } catch {
-      noResultsFound.value = true;
-    } finally {
-      isLoading.value = false;
+      return;
     }
+
+    // CAS RUE / NUMÉRO — Impossible sans FANTOIR
+    if (!selectedCodeIdFantoir.value) {
+      addresses.value = [];
+      noResultsFound.value = false;
+      return;
+    }
+
+    if (selectedNumero.value) {
+      addresses.value = await PropertyService.getAddressesByNumero(
+        selectedCodeIdFantoir.value,
+        selectedNumero.value,
+        selectedRep.value || undefined
+      );
+    } else {
+      addresses.value = await PropertyService.getAddressesByFantoir(
+        selectedCodeIdFantoir.value,
+        'adress'
+      );
+    }
+
+    cityCenter.value = computeCenter(addresses.value);
+
+    lastSearchParams.value = {
+      city: selectedCity.value,
+      street: selectedStreet.value,
+      codeInsee: selectedCodeInsee.value,
+      codeIdFantoir: selectedCodeIdFantoir.value,
+      numero: selectedNumero.value,
+      rep: selectedRep.value,
+      ownerName: null,
+    };
+
+    isDataLoaded.value = true;
+    noResultsFound.value = addresses.value.length === 0;
+
+    await fetchDPE();
+  } catch {
+    noResultsFound.value = true;
+    addresses.value = [];
+  } finally {
+    isLoading.value = false;
   }
+}
 
   async function querySearchEstimation() {
     if (!selectedCodeIdFantoir.value) return;
@@ -264,17 +302,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
     selectedCodeIdFantoir.value = codeIdFantoir;
   }
 
-  function clearSearchData() {
-    selectedCity.value = null;
-    selectedStreet.value = null;
-    selectedCodeInsee.value = '';
-    selectedCodeIdFantoir.value = '';
-    addresses.value = [];
-    isDataLoaded.value = false;
-    lastSearchParams.value = null;
-    noResultsFound.value = false;
-    showCustomPropertyDialog.value = false;
-  }
+function clearSearchData() {
+  selectedCity.value = null;
+  selectedStreet.value = null;
+  selectedCodeInsee.value = '';
+  selectedCodeIdFantoir.value = '';
+  selectedNumero.value = '';
+  selectedRep.value = '';
+  selectedNumeroFull.value = null;
+  selectedOwnerName.value = '';
+  addresses.value = [];
+  isDataLoaded.value = false;
+  lastSearchParams.value = null;
+  noResultsFound.value = false;
+  showCustomPropertyDialog.value = false;
+}
 
   async function createCustomProperty(
     propertyData: Partial<IAddressDetail> & {
@@ -332,6 +374,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     dpePoints,
     markers,
     filterMode,
+    selectedOwnerName,
     // Actions
     fetchDPE,
     querySearchAddress,
