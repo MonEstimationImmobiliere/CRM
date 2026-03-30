@@ -1,6 +1,6 @@
 import { createRouter, createWebHashHistory } from "vue-router"
 import Layout from '@/layout/index.vue'
-import { Link, HomeFilled, Connection } from '@element-plus/icons-vue'
+import { Link, HomeFilled, Connection, House } from '@element-plus/icons-vue'
 import { markRaw } from "vue"
 import type { RouteRecordRaw } from 'vue-router'
 
@@ -49,6 +49,21 @@ const routes: RouteRecordRaw[] = [
     name: 'Login',
     component: () => import('@/views/login.vue'),
     meta: { hidden: true, title: 'login' }
+  },
+  {
+    path: '/properties',
+    name: 'Properties',
+    component: Layout,
+    redirect: '/properties/index',
+    meta: { breadcrumb: false },
+    children: [
+      {
+        path: 'index',
+        name: 'PropertiesIndex',
+        component: () => import('@/views/properties.vue'),
+        meta: { title: 'Gestion des biens', icon: House }
+      }
+    ]
   },
   {
     path: '/modal',
