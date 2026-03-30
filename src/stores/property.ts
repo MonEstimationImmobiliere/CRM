@@ -96,8 +96,11 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  function toggleSearchMode() {
-    searchMode.value = searchMode.value === 'address' ? 'owner' : 'address'
+  function setSearchMode(mode: Property.SearchMode) {
+    searchMode.value = mode
+  }
+
+  function clearSearchResults() {
     searchResults.value = []
   }
 
@@ -113,6 +116,7 @@ export const usePropertyStore = defineStore('property', () => {
     fetchUnits,
     addUnit,
     removeUnit,
-    toggleSearchMode
+    setSearchMode,
+    clearSearchResults
   }
 })

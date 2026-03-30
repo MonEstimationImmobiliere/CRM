@@ -26,14 +26,14 @@ watch(() => store.searchMode, () => {
     <div class="search-mode-toggle">
       <ElButton
         :type="store.searchMode === 'address' ? 'primary' : 'default'"
-        @click="store.searchMode = 'address'"
+        @click="store.setSearchMode('address')"
       >
         <ElIcon class="search-mode-icon"><Location /></ElIcon>
         Recherche par Adresse
       </ElButton>
       <ElButton
         :type="store.searchMode === 'owner' ? 'primary' : 'default'"
-        @click="store.searchMode = 'owner'"
+        @click="store.setSearchMode('owner')"
       >
         <ElIcon class="search-mode-icon"><User /></ElIcon>
         Recherche par Propriétaire
@@ -46,7 +46,7 @@ watch(() => store.searchMode, () => {
       clearable
       size="large"
       @input="onSearchInput"
-      @clear="store.searchResults = []"
+      @clear="store.clearSearchResults()"
     />
   </div>
 </template>

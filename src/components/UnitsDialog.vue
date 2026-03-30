@@ -24,6 +24,18 @@ const unitTypes: Property.UnitType[] = [
   'Dépendance'
 ]
 
+const unitTypeTagMap: Record<Property.UnitType, string> = {
+  'Appartement': '',
+  'Local commercial': 'warning',
+  'Terrain': 'success',
+  'Parking': 'info',
+  'Dépendance': 'success'
+}
+
+function getUnitTypeTag(unitType: Property.UnitType): string {
+  return unitTypeTagMap[unitType] ?? ''
+}
+
 const showAddForm = ref(false)
 const unitForm = ref<Property.UnitForm>({
   unit_number: '',
@@ -144,7 +156,7 @@ const addressLabel = () => {
       <el-table-column label="Type" width="180">
         <template #default="{ row }">
           <el-tag
-            :type="row.unit_type === 'Appartement' ? '' : row.unit_type === 'Local commercial' ? 'warning' : row.unit_type === 'Parking' ? 'info' : 'success'"
+            :type="getUnitTypeTag(row.unit_type)"
             size="small"
           >
             {{ row.unit_type }}
