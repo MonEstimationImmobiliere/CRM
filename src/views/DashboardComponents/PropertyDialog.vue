@@ -93,9 +93,8 @@
                   size="large"
                 >
                   <el-radio-button label="Maison">Maison</el-radio-button>
-                  <el-radio-button label="Appartement"
-                    >Appartement</el-radio-button
-                  >
+                  <el-radio-button label="Appartement">Appartement</el-radio-button>
+                  <el-radio-button label="Appartement">Immeuble</el-radio-button>
                 </el-radio-group>
               </el-form-item>
 
