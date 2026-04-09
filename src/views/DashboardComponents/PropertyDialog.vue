@@ -15,28 +15,22 @@
         <div></div>
         <h4 :id="titleId" class="titleHeader">{{ dialogTitle }}</h4>
         <div class="header-actions">
-          <el-button
-            @click="toggleFavorite"
-            :type="
-              store.selectedProperty?.id_fantoir_long &&
-              store.isFavorite(store.selectedProperty.id_fantoir_long)
-                ? 'warning'
-                : 'default'
-            "
-            size="small"
-            circle
-          >
-            <el-icon>
-              <StarFilled
-                v-if="
-                  store.selectedProperty?.id_fantoir_long &&
-                  store.isFavorite(store.selectedProperty.id_fantoir_long)
-                "
-              />
-
-              <Star v-else />
-            </el-icon>
-          </el-button>
+<el-button
+  @click="toggleFavorite"
+  size="small"
+  circle
+>
+  <el-icon>
+    <StarFilled
+      v-if="Number(store.selectedProperty?.favorite) === 1 || store.selectedProperty?.favorite === true"
+      style="color: #f56c6c"
+    />
+    <Star
+      v-else
+      style="color: #909399"
+    />
+  </el-icon>
+</el-button>
         </div>
       </div>
     </template>
@@ -742,11 +736,10 @@ const saveProperty = async (): Promise<void> => {
   const filteredProperty = { ...store.selectedProperty } as any;
   delete filteredProperty.comment_rappel;
 
+  filteredProperty.id_fantoir_long = String(store.selectedProperty.id_fantoir_long || '');
+
   try {
     console.log('saveProperty payload avant envoi', filteredProperty);
-    console.log('selectedProperty avant save', filteredProperty);
-console.log('id avant save', filteredProperty.id);
-console.log('isEditing', isEditing.value);
 
     if (isEditing.value) {
       const saved = await store.saveProperty(filteredProperty);
@@ -797,25 +790,28 @@ const openReminderDialog = () => {
 
 // Gestion des favoris
 const toggleFavorite = async () => {
-  if (!store.selectedProperty?.id_fantoir_long) return;
+  if (!store.selectedProperty?.id) return;
 
   try {
-    const newFavoriteState = await store.toggleFavorite(
-      store.selectedProperty.id_fantoir_long
+    const savedRow = await store.toggleFavorite(
+      store.selectedProperty.id,
+      store.selectedProperty
     );
 
-    (store.selectedProperty as any).favorite = newFavoriteState ? 1 : 0;
+    (store.selectedProperty as any).id = savedRow.id;
+    (store.selectedProperty as any).favorite = savedRow.favorite;
 
     dashboardStore.updateAddress({
       ...(store.selectedProperty as any),
-      favorite: newFavoriteState ? 1 : 0,
+      id: savedRow.id,
+      favorite: savedRow.favorite,
     });
 
     ElMessage({
-      message: newFavoriteState
+      message: savedRow.favorite
         ? 'Propriété ajoutée aux favoris'
         : 'Propriété retirée des favoris',
-      type: newFavoriteState ? 'success' : 'info',
+      type: savedRow.favorite ? 'success' : 'info',
       duration: 2000,
     });
   } catch (error) {
@@ -827,6 +823,10 @@ const toggleFavorite = async () => {
     });
   }
 };
+
+function isFavoriteValue(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
 </script>
 
 <style scoped>

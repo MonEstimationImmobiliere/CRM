@@ -12,6 +12,7 @@
     />
     <el-table
       :data="filteredAddresses"
+      :row-key="getRowKey"
       class="modern-property-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
       height="80vh"
@@ -183,17 +184,22 @@
       >
         <template #default="{ row }">
           <div class="action-buttons">
-            <el-button
-              @click.stop="toggleFavorite(row)"
-              :type="isFavorite(row.favorite) ? 'danger' : 'default'"
-              size="small"
-              circle
-            >
-              <el-icon>
-                <StarFilled v-if="isFavorite(row.favorite)" />
-                <Star v-else />
-              </el-icon>
-            </el-button>
+<el-button
+  @click.stop="toggleFavorite(row)"
+  size="small"
+  circle
+>
+  <el-icon>
+    <StarFilled
+      v-if="Number(row.favorite) === 1 || row.favorite === true"
+      style="color: #f56c6c"
+    />
+    <Star
+      v-else
+      style="color: #909399"
+    />
+  </el-icon>
+</el-button>
             <el-button
               type="primary"
               size="small"
@@ -228,7 +234,7 @@ import {
   formatSurface as formatMetrage,
 } from '@/helpers/intl';
 import { ref, computed, onMounted } from 'vue';
-const selectedId = ref<string | null>(null);
+const selectedId = ref<number | null>(null);
 
 const emit = defineEmits(['select-street', 'select-numero', 'edit-property']);
 
@@ -240,9 +246,13 @@ const handleNumeroClick = (row: any) => {
   emit('select-numero', row);
 };
 
-function isFavorite(value: unknown): boolean {
+function isFavoriteValue(value: unknown): boolean {
   return value === true || value === 'true' || value === 1 || value === '1';
 }
+
+const getRowKey = (row: any) => {
+  return Number(row.id) > 0 ? `property_${row.id}` : `address_${row.id_fantoir_long}`;
+};
 
 function getMonthsDiff(dateRappel: string | null): number {
   if (!dateRappel) return -1;
@@ -331,11 +341,16 @@ const props = defineProps({
 });
 
 const handleRowClick = (row: any) => {
-  // Ne pas ouvrir la fiche si seulement la ville est sélectionnée
   if (props.cityOnly) {
     return;
   }
-  emit('edit-property', row);
+
+  console.log('ROW CLICK id_fantoir_long =', row.id_fantoir_long);
+
+  emit('edit-property', {
+    ...row,
+    id_fantoir_long: row.id_fantoir_long,
+  });
 };
 
 const sortByNumeroAndRep = (
@@ -357,24 +372,25 @@ const sortByNumeroAndRep = (
 
 //const getRowClass = () => 'custom-row';
 
-const getRowClass = (row: any) => {
-  return row.id_fantoir_long === selectedId.value
+const getRowClass = ({ row }: any) => {
+  return Number(row.id) === Number(selectedId.value)
     ? 'custom-row selected-row'
     : 'custom-row';
 };
 
 const toggleFavorite = async (row: any) => {
   try {
-    const newState = await store.toggleFavorite(row.id_fantoir_long, row);
+    const savedRow = await store.toggleFavorite(row.id, row);
 
-    ElMessage.success(newState ? 'Ajouté aux favoris' : 'Retiré des favoris');
+    row.id = savedRow.id;
+    row.favorite = savedRow.favorite;
 
-    //row.favorite = newState;
-    row.favorite = newState ? 1 : 0;
+    ElMessage.success(savedRow.favorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
 
     dashboardStore.updateAddress({
       ...row,
-      favorite: row.favorite,
+      id: savedRow.id,
+      favorite: savedRow.favorite,
     });
   } catch (e) {
     console.error('toggleFavorite error:', e);
@@ -547,5 +563,17 @@ function getDisplayType(row: any): string {
 .icon-commerce {
   font-size: 24px;
   color: #7c3aed;
+}
+
+:deep(.el-button.favorite-active) {
+  background-color: #f56c6c !important;
+  border-color: #f56c6c !important;
+  color: white !important;
+}
+
+:deep(.el-button.favorite-active:hover) {
+  background-color: #f56c6c !important;
+  border-color: #f56c6c !important;
+  color: white !important;
 }
 </style>

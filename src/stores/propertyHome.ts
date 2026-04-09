@@ -76,17 +76,39 @@ function addProperty(property: Partial<IProperty>) {
 }
 
 const saveProperty = async (property: Partial<IProperty>) => {
-  let saved;
+  let response;
+  let saved: any;
+
   const propertyId = Number(property.id ?? 0);
 
   console.log('STORE saveProperty property.id =', property.id);
   console.log('STORE saveProperty propertyId =', propertyId);
 
   if (propertyId > 0) {
-    saved = await PropertyService.updateProperty(propertyId, property);
+    response = await PropertyService.updateProperty(propertyId, property);
+  } else {
+    console.log('CREATE PROPERTY FROM FAVORITE', property);
+    response = await PropertyService.createProperty(property);
+  }
+
+  // Normalisation de la réponse API
+const resp: any = response;
+
+saved =
+  resp?.property ??
+  resp?.data?.property ??
+  resp?.data ??
+  resp;
+
+  console.log('STORE saveProperty normalized saved =', saved);
+
+  if (!saved || Number(saved.id ?? 0) <= 0) {
+    throw new Error("La propriété sauvegardée ne contient pas d'id valide");
+  }
+
+  if (propertyId > 0) {
     updatePropertyInStore(saved);
   } else {
-    saved = await PropertyService.createProperty(property);
     addProperty(saved);
   }
 
@@ -236,60 +258,129 @@ const selectProperty = async (
     properties.value.filter(property => property.favorite === true)
   );
 
-  const toggleFavorite = async (
-    id_fantoir_long: string,
-    sourceRow: any = null
-  ) => {
-    let existing = null;
+const toggleFavorite = async (
+  propertyId: number | string,
+  sourceRow: any = null
+): Promise<any> => {
+  const numericId = Number(propertyId);
+  const rowType = String(sourceRow?.row_type ?? '').trim().toLowerCase();
 
-    try {
-      existing = await PropertyService.getPropertyById(id_fantoir_long);
-    } catch (err: any) {
-      if (err.response?.status !== 404) {
-        throw err;
-      }
+  console.log('TOGGLE FAVORITE CALLED', {
+    propertyId,
+    numericId,
+    rowType,
+    sourceRow,
+  });
+
+  // =========================
+  // CAS 1 : property existe déjà
+  // =========================
+  if (numericId > 0) {
+const existingResponse: any = await PropertyService.getProperty(numericId);
+
+const existing =
+  existingResponse?.property ??
+  existingResponse?.data?.property ??
+  existingResponse?.data ??
+  existingResponse;
+
+console.log('EXISTING PROPERTY FOR FAVORITE =', existing);
+
+if (!existing || !existing.id) {
+  throw new Error('Propriété introuvable');
+}
+
+const updatedProperty: any = {
+  ...existing,
+  favorite: existing.favorite ? 0 : 1,
+};
+
+    await PropertyService.updateProperty(Number(updatedProperty.id), updatedProperty);
+
+    updatePropertyInStore(updatedProperty);
+
+    if (
+      selectedProperty.value &&
+      Number(selectedProperty.value.id) === Number(updatedProperty.id)
+    ) {
+      selectedProperty.value = {
+        ...selectedProperty.value,
+        ...updatedProperty,
+      } as any;
     }
 
-    let property: any;
+    return updatedProperty;
+  }
 
-    if (!existing) {
-      property = {
-        ...defaultPropertyData,
-        ...sourceRow,
-        id_fantoir_long,
-        id_fantoir: sourceRow?.id_fantoir || '',
-        code_postal: sourceRow?.code_postal || '',
-        city: sourceRow?.city || sourceRow?.nom_commune || '',
-        nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
-        nom_voie: sourceRow?.nom_voie || '',
-        numero: sourceRow?.numero || '',
-        rep: sourceRow?.rep || '',
-        numero_appartement: sourceRow?.numero_appartement || '',
-        surface: sourceRow?.surface || 0,
-        favorite: true,
-      };
+  // =========================
+  // CAS 2 : adresse racine sans property encore créée
+  // =========================
+  if (rowType === 'address') {
+    const propertyToCreate: any = {
+      ...defaultPropertyData,
+      ...sourceRow,
+      id: 0,
+      unit_id: 0,
+      row_type: 'address',
+      id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
+      id_fantoir: sourceRow?.id_fantoir || '',
+      code_insee: sourceRow?.code_insee || '',
+      code_postal: sourceRow?.code_postal || '',
+      nom_voie: sourceRow?.nom_voie || '',
+      numero: sourceRow?.numero || '',
+      rep: sourceRow?.rep || '',
+      city: sourceRow?.city || sourceRow?.nom_commune || '',
+      nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
+      favorite: 1,
+    };
 
-      const created = await PropertyService.createProperty(property);
-      property.id = created.id;
-    } else {
-      property = {
-        ...existing,
-        favorite: !existing.favorite,
-      };
+    console.log('CREATE ROOT PROPERTY FROM FAVORITE', propertyToCreate);
 
-      await PropertyService.updateProperty(property.id, property);
+    const createdResponse: any = await PropertyService.createProperty(propertyToCreate);
+
+    const created =
+      createdResponse?.property ??
+      createdResponse?.data?.property ??
+      createdResponse?.data ??
+      createdResponse;
+
+    console.log('CREATED ROOT PROPERTY =', created);
+
+    if (!created || !created.id) {
+      throw new Error("La property racine n'a pas été créée correctement");
     }
 
-    updatePropertyInStore(property);
-    return property.favorite;
-  };
+    addProperty(created);
 
-  const isFavorite = (propertyId: string): boolean => {
-    const property = properties.value.find(
-      p => p.id_fantoir_long === propertyId
-    );
-    return Boolean(property?.favorite) || false;
-  };
+    if (sourceRow) {
+  sourceRow.id = created.id;
+  sourceRow.favorite = created.favorite;
+}
+
+    if (
+      selectedProperty.value &&
+      selectedProperty.value.row_type === 'address' &&
+      selectedProperty.value.id_fantoir_long === created.id_fantoir_long
+    ) {
+      selectedProperty.value = {
+        ...selectedProperty.value,
+        ...created,
+      } as any;
+    }
+
+    return created;
+  }
+
+  throw new Error("La fiche du logement n'est pas encore créée.");
+};
+
+const isFavorite = (propertyId: number): boolean => {
+  const property = properties.value.find(
+    p => Number(p.id) === Number(propertyId)
+  );
+
+  return Boolean(property?.favorite);
+};
 
   const loadFavoritesProperties = async () => {
     const favoriteProperties = await PropertyService.getFavorites();

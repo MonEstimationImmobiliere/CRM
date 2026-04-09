@@ -21,6 +21,7 @@ export const PropertyService = {
   
 
  async createProperty(property: Partial<IProperty>): Promise<IProperty> {
+  console.log('API createProperty payload', property);
   const response = await apiService.post<{ property: IProperty }>(
     `/property/create`,
     property
