@@ -106,6 +106,18 @@ async getAddressesByFantoir(
   return response.data;
 },
 
+  async getFavoriteAddresses(ownerName: string): Promise<IAddressDetail[]> {
+  const response = await apiService.get<IAddressDetail[]>(
+    `/address-owner`,
+    {
+      params: {
+          favorite: 1,
+      },
+    }
+  );
+  return response.data;
+},
+
   async removeFromFavorites(propertyId: string): Promise<void> {
     await apiService.delete(
       `/property/${encodeURIComponent(propertyId)}/favorite`

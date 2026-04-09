@@ -42,6 +42,7 @@ interface SearchParams {
   numero: string | null;
   rep: string | null;
   ownerName: string | null;
+    favoritesOnly: boolean;
 }
 
 /**
@@ -77,6 +78,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const markers = ref<Record<string, any>>({});
   const filterMode = ref<string | null>(null);
   const selectedOwnerName = ref('');
+  const favoritesOnly = ref(false);
 
   // --- Helpers ---
 
@@ -141,7 +143,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
-  async function querySearchAddress() {
+async function querySearchAddress() {
   try {
     isLoading.value = true;
 
@@ -163,6 +165,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         numero: selectedNumero.value || null,
         rep: selectedRep.value || null,
         ownerName,
+        favoritesOnly: false,
       };
 
       isDataLoaded.value = true;
@@ -171,9 +174,32 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
 
     // ===========================
-    // PRIORITE 2 : RECHERCHE CLASSIQUE
+    // PRIORITE 2 : FAVORIS
     // ===========================
-    // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
+    if (favoritesOnly.value) {
+      addresses.value = await PropertyService.getFavoriteAddresses();
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName: null,
+        favoritesOnly: true,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+      return;
+    }
+
+    // ===========================
+    // PRIORITE 3 : RECHERCHE CLASSIQUE
+    // ===========================
     if (
       selectedCity.value &&
       !selectedStreet.value &&
@@ -194,6 +220,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         numero: null,
         rep: null,
         ownerName: null,
+        favoritesOnly: false,
       };
 
       isDataLoaded.value = true;
@@ -203,7 +230,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       return;
     }
 
-    // CAS RUE / NUMÉRO — Impossible sans FANTOIR
     if (!selectedCodeIdFantoir.value) {
       addresses.value = [];
       noResultsFound.value = false;
@@ -211,11 +237,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
 
     addresses.value = await PropertyService.getAddressesByFantoir(
-  selectedCodeIdFantoir.value,
-  'address',
-  selectedNumero.value || undefined,
-  selectedRep.value || undefined
-);
+      selectedCodeIdFantoir.value,
+      'address',
+      selectedNumero.value || undefined,
+      selectedRep.value || undefined
+    );
 
     cityCenter.value = computeCenter(addresses.value);
 
@@ -227,6 +253,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       numero: selectedNumero.value,
       rep: selectedRep.value,
       ownerName: null,
+      favoritesOnly: false,
     };
 
     isDataLoaded.value = true;
@@ -240,6 +267,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     isLoading.value = false;
   }
 }
+
 
   async function querySearchEstimation() {
     if (!selectedCodeIdFantoir.value) return;
@@ -274,6 +302,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
     );
     isDataLoaded.value = true;
   }
+
+  function toggleFavoritesFilter() {
+  favoritesOnly.value = !favoritesOnly.value;
+  querySearchAddress();
+}
 
   function updateAddress(property: IAddressDetail) {
     const index = addresses.value.findIndex(
@@ -317,6 +350,7 @@ function clearSearchData() {
   lastSearchParams.value = null;
   noResultsFound.value = false;
   showCustomPropertyDialog.value = false;
+  favoritesOnly.value = false;
 }
 
   async function createCustomProperty(
@@ -376,6 +410,8 @@ function clearSearchData() {
     markers,
     filterMode,
     selectedOwnerName,
+    favoritesOnly,
+
     // Actions
     fetchDPE,
     querySearchAddress,
@@ -388,5 +424,6 @@ function clearSearchData() {
     createCustomProperty,
     openCustomPropertyDialog,
     closeCustomPropertyDialog,
+    toggleFavoritesFilter,
   };
 });

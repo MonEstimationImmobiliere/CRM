@@ -47,7 +47,14 @@
     @keyup.enter="dashboardStore.querySearchAddress()"
   />
 </div>
-
+<div class="favoriteFilterContainer">
+  <el-button
+    :type="dashboardStore.favoritesOnly ? 'warning' : 'default'"
+    @click="dashboardStore.toggleFavoritesFilter()"
+  >
+    Favoris
+  </el-button>
+</div>
 
       <!-- SWITCH LISTE / CARDS -->
       <ViewToggle v-model="viewType" :options="viewOptions" />
@@ -92,6 +99,8 @@
 </template>
 
 <script setup lang="ts">
+
+
 /* ------------------------------------
       IMPORTS
 ------------------------------------ */
@@ -114,6 +123,8 @@ import PropertyForm from './DashboardComponents/PropertyDialog.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
 import Button from '@/components/OwnReusableComponents/button/Button.vue';
+
+
 
 /* ------------------------------------
       STORES
@@ -398,6 +409,8 @@ const handleTableNumeroClick = (row: {
 const querySearchEstimation = async () => {
   await dashboardStore.querySearchEstimation();
 };
+
+
 
 /* ------------------------------------
       VIEW SWITCH
