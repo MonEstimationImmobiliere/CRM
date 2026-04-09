@@ -13,7 +13,6 @@ export const PropertyService = {
     );
     return data;
   },
-  
 
   async createProperty(property: Partial<IProperty>): Promise<IProperty> {
     const response = await apiService.post<IProperty>(
@@ -80,16 +79,13 @@ export const PropertyService = {
   },
 
   async getAddressesByOwner(ownerName: string): Promise<IAddressDetail[]> {
-  const response = await apiService.get<IAddressDetail[]>(
-    `/address-owner`,
-    {
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
       params: {
         owner: ownerName,
       },
-    }
-  );
-  return response.data;
-},
+    });
+    return response.data;
+  },
 
   async removeFromFavorites(propertyId: string): Promise<void> {
     await apiService.delete(

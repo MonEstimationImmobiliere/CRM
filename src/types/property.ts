@@ -70,6 +70,8 @@ export interface IProperty {
   rep: string | null;
   city: string | null;
   apart_number: string | null;
+  unit_id: string | null;
+  unit_label: string | null;
   /** Alias historique pour apart_number */
   numero_appartement?: string;
   /** Nom de la commune (utilisé par certaines vues) */
@@ -164,3 +166,40 @@ export type PropertyList = IProperty[];
  * Liste de favoris (alias)
  */
 export type FavoriteList = IProperty[];
+
+/**
+ * Interface pour les données du tableau dashboard (retour API recherche)
+ */
+export interface IPropertyTableDashboard {
+  id: string;
+  row_type: string;
+  row_id: string;
+  id_fantoir_long: string;
+  code_insee: string;
+  id_fantoir: string;
+  numero: string;
+  rep: string;
+  nom_voie: string;
+  nom_commune: string;
+  code_postal: string;
+  lat: string;
+  lon: string;
+  unit_id: string;
+  unit_label: string;
+  apart_number: string;
+  type_code: string;
+  type_bien: string;
+  label: string;
+  surface: number | null;
+  bedrooms: number | null;
+  area: number | null;
+  price: number | null;
+  favorite: string;
+  nombre_ventes: number;
+  date_derniere_vente: string | null;
+  dernier_prix_vente: string | null;
+  nombre_estimations: number;
+  dernier_prix_estime: string | null;
+  date_rappel: string | null;
+  date_maj: string | null;
+}

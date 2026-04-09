@@ -142,16 +142,86 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   async function querySearchAddress() {
-  try {
-    isLoading.value = true;
+    try {
+      isLoading.value = true;
 
-    const ownerName = selectedOwnerName.value.trim();
+      const ownerName = selectedOwnerName.value.trim();
 
-    // ===========================
-    // PRIORITE 1 : PROPRIETAIRE
-    // ===========================
-    if (ownerName) {
-      addresses.value = await PropertyService.getAddressesByOwner(ownerName);
+      // ===========================
+      // PRIORITE 1 : PROPRIETAIRE
+      // ===========================
+      if (ownerName) {
+        addresses.value = await PropertyService.getAddressesByOwner(ownerName);
+
+        cityCenter.value = computeCenter(addresses.value);
+
+        lastSearchParams.value = {
+          city: selectedCity.value,
+          street: selectedStreet.value,
+          codeInsee: selectedCodeInsee.value,
+          codeIdFantoir: selectedCodeIdFantoir.value || null,
+          numero: selectedNumero.value || null,
+          rep: selectedRep.value || null,
+          ownerName,
+        };
+
+        isDataLoaded.value = true;
+        noResultsFound.value = addresses.value.length === 0;
+        return;
+      }
+
+      // ===========================
+      // PRIORITE 2 : RECHERCHE CLASSIQUE
+      // ===========================
+      // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
+      if (
+        selectedCity.value &&
+        !selectedStreet.value &&
+        !selectedNumero.value &&
+        !selectedRep.value
+      ) {
+        addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
+          selectedCodeInsee.value
+        );
+
+        cityCenter.value = computeCenter(addresses.value);
+
+        lastSearchParams.value = {
+          city: selectedCity.value,
+          street: null,
+          codeInsee: selectedCodeInsee.value,
+          codeIdFantoir: null,
+          numero: null,
+          rep: null,
+          ownerName: null,
+        };
+
+        isDataLoaded.value = true;
+        noResultsFound.value = addresses.value.length === 0;
+
+        await fetchDPE();
+        return;
+      }
+
+      // CAS RUE / NUMÉRO — Impossible sans FANTOIR
+      if (!selectedCodeIdFantoir.value) {
+        addresses.value = [];
+        noResultsFound.value = false;
+        return;
+      }
+
+      if (selectedNumero.value) {
+        addresses.value = await PropertyService.getAddressesByNumero(
+          selectedCodeIdFantoir.value,
+          selectedNumero.value,
+          selectedRep.value || undefined
+        );
+      } else {
+        addresses.value = await PropertyService.getAddressesByFantoir(
+          selectedCodeIdFantoir.value,
+          'adress'
+        );
+      }
 
       cityCenter.value = computeCenter(addresses.value);
 
@@ -159,40 +229,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
         city: selectedCity.value,
         street: selectedStreet.value,
         codeInsee: selectedCodeInsee.value,
-        codeIdFantoir: selectedCodeIdFantoir.value || null,
-        numero: selectedNumero.value || null,
-        rep: selectedRep.value || null,
-        ownerName,
-      };
-
-      isDataLoaded.value = true;
-      noResultsFound.value = addresses.value.length === 0;
-      return;
-    }
-
-    // ===========================
-    // PRIORITE 2 : RECHERCHE CLASSIQUE
-    // ===========================
-    // CAS : UNIQUEMENT LA VILLE → ROUTE GROUPÉE
-    if (
-      selectedCity.value &&
-      !selectedStreet.value &&
-      !selectedNumero.value &&
-      !selectedRep.value
-    ) {
-      addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
-        selectedCodeInsee.value
-      );
-
-      cityCenter.value = computeCenter(addresses.value);
-
-      lastSearchParams.value = {
-        city: selectedCity.value,
-        street: null,
-        codeInsee: selectedCodeInsee.value,
-        codeIdFantoir: null,
-        numero: null,
-        rep: null,
+        codeIdFantoir: selectedCodeIdFantoir.value,
+        numero: selectedNumero.value,
+        rep: selectedRep.value,
         ownerName: null,
       };
 
@@ -200,52 +239,13 @@ export const useDashboardStore = defineStore('dashboard', () => {
       noResultsFound.value = addresses.value.length === 0;
 
       await fetchDPE();
-      return;
-    }
-
-    // CAS RUE / NUMÉRO — Impossible sans FANTOIR
-    if (!selectedCodeIdFantoir.value) {
+    } catch {
+      noResultsFound.value = true;
       addresses.value = [];
-      noResultsFound.value = false;
-      return;
+    } finally {
+      isLoading.value = false;
     }
-
-    if (selectedNumero.value) {
-      addresses.value = await PropertyService.getAddressesByNumero(
-        selectedCodeIdFantoir.value,
-        selectedNumero.value,
-        selectedRep.value || undefined
-      );
-    } else {
-      addresses.value = await PropertyService.getAddressesByFantoir(
-        selectedCodeIdFantoir.value,
-        'adress'
-      );
-    }
-
-    cityCenter.value = computeCenter(addresses.value);
-
-    lastSearchParams.value = {
-      city: selectedCity.value,
-      street: selectedStreet.value,
-      codeInsee: selectedCodeInsee.value,
-      codeIdFantoir: selectedCodeIdFantoir.value,
-      numero: selectedNumero.value,
-      rep: selectedRep.value,
-      ownerName: null,
-    };
-
-    isDataLoaded.value = true;
-    noResultsFound.value = addresses.value.length === 0;
-
-    await fetchDPE();
-  } catch {
-    noResultsFound.value = true;
-    addresses.value = [];
-  } finally {
-    isLoading.value = false;
   }
-}
 
   async function querySearchEstimation() {
     if (!selectedCodeIdFantoir.value) return;
@@ -302,21 +302,21 @@ export const useDashboardStore = defineStore('dashboard', () => {
     selectedCodeIdFantoir.value = codeIdFantoir;
   }
 
-function clearSearchData() {
-  selectedCity.value = null;
-  selectedStreet.value = null;
-  selectedCodeInsee.value = '';
-  selectedCodeIdFantoir.value = '';
-  selectedNumero.value = '';
-  selectedRep.value = '';
-  selectedNumeroFull.value = null;
-  selectedOwnerName.value = '';
-  addresses.value = [];
-  isDataLoaded.value = false;
-  lastSearchParams.value = null;
-  noResultsFound.value = false;
-  showCustomPropertyDialog.value = false;
-}
+  function clearSearchData() {
+    selectedCity.value = null;
+    selectedStreet.value = null;
+    selectedCodeInsee.value = '';
+    selectedCodeIdFantoir.value = '';
+    selectedNumero.value = '';
+    selectedRep.value = '';
+    selectedNumeroFull.value = null;
+    selectedOwnerName.value = '';
+    addresses.value = [];
+    isDataLoaded.value = false;
+    lastSearchParams.value = null;
+    noResultsFound.value = false;
+    showCustomPropertyDialog.value = false;
+  }
 
   async function createCustomProperty(
     propertyData: Partial<IAddressDetail> & {

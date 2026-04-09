@@ -38,16 +38,15 @@
         </Button>
       </div> -->
 
-<!-- NOUVEAU CHAMP RECHERCHE PROPRIETAIRE -->
-<div class="ownerSearchContainer">
-  <el-input
-    v-model="selectedOwnerName"
-    clearable
-    placeholder="Nom du propriétaire"
-    @keyup.enter="dashboardStore.querySearchAddress()"
-  />
-</div>
-
+      <!-- NOUVEAU CHAMP RECHERCHE PROPRIETAIRE -->
+      <div class="ownerSearchContainer">
+        <el-input
+          v-model="selectedOwnerName"
+          clearable
+          placeholder="Nom du propriétaire"
+          @keyup.enter="dashboardStore.querySearchAddress()"
+        />
+      </div>
 
       <!-- SWITCH LISTE / CARDS -->
       <ViewToggle v-model="viewType" :options="viewOptions" />
@@ -96,7 +95,7 @@
       IMPORTS
 ------------------------------------ */
 import { computed, onMounted, watch } from 'vue';
-import { DataBoard, Grid, Location } from '@element-plus/icons-vue';
+import { DataBoard, Location } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
 
 // Stores

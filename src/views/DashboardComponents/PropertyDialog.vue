@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    size="40%"
+    size="50%"
     :style="{
       borderRadius: '10px',
       height: '98%',
@@ -93,8 +93,12 @@
                   size="large"
                 >
                   <el-radio-button label="Maison">Maison</el-radio-button>
-                  <el-radio-button label="Appartement">Appartement</el-radio-button>
-                  <el-radio-button label="Appartement">Immeuble</el-radio-button>
+                  <el-radio-button label="Appartement"
+                    >Appartement</el-radio-button
+                  >
+                  <el-radio-button label="Appartement"
+                    >Immeuble</el-radio-button
+                  >
                 </el-radio-group>
               </el-form-item>
 
