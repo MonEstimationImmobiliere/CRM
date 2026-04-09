@@ -1,7 +1,7 @@
 /**
  * Types de propriétés disponibles
  */
-export type PropertyType = 'maison' | 'appartement' | null;
+export type PropertyType = 'maison' | 'appartement' | 'immeuble' | 'terrain' | null;
 
 /**
  * Types de chauffage
@@ -74,7 +74,9 @@ export interface IProperty {
   numero_appartement?: string;
   /** Nom de la commune (utilisé par certaines vues) */
   nom_commune?: string;
+
   property_type: PropertyType;
+
   surface: number;
   area: number | null;
   floor_number: number | null;
@@ -135,6 +137,26 @@ export interface IProperty {
   rented: boolean;
   /** Indique si le bien est créé manuellement */
   is_custom?: boolean;
+
+  /** Liaison vers une unit */
+  unit_id?: number | null;
+  unit_label?: string;
+  row_type?: 'address' | 'unit' | string;
+
+  /** Champs utiles pour le tableau principal */
+  type_bien?: string | null;
+  type_code?: string | null;
+  label?: string | null;
+  date_maj?: string | null;
+
+  nombre_ventes?: number | null;
+  date_derniere_vente?: string | null;
+  dernier_prix_vente?: number | null;
+  nombre_estimations?: number | null;
+  dernier_prix_estime?: number | null;
+
+  lat?: number | null;
+  lon?: number | null;
 }
 
 /**

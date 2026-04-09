@@ -20,7 +20,7 @@
     >
       <el-table-column label="Ville" prop="city" sortable min-width="100">
         <template #default="{ row }">
-          {{ row.nom_commune }} {{ row.codePostal }}
+          {{ row.nom_commune }} {{ row.code_postal }}
         </template>
       </el-table-column>
 
@@ -47,27 +47,45 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Type" prop="type_bien" sortable min-width="80">
-        <template #default="{ row }">
-          <!--  {{ row.type_bien }} {{ row.apart_number || '' }}-->
+      <el-table-column label="Type" prop="property_type" sortable min-width="140">
+  <template #default="{ row }">
+    <el-icon class="icon-maison" v-if="getDisplayType(row) === 'Maison'">
+      <House />
+    </el-icon>
 
-          <el-icon class="icon-maison" v-if="row.type_bien === 'Maison'"
-            ><House
-          /></el-icon>
-          <el-icon
-            class="icon-appartement"
-            v-else-if="row.type_bien === 'Appartement'"
-            ><OfficeBuilding
-          /></el-icon>
-          <el-icon
-            class="icon-immeuble"
-            v-else-if="row.type_bien === 'Immeuble'"
-            ><OfficeBuilding
-          /></el-icon>
-          <el-icon class="icon-inconnu" v-else><QuestionFilled /></el-icon>
-          <span v-if="row.apart_number">/{{ row.apart_number }}</span>
-        </template>
-      </el-table-column>
+    <el-icon
+      class="icon-appartement"
+      v-else-if="getDisplayType(row) === 'Appartement'"
+    >
+      <OfficeBuilding />
+    </el-icon>
+
+    <el-icon
+      class="icon-immeuble"
+      v-else-if="getDisplayType(row) === 'Immeuble'"
+    >
+      <OfficeBuilding />
+    </el-icon>
+
+    <el-icon
+      class="icon-commerce"
+      v-else-if="
+        getDisplayType(row) === 'Commerce' ||
+        getDisplayType(row) === 'Local commercial'
+      "
+    >
+      <OfficeBuilding />
+    </el-icon>
+
+    <el-icon class="icon-inconnu" v-else>
+      <QuestionFilled />
+    </el-icon>
+
+    <span style="margin-left: 6px">{{ getDisplayType(row) }}</span>
+    <span v-if="row.unit_label"> / {{ row.unit_label }}</span>
+    <span v-else-if="row.apart_number"> / {{ row.apart_number }}</span>
+  </template>
+</el-table-column>
 
       <el-table-column
         label="Surface"
@@ -167,18 +185,12 @@
           <div class="action-buttons">
             <el-button
               @click.stop="toggleFavorite(row)"
-              :type="
-                row.favorite === 'true' || row.favorite === true
-                  ? 'danger'
-                  : 'default'
-              "
+              :type="isFavorite(row.favorite) ? 'danger' : 'default'"
               size="small"
               circle
             >
               <el-icon>
-                <StarFilled
-                  v-if="row.favorite === 'true' || row.favorite === true"
-                />
+                <StarFilled v-if="isFavorite(row.favorite)" />
                 <Star v-else />
               </el-icon>
             </el-button>
@@ -227,6 +239,10 @@ const handleStreetClick = (row: any) => {
 const handleNumeroClick = (row: any) => {
   emit('select-numero', row);
 };
+
+function isFavorite(value: unknown): boolean {
+  return value === true || value === 'true' || value === 1 || value === '1';
+}
 
 function getMonthsDiff(dateRappel: string | null): number {
   if (!dateRappel) return -1;
@@ -292,7 +308,7 @@ const filteredAddresses = computed(() => {
         return address.id !== null && reminderIds.has(address.id);
       }
       case 'favoris':
-        return address.favorite === 'true' || address.favorite === true;
+        return isFavorite(address.favorite);
       default:
         return true;
     }
@@ -354,7 +370,7 @@ const toggleFavorite = async (row: any) => {
     ElMessage.success(newState ? 'Ajouté aux favoris' : 'Retiré des favoris');
 
     //row.favorite = newState;
-    row.favorite = newState ? 'true' : 'false';
+    row.favorite = newState ? 1 : 0;
 
     dashboardStore.updateAddress({
       ...row,
@@ -365,6 +381,36 @@ const toggleFavorite = async (row: any) => {
     ElMessage.error('Impossible de modifier le favori');
   }
 };
+
+function getDisplayType(row: any): string {
+  const type = (row.property_type || row.type_code || '').toString().toLowerCase();
+
+  switch (type) {
+    case 'maison':
+      return 'Maison';
+    case 'immeuble':
+      return 'Immeuble';
+    case 'terrain':
+      return 'Terrain';
+    case 'commerce':
+      return 'Commerce';
+    case 'appartement':
+      return 'Appartement';
+    case 'local_commercial':
+      return 'Local commercial';
+    case 'parking':
+      return 'Parking';
+    case 'cave':
+      return 'Cave';
+    case 'inconnu':
+    case 'unknown':
+    case 'address':
+    case '':
+      return 'Inconnu';
+    default:
+      return type;
+  }
+}
 </script>
 
 <style scoped>
@@ -496,5 +542,10 @@ const toggleFavorite = async (row: any) => {
     flex-direction: column;
     gap: 4px;
   }
+}
+
+.icon-commerce {
+  font-size: 24px;
+  color: #7c3aed;
 }
 </style>

@@ -210,18 +210,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
       return;
     }
 
-    if (selectedNumero.value) {
-      addresses.value = await PropertyService.getAddressesByNumero(
-        selectedCodeIdFantoir.value,
-        selectedNumero.value,
-        selectedRep.value || undefined
-      );
-    } else {
-      addresses.value = await PropertyService.getAddressesByFantoir(
-        selectedCodeIdFantoir.value,
-        'adress'
-      );
-    }
+    addresses.value = await PropertyService.getAddressesByFantoir(
+  selectedCodeIdFantoir.value,
+  'address',
+  selectedNumero.value || undefined,
+  selectedRep.value || undefined
+);
 
     cityCenter.value = computeCenter(addresses.value);
 
@@ -251,7 +245,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (!selectedCodeIdFantoir.value) return;
     addresses.value = await PropertyService.getAddressesByFantoir(
       selectedCodeIdFantoir.value,
-      'estimation'
+      'estimation',
+    selectedNumero.value || undefined,
+    selectedRep.value || undefined
+
     );
     isDataLoaded.value = true;
   }
@@ -260,7 +257,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (!selectedCodeIdFantoir.value) return;
     addresses.value = await PropertyService.getAddressesByFantoir(
       selectedCodeIdFantoir.value,
-      'rappel'
+      'rappel',
+    selectedNumero.value || undefined,
+    selectedRep.value || undefined
     );
     isDataLoaded.value = true;
   }
@@ -269,7 +268,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
     if (!selectedCodeIdFantoir.value) return;
     addresses.value = await PropertyService.getAddressesByFantoir(
       selectedCodeIdFantoir.value,
-      'maj'
+      'maj',
+    selectedNumero.value || undefined,
+    selectedRep.value || undefined
     );
     isDataLoaded.value = true;
   }

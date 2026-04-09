@@ -13,15 +13,20 @@ export const PropertyService = {
     );
     return data;
   },
+
+  async getProperty(id: number) {
+  const response = await apiService.get(`/property/${id}`);
+  return response.data;
+},
   
 
-  async createProperty(property: Partial<IProperty>): Promise<IProperty> {
-    const response = await apiService.post<IProperty>(
-      `/property/create`,
-      property
-    );
-    return response.data;
-  },
+ async createProperty(property: Partial<IProperty>): Promise<IProperty> {
+  const response = await apiService.post<{ property: IProperty }>(
+    `/property/create`,
+    property
+  );
+  return response.data.property;
+},
 
   async updateProperty(
     propertyId: number,
@@ -56,15 +61,24 @@ export const PropertyService = {
     return response.data;
   },
 
-  async getAddressesByFantoir(
-    idFantoir: string,
-    type: string
-  ): Promise<AddressDetailList> {
-    const response = await apiService.get<AddressDetailList>(
-      `/addresses/${encodeURIComponent(idFantoir)}?type=${encodeURIComponent(type)}`
-    );
-    return response.data;
-  },
+async getAddressesByFantoir(
+  idFantoir: string,
+  type: string,
+  numero?: string,
+  rep?: string
+): Promise<AddressDetailList> {
+  const params = new URLSearchParams({
+    type,
+  });
+
+  if (numero) params.append('numero', numero);
+  if (rep) params.append('rep', rep);
+
+  const response = await apiService.get<AddressDetailList>(
+    `/addresses/${encodeURIComponent(idFantoir)}?${params.toString()}`
+  );
+  return response.data;
+},
 
   async getAddressesByNumero(
     idFantoir: string,

@@ -86,18 +86,39 @@
             <div class="card-content">
               <el-form-item label="Type de bien">
                 <el-radio-group
-                  :model-value="store.selectedProperty?.property_type ?? ''"
+                  :model-value="store.selectedProperty?.property_type ?? 'inconnu'"
                   @update:model-value="
                     store.selectedProperty!.property_type = $event as any
                   "
                   size="large"
                 >
-                  <el-radio-button label="Maison">Maison</el-radio-button>
-                  <el-radio-button label="Appartement">Appartement</el-radio-button>
-                  <el-radio-button label="Appartement">Immeuble</el-radio-button>
+                  <!-- CAS ADDRESS (property racine) -->
+                  <template v-if="store.selectedProperty?.row_type === 'address'">
+                    <el-radio-button label="inconnu">Inconnu</el-radio-button>
+                    <el-radio-button label="maison">Maison</el-radio-button>
+                    <el-radio-button label="immeuble">Immeuble</el-radio-button>
+                    <el-radio-button label="terrain">Terrain</el-radio-button>
+                    <el-radio-button label="commerce">Commerce</el-radio-button>
+                  </template>
+
+                  <!-- CAS UNIT -->
+                  <template v-else-if="store.selectedProperty?.row_type === 'unit'">
+                    <el-radio-button label="appartement">Appartement</el-radio-button>
+                    <el-radio-button label="local_commercial">Local commercial</el-radio-button>
+                    <el-radio-button label="parking">Parking</el-radio-button>
+                    <el-radio-button label="cave">Cave</el-radio-button>
+                  </template>
                 </el-radio-group>
               </el-form-item>
 
+ <el-button
+  v-if="store.selectedProperty?.row_type === 'address'"
+  type="primary"
+  size="small"
+  @click="openUnitDialog"
+>
+  Créer une unit
+</el-button>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <el-form-item label="Année de construction">
                   <el-input-number
@@ -545,7 +566,8 @@
         </el-button>
 
         <el-button type="primary" @click="saveProperty" size="large">
-          {{ isEditing ? 'Sauvegarder' : 'Créer' }}
+          <!-- {{ isEditing ? 'Sauvegarder' : 'Créer' }} -->
+            Sauvegarder
         </el-button>
       </div>
     </el-form>
@@ -557,6 +579,11 @@
     :property-id="store.selectedProperty?.id ?? 0"
     :property-address="propertyAddress"
   />
+
+  <UnitDialog
+  v-model="showUnitDialog"
+  @save="createUnit"
+/>
 </template>
 
 <script setup lang="ts">
@@ -585,6 +612,87 @@ import { useDashboardStore } from '../../stores/dashboard';
 import PropertyReminderForm from './PropertyReminderForm.vue';
 import PropertyReminderList from './PropertyReminderList.vue';
 
+import { UnitService } from '@/api';
+import UnitDialog from './UnitDialog.vue';
+const showUnitDialog = ref(false);
+
+const openUnitDialog = () => {
+  showUnitDialog.value = true;
+};
+
+const createUnit = async (payload: {
+  unit_type: string;
+  unit_label: string;
+}) => {
+  if (!store.selectedProperty) return;
+
+  try {
+    let rootProperty = store.selectedProperty;
+
+    // Si la property racine n'existe pas encore, on la crée d'abord
+    if (!rootProperty.id || Number(rootProperty.id) === 0) {
+      const propertyToCreate = {
+        ...rootProperty,
+        city: rootProperty.city || rootProperty.nom_commune || '',
+      };
+
+      const createdRoot = await store.saveProperty(propertyToCreate);
+      rootProperty = createdRoot as any;
+      await store.selectProperty(createdRoot as any);
+    }
+
+    // Création de la unit rattachée à l'adresse
+    const unitResponse = await UnitService.save({
+      id_fantoir_long: rootProperty.id_fantoir_long,
+      id_fantoir: rootProperty.id_fantoir,
+      code_insee: rootProperty.code_insee,
+      code_postal: rootProperty.code_postal,
+      nom_voie: rootProperty.nom_voie,
+      numero: rootProperty.numero,
+      rep: rootProperty.rep,
+      city: rootProperty.city || rootProperty.nom_commune || '',
+      unit_type: payload.unit_type,
+      unit_label: payload.unit_label,
+    });
+
+    const createdUnit = (unitResponse as any)?.unit ?? unitResponse;
+
+    // Création automatique de la property liée à la unit
+    await store.saveProperty({
+      id: 0,
+      row_type: 'unit',
+      unit_id: createdUnit.id,
+      id_fantoir_long: createdUnit.id_fantoir_long || rootProperty.id_fantoir_long,
+      id_fantoir: createdUnit.id_fantoir || rootProperty.id_fantoir,
+      code_insee: createdUnit.code_insee || rootProperty.code_insee,
+      code_postal: createdUnit.code_postal || rootProperty.code_postal,
+      nom_voie: createdUnit.nom_voie || rootProperty.nom_voie,
+      numero: createdUnit.numero || rootProperty.numero,
+      rep: createdUnit.rep || rootProperty.rep,
+      city:
+        createdUnit.city || rootProperty.city || rootProperty.nom_commune || '',
+      nom_commune:
+        createdUnit.city || rootProperty.nom_commune || rootProperty.city || '',
+      property_type: payload.unit_type,
+      favorite: 0,
+    } as any);
+
+    ElMessage.success('Unité créée avec sa property');
+
+    if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+      await dashboardStore.querySearchAddress();
+    }
+  } catch (error: any) {
+    console.error('Erreur création unit:', error);
+    console.error('Réponse backend unit:', error?.response?.data);
+
+    ElMessage.error(
+      error?.response?.data?.message ||
+        error?.message ||
+        "Impossible de créer l'unité"
+    );
+  }
+};
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
 const { selectedCity } = useDashboardStore();
@@ -594,7 +702,7 @@ const visible = computed<boolean>({
   set: (value: boolean) => store.setDialogVisible(value),
 });
 
-const isEditing = computed<boolean>(() => !!store.selectedProperty?.id);
+const isEditing = computed<boolean>(() => Number(store.selectedProperty?.id ?? 0) > 0);
 
 const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return 'Nouvelle propriété';
@@ -602,9 +710,10 @@ const dialogTitle = computed<string>(() => {
   const codePostal = store.selectedProperty.code_postal || '';
   // Récupérer la ville depuis le store dashboard (input sélectionné) - city contient le nom de la ville
   const city =
-    (dashboardStore.selectedCity as any)?.city ||
-    store.selectedProperty.city ||
-    '';
+  (dashboardStore.selectedCity as any)?.city ||
+  store.selectedProperty.nom_commune ||
+  store.selectedProperty.city ||
+  '';
   const numero = store.selectedProperty.numero || '';
   const rep = store.selectedProperty.rep
     ? ` ${store.selectedProperty.rep}`
@@ -628,26 +737,44 @@ const closeDialog = (): void => {
 };
 
 const saveProperty = async (): Promise<void> => {
-  if (store.selectedProperty) {
-    const filteredProperty = store.selectedProperty as any;
-    delete filteredProperty.comment_rappel;
-    try {
-      if (isEditing.value) {
-        await store.saveProperty(filteredProperty);
-      } else {
-        filteredProperty.city = selectedCity?.value || '';
-        await store.saveProperty(filteredProperty);
-      }
+  if (!store.selectedProperty) return;
 
-      // Refresh the dashboard data after successful save
-      if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
-        await dashboardStore.querySearchAddress();
-      }
+  const filteredProperty = { ...store.selectedProperty } as any;
+  delete filteredProperty.comment_rappel;
 
-      closeDialog();
-    } catch (error) {
-      console.error('Error saving property:', error);
+  try {
+    console.log('saveProperty payload avant envoi', filteredProperty);
+    console.log('selectedProperty avant save', filteredProperty);
+console.log('id avant save', filteredProperty.id);
+console.log('isEditing', isEditing.value);
+
+    if (isEditing.value) {
+      const saved = await store.saveProperty(filteredProperty);
+      console.log('property mise à jour', saved);
+    } else {
+      filteredProperty.city =
+        filteredProperty.city ||
+        filteredProperty.nom_commune ||
+        selectedCity?.value ||
+        '';
+
+      const saved = await store.saveProperty(filteredProperty);
+      console.log('property créée', saved);
     }
+
+    if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+      await dashboardStore.querySearchAddress();
+    }
+
+    ElMessage.success('Propriété sauvegardée');
+    closeDialog();
+  } catch (error: any) {
+    console.error('Error saving property:', error);
+    ElMessage.error(
+      error?.response?.data?.message ||
+        error?.message ||
+        'Erreur lors de la sauvegarde'
+    );
   }
 };
 
@@ -676,6 +803,14 @@ const toggleFavorite = async () => {
     const newFavoriteState = await store.toggleFavorite(
       store.selectedProperty.id_fantoir_long
     );
+
+    (store.selectedProperty as any).favorite = newFavoriteState ? 1 : 0;
+
+    dashboardStore.updateAddress({
+      ...(store.selectedProperty as any),
+      favorite: newFavoriteState ? 1 : 0,
+    });
+
     ElMessage({
       message: newFavoriteState
         ? 'Propriété ajoutée aux favoris'

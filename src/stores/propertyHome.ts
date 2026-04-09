@@ -6,11 +6,16 @@ import type { IProperty } from '@/types/property';
 const defaultPropertyData: Partial<IProperty> = {
   id_fantoir_long: '',
   id_fantoir: '',
+  code_insee: '',
   code_postal: '',
   city: '',
+  nom_commune: '',
   nom_voie: '',
   numero: '',
   rep: '',
+  unit_id: null as any,
+  unit_label: '',
+  row_type: '',
   owner: '',
   email: '',
   phone: '',
@@ -63,47 +68,54 @@ export const usePropertyStore = defineStore('property', () => {
   const isDialogVisible = ref<boolean>(false);
   const favoritesViewType = ref<'table' | 'card'>('table');
 
-  function addProperty(property: Partial<IProperty>) {
-    const newProperty = {
-      ...property,
-      id: Date.now(),
-    };
-    properties.value.push(newProperty);
+function addProperty(property: Partial<IProperty>) {
+  properties.value.push({
+    ...property,
+    favorite: Boolean(property.favorite),
+  });
+}
+
+const saveProperty = async (property: Partial<IProperty>) => {
+  let saved;
+  const propertyId = Number(property.id ?? 0);
+
+  console.log('STORE saveProperty property.id =', property.id);
+  console.log('STORE saveProperty propertyId =', propertyId);
+
+  if (propertyId > 0) {
+    saved = await PropertyService.updateProperty(propertyId, property);
+    updatePropertyInStore(saved);
+  } else {
+    saved = await PropertyService.createProperty(property);
+    addProperty(saved);
   }
 
-  const saveProperty = async (property: Partial<IProperty>) => {
-    let saved;
+  return saved;
+};
 
-    if (property.id) {
-      saved = await PropertyService.updateProperty(property.id, property);
-      updatePropertyInStore(saved);
-    } else {
-      const created = await PropertyService.createProperty(property);
-      saved = { ...property, id: created.id };
-      addProperty(saved);
-    }
-
-    return saved;
-  };
-
-  // Fonction pour mettre à jour une propriété dans le store après sauvegarde
   function updatePropertyInStore(updatedProperty: Partial<IProperty>) {
-    // Chercher par id_fantoir_long d'abord (pour les favoris), puis par id
     const index = properties.value.findIndex(
       p =>
-        p.id_fantoir_long === updatedProperty.id_fantoir_long ||
-        p.id === updatedProperty.id
+        p.id === updatedProperty.id ||
+        (
+          p.unit_id &&
+          updatedProperty.unit_id &&
+          p.unit_id === updatedProperty.unit_id
+        ) ||
+        (
+          !p.unit_id &&
+          !updatedProperty.unit_id &&
+          p.id_fantoir_long === updatedProperty.id_fantoir_long
+        )
     );
 
     if (index !== -1) {
-      // Préserver la structure existante et mettre à jour avec les nouvelles données
       properties.value[index] = {
         ...properties.value[index],
         ...updatedProperty,
-        favorite: Boolean(updatedProperty.favorite), // Normaliser le booléen
+        favorite: Boolean(updatedProperty.favorite),
       };
     } else {
-      // Si la propriété n'est pas trouvée, l'ajouter au store
       const normalizedProperty = {
         ...updatedProperty,
         favorite: Boolean(updatedProperty.favorite),
@@ -119,7 +131,17 @@ export const usePropertyStore = defineStore('property', () => {
   function updateProperty(property: Partial<IProperty>) {
     const index = properties.value.findIndex(
       p =>
-        p.id_fantoir_long === property.id_fantoir_long || p.id === property.id
+        p.id === property.id ||
+        (
+          p.unit_id &&
+          property.unit_id &&
+          p.unit_id === property.unit_id
+        ) ||
+        (
+          !p.unit_id &&
+          !property.unit_id &&
+          p.id_fantoir_long === property.id_fantoir_long
+        )
     );
 
     if (index !== -1) {
@@ -131,36 +153,77 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  const selectProperty = async (
-    property: Partial<IProperty> | null | undefined
-  ) => {
-    if (property?.id_fantoir_long) {
-      try {
-        const data = await PropertyService.getPropertyById(
-          property.id_fantoir_long
-        );
-        const normalizedData = {
-          ...defaultPropertyData,
-          ...data,
-          favorite: Boolean(data.favorite),
-        };
-        selectedProperty.value = normalizedData;
-      } catch {
-        selectedProperty.value = {
-          ...defaultPropertyData,
-          ...(property || {}),
-        };
-      }
-    } else {
-      selectedProperty.value = { ...defaultPropertyData, ...(property || {}) };
+const selectProperty = async (
+  property: Partial<IProperty> | null | undefined
+) => {
+  if (!property) {
+    selectedProperty.value = { ...defaultPropertyData };
+    return;
+  }
+
+  try {
+    // Cas 1 : la property existe déjà en base
+    if (property.id && Number(property.id) > 0) {
+      const data = await PropertyService.getProperty(Number(property.id));
+
+      selectedProperty.value = {
+        ...defaultPropertyData,
+        ...property,
+        ...data,
+        city: (data as any).city || (data as any).nom_commune || '',
+        nom_commune: (data as any).nom_commune || (data as any).city || '',
+        favorite:
+          Number((data as any).favorite ?? (property as any).favorite ?? 0) ===
+          1,
+        unit_id: (data as any).unit_id ?? (property as any).unit_id ?? null,
+        row_type:
+          (property as any).row_type ?? (data as any).row_type ?? 'address',
+        property_type:
+          (data as any).property_type ??
+          (property as any).property_type ??
+          'inconnu',
+      };
+      return;
     }
-  };
+
+    // Cas 2 : pas encore de property en base
+    selectedProperty.value = {
+      ...defaultPropertyData,
+      ...property,
+      city: (property as any).city || (property as any).nom_commune || '',
+      nom_commune:
+        (property as any).nom_commune || (property as any).city || '',
+      favorite: Number((property as any).favorite ?? 0) === 1,
+      unit_id: (property as any).unit_id ?? null,
+      row_type: (property as any).row_type ?? 'address',
+      property_type: (property as any).property_type ?? 'inconnu',
+    };
+  } catch (error: any) {
+    console.error('Erreur selectProperty:', error);
+
+    selectedProperty.value = {
+      ...defaultPropertyData,
+      ...property,
+      id: 0,
+      city: (property as any).city || (property as any).nom_commune || '',
+      nom_commune:
+        (property as any).nom_commune || (property as any).city || '',
+      favorite: Number((property as any).favorite ?? 0) === 1,
+      unit_id: (property as any).unit_id ?? null,
+      row_type: (property as any).row_type ?? 'address',
+      property_type: (property as any).property_type ?? 'inconnu',
+    };
+  }
+};
 
   function loadPropertyBaseData(property: any) {
     selectedProperty.value = {
       ...defaultPropertyData,
       ...property,
       id_fantoir_long: property.id_fantoir_long,
+      city: property.city || property.nom_commune || '',
+      nom_commune: property.nom_commune || property.city || '',
+      unit_id: property.unit_id ?? null,
       favorite: Boolean(property.favorite),
     };
   }
@@ -169,7 +232,6 @@ export const usePropertyStore = defineStore('property', () => {
     isDialogVisible.value = visible;
   }
 
-  // Gestion des favoris
   const favorites = computed(() =>
     properties.value.filter(property => property.favorite === true)
   );
@@ -197,8 +259,8 @@ export const usePropertyStore = defineStore('property', () => {
         id_fantoir_long,
         id_fantoir: sourceRow?.id_fantoir || '',
         code_postal: sourceRow?.code_postal || '',
-        city: sourceRow?.city || '',
-        nom_commune: sourceRow?.nom_commune || '',
+        city: sourceRow?.city || sourceRow?.nom_commune || '',
+        nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
         nom_voie: sourceRow?.nom_voie || '',
         numero: sourceRow?.numero || '',
         rep: sourceRow?.rep || '',
@@ -232,24 +294,27 @@ export const usePropertyStore = defineStore('property', () => {
   const loadFavoritesProperties = async () => {
     const favoriteProperties = await PropertyService.getFavorites();
 
-    // Reset existing favorites
     properties.value.forEach(property => {
       if (property.favorite) {
         property.favorite = false;
       }
     });
 
-    // Process favorites from API
     favoriteProperties.forEach(property => {
       const normalizedProperty = {
         ...defaultPropertyData,
         ...property,
-        numero: String(property.numero ?? ''),
+        numero: String((property as any).numero ?? ''),
+        city: (property as any).city || (property as any).nom_commune || '',
+        nom_commune:
+          (property as any).nom_commune || (property as any).city || '',
         favorite: true,
       };
 
       const existingIndex = properties.value.findIndex(
-        p => p.id_fantoir_long === property.id_fantoir_long
+        p =>
+          p.id === (property as any).id ||
+          p.id_fantoir_long === (property as any).id_fantoir_long
       );
 
       if (existingIndex !== -1) {
