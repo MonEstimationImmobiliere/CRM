@@ -550,21 +550,23 @@ watch(
     { deep: true }
   );
 
-  watch(
-    () => dashboard.selectedStreet,
-    () => {
-      popups.close();
-      recenterMap();
-    }
-  );
+watch(
+  () => dashboard.selectedStreet,
+  newStreet => {
+    popups.close();
+    if (!newStreet) return;
+    recenterMap();
+  }
+);
 
-  watch(
-    () => dashboard.selectedNumeroFull,
-    () => {
-      popups.close();
-      recenterMap();
-    }
-  );
+watch(
+  () => dashboard.selectedNumeroFull,
+  newNumero => {
+    popups.close();
+    if (!newNumero) return;
+    recenterMap();
+  }
+);
 
 watch(
   () => dashboard.selectedCity,
