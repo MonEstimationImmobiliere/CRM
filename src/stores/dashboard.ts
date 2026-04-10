@@ -99,10 +99,25 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   // --- Helpers ---
 
+  function formatDateLocal(date: Date): string {
+  const year = date.getFullYear();
+  const month = String(date.getMonth() + 1).padStart(2, '0');
+  const day = String(date.getDate()).padStart(2, '0');
+  return `${year}-${month}-${day}`;
+}
+
 function setMainMode(
   mode: 'prospection' | 'favorites' | 'estimations' | 'rappels' | 'maj' | 'dpe' | 'dvf'
 ) {
+
+  if (activeMainMode.value === mode) return;
+
   activeMainMode.value = mode;
+
+    if (mode === 'dpe') {
+    viewType.value = 'map';
+  }
+
   querySearchAddress();
 }
 
@@ -119,75 +134,86 @@ function setMainMode(
 
   // --- Actions ---
 
-  async function fetchDPE() {
-    try {
-      const codeInsee =
-        selectedCodeInsee.value ||
-        selectedCity.value?.codeInsee ||
-        selectedCity.value?.code_insee;
+async function fetchDPE() {
+  try {
+    const codeInsee =
+      selectedCodeInsee.value ||
+      selectedCity.value?.codeInsee ||
+      selectedCity.value?.code_insee;
 
-      if (!codeInsee) {
-        dpePoints.value = [];
-        return;
-      }
+    if (!codeInsee) {
+      dpePoints.value = [];
+      return;
+    }
 
-      const now = new Date();
-const to = now.toISOString().slice(0, 10);
+    const fromDate = new Date();
 
-const fromDate = new Date();
+    switch (dpeFilterRange.value) {
+      case '1m':
+        fromDate.setMonth(fromDate.getMonth() - 1);
+        break;
+      case '3m':
+        fromDate.setMonth(fromDate.getMonth() - 3);
+        break;
+      case '6m':
+        fromDate.setMonth(fromDate.getMonth() - 6);
+        break;
+      case '1y':
+        fromDate.setFullYear(fromDate.getFullYear() - 1);
+        break;
+    }
 
-switch (dpeFilterRange.value) {
-  case '1m':
-    fromDate.setMonth(fromDate.getMonth() - 1);
-    break;
-  case '3m':
-    fromDate.setMonth(fromDate.getMonth() - 3);
-    break;
-  case '6m':
-    fromDate.setMonth(fromDate.getMonth() - 6);
-    break;
-  case '1y':
-    fromDate.setFullYear(fromDate.getFullYear() - 1);
-    break;
+    const from = formatDateLocal(fromDate);
+
+ const url =
+  `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
+  `?code_insee_ban_eq=${encodeURIComponent(codeInsee)}` +
+  `&date_etablissement_dpe_gte=${from}` +
+  `&sort=-date_etablissement_dpe` +
+  `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
+  `&size=5000`;
+
+    const response = await fetch(url);
+    const json = await response.json();
+
+    console.log('DPE FROM =', from);
+    console.log('DPE COUNT =', json.results?.length ?? 0);
+
+    if (!json.results) {
+      dpePoints.value = [];
+      return;
+    }
+
+    dpePoints.value = json.results
+      .filter((r: IDpeResult) => r._geopoint)
+      .map((r: IDpeResult) => {
+        const [lat, lon] = r._geopoint
+          .split(',')
+          .map((v: string) => Number(v.trim()));
+
+        return {
+          lat,
+          lon,
+          adresse: r.adresse_ban,
+          etiquette: r.etiquette_dpe,
+          type: r.type_batiment,
+          date: r.date_etablissement_dpe,
+        };
+      })
+      .filter((p: DpePoint) => !Number.isNaN(p.lat) && !Number.isNaN(p.lon));
+
+    console.log('DPE commune', codeInsee, 'points =', dpePoints.value.length);
+  } catch (e) {
+    console.error('fetchDPE error', e);
+    dpePoints.value = [];
+  }
 }
 
-const from = fromDate.toISOString().slice(0, 10);
-
-      const url =
-        `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
-        `?code_departement_ban_eq=14` +
-        `&date_etablissement_dpe_gte=${from}` +
-        `&date_etablissement_dpe_lte=${to}` +
-        `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
-        `&size=5000`;
-
-      const response = await fetch(url);
-      const json = await response.json();
-
-      if (!json.results) {
-        dpePoints.value = [];
-        return;
-      }
-
-      dpePoints.value = json.results
-        .filter((r: IDpeResult) => r._geopoint)
-        .map((r: IDpeResult) => {
-          const [lat, lon] = r._geopoint.split(',').map(Number);
-          return {
-            lat,
-            lon,
-            adresse: r.adresse_ban,
-            etiquette: r.etiquette_dpe,
-            type: r.type_batiment,
-            date: r.date_etablissement_dpe,
-          };
-        });
-    } catch {
-      dpePoints.value = [];
-    }
-  }
-
 async function querySearchAddress() {
+  if (activeMainMode.value !== 'dpe') {
+  dpePoints.value = [];
+}
+
   try {
     isLoading.value = true;
 

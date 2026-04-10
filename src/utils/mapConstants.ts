@@ -1,5 +1,4 @@
 // filepath: src/utils/mapConstants.ts
-// Constantes partagées pour la carte MapLibre (MapView + SideBarMapView)
 
 /* ----------------------------------------
    MapTiler
@@ -12,7 +11,7 @@ export const MAP_STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?ke
 /* ----------------------------------------
    Defaults
 ---------------------------------------- */
-export const DEFAULT_CENTER: [number, number] = [2.35, 48.85]; // Paris
+export const DEFAULT_CENTER: [number, number] = [2.35, 48.85];
 export const DEFAULT_ZOOM = 13;
 
 /* ----------------------------------------
@@ -20,27 +19,33 @@ export const DEFAULT_ZOOM = 13;
 ---------------------------------------- */
 export type MapDisplayMode =
   | 'prospection'
-  | 'estimation'
-  | 'rappel'
-  | 'favoris'
-  | 'dpe';
+  | 'favorites'
+  | 'estimations'
+  | 'rappels'
+  | 'maj'
+  | 'dpe'
+  | 'dvf';
 
 export const MAP_MODES: { value: MapDisplayMode; label: string }[] = [
   { value: 'prospection', label: 'Prospection' },
-  { value: 'estimation', label: 'Estimations' },
-  { value: 'rappel', label: 'Rappels' },
-  { value: 'favoris', label: 'Favoris' },
+  { value: 'favorites', label: 'Favoris' },
+  { value: 'estimations', label: 'Estimations' },
+  { value: 'rappels', label: 'Rappels' },
+  { value: 'maj', label: 'MAJ' },
   { value: 'dpe', label: 'DPE' },
+  { value: 'dvf', label: 'DVF' },
 ];
 
 /* ----------------------------------------
-   Map marker colors (by mode)
+   Map marker colors
 ---------------------------------------- */
 export const COLORS: Record<MapDisplayMode | 'none', string> = {
   prospection: '#4287f5',
-  estimation: '#9333ea',
-  rappel: '#06b6d4',
-  favoris: '#f97316',
+  favorites: '#f97316',
+  estimations: '#9333ea',
+  rappels: '#06b6d4',
+  maj: '#8b5cf6',
   dpe: '#10b981',
+  dvf: '#ef4444',
   none: '#d1d5db',
 };

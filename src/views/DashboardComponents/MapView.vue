@@ -1,13 +1,5 @@
 <template>
   <section class="mapContainer">
-    <!-- TopBar Filters -->
-   <!-- <TopBarMapView
-      @mode-change="handleModeChange"
-      :addresses="addresses as any"
-      :active-mode="dashboard.filterMode"
-    />-->
-
-    <!-- Map -->
     <div class="map-wrapper">
       <div id="map" class="map"></div>
     </div>
@@ -20,7 +12,6 @@ import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
-import TopBarMapView from './TopBarMapView.vue';
 import { useMapPopups, type MapAddress } from '@/composables/useMapPopups';
 import {
   COLORS,
@@ -29,9 +20,6 @@ import {
   DEFAULT_ZOOM,
 } from '@/utils/mapConstants';
 
-/* -------------------------------------
-   PROPS & EMITS
-------------------------------------- */
 import type { IAddressDetail, IAddressGrouped } from '@/types/address';
 
 type Address = IAddressDetail | IAddressGrouped;
@@ -44,7 +32,10 @@ interface CityCenter {
 interface DpePoint {
   lat: number;
   lon: number;
-  [key: string]: any;
+  adresse: string;
+  etiquette: string;
+  type: string;
+  date: string;
 }
 
 const props = defineProps<{
@@ -60,11 +51,12 @@ const emit = defineEmits<{
 const dashboard = useDashboardStore();
 const remindersStore = useRemindersStore();
 
+let dpePopup: maplibregl.Popup | null = null;
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
+let lastRecenterCityKey = '';
 
-// Current display mode - synced with store
-const currentMode = computed(() => dashboard.filterMode || 'prospection');
+const currentMode = computed(() => dashboard.activeMainMode || 'prospection');
 
 // Popup composable
 const popups = useMapPopups({
@@ -84,16 +76,8 @@ const reminderPropertyIds = computed(() => {
 });
 
 /* -------------------------------------
-   SIDEBAR EVENT HANDLERS
+   COULEUR DES POINTS ADRESSES
 ------------------------------------- */
-function handleModeChange(mode: string) {
-  dashboard.filterMode = dashboard.filterMode === mode ? null : mode;
-  updatePointsWithColors();
-}
-
-/**
- * Détermine la couleur d'un point selon le mode et les données de l'adresse
- */
 function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
 
@@ -106,22 +90,32 @@ function getPointColor(address: Address, mode: string): string {
       return hasData ? COLORS.prospection : COLORS.none;
     }
 
-    case 'estimation':
+    case 'estimations':
       return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
         ? COLORS.estimation
         : COLORS.none;
 
-    case 'rappel': {
+    case 'rappels': {
       const hasReminder =
         addr.id !== null && reminderPropertyIds.value.has(addr.id);
       return hasReminder ? COLORS.rappel : COLORS.none;
     }
 
-    case 'favoris':
-      return addr.favorite === 'true' ? COLORS.favoris : COLORS.none;
+    case 'favorites':
+      return Number(addr.favorite) === 1 || addr.favorite === true
+        ? COLORS.favoris
+        : COLORS.none;
+
+    case 'maj':
+      return addr.date_maj ? '#8b5cf6' : COLORS.none;
 
     case 'dpe':
       return COLORS.none;
+
+    case 'dvf':
+      return addr.nombre_ventes && addr.nombre_ventes > 0
+        ? COLORS.dvf || '#ef4444'
+        : COLORS.none;
 
     default:
       return COLORS.none;
@@ -146,15 +140,16 @@ onMounted(async () => {
   map.on('load', () => {
     mapLoaded = true;
 
-    map!.addSource('dvf_points', {
+    // Source des adresses normales
+    map!.addSource('address_points', {
       type: 'geojson',
       data: emptyGeoJSON(),
     });
 
     map!.addLayer({
-      id: 'dvf-dots',
+      id: 'address-dots',
       type: 'circle',
-      source: 'dvf_points',
+      source: 'address_points',
       paint: {
         'circle-radius': 7,
         'circle-color': COLORS.none,
@@ -163,13 +158,58 @@ onMounted(async () => {
       },
     });
 
+    // Source des points DPE
+    map!.addSource('dpe_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+    });
+
+    map!.addLayer({
+      id: 'dpe-dots',
+      type: 'circle',
+      source: 'dpe_points',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': [
+          'match',
+          ['get', 'etiquette'],
+          'A',
+          '#10b981',
+          'B',
+          '#22c55e',
+          'C',
+          '#84cc16',
+          'D',
+          '#eab308',
+          'E',
+          '#f97316',
+          'F',
+          '#ef4444',
+          'G',
+          '#991b1b',
+          '#6b7280',
+        ],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
+
     setupWatchers();
     popups.setup(map!);
-    updatePointsWithColors();
+    setupDpeInteractions();
+    updateAddressPoints();
+    updateAddressPointsWithColors();
+    updateDpePoints();
+    updateLayerVisibility();
+    recenterMap();
   });
 });
 
 onUnmounted(() => {
+  if (dpePopup) {
+  dpePopup.remove();
+  dpePopup = null;
+}
   popups.close();
   if (map) {
     map.remove();
@@ -178,9 +218,9 @@ onUnmounted(() => {
 });
 
 /* -------------------------------------
-   UPDATE DES POINTS
+   UPDATE DES POINTS ADRESSES
 ------------------------------------- */
-function updatePoints() {
+function updateAddressPoints() {
   if (!mapLoaded) return;
 
   const features = props.addresses
@@ -194,13 +234,39 @@ function updatePoints() {
       properties: { ...a },
     }));
 
-  setSourceData('dvf_points', features);
+  setSourceData('address_points', features);
 }
 
-/**
- * Met à jour les couleurs des points selon le mode actuel
- */
-function updatePointsWithColors() {
+/* -------------------------------------
+   UPDATE DES POINTS DPE
+------------------------------------- */
+function updateDpePoints() {
+  if (!mapLoaded) return;
+
+  const features = (props.dpePoints || [])
+    .filter(p => p.lat && p.lon)
+    .map(p => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [parseFloat(String(p.lon)), parseFloat(String(p.lat))],
+      },
+      properties: {
+        ...p,
+        etiquette: p.etiquette || '',
+        adresse: p.adresse || '',
+        type: p.type || '',
+        date: p.date || '',
+      },
+    }));
+
+  setSourceData('dpe_points', features);
+}
+
+/* -------------------------------------
+   COULEURS DES POINTS ADRESSES
+------------------------------------- */
+function updateAddressPointsWithColors() {
   if (!mapLoaded || !map) return;
 
   const mode = currentMode.value;
@@ -221,19 +287,159 @@ function updatePointsWithColors() {
   colorExpression.push(COLORS.none);
 
   try {
-    map.setPaintProperty('dvf-dots', 'circle-color', colorExpression);
+    map.setPaintProperty('address-dots', 'circle-color', colorExpression);
   } catch (error) {
     console.error('Error updating map colors:', error);
-    map.setPaintProperty('dvf-dots', 'circle-color', COLORS.prospection);
+    map.setPaintProperty('address-dots', 'circle-color', COLORS.prospection);
   }
 }
+
+/* -------------------------------------
+   VISIBILITE DES COUCHES
+------------------------------------- */
+function updateLayerVisibility() {
+  if (!mapLoaded || !map) return;
+
+  const isDpeMode = dashboard.activeMainMode === 'dpe';
+
+  map.setLayoutProperty(
+    'address-dots',
+    'visibility',
+    isDpeMode ? 'none' : 'visible'
+  );
+
+  map.setLayoutProperty(
+    'dpe-dots',
+    'visibility',
+    isDpeMode ? 'visible' : 'none'
+  );
+}
+function setupDpeInteractions() {
+  if (!map) return;
+
+  map.on('click', 'dpe-dots', e => {
+    const feature = e.features?.[0];
+    if (!feature) return;
+
+    const coordinates = (feature.geometry as any).coordinates.slice();
+    const props = feature.properties || {};
+
+    const adresse = props.adresse || 'Adresse inconnue';
+    const etiquette = props.etiquette || '-';
+    const type = props.type || '-';
+    const date = props.date
+      ? new Date(props.date).toLocaleDateString('fr-FR')
+      : '-';
+
+    const dpeColors: Record<string, string> = {
+      A: '#10b981',
+      B: '#22c55e',
+      C: '#84cc16',
+      D: '#eab308',
+      E: '#f97316',
+      F: '#ef4444',
+      G: '#991b1b',
+    };
+
+    const badgeColor = dpeColors[etiquette] || '#6b7280';
+
+    if (dpePopup) dpePopup.remove();
+
+    dpePopup = new maplibregl.Popup({
+      closeButton: true,
+      offset: 14,
+    })
+      .setLngLat(coordinates)
+      .setHTML(`
+        <div style="
+          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+          min-width: 220px;
+          line-height: 1.4;
+        ">
+          <div style="
+            font-weight: 600;
+            font-size: 14px;
+            margin-bottom: 6px;
+          ">
+            ${adresse}
+          </div>
+
+          <div style="
+            display:flex;
+            align-items:center;
+            gap:8px;
+            margin-bottom:6px;
+          ">
+            <span style="
+              background:${badgeColor};
+              color:white;
+              font-weight:600;
+              padding:2px 8px;
+              border-radius:6px;
+              font-size:12px;
+            ">
+              DPE ${etiquette}
+            </span>
+
+            <span style="
+              font-size:12px;
+              color:#6b7280;
+            ">
+              ${type}
+            </span>
+          </div>
+
+          <div style="
+            font-size:12px;
+            color:#6b7280;
+          ">
+            Diagnostic réalisé le ${date}
+          </div>
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  map.on('mouseenter', 'dpe-dots', () => {
+    if (map) map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'dpe-dots', () => {
+    if (map) map.getCanvas().style.cursor = '';
+  });
+}
+
 
 /* -------------------------------------
    RECENTRAGE LOGIQUE
 ------------------------------------- */
 async function recenterMap() {
   await nextTick();
-  if (!mapLoaded) return;
+  if (!mapLoaded || !map) return;
+
+  // MODE DPE : toujours prioriser la ville choisie
+  if (dashboard.activeMainMode === 'dpe') {
+    if (dashboard.selectedCity && props.cityCenter) {
+      flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
+      return;
+    }
+
+    const points = props.dpePoints || [];
+
+    if (points.length === 1) {
+      flyTo(points[0].lon, points[0].lat, 17);
+      return;
+    }
+
+    if (points.length > 1) {
+      const lats = points.map(p => Number(p.lat));
+      const lons = points.map(p => Number(p.lon));
+      flyTo(avg(lons), avg(lats), 10);
+      return;
+    }
+
+    return;
+  }
 
   if (dashboard.selectedNumeroFull && props.addresses.length === 1) {
     const a = props.addresses[0];
@@ -251,6 +457,12 @@ async function recenterMap() {
   if (dashboard.selectedCity && props.cityCenter) {
     flyTo(props.cityCenter.lon, props.cityCenter.lat, 14);
   }
+}
+
+function getCityKey() {
+  const city = dashboard.selectedCity;
+  if (!city) return '';
+  return `${city.value || ''}|${dashboard.selectedCodeInsee || ''}`;
 }
 
 /* -------------------------------------
@@ -282,34 +494,57 @@ function setSourceData(sourceName: string, features: any[]) {
 }
 
 /* -------------------------------------
-   WATCHERS (sync carte <-> dashboard)
+   WATCHERS
 ------------------------------------- */
 function setupWatchers() {
-  watch(
-    () => props.addresses,
-    () => {
-      updatePoints();
-      updatePointsWithColors();
+watch(
+  () => props.addresses,
+  () => {
+    updateAddressPoints();
+    updateAddressPointsWithColors();
+    updateLayerVisibility();
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
+  () => props.dpePoints,
+  () => {
+    updateDpePoints();
+    updateLayerVisibility();
+  },
+  { deep: true, immediate: true }
+);
+
+watch(
+  () => props.cityCenter,
+  newCenter => {
+    if (!newCenter || !dashboard.selectedCity) return;
+
+    const currentCityKey = getCityKey();
+
+    if (currentCityKey && currentCityKey !== lastRecenterCityKey) {
+      lastRecenterCityKey = currentCityKey;
+      popups.close();
       recenterMap();
-    },
-    { deep: true, immediate: true }
-  );
+    }
+  }
+);
 
-  watch(
-    () => props.cityCenter,
-    () => recenterMap()
-  );
-
-  watch(
-    () => dashboard.filterMode,
-    () => updatePointsWithColors()
-  );
+watch(
+  () => dashboard.activeMainMode,
+  () => {
+    updateAddressPointsWithColors();
+    updateLayerVisibility();
+  },
+  { immediate: true }
+);
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],
     () => {
-      if (currentMode.value === 'rappel') {
-        updatePointsWithColors();
+      if (currentMode.value === 'rappels') {
+        updateAddressPointsWithColors();
       }
     },
     { deep: true }
@@ -322,6 +557,7 @@ function setupWatchers() {
       recenterMap();
     }
   );
+
   watch(
     () => dashboard.selectedNumeroFull,
     () => {
@@ -329,13 +565,14 @@ function setupWatchers() {
       recenterMap();
     }
   );
-  watch(
-    () => dashboard.selectedCity,
-    () => {
-      popups.close();
-      recenterMap();
-    }
-  );
+
+watch(
+  () => dashboard.selectedCity,
+  () => {
+    popups.close();
+    lastRecenterCityKey = '';
+  }
+);
 }
 </script>
 

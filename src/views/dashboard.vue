@@ -111,14 +111,15 @@
 
   <!-- DPE -->
   <div class="modeWithFilter">
-    <button
-      class="modePill"
-      :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
-      @click="dashboardStore.setMainMode('dpe')"
-    >
-      <span class="modeDot dpe"></span>
-      DPE
-    </button>
+<button
+  class="modePill"
+  :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
+  :disabled="!dashboardStore.selectedCodeInsee && !dashboardStore.selectedCity"
+  @click="dashboardStore.setMainMode('dpe')"
+>
+  <span class="modeDot dpe"></span>
+  DPE
+</button>
 
     <el-select
       v-if="dashboardStore.activeMainMode === 'dpe'"
@@ -127,10 +128,10 @@
       class="modeSelect"
       @change="dashboardStore.querySearchAddress()"
     >
-      <el-option label="< 1 mois" value="1m" />
-      <el-option label="< 3 mois" value="3m" />
-      <el-option label="< 6 mois" value="6m" />
-      <el-option label="< 1 an" value="1y" />
+      <el-option label="Dernier mois" value="1m" />
+<el-option label="3 derniers mois" value="3m" />
+<el-option label="6 derniers mois" value="6m" />
+<el-option label="12 derniers mois" value="1y" />
     </el-select>
   </div>
 
@@ -168,7 +169,7 @@
 
     <!-- TABLE DES ADRESSES -->
     <div
-      v-if="viewType === 'table'"
+       v-if="viewType === 'table' && dashboardStore.activeMainMode !== 'dpe'"
       v-loading="isLoading"
       element-loading-text="Chargement des adresses..."
       element-loading-background="rgba(255, 255, 255, 0.8)"
@@ -191,13 +192,13 @@
       @edit-property="openPropertyDialog"
     />
 
-    <MapView
-      v-show="viewType === 'map'"
-      :addresses="addresses"
-      :city-center="dashboardStore.cityCenter"
-      :dpe-points="dashboardStore.dpePoints"
-      @edit-property="openPropertyDialog"
-    />
+<MapView
+  v-show="viewType === 'map'"
+  :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
+  :city-center="dashboardStore.cityCenter"
+  :dpe-points="dashboardStore.dpePoints"
+  @edit-property="openPropertyDialog"
+/>
 
     <PropertyForm />
     <CreateCustomPropertyDialog />
@@ -267,6 +268,15 @@ watch(
   }
 );
 
+watch(
+  () => dashboardStore.activeMainMode,
+  newMode => {
+    if (newMode === 'dpe' && dashboardStore.viewType !== 'map') {
+      dashboardStore.viewType = 'map';
+    }
+  }
+);
+
 // 🟥 Si le numéro change → relancer la recherche
 watch(
   () => dashboardStore.selectedNumeroFull,
@@ -313,6 +323,9 @@ watch(
 /* ------------------------------------
       COMPUTED BINDINGS
 ------------------------------------ */
+const mapAddresses = computed(() => {
+  return dashboardStore.activeMainMode === 'dpe' ? [] : dashboardStore.addresses;
+});
 
 const selectedOwnerName = computed({
   get: () => dashboardStore.selectedOwnerName,
@@ -522,13 +535,12 @@ const querySearchEstimation = async () => {
       VIEW SWITCH
 ------------------------------------ */
 const viewOptions = computed(() => [
-  { value: 'table', label: 'Vue tableau', icon: DataBoard },
-  // {
-  //   value: 'card',
-  //   label: 'Vue cartes',
-  //   icon: Grid,
-  //   disabled: isCityOnly.value,
-  // },
+  {
+    value: 'table',
+    label: 'Vue tableau',
+    icon: DataBoard,
+    disabled: dashboardStore.activeMainMode === 'dpe',
+  },
   { value: 'map', label: 'Vue carte', icon: Location },
 ]);
 
