@@ -4,18 +4,13 @@
 </div>-->
 
   <div class="property-table-container">
-    <TopBarMapView
-      v-if="!cityOnly"
-      :addresses="addresses as any"
-      :active-mode="dashboardStore.filterMode"
-      @mode-change="handleFilterModeChange"
-    />
+
     <el-table
       :data="filteredAddresses"
       :row-key="getRowKey"
       class="modern-property-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
-      height="80vh"
+      max-height="calc(100vh - 320px)"
       :row-class-name="getRowClass"
       @row-click="handleRowClick"
     >
@@ -227,7 +222,6 @@ import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
-import TopBarMapView from './TopBarMapView.vue';
 import {
   formatDateShort as formatDate,
   formatPrice,
@@ -292,7 +286,7 @@ onMounted(() => {
   remindersStore.loadReminders();
 });
 
-const filteredAddresses = computed(() => {
+/*const filteredAddresses = computed(() => {
   const mode = dashboardStore.filterMode;
   if (!mode) return props.addresses;
 
@@ -323,7 +317,8 @@ const filteredAddresses = computed(() => {
         return true;
     }
   });
-});
+});*/
+const filteredAddresses = computed(() => props.addresses);
 
 const handleFilterModeChange = (mode: string) => {
   dashboardStore.filterMode = dashboardStore.filterMode === mode ? null : mode;
@@ -431,10 +426,14 @@ function getDisplayType(row: any): string {
 
 <style scoped>
 .property-table-container {
-  padding: 16px 0;
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: auto;
+  box-sizing: border-box;
 }
 
 .modern-property-table {
+  width: 100%;
   border-radius: var(--table-radius);
   overflow: hidden;
   box-shadow: var(--table-shadow);

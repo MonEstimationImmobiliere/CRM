@@ -12,6 +12,7 @@
 }
 
 body {
+  margin: 0;
   color: var(--apple-text-primary);
   font-size: 14px;
   font-family:
@@ -30,13 +31,19 @@ body {
   overflow-x: hidden;
 }
 
+html,
+body,
 #app {
-  width: 100vw;
-  height: 100vh;
-  display: flex;
-  flex-direction: column;
+  width: 100%;
+  max-width: 100%;
 }
 
+#app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  overflow-x: hidden;
+}
 a,
 a:focus,
 a:hover {

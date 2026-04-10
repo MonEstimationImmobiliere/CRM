@@ -27,19 +27,16 @@ const emit = defineEmits<{
 
 <style lang="postcss" scoped>
 .shadow-wrapper {
-  width: 150vw;
-  height: 150vh;
   position: fixed;
-  top: -25vh;
-  left: -25vw;
+  inset: 0;
   z-index: 999;
-  padding: 25vh 25vw;
   background-color: v-bind('props.color');
+  overflow: hidden;
 }
 
 .shadow-content-wrapper {
-  width: 100vw;
-  height: 100vh;
+  width: 100%;
+  height: 100%;
   position: relative;
 }
 </style>

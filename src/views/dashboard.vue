@@ -761,4 +761,10 @@ const openPropertyDialog = (property: any) => {
 .modeDot.maj {
   background: #8b5cf6;
 }
+.dashboardContainer {
+  max-width: 100%;
+  min-width: 0;
+  overflow-x: hidden;
+  box-sizing: border-box;
+}
 </style>

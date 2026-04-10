@@ -604,16 +604,19 @@ watch(
 
 <style scoped>
 .mapContainer {
-  display: flex;
-  flex-direction: column;
   width: 100%;
-  height: calc(100vh - 80px);
   position: relative;
+  min-width: 0;
+    overflow: hidden;
 }
 
 .map-wrapper {
-  flex: 1;
   position: relative;
+  width: 100%;
+  height: 700px;
+  max-width: 100%;
+  overflow: hidden;
+  border-radius: 18px;
 }
 
 .map {
