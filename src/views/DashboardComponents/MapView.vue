@@ -78,17 +78,41 @@ const reminderPropertyIds = computed(() => {
 /* -------------------------------------
    COULEUR DES POINTS ADRESSES
 ------------------------------------- */
+function getProspectionFreshnessColor(dateMaj: any): string {
+  if (!dateMaj) {
+    return '#9ca3af'; // gris visible
+  }
+
+  const majDate = new Date(dateMaj);
+  if (Number.isNaN(majDate.getTime())) {
+    return '#9ca3af';
+  }
+
+  const now = new Date();
+  const diffMs = now.getTime() - majDate.getTime();
+  const diffDays = diffMs / (1000 * 60 * 60 * 24);
+
+  if (diffDays <= 30) {
+    return '#15803d'; // vert foncé
+  }
+
+  if (diffDays <= 90) {
+    return '#22c55e'; // vert moyen
+  }
+
+  if (diffDays <= 180) {
+    return '#86efac'; // vert clair
+  }
+
+  return '#9ca3af'; // gris si trop ancien
+}
+
 function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
 
   switch (mode) {
-    case 'prospection': {
-      const hasData =
-        addr.date_maj !== null ||
-        (addr.nombre_ventes && addr.nombre_ventes > 0) ||
-        (addr.nombre_estimations && addr.nombre_estimations > 0);
-      return hasData ? COLORS.prospection : COLORS.none;
-    }
+    case 'prospection':
+  return getProspectionFreshnessColor(addr.date_maj);
 
     case 'estimations':
       return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0

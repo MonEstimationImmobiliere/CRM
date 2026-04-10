@@ -47,5 +47,5 @@ export const COLORS: Record<MapDisplayMode | 'none', string> = {
   maj: '#8b5cf6',
   dpe: '#10b981',
   dvf: '#ef4444',
-  none: '#d1d5db',
+  none: '#9ca3af',
 };
