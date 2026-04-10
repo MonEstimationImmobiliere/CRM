@@ -106,17 +106,70 @@ async getAddressesByFantoir(
   return response.data;
 },
 
-  async getFavoriteAddresses(ownerName: string): Promise<IAddressDetail[]> {
+  async getFavoriteAddresses(): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(
+      `/address-owner`,
+      {
+        params: {
+          favorite: 1,
+        },
+      }
+    );
+    return response.data;
+  },
+
+    async getEstimationAddresses(): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(
+      `/address-owner`,
+      {
+        params: {
+          type: 'estimation',
+        },
+      }
+    );
+    return response.data;
+  },
+
+    async getReminderAddresses(): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(
+      `/address-owner`,
+      {
+        params: {
+          type: 'rappel',
+        },
+      }
+    );
+    return response.data;
+  },
+
+async getMajAddresses(
+  range: '7d' | '30d' | '3m' | '6m'
+): Promise<IAddressDetail[]> {
   const response = await apiService.get<IAddressDetail[]>(
     `/address-owner`,
     {
       params: {
-          favorite: 1,
+        type: 'maj',
+        range,
       },
     }
   );
   return response.data;
 },
+
+    async getDvfAddresses(
+    range: '1y' | '2y' | '3y' | '5y'
+  ): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(
+      `/address-dvf`,
+      {
+        params: {
+          range,
+        },
+      }
+    );
+    return response.data;
+  },
 
   async removeFromFavorites(propertyId: string): Promise<void> {
     await apiService.delete(

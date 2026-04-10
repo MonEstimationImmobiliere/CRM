@@ -1,11 +1,11 @@
 <template>
   <section class="mapContainer">
     <!-- TopBar Filters -->
-    <TopBarMapView
+   <!-- <TopBarMapView
       @mode-change="handleModeChange"
       :addresses="addresses as any"
       :active-mode="dashboard.filterMode"
-    />
+    />-->
 
     <!-- Map -->
     <div class="map-wrapper">

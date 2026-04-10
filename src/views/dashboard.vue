@@ -1,64 +1,170 @@
 <template>
   <section class="block dashboardContainer">
-    <div class="headerFilterInfoContainer">
-      <!-- AUTOCOMPLETES Ville → Rue → Numéro -->
-      <div class="autoCompleteContainer">
-        <CityAutocomplete
-          v-model="selectedCity"
-          @select="handleCitySelect"
-          @clear="handleCityClear"
-        />
 
-        <StreetAutocomplete
-          v-model="selectedStreet"
-          :code-insee="selectedCodeInsee"
-          @select="handleStreetSelect"
-          @clear="handleStreetClear"
-        />
 
-        <NumeroAutocomplete
-          v-model="selectedNumeroFull"
-          :id-fantoir="selectedCodeIdFantoir"
-          @select="handleNumeroSelect"
-          @clear="handleNumeroClear"
+<div class="headerFilterInfoContainer">
+  <!-- LIGNE 1 -->
+  <div class="headerTopRow">
+    <div class="autoCompleteContainer">
+      <CityAutocomplete
+        v-model="selectedCity"
+        @select="handleCitySelect"
+        @clear="handleCityClear"
+      />
+
+      <StreetAutocomplete
+        v-model="selectedStreet"
+        :code-insee="selectedCodeInsee"
+        @select="handleStreetSelect"
+        @clear="handleStreetClear"
+      />
+
+      <NumeroAutocomplete
+        v-model="selectedNumeroFull"
+        :id-fantoir="selectedCodeIdFantoir"
+        @select="handleNumeroSelect"
+        @clear="handleNumeroClear"
+      />
+    </div>
+
+    <div class="headerRightContainer">
+      <div class="ownerSearchContainer">
+        <el-input
+          v-model="selectedOwnerName"
+          clearable
+          placeholder="Nom du propriétaire"
+          @keyup.enter="dashboardStore.querySearchAddress()"
         />
       </div>
 
-      <!-- BOUTONS -->
-      <!-- <div class="validationButtonContainer">
-        <Button type="primary" @click="querySearchEstimation">
-          Estimations reçues
-        </Button>
-
-        <Button
-          type="primary"
-          @click="dashboardStore.openCustomPropertyDialog()"
-        >
-          Créer une propriété personnalisée
-        </Button>
-      </div> -->
-
-<!-- NOUVEAU CHAMP RECHERCHE PROPRIETAIRE -->
-<div class="ownerSearchContainer">
-  <el-input
-    v-model="selectedOwnerName"
-    clearable
-    placeholder="Nom du propriétaire"
-    @keyup.enter="dashboardStore.querySearchAddress()"
-  />
-</div>
-<div class="favoriteFilterContainer">
-  <el-button
-    :type="dashboardStore.favoritesOnly ? 'warning' : 'default'"
-    @click="dashboardStore.toggleFavoritesFilter()"
-  >
-    Favoris
-  </el-button>
-</div>
-
-      <!-- SWITCH LISTE / CARDS -->
       <ViewToggle v-model="viewType" :options="viewOptions" />
     </div>
+  </div>
+
+  <!-- LIGNE 2 -->
+<div class="headerBottomRow">
+<div class="modeBar">
+
+  <button
+    class="modePill"
+    :class="{ active: dashboardStore.activeMainMode === 'prospection' }"
+    @click="dashboardStore.setMainMode('prospection')"
+  >
+    <span class="modeDot prospection"></span>
+    Prospection
+  </button>
+
+
+  <button
+    class="modePill"
+    :class="{ active: dashboardStore.activeMainMode === 'favorites' }"
+    @click="dashboardStore.setMainMode('favorites')"
+  >
+    <span class="modeDot favoris"></span>
+    Favoris
+  </button>
+
+
+  <button
+    class="modePill"
+    :class="{ active: dashboardStore.activeMainMode === 'estimations' }"
+    @click="dashboardStore.setMainMode('estimations')"
+  >
+    <span class="modeDot estimations"></span>
+    Estimations
+  </button>
+
+
+  <button
+    class="modePill"
+    :class="{ active: dashboardStore.activeMainMode === 'rappels' }"
+    @click="dashboardStore.setMainMode('rappels')"
+  >
+    <span class="modeDot rappels"></span>
+    Rappels
+  </button>
+
+  <div class="modeWithFilter">
+  <button
+    class="modePill"
+    :class="{ active: dashboardStore.activeMainMode === 'maj' }"
+    @click="dashboardStore.setMainMode('maj')"
+  >
+    <span class="modeDot maj"></span>
+    MAJ
+  </button>
+
+  <el-select
+    v-if="dashboardStore.activeMainMode === 'maj'"
+    v-model="dashboardStore.majFilterRange"
+    size="small"
+    class="modeSelect"
+    @change="dashboardStore.querySearchAddress()"
+  >
+    <el-option label="< 7 jours" value="7d" />
+    <el-option label="< 30 jours" value="30d" />
+    <el-option label="< 3 mois" value="3m" />
+    <el-option label="< 6 mois" value="6m" />
+  </el-select>
+</div>
+
+
+  <!-- DPE -->
+  <div class="modeWithFilter">
+    <button
+      class="modePill"
+      :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
+      @click="dashboardStore.setMainMode('dpe')"
+    >
+      <span class="modeDot dpe"></span>
+      DPE
+    </button>
+
+    <el-select
+      v-if="dashboardStore.activeMainMode === 'dpe'"
+      v-model="dashboardStore.dpeFilterRange"
+      size="small"
+      class="modeSelect"
+      @change="dashboardStore.querySearchAddress()"
+    >
+      <el-option label="< 1 mois" value="1m" />
+      <el-option label="< 3 mois" value="3m" />
+      <el-option label="< 6 mois" value="6m" />
+      <el-option label="< 1 an" value="1y" />
+    </el-select>
+  </div>
+
+
+  <!-- DVF -->
+  <div class="modeWithFilter">
+    <button
+      class="modePill"
+      :class="{ active: dashboardStore.activeMainMode === 'dvf' }"
+      @click="dashboardStore.setMainMode('dvf')"
+    >
+      <span class="modeDot dvf"></span>
+      DVF
+    </button>
+
+    <el-select
+      v-if="dashboardStore.activeMainMode === 'dvf'"
+      v-model="dashboardStore.dvfFilterRange"
+      size="small"
+      class="modeSelect"
+      @change="dashboardStore.querySearchAddress()"
+    >
+      <el-option label="< 1 an" value="1y" />
+      <el-option label="< 2 ans" value="2y" />
+      <el-option label="< 3 ans" value="3y" />
+      <el-option label="< 5 ans" value="5y" />
+    </el-select>
+  </div>
+
+</div>
+</div>
+
+  </div>
+
 
     <!-- TABLE DES ADRESSES -->
     <div
@@ -485,5 +591,162 @@ const openPropertyDialog = (property: any) => {
   flex: 1;
   min-width: 260px;
   max-width: 520px;
+}
+
+.headerFilterInfoContainer {
+  display: flex;
+  flex-direction: column;
+  gap: 18px;
+  margin-bottom: 20px;
+  background: var(--apple-card-bg);
+  padding: 20px;
+  border-radius: var(--apple-radius);
+  box-shadow: var(--apple-shadow);
+}
+
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.headerBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.autoCompleteContainer {
+  display: flex;
+  align-items: center;
+  gap: 20px;
+  flex: 1;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+
+.headerRightContainer {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.ownerSearchContainer {
+  min-width: 260px;
+  max-width: 320px;
+}
+
+.modeBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modePill {
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modePill:hover {
+  background: #e5e7eb;
+}
+
+.modePill.active {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.modeBar {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modePill:hover {
+  background: #e5e7eb;
+}
+
+.modePill.active {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.modeDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modePill.active .modeDot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.modeDot.prospection {
+  background: #3b82f6;
+}
+
+.modeDot.favoris {
+  background: #f97316;
+}
+
+.modeDot.estimations {
+  background: #9333ea;
+}
+
+.modeDot.rappels {
+  background: #06b6d4;
+}
+
+.modeDot.dpe {
+  background: #10b981;
+}
+
+.modeDot.dvf {
+  background: #ef4444;
+}
+
+.modeWithFilter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.modeSelect {
+  width: 110px;
+}
+
+.modeDot.maj {
+  background: #8b5cf6;
 }
 </style>

@@ -42,7 +42,16 @@ interface SearchParams {
   numero: string | null;
   rep: string | null;
   ownerName: string | null;
-    favoritesOnly: boolean;
+  activeMainMode:
+    | 'prospection'
+    | 'favorites'
+    | 'estimations'
+    | 'rappels'
+    | 'dpe'
+    | 'dvf';
+  majFilterRange?: '7d' | '30d' | '3m' | '6m';
+  dpeFilterRange?: '1m' | '3m' | '6m' | '1y';
+  dvfFilterRange?: '1y' | '2y' | '3y' | '5y';
 }
 
 /**
@@ -78,9 +87,24 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const markers = ref<Record<string, any>>({});
   const filterMode = ref<string | null>(null);
   const selectedOwnerName = ref('');
-  const favoritesOnly = ref(false);
+  const activeMainMode = ref<
+    'prospection' | 'favorites' | 'estimations' | 'rappels' | 'maj' | 'dpe' | 'dvf'
+  >('prospection');
+  const dpeFilterRange = ref<'1m' | '3m' | '6m' | '1y'>('3m');
+  const dvfFilterRange = ref<'1y' | '2y' | '3y' | '5y'>('1y');
+  const majFilterRange = ref<'7d' | '30d' | '3m' | '6m'>('30d');
+
+
+
 
   // --- Helpers ---
+
+function setMainMode(
+  mode: 'prospection' | 'favorites' | 'estimations' | 'rappels' | 'maj' | 'dpe' | 'dvf'
+) {
+  activeMainMode.value = mode;
+  querySearchAddress();
+}
 
   /** Calcule le centre géographique d'une liste d'adresses */
   function computeCenter(addressList: (IAddressGrouped | IAddressDetail)[]) {
@@ -107,13 +131,33 @@ export const useDashboardStore = defineStore('dashboard', () => {
         return;
       }
 
-      const to = '2025-11-30';
-      const from = '2025-11-01';
+      const now = new Date();
+const to = now.toISOString().slice(0, 10);
+
+const fromDate = new Date();
+
+switch (dpeFilterRange.value) {
+  case '1m':
+    fromDate.setMonth(fromDate.getMonth() - 1);
+    break;
+  case '3m':
+    fromDate.setMonth(fromDate.getMonth() - 3);
+    break;
+  case '6m':
+    fromDate.setMonth(fromDate.getMonth() - 6);
+    break;
+  case '1y':
+    fromDate.setFullYear(fromDate.getFullYear() - 1);
+    break;
+}
+
+const from = fromDate.toISOString().slice(0, 10);
 
       const url =
         `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
         `?code_departement_ban_eq=14` +
         `&date_etablissement_dpe_gte=${from}` +
+        `&date_etablissement_dpe_lte=${to}` +
         `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
         `&size=5000`;
 
@@ -165,7 +209,9 @@ async function querySearchAddress() {
         numero: selectedNumero.value || null,
         rep: selectedRep.value || null,
         ownerName,
-        favoritesOnly: false,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
       };
 
       isDataLoaded.value = true;
@@ -174,9 +220,9 @@ async function querySearchAddress() {
     }
 
     // ===========================
-    // PRIORITE 2 : FAVORIS
+    // PRIORITE 2 : MODES GLOBAUX
     // ===========================
-    if (favoritesOnly.value) {
+    if (activeMainMode.value === 'favorites') {
       addresses.value = await PropertyService.getFavoriteAddresses();
 
       cityCenter.value = computeCenter(addresses.value);
@@ -189,7 +235,151 @@ async function querySearchAddress() {
         numero: selectedNumero.value || null,
         rep: selectedRep.value || null,
         ownerName: null,
-        favoritesOnly: true,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+      return;
+    }
+
+    if (activeMainMode.value === 'estimations') {
+      addresses.value = await PropertyService.getEstimationAddresses();
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName: null,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+      return;
+    }
+
+    if (activeMainMode.value === 'rappels') {
+      addresses.value = await PropertyService.getReminderAddresses();
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName: null,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+      return;
+    }
+
+    if (activeMainMode.value === 'maj') {
+  addresses.value = await PropertyService.getMajAddresses(majFilterRange.value);
+
+  cityCenter.value = computeCenter(addresses.value);
+
+  lastSearchParams.value = {
+    city: selectedCity.value,
+    street: selectedStreet.value,
+    codeInsee: selectedCodeInsee.value,
+    codeIdFantoir: selectedCodeIdFantoir.value || null,
+    numero: selectedNumero.value || null,
+    rep: selectedRep.value || null,
+    ownerName: null,
+    activeMainMode: activeMainMode.value,
+    majFilterRange: majFilterRange.value,
+    dpeFilterRange: dpeFilterRange.value,
+    dvfFilterRange: dvfFilterRange.value,
+  };
+
+  isDataLoaded.value = true;
+  noResultsFound.value = addresses.value.length === 0;
+  return;
+}
+
+    // ===========================
+    // MODE DPE : garde recherche normale + points DPE filtrés
+    // ===========================
+    if (activeMainMode.value === 'dpe') {
+      if (
+        selectedCity.value &&
+        !selectedStreet.value &&
+        !selectedNumero.value &&
+        !selectedRep.value
+      ) {
+        addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
+          selectedCodeInsee.value
+        );
+      } else if (selectedCodeIdFantoir.value) {
+        addresses.value = await PropertyService.getAddressesByFantoir(
+          selectedCodeIdFantoir.value,
+          'address',
+          selectedNumero.value || undefined,
+          selectedRep.value || undefined
+        );
+      } else {
+        addresses.value = [];
+      }
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName: null,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
+      };
+
+      isDataLoaded.value = true;
+      noResultsFound.value = addresses.value.length === 0;
+
+      await fetchDPE();
+      return;
+    }
+
+    // ===========================
+    // MODE DVF : à brancher ensuite
+    // ===========================
+    if (activeMainMode.value === 'dvf') {
+      addresses.value = await PropertyService.getDvfAddresses(dvfFilterRange.value);
+
+      cityCenter.value = computeCenter(addresses.value);
+
+      lastSearchParams.value = {
+        city: selectedCity.value,
+        street: selectedStreet.value,
+        codeInsee: selectedCodeInsee.value,
+        codeIdFantoir: selectedCodeIdFantoir.value || null,
+        numero: selectedNumero.value || null,
+        rep: selectedRep.value || null,
+        ownerName: null,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
       };
 
       isDataLoaded.value = true;
@@ -198,7 +388,7 @@ async function querySearchAddress() {
     }
 
     // ===========================
-    // PRIORITE 3 : RECHERCHE CLASSIQUE
+    // PROSPECTION / RECHERCHE CLASSIQUE
     // ===========================
     if (
       selectedCity.value &&
@@ -220,7 +410,9 @@ async function querySearchAddress() {
         numero: null,
         rep: null,
         ownerName: null,
-        favoritesOnly: false,
+        activeMainMode: activeMainMode.value,
+        dpeFilterRange: dpeFilterRange.value,
+        dvfFilterRange: dvfFilterRange.value,
       };
 
       isDataLoaded.value = true;
@@ -253,7 +445,9 @@ async function querySearchAddress() {
       numero: selectedNumero.value,
       rep: selectedRep.value,
       ownerName: null,
-      favoritesOnly: false,
+      activeMainMode: activeMainMode.value,
+      dpeFilterRange: dpeFilterRange.value,
+      dvfFilterRange: dvfFilterRange.value,
     };
 
     isDataLoaded.value = true;
@@ -345,12 +539,16 @@ function clearSearchData() {
   selectedRep.value = '';
   selectedNumeroFull.value = null;
   selectedOwnerName.value = '';
+  activeMainMode.value = 'prospection';
+  dpeFilterRange.value = '3m';
+  dvfFilterRange.value = '1y';
   addresses.value = [];
+  dpePoints.value = [];
   isDataLoaded.value = false;
   lastSearchParams.value = null;
   noResultsFound.value = false;
   showCustomPropertyDialog.value = false;
-  favoritesOnly.value = false;
+  majFilterRange.value = '30d';
 }
 
   async function createCustomProperty(
@@ -410,7 +608,11 @@ function clearSearchData() {
     markers,
     filterMode,
     selectedOwnerName,
-    favoritesOnly,
+activeMainMode,
+dpeFilterRange,
+dvfFilterRange,
+majFilterRange,
+
 
     // Actions
     fetchDPE,
@@ -425,5 +627,7 @@ function clearSearchData() {
     openCustomPropertyDialog,
     closeCustomPropertyDialog,
     toggleFavoritesFilter,
+  
+setMainMode,
   };
 });
