@@ -112,7 +112,7 @@ function getPointColor(address: Address, mode: string): string {
 
   switch (mode) {
     case 'prospection':
-  return getProspectionFreshnessColor(addr.date_maj);
+          return getProspectionFreshnessColor(addr.date_maj);
 
     case 'estimations':
       return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
@@ -231,9 +231,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (dpePopup) {
-  dpePopup.remove();
-  dpePopup = null;
-}
+      dpePopup.remove();
+      dpePopup = null;
+    }
   popups.close();
   if (map) {
     map.remove();
@@ -374,7 +374,9 @@ function setupDpeInteractions() {
       offset: 14,
     })
       .setLngLat(coordinates)
-      .setHTML(`
+      .setHTML(
+        
+        `
         <div style="
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
           min-width: 220px;
@@ -419,8 +421,10 @@ function setupDpeInteractions() {
           ">
             Diagnostic réalisé le ${date}
           </div>
-        </div>
-      `)
+       
+       </div>
+      `
+      )
       .addTo(map);
   });
 
@@ -429,10 +433,8 @@ function setupDpeInteractions() {
   });
 
   map.on('mouseleave', 'dpe-dots', () => {
-    if (map) map.getCanvas().style.cursor = '';
-  });
+   });
 }
-
 
 /* -------------------------------------
    RECENTRAGE LOGIQUE
@@ -520,49 +522,49 @@ function setSourceData(sourceName: string, features: any[]) {
 /* -------------------------------------
    WATCHERS
 ------------------------------------- */
-function setupWatchers() {
-watch(
-  () => props.addresses,
-  () => {
-    updateAddressPoints();
-    updateAddressPointsWithColors();
-    updateLayerVisibility();
-  },
-  { deep: true, immediate: true }
-);
-
-watch(
-  () => props.dpePoints,
-  () => {
-    updateDpePoints();
-    updateLayerVisibility();
-  },
-  { deep: true, immediate: true }
-);
-
-watch(
-  () => props.cityCenter,
-  newCenter => {
-    if (!newCenter || !dashboard.selectedCity) return;
-
-    const currentCityKey = getCityKey();
-
-    if (currentCityKey && currentCityKey !== lastRecenterCityKey) {
-      lastRecenterCityKey = currentCityKey;
-      popups.close();
-      recenterMap();
-    }
-  }
-);
-
-watch(
-  () => dashboard.activeMainMode,
-  () => {
-    updateAddressPointsWithColors();
-    updateLayerVisibility();
-  },
-  { immediate: true }
-);
+  function setupWatchers() {
+    watch(
+      () => props.addresses,
+      () => {
+        updateAddressPoints();
+        updateAddressPointsWithColors();
+        updateLayerVisibility();
+      },
+      { deep: true, immediate: true }
+  );
+  
+    watch(
+      () => props.dpePoints,
+      () => {
+        updateDpePoints();
+        updateLayerVisibility();
+      },
+      { deep: true, immediate: true }
+  );
+  
+    watch(
+      () => props.cityCenter,
+      newCenter => {
+      if (!newCenter || !dashboard.selectedCity) return;
+  
+      const currentCityKey = getCityKey();
+  
+        if (currentCityKey && currentCityKey !== lastRecenterCityKey) {
+          lastRecenterCityKey = currentCityKey;
+          popups.close();
+          recenterMap();
+        }
+      }
+  );
+  
+    watch(
+      () => dashboard.activeMainMode,
+      () => {
+        updateAddressPointsWithColors();
+        updateLayerVisibility();
+      },
+      { immediate: true }
+  );
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],
@@ -573,32 +575,32 @@ watch(
     },
     { deep: true }
   );
-
-watch(
-  () => dashboard.selectedStreet,
-  newStreet => {
-    popups.close();
-    if (!newStreet) return;
-    recenterMap();
-  }
-);
-
-watch(
-  () => dashboard.selectedNumeroFull,
-  newNumero => {
-    popups.close();
-    if (!newNumero) return;
-    recenterMap();
-  }
-);
-
-watch(
-  () => dashboard.selectedCity,
-  () => {
-    popups.close();
-    lastRecenterCityKey = '';
-  }
-);
+  
+    watch(
+      () => dashboard.selectedStreet,
+      newStreet => {
+        popups.close();
+        if (!newStreet) return;
+        recenterMap();
+      }
+  );
+  
+    watch(
+      () => dashboard.selectedNumeroFull,
+      newNumero => {
+        popups.close();
+        if (!newNumero) return;
+        recenterMap();
+      }
+  );
+  
+    watch(
+      () => dashboard.selectedCity,
+      () => {
+        popups.close();
+        lastRecenterCityKey = '';
+      }
+  );
 }
 </script>
 
@@ -606,8 +608,8 @@ watch(
 .mapContainer {
   width: 100%;
   position: relative;
-  min-width: 0;
-    overflow: hidden;
+min-width: 0;
+  overflow: hidden;
 }
 
 .map-wrapper {
@@ -623,4 +625,5 @@ watch(
   width: 100%;
   height: 100%;
 }
+
 </style>

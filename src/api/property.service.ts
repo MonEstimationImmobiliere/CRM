@@ -15,19 +15,18 @@ export const PropertyService = {
   },
 
   async getProperty(id: number) {
-  const response = await apiService.get(`/property/${id}`);
-  return response.data;
-},
-  
+    const response = await apiService.get(`/property/${id}`);
+    return response.data;
+  },
 
- async createProperty(property: Partial<IProperty>): Promise<IProperty> {
-  console.log('API createProperty payload', property);
-  const response = await apiService.post<{ property: IProperty }>(
-    `/property/create`,
-    property
-  );
-  return response.data.property;
-},
+  async createProperty(property: Partial<IProperty>): Promise<IProperty> {
+    console.log('API createProperty payload', property);
+    const response = await apiService.post<{ property: IProperty }>(
+      `/property/create`,
+      property
+    );
+    return response.data.property;
+  },
 
   async updateProperty(
     propertyId: number,
@@ -62,24 +61,24 @@ export const PropertyService = {
     return response.data;
   },
 
-async getAddressesByFantoir(
-  idFantoir: string,
-  type: string,
-  numero?: string,
-  rep?: string
-): Promise<AddressDetailList> {
-  const params = new URLSearchParams({
-    type,
-  });
+  async getAddressesByFantoir(
+    idFantoir: string,
+    type: string,
+    numero?: string,
+    rep?: string
+  ): Promise<AddressDetailList> {
+    const params = new URLSearchParams({
+      type,
+    });
 
-  if (numero) params.append('numero', numero);
-  if (rep) params.append('rep', rep);
+    if (numero) params.append('numero', numero);
+    if (rep) params.append('rep', rep);
 
-  const response = await apiService.get<AddressDetailList>(
-    `/addresses/${encodeURIComponent(idFantoir)}?${params.toString()}`
-  );
-  return response.data;
-},
+    const response = await apiService.get<AddressDetailList>(
+      `/addresses/${encodeURIComponent(idFantoir)}?${params.toString()}`
+    );
+    return response.data;
+  },
 
   async getAddressesByNumero(
     idFantoir: string,
@@ -95,79 +94,61 @@ async getAddressesByFantoir(
   },
 
   async getAddressesByOwner(ownerName: string): Promise<IAddressDetail[]> {
-  const response = await apiService.get<IAddressDetail[]>(
-    `/address-owner`,
-    {
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
       params: {
         owner: ownerName,
       },
-    }
-  );
-  return response.data;
-},
+    });
+    return response.data;
+  },
 
   async getFavoriteAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(
-      `/address-owner`,
-      {
-        params: {
-          favorite: 1,
-        },
-      }
-    );
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+      params: {
+        favorite: 1,
+      },
+    });
     return response.data;
   },
 
-    async getEstimationAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(
-      `/address-owner`,
-      {
-        params: {
-          type: 'estimation',
-        },
-      }
-    );
+  async getEstimationAddresses(): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+      params: {
+        type: 'estimation',
+      },
+    });
     return response.data;
   },
 
-    async getReminderAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(
-      `/address-owner`,
-      {
-        params: {
-          type: 'rappel',
-        },
-      }
-    );
+  async getReminderAddresses(): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+      params: {
+        type: 'rappel',
+      },
+    });
     return response.data;
   },
 
-async getMajAddresses(
-  range: '7d' | '30d' | '3m' | '6m'
-): Promise<IAddressDetail[]> {
-  const response = await apiService.get<IAddressDetail[]>(
-    `/address-owner`,
-    {
+  async getMajAddresses(
+    range: '7d' | '30d' | '3m' | '6m'
+  ): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
       params: {
         type: 'maj',
         range,
       },
-    }
-  );
-  return response.data;
-},
+    });
+    return response.data;
+  },
 
-    async getDvfAddresses(
+  async getDvfAddresses(
     range: '1y' | '2y' | '3y' | '5y'
   ): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(
-      `/address-dvf`,
-      {
-        params: {
-          range,
-        },
-      }
-    );
+    const response = await apiService.get<IAddressDetail[]>(`/address-dvf`, {
+      params: {
+        range,
+      },
+    });
     return response.data;
   },
 

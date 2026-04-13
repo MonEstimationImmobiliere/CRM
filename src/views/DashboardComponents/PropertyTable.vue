@@ -4,7 +4,6 @@
 </div>-->
 
   <div class="property-table-container">
-
     <el-table
       :data="filteredAddresses"
       :row-key="getRowKey"
@@ -43,45 +42,50 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Type" prop="property_type" sortable min-width="140">
-  <template #default="{ row }">
-    <el-icon class="icon-maison" v-if="getDisplayType(row) === 'Maison'">
-      <House />
-    </el-icon>
+      <el-table-column
+        label="Type"
+        prop="property_type"
+        sortable
+        min-width="140"
+      >
+        <template #default="{ row }">
+          <el-icon class="icon-maison" v-if="getDisplayType(row) === 'Maison'">
+            <House />
+          </el-icon>
 
-    <el-icon
-      class="icon-appartement"
-      v-else-if="getDisplayType(row) === 'Appartement'"
-    >
-      <OfficeBuilding />
-    </el-icon>
+          <el-icon
+            class="icon-appartement"
+            v-else-if="getDisplayType(row) === 'Appartement'"
+          >
+            <OfficeBuilding />
+          </el-icon>
 
-    <el-icon
-      class="icon-immeuble"
-      v-else-if="getDisplayType(row) === 'Immeuble'"
-    >
-      <OfficeBuilding />
-    </el-icon>
+          <el-icon
+            class="icon-immeuble"
+            v-else-if="getDisplayType(row) === 'Immeuble'"
+          >
+            <OfficeBuilding />
+          </el-icon>
 
-    <el-icon
-      class="icon-commerce"
-      v-else-if="
-        getDisplayType(row) === 'Commerce' ||
-        getDisplayType(row) === 'Local commercial'
-      "
-    >
-      <OfficeBuilding />
-    </el-icon>
+          <el-icon
+            class="icon-commerce"
+            v-else-if="
+              getDisplayType(row) === 'Commerce' ||
+              getDisplayType(row) === 'Local commercial'
+            "
+          >
+            <OfficeBuilding />
+          </el-icon>
 
-    <el-icon class="icon-inconnu" v-else>
-      <QuestionFilled />
-    </el-icon>
+          <el-icon class="icon-inconnu" v-else>
+            <QuestionFilled />
+          </el-icon>
 
-    <span style="margin-left: 6px">{{ getDisplayType(row) }}</span>
-    <span v-if="row.unit_label"> / {{ row.unit_label }}</span>
-    <span v-else-if="row.apart_number"> / {{ row.apart_number }}</span>
-  </template>
-</el-table-column>
+          <span style="margin-left: 6px">{{ getDisplayType(row) }}</span>
+          <span v-if="row.unit_label"> / {{ row.unit_label }}</span>
+          <span v-else-if="row.apart_number"> / {{ row.apart_number }}</span>
+        </template>
+      </el-table-column>
 
       <el-table-column
         label="Surface"
@@ -179,22 +183,15 @@
       >
         <template #default="{ row }">
           <div class="action-buttons">
-<el-button
-  @click.stop="toggleFavorite(row)"
-  size="small"
-  circle
->
-  <el-icon>
-    <StarFilled
-      v-if="Number(row.favorite) === 1 || row.favorite === true"
-      style="color: #f56c6c"
-    />
-    <Star
-      v-else
-      style="color: #909399"
-    />
-  </el-icon>
-</el-button>
+            <el-button @click.stop="toggleFavorite(row)" size="small" circle>
+              <el-icon>
+                <StarFilled
+                  v-if="Number(row.favorite) === 1 || row.favorite === true"
+                  style="color: #f56c6c"
+                />
+                <Star v-else style="color: #909399" />
+              </el-icon>
+            </el-button>
             <el-button
               type="primary"
               size="small"
@@ -245,7 +242,9 @@ function isFavoriteValue(value: unknown): boolean {
 }
 
 const getRowKey = (row: any) => {
-  return Number(row.id) > 0 ? `property_${row.id}` : `address_${row.id_fantoir_long}`;
+  return Number(row.id) > 0
+    ? `property_${row.id}`
+    : `address_${row.id_fantoir_long}`;
 };
 
 function getMonthsDiff(dateRappel: string | null): number {
@@ -380,7 +379,9 @@ const toggleFavorite = async (row: any) => {
     row.id = savedRow.id;
     row.favorite = savedRow.favorite;
 
-    ElMessage.success(savedRow.favorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
+    ElMessage.success(
+      savedRow.favorite ? 'Ajouté aux favoris' : 'Retiré des favoris'
+    );
 
     dashboardStore.updateAddress({
       ...row,
@@ -394,7 +395,9 @@ const toggleFavorite = async (row: any) => {
 };
 
 function getDisplayType(row: any): string {
-  const type = (row.property_type || row.type_code || '').toString().toLowerCase();
+  const type = (row.property_type || row.type_code || '')
+    .toString()
+    .toLowerCase();
 
   switch (type) {
     case 'maison':

@@ -1,7 +1,12 @@
 /**
  * Types de propriétés disponibles
  */
-export type PropertyType = 'maison' | 'appartement' | 'immeuble' | 'terrain' | null;
+export type PropertyType =
+  | 'maison'
+  | 'appartement'
+  | 'immeuble'
+  | 'terrain'
+  | null;
 
 /**
  * Types de chauffage

@@ -162,8 +162,6 @@ const sortedReminders = computed(() => sortReminders(reminders.value, 'desc'));
 // Counts
 const overdueCounts = computed(
   () =>
-   
-      
     reminders.value.filter(r => isOverdue(r.date, r.completed) && !r.completed)
       .length
 );

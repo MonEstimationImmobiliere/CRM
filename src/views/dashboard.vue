@@ -1,175 +1,168 @@
 <template>
   <section class="block dashboardContainer">
+    <div class="headerFilterInfoContainer">
+      <!-- LIGNE 1 -->
+      <div class="headerTopRow">
+        <div class="autoCompleteContainer">
+          <CityAutocomplete
+            v-model="selectedCity"
+            @select="handleCitySelect"
+            @clear="handleCityClear"
+          />
 
+          <StreetAutocomplete
+            v-model="selectedStreet"
+            :code-insee="selectedCodeInsee"
+            @select="handleStreetSelect"
+            @clear="handleStreetClear"
+          />
 
-<div class="headerFilterInfoContainer">
-  <!-- LIGNE 1 -->
-  <div class="headerTopRow">
-    <div class="autoCompleteContainer">
-      <CityAutocomplete
-        v-model="selectedCity"
-        @select="handleCitySelect"
-        @clear="handleCityClear"
-      />
+          <NumeroAutocomplete
+            v-model="selectedNumeroFull"
+            :id-fantoir="selectedCodeIdFantoir"
+            @select="handleNumeroSelect"
+            @clear="handleNumeroClear"
+          />
+        </div>
 
-      <StreetAutocomplete
-        v-model="selectedStreet"
-        :code-insee="selectedCodeInsee"
-        @select="handleStreetSelect"
-        @clear="handleStreetClear"
-      />
+        <div class="headerRightContainer">
+          <div class="ownerSearchContainer">
+            <el-input
+              v-model="selectedOwnerName"
+              clearable
+              placeholder="Nom du propriétaire"
+              @keyup.enter="dashboardStore.querySearchAddress()"
+            />
+          </div>
 
-      <NumeroAutocomplete
-        v-model="selectedNumeroFull"
-        :id-fantoir="selectedCodeIdFantoir"
-        @select="handleNumeroSelect"
-        @clear="handleNumeroClear"
-      />
-    </div>
-
-    <div class="headerRightContainer">
-      <div class="ownerSearchContainer">
-        <el-input
-          v-model="selectedOwnerName"
-          clearable
-          placeholder="Nom du propriétaire"
-          @keyup.enter="dashboardStore.querySearchAddress()"
-        />
+          <ViewToggle v-model="viewType" :options="viewOptions" />
+        </div>
       </div>
 
-      <ViewToggle v-model="viewType" :options="viewOptions" />
+      <!-- LIGNE 2 -->
+      <div class="headerBottomRow">
+        <div class="modeBar">
+          <button
+            class="modePill"
+            :class="{ active: dashboardStore.activeMainMode === 'prospection' }"
+            @click="dashboardStore.setMainMode('prospection')"
+          >
+            <span class="modeDot prospection"></span>
+            Prospection
+          </button>
+
+          <button
+            class="modePill"
+            :class="{ active: dashboardStore.activeMainMode === 'favorites' }"
+            @click="dashboardStore.setMainMode('favorites')"
+          >
+            <span class="modeDot favoris"></span>
+            Favoris
+          </button>
+
+          <button
+            class="modePill"
+            :class="{ active: dashboardStore.activeMainMode === 'estimations' }"
+            @click="dashboardStore.setMainMode('estimations')"
+          >
+            <span class="modeDot estimations"></span>
+            Estimations
+          </button>
+
+          <button
+            class="modePill"
+            :class="{ active: dashboardStore.activeMainMode === 'rappels' }"
+            @click="dashboardStore.setMainMode('rappels')"
+          >
+            <span class="modeDot rappels"></span>
+            Rappels
+          </button>
+
+          <div class="modeWithFilter">
+            <button
+              class="modePill"
+              :class="{ active: dashboardStore.activeMainMode === 'maj' }"
+              @click="dashboardStore.setMainMode('maj')"
+            >
+              <span class="modeDot maj"></span>
+              MAJ
+            </button>
+
+            <el-select
+              v-if="dashboardStore.activeMainMode === 'maj'"
+              v-model="dashboardStore.majFilterRange"
+              size="small"
+              class="modeSelect"
+              @change="dashboardStore.querySearchAddress()"
+            >
+              <el-option label="< 7 jours" value="7d" />
+              <el-option label="< 30 jours" value="30d" />
+              <el-option label="< 3 mois" value="3m" />
+              <el-option label="< 6 mois" value="6m" />
+            </el-select>
+          </div>
+
+                  <div class="modeWithFilter">
+                    <button
+                          class="modePill"
+                          :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
+                          :disabled="
+                         
+                   !dashboardStore.selectedCodeInsee
+                &&
+              
+                            !dashboardStore.selectedCity
+                          "
+                          @click="dashboardStore.setMainMode('dpe')"
+                        >
+                          <span class="modeDot dpe"></span>
+              DPE
+                    </button>
+        
+                    <el-select
+                      v-if="dashboardStore.activeMainMode === 'dpe'"
+                      v-model="dashboardStore.dpeFilterRange"
+                      size="small"
+                      class="modeSelect"
+                      @change="dashboardStore.querySearchAddress()"
+                          >
+                            <el-option label="Dernier mois" value="1m" />
+                            <el-option label="3 derniers mois" value="3m" />
+                      <el-option label="6 derniers mois" value="6m" />
+                            </el-select>
+          </div>
+
+          <!-- DVF -->
+          <div class="modeWithFilter">
+            <button
+              class="modePill"
+              :class="{ active: dashboardStore.activeMainMode === 'dvf' }"
+              @click="dashboardStore.setMainMode('dvf')"
+            >
+              <span class="modeDot dvf"></span>
+              DVF
+            </button>
+
+            <el-select
+              v-if="dashboardStore.activeMainMode === 'dvf'"
+              v-model="dashboardStore.dvfFilterRange"
+              size="small"
+              class="modeSelect"
+              @change="dashboardStore.querySearchAddress()"
+            >
+              <el-option label="< 1 an" value="1y" />
+              <el-option label="< 2 ans" value="2y" />
+              <el-option label="< 3 ans" value="3y" />
+              <el-option label="< 5 ans" value="5y" />
+            </el-select>
+          </div>
+        </div>
+      </div>
     </div>
-  </div>
-
-  <!-- LIGNE 2 -->
-<div class="headerBottomRow">
-<div class="modeBar">
-
-  <button
-    class="modePill"
-    :class="{ active: dashboardStore.activeMainMode === 'prospection' }"
-    @click="dashboardStore.setMainMode('prospection')"
-  >
-    <span class="modeDot prospection"></span>
-    Prospection
-  </button>
-
-
-  <button
-    class="modePill"
-    :class="{ active: dashboardStore.activeMainMode === 'favorites' }"
-    @click="dashboardStore.setMainMode('favorites')"
-  >
-    <span class="modeDot favoris"></span>
-    Favoris
-  </button>
-
-
-  <button
-    class="modePill"
-    :class="{ active: dashboardStore.activeMainMode === 'estimations' }"
-    @click="dashboardStore.setMainMode('estimations')"
-  >
-    <span class="modeDot estimations"></span>
-    Estimations
-  </button>
-
-
-  <button
-    class="modePill"
-    :class="{ active: dashboardStore.activeMainMode === 'rappels' }"
-    @click="dashboardStore.setMainMode('rappels')"
-  >
-    <span class="modeDot rappels"></span>
-    Rappels
-  </button>
-
-  <div class="modeWithFilter">
-  <button
-    class="modePill"
-    :class="{ active: dashboardStore.activeMainMode === 'maj' }"
-    @click="dashboardStore.setMainMode('maj')"
-  >
-    <span class="modeDot maj"></span>
-    MAJ
-  </button>
-
-  <el-select
-    v-if="dashboardStore.activeMainMode === 'maj'"
-    v-model="dashboardStore.majFilterRange"
-    size="small"
-    class="modeSelect"
-    @change="dashboardStore.querySearchAddress()"
-  >
-    <el-option label="< 7 jours" value="7d" />
-    <el-option label="< 30 jours" value="30d" />
-    <el-option label="< 3 mois" value="3m" />
-    <el-option label="< 6 mois" value="6m" />
-  </el-select>
-</div>
-
-
-  <!-- DPE -->
-  <div class="modeWithFilter">
-<button
-  class="modePill"
-  :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
-  :disabled="!dashboardStore.selectedCodeInsee && !dashboardStore.selectedCity"
-  @click="dashboardStore.setMainMode('dpe')"
->
-  <span class="modeDot dpe"></span>
-  DPE
-</button>
-
-    <el-select
-      v-if="dashboardStore.activeMainMode === 'dpe'"
-      v-model="dashboardStore.dpeFilterRange"
-      size="small"
-      class="modeSelect"
-      @change="dashboardStore.querySearchAddress()"
-    >
-      <el-option label="Dernier mois" value="1m" />
-<el-option label="3 derniers mois" value="3m" />
-<el-option label="6 derniers mois" value="6m" />
-<el-option label="12 derniers mois" value="1y" />
-    </el-select>
-  </div>
-
-
-  <!-- DVF -->
-  <div class="modeWithFilter">
-    <button
-      class="modePill"
-      :class="{ active: dashboardStore.activeMainMode === 'dvf' }"
-      @click="dashboardStore.setMainMode('dvf')"
-    >
-      <span class="modeDot dvf"></span>
-      DVF
-    </button>
-
-    <el-select
-      v-if="dashboardStore.activeMainMode === 'dvf'"
-      v-model="dashboardStore.dvfFilterRange"
-      size="small"
-      class="modeSelect"
-      @change="dashboardStore.querySearchAddress()"
-    >
-      <el-option label="< 1 an" value="1y" />
-      <el-option label="< 2 ans" value="2y" />
-      <el-option label="< 3 ans" value="3y" />
-      <el-option label="< 5 ans" value="5y" />
-    </el-select>
-  </div>
-
-</div>
-</div>
-
-  </div>
-
 
     <!-- TABLE DES ADRESSES -->
-    <div
-       v-if="viewType === 'table' && dashboardStore.activeMainMode !== 'dpe'"
+   <div
+      v-if="viewType === 'table' && dashboardStore.activeMainMode !== 'dpe'"
       v-loading="isLoading"
       element-loading-text="Chargement des adresses..."
       element-loading-background="rgba(255, 255, 255, 0.8)"
@@ -191,14 +184,14 @@
       :addresses="addresses as IAddressDetail[]"
       @edit-property="openPropertyDialog"
     />
-
-<MapView
-  v-show="viewType === 'map'"
-  :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
-  :city-center="dashboardStore.cityCenter"
-  :dpe-points="dashboardStore.dpePoints"
-  @edit-property="openPropertyDialog"
-/>
+    
+        <MapView
+          v-show="viewType === 'map'"
+          :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
+          :city-center="dashboardStore.cityCenter"
+          :dpe-points="dashboardStore.dpePoints"
+          @edit-property="openPropertyDialog"
+    />
 
     <PropertyForm />
     <CreateCustomPropertyDialog />
@@ -206,8 +199,6 @@
 </template>
 
 <script setup lang="ts">
-
-
 /* ------------------------------------
       IMPORTS
 ------------------------------------ */
@@ -230,8 +221,6 @@ import PropertyForm from './DashboardComponents/PropertyDialog.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
 import Button from '@/components/OwnReusableComponents/button/Button.vue';
-
-
 
 /* ------------------------------------
       STORES
@@ -324,7 +313,11 @@ watch(
       COMPUTED BINDINGS
 ------------------------------------ */
 const mapAddresses = computed(() => {
-  return dashboardStore.activeMainMode === 'dpe' ? [] : dashboardStore.addresses;
+   
+   
+  return dashboardStore.activeMainMode === 'dpe'
+    ? []
+    : dashboardStore.addresses;
 });
 
 const selectedOwnerName = computed({
@@ -528,8 +521,6 @@ const handleTableNumeroClick = (row: {
 const querySearchEstimation = async () => {
   await dashboardStore.querySearchEstimation();
 };
-
-
 
 /* ------------------------------------
       VIEW SWITCH

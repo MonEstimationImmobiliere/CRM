@@ -15,22 +15,18 @@
         <div></div>
         <h4 :id="titleId" class="titleHeader">{{ dialogTitle }}</h4>
         <div class="header-actions">
-<el-button
-  @click="toggleFavorite"
-  size="small"
-  circle
->
-  <el-icon>
-    <StarFilled
-      v-if="Number(store.selectedProperty?.favorite) === 1 || store.selectedProperty?.favorite === true"
-      style="color: #f56c6c"
-    />
-    <Star
-      v-else
-      style="color: #909399"
-    />
-  </el-icon>
-</el-button>
+          <el-button @click="toggleFavorite" size="small" circle>
+            <el-icon>
+              <StarFilled
+                v-if="
+                  Number(store.selectedProperty?.favorite) === 1 ||
+                  store.selectedProperty?.favorite === true
+                "
+                style="color: #f56c6c"
+              />
+              <Star v-else style="color: #909399" />
+            </el-icon>
+          </el-button>
         </div>
       </div>
     </template>
@@ -80,14 +76,18 @@
             <div class="card-content">
               <el-form-item label="Type de bien">
                 <el-radio-group
-                  :model-value="store.selectedProperty?.property_type ?? 'inconnu'"
+                  :model-value="
+                    store.selectedProperty?.property_type ?? 'inconnu'
+                  "
                   @update:model-value="
                     store.selectedProperty!.property_type = $event as any
                   "
                   size="large"
                 >
                   <!-- CAS ADDRESS (property racine) -->
-                  <template v-if="store.selectedProperty?.row_type === 'address'">
+                  <template
+                    v-if="store.selectedProperty?.row_type === 'address'"
+                  >
                     <el-radio-button label="inconnu">Inconnu</el-radio-button>
                     <el-radio-button label="maison">Maison</el-radio-button>
                     <el-radio-button label="immeuble">Immeuble</el-radio-button>
@@ -96,23 +96,29 @@
                   </template>
 
                   <!-- CAS UNIT -->
-                  <template v-else-if="store.selectedProperty?.row_type === 'unit'">
-                    <el-radio-button label="appartement">Appartement</el-radio-button>
-                    <el-radio-button label="local_commercial">Local commercial</el-radio-button>
+                  <template
+                    v-else-if="store.selectedProperty?.row_type === 'unit'"
+                  >
+                    <el-radio-button label="appartement"
+                      >Appartement</el-radio-button
+                    >
+                    <el-radio-button label="local_commercial"
+                      >Local commercial</el-radio-button
+                    >
                     <el-radio-button label="parking">Parking</el-radio-button>
                     <el-radio-button label="cave">Cave</el-radio-button>
                   </template>
                 </el-radio-group>
               </el-form-item>
 
- <el-button
-  v-if="store.selectedProperty?.row_type === 'address'"
-  type="primary"
-  size="small"
-  @click="openUnitDialog"
->
-  Créer une unit
-</el-button>
+              <el-button
+                v-if="store.selectedProperty?.row_type === 'address'"
+                type="primary"
+                size="small"
+                @click="openUnitDialog"
+              >
+                Créer une unit
+              </el-button>
               <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <el-form-item label="Année de construction">
                   <el-input-number
@@ -561,7 +567,7 @@
 
         <el-button type="primary" @click="saveProperty" size="large">
           <!-- {{ isEditing ? 'Sauvegarder' : 'Créer' }} -->
-            Sauvegarder
+          Sauvegarder
         </el-button>
       </div>
     </el-form>
@@ -574,10 +580,7 @@
     :property-address="propertyAddress"
   />
 
-  <UnitDialog
-  v-model="showUnitDialog"
-  @save="createUnit"
-/>
+  <UnitDialog v-model="showUnitDialog" @save="createUnit" />
 </template>
 
 <script setup lang="ts">
@@ -656,7 +659,8 @@ const createUnit = async (payload: {
       id: 0,
       row_type: 'unit',
       unit_id: createdUnit.id,
-      id_fantoir_long: createdUnit.id_fantoir_long || rootProperty.id_fantoir_long,
+      id_fantoir_long:
+        createdUnit.id_fantoir_long || rootProperty.id_fantoir_long,
       id_fantoir: createdUnit.id_fantoir || rootProperty.id_fantoir,
       code_insee: createdUnit.code_insee || rootProperty.code_insee,
       code_postal: createdUnit.code_postal || rootProperty.code_postal,
@@ -696,7 +700,9 @@ const visible = computed<boolean>({
   set: (value: boolean) => store.setDialogVisible(value),
 });
 
-const isEditing = computed<boolean>(() => Number(store.selectedProperty?.id ?? 0) > 0);
+const isEditing = computed<boolean>(
+  () => Number(store.selectedProperty?.id ?? 0) > 0
+);
 
 const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return 'Nouvelle propriété';
@@ -704,10 +710,10 @@ const dialogTitle = computed<string>(() => {
   const codePostal = store.selectedProperty.code_postal || '';
   // Récupérer la ville depuis le store dashboard (input sélectionné) - city contient le nom de la ville
   const city =
-  (dashboardStore.selectedCity as any)?.city ||
-  store.selectedProperty.nom_commune ||
-  store.selectedProperty.city ||
-  '';
+    (dashboardStore.selectedCity as any)?.city ||
+    store.selectedProperty.nom_commune ||
+    store.selectedProperty.city ||
+    '';
   const numero = store.selectedProperty.numero || '';
   const rep = store.selectedProperty.rep
     ? ` ${store.selectedProperty.rep}`
@@ -736,7 +742,9 @@ const saveProperty = async (): Promise<void> => {
   const filteredProperty = { ...store.selectedProperty } as any;
   delete filteredProperty.comment_rappel;
 
-  filteredProperty.id_fantoir_long = String(store.selectedProperty.id_fantoir_long || '');
+  filteredProperty.id_fantoir_long = String(
+    store.selectedProperty.id_fantoir_long || ''
+  );
 
   try {
     console.log('saveProperty payload avant envoi', filteredProperty);
@@ -824,9 +832,9 @@ const toggleFavorite = async () => {
   }
 };
 
-function isFavoriteValue(value: unknown): boolean {
-  return value === true || value === 'true' || value === 1 || value === '1';
-}
+// function isFavoriteValue(value: unknown): boolean {
+//   return value === true || value === 'true' || value === 1 || value === '1';
+// }
 </script>
 
 <style scoped>
