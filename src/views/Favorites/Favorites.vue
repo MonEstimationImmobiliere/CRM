@@ -96,7 +96,7 @@ import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
 import { DataBoard, Grid } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
-import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
+import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
 

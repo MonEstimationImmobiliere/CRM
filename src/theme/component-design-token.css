@@ -1,0 +1,31 @@
+@import './general-design-tokens.css';
+@import './unified-theme.css';
+
+:root {
+  /* ===================================
+   * CARD
+   * =================================== */
+
+  --ion-padding-card: 20px;
+  --ion-margin-bottom-header: 0.75rem;
+
+  /* ===================================
+   * HEARDER
+   * =================================== */
+  --ion-gap-header: 1rem;
+  --ion-gap-header-left: 0.5rem;
+  --ion-gap-header-right: 0.5rem;
+
+  /* ===================================
+   * INPUT
+   * =================================== */
+
+  --ion-input-border-radius: var(--ion-radius-lg);
+  --ion-input-height: var(--ion-size-10);
+
+  /* ===================================
+   * SLIDER
+   * =================================== */
+  --ion-slider-thumb-size: 20px;
+  --ion-color-primary-slider: #2257d3;
+}

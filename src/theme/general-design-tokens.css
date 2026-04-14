@@ -1,0 +1,232 @@
+/* Design Tokens - Centralized CSS variables for consistent design system */
+
+:root {
+  /* ===================================
+   * FONT FAMILY
+   * =================================== */
+  --ion-font-family: 'Montserrat', sans-serif;
+  --ion-font-family-base: 'Montserrat', sans-serif;
+  --ion-font-family-heading: 'Montserrat', sans-serif;
+  --ion-font-family-mono:
+    'SF Mono', 'Monaco', 'Inconsolata', 'Fira Code', 'Fira Mono', 'Droid Sans Mono',
+    'Source Code Pro', monospace;
+  /* ===================================
+   * FONT SIZE - Typography Scale
+   * =================================== */
+  --ion-text-2xs: 0.625rem; /* 10px */
+  --ion-text-xs: 0.75rem; /* 12px */
+  --ion-text-sm: 0.875rem; /* 14px */
+  --ion-text-base: 1rem; /* 16px */
+  --ion-text-md: 1.125rem; /* 18px */
+  --ion-text-lg: 1.25rem; /* 20px */
+  --ion-text-xl: 1.5rem; /* 24px */
+  --ion-text-2xl: 1.875rem; /* 30px */
+  --ion-text-3xl: 2.25rem; /* 36px */
+  --ion-text-4xl: 3rem; /* 48px */
+  --ion-text-5xl: 3.75rem; /* 60px */
+
+  /* ===================================
+   * FONT WEIGHT
+   * =================================== */
+  --ion-font-thin: 100;
+  --ion-font-extralight: 200;
+  --ion-font-light: 300;
+  --ion-font-normal: 400;
+  --ion-font-medium: 500;
+  --ion-font-semibold: 600;
+  --ion-font-bold: 700;
+  --ion-font-extrabold: 800;
+  --ion-font-black: 900;
+
+  /* ===================================
+   * LINE HEIGHT
+   * =================================== */
+  --ion-leading-none: 1;
+  --ion-leading-tight: 1.25;
+  --ion-leading-snug: 1.375;
+  --ion-leading-normal: 1.5;
+  --ion-leading-relaxed: 1.625;
+  --ion-leading-loose: 2;
+
+  /* ===================================
+   * LETTER SPACING
+   * =================================== */
+  --ion-tracking-tighter: -0.05em;
+  --ion-tracking-tight: -0.025em;
+  --ion-tracking-normal: 0;
+  --ion-tracking-wide: 0.025em;
+  --ion-tracking-wider: 0.05em;
+  --ion-tracking-widest: 0.1em;
+
+  /* ===================================
+   * BORDER RADIUS
+   * =================================== */
+  --ion-radius-none: 0;
+  --ion-radius-xs: 0.125rem; /* 2px */
+  --ion-radius-sm: 0.25rem; /* 4px */
+  --ion-radius-md: 0.375rem; /* 6px */
+  --ion-radius-base: 0.5rem; /* 8px */
+  --ion-radius-lg: 0.75rem; /* 12px */
+  --ion-radius-xl: 1rem; /* 16px */
+  --ion-radius-2xl: 1.5rem; /* 24px */
+  --ion-radius-3xl: 2rem; /* 32px */
+  --ion-radius-full: 9999px;
+  --ion-radius-pill: 50rem;
+
+  /* ===================================
+   * SPACING SCALE
+   * =================================== */
+  --ion-space-0: 0;
+  --ion-space-px: 1px;
+  --ion-space-0-5: 0.125rem; /* 2px */
+  --ion-space-1: 0.25rem; /* 4px */
+  --ion-space-1-5: 0.375rem; /* 6px */
+  --ion-space-2: 0.5rem; /* 8px */
+  --ion-space-2-5: 0.625rem; /* 10px */
+  --ion-space-3: 0.75rem; /* 12px */
+  --ion-space-3-5: 0.875rem; /* 14px */
+  --ion-space-4: 1rem; /* 16px */
+  --ion-space-5: 1.25rem; /* 20px */
+  --ion-space-6: 1.5rem; /* 24px */
+  --ion-space-7: 1.75rem; /* 28px */
+  --ion-space-8: 2rem; /* 32px */
+  --ion-space-9: 2.25rem; /* 36px */
+  --ion-space-10: 2.5rem; /* 40px */
+  --ion-space-11: 2.75rem; /* 44px */
+  --ion-space-12: 3rem; /* 48px */
+  --ion-space-14: 3.5rem; /* 56px */
+  --ion-space-16: 4rem; /* 64px */
+  --ion-space-20: 5rem; /* 80px */
+  --ion-space-24: 6rem; /* 96px */
+  --ion-space-28: 7rem; /* 112px */
+  --ion-space-32: 8rem; /* 128px */
+
+  /* ===================================
+   * BORDER WIDTH
+   * =================================== */
+  --ion-border-0: 0;
+  --ion-border-1: 1px;
+  --ion-border-2: 2px;
+  --ion-border-3: 3px;
+  --ion-border-4: 4px;
+  --ion-border-8: 8px;
+
+  /* ===================================
+   * BOX SHADOW
+   * =================================== */
+  --ion-shadow-none: none;
+  --ion-shadow-xs: 0 1px 2px 0 rgb(0 0 0 / 0.05);
+  --ion-shadow-sm: 0 1px 3px 0 rgb(0 0 0 / 0.1), 0 1px 2px -1px rgb(0 0 0 / 0.1);
+  --ion-shadow-md: 0 4px 6px -1px rgb(0 0 0 / 0.1), 0 2px 4px -2px rgb(0 0 0 / 0.1);
+  --ion-shadow-lg: 0 10px 15px -3px rgb(0 0 0 / 0.1), 0 4px 6px -4px rgb(0 0 0 / 0.1);
+  --ion-shadow-xl: 0 20px 25px -5px rgb(0 0 0 / 0.1), 0 8px 10px -6px rgb(0 0 0 / 0.1);
+  --ion-shadow-2xl: 0 25px 50px -12px rgb(0 0 0 / 0.25);
+  --ion-shadow-inner: inset 0 2px 4px 0 rgb(0 0 0 / 0.05);
+  --ion-shadow-outline: 0 0 0 3px rgba(9, 22, 103, 0.5);
+
+  /* ===================================
+   * TRANSITION DURATION
+   * =================================== */
+  --ion-duration-75: 75ms;
+  --ion-duration-100: 100ms;
+  --ion-duration-150: 150ms;
+  --ion-duration-200: 200ms;
+  --ion-duration-300: 300ms;
+  --ion-duration-500: 500ms;
+  --ion-duration-700: 700ms;
+  --ion-duration-1000: 1000ms;
+
+  /* ===================================
+   * TRANSITION TIMING FUNCTION
+   * =================================== */
+  --ion-ease-linear: linear;
+  --ion-ease-in: cubic-bezier(0.4, 0, 1, 1);
+  --ion-ease-out: cubic-bezier(0, 0, 0.2, 1);
+  --ion-ease-in-out: cubic-bezier(0.4, 0, 0.2, 1);
+  --ion-ease-bounce: cubic-bezier(0.68, -0.55, 0.265, 1.55);
+
+  /* ===================================
+   * Z-INDEX SCALE
+   * =================================== */
+  --ion-z-0: 0;
+  --ion-z-10: 10;
+  --ion-z-20: 20;
+  --ion-z-30: 30;
+  --ion-z-40: 40;
+  --ion-z-50: 50;
+  --ion-z-dropdown: 100;
+  --ion-z-sticky: 200;
+  --ion-z-fixed: 300;
+  --ion-z-modal-backdrop: 400;
+  --ion-z-modal: 500;
+  --ion-z-popover: 600;
+  --ion-z-tooltip: 700;
+  --ion-z-toast: 800;
+  --ion-z-max: 9999;
+
+  /* ===================================
+   * OPACITY
+   * =================================== */
+  --ion-opacity-0: 0;
+  --ion-opacity-5: 0.05;
+  --ion-opacity-10: 0.1;
+  --ion-opacity-20: 0.2;
+  --ion-opacity-25: 0.25;
+  --ion-opacity-30: 0.3;
+  --ion-opacity-40: 0.4;
+  --ion-opacity-50: 0.5;
+  --ion-opacity-60: 0.6;
+  --ion-opacity-70: 0.7;
+  --ion-opacity-75: 0.75;
+  --ion-opacity-80: 0.8;
+  --ion-opacity-90: 0.9;
+  --ion-opacity-95: 0.95;
+  --ion-opacity-100: 1;
+
+  /* ===================================
+   * ASPECT RATIO
+   * =================================== */
+  --ion-aspect-auto: auto;
+  --ion-aspect-square: 1 / 1;
+  --ion-aspect-video: 16 / 9;
+  --ion-aspect-portrait: 3 / 4;
+  --ion-aspect-landscape: 4 / 3;
+
+  /* ===================================
+   * CONTAINER MAX WIDTHS
+   * =================================== */
+  --ion-container-xs: 20rem; /* 320px */
+  --ion-container-sm: 24rem; /* 384px */
+  --ion-container-md: 28rem; /* 448px */
+  --ion-container-lg: 32rem; /* 512px */
+  --ion-container-xl: 36rem; /* 576px */
+  --ion-container-2xl: 42rem; /* 672px */
+  --ion-container-3xl: 48rem; /* 768px */
+  --ion-container-4xl: 56rem; /* 896px */
+  --ion-container-5xl: 64rem; /* 1024px */
+  --ion-container-6xl: 72rem; /* 1152px */
+  --ion-container-7xl: 80rem; /* 1280px */
+  --ion-container-full: 100%;
+
+  /* ===================================
+   * BLUR
+   * =================================== */
+  --ion-blur-none: 0;
+  --ion-blur-sm: 4px;
+  --ion-blur-md: 8px;
+  --ion-blur-lg: 12px;
+  --ion-blur-xl: 16px;
+  --ion-blur-2xl: 24px;
+  --ion-blur-3xl: 40px;
+
+  /* ===================================
+   * GAP
+   * =================================== */
+  --ion-gap-xs: 0.25rem; /* 4px */
+  --ion-gap-sm: 0.5rem; /* 8px */
+  --ion-gap-md: 0.75rem; /* 12px */
+  --ion-gap-lg: 1rem; /* 16px */
+  --ion-gap-xl: 1.5rem; /* 24px */
+  --ion-gap-2xl: 2rem; /* 32px */
+  --ion-gap-3xl: 3rem; /* 48px */
+}

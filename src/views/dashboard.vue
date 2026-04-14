@@ -102,34 +102,31 @@
             </el-select>
           </div>
 
-                  <div class="modeWithFilter">
-                    <button
-                          class="modePill"
-                          :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
-                          :disabled="
-                         
-                   !dashboardStore.selectedCodeInsee
-                &&
-              
-                            !dashboardStore.selectedCity
-                          "
-                          @click="dashboardStore.setMainMode('dpe')"
-                        >
-                          <span class="modeDot dpe"></span>
+          <div class="modeWithFilter">
+            <button
+              class="modePill"
+              :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
+              :disabled="
+                !dashboardStore.selectedCodeInsee &&
+                !dashboardStore.selectedCity
+              "
+              @click="dashboardStore.setMainMode('dpe')"
+            >
+              <span class="modeDot dpe"></span>
               DPE
-                    </button>
-        
-                    <el-select
-                      v-if="dashboardStore.activeMainMode === 'dpe'"
-                      v-model="dashboardStore.dpeFilterRange"
-                      size="small"
-                      class="modeSelect"
-                      @change="dashboardStore.querySearchAddress()"
-                          >
-                            <el-option label="Dernier mois" value="1m" />
-                            <el-option label="3 derniers mois" value="3m" />
-                      <el-option label="6 derniers mois" value="6m" />
-                            </el-select>
+            </button>
+
+            <el-select
+              v-if="dashboardStore.activeMainMode === 'dpe'"
+              v-model="dashboardStore.dpeFilterRange"
+              size="small"
+              class="modeSelect"
+              @change="dashboardStore.querySearchAddress()"
+            >
+              <el-option label="Dernier mois" value="1m" />
+              <el-option label="3 derniers mois" value="3m" />
+              <el-option label="6 derniers mois" value="6m" />
+            </el-select>
           </div>
 
           <!-- DVF -->
@@ -161,7 +158,7 @@
     </div>
 
     <!-- TABLE DES ADRESSES -->
-   <div
+    <div
       v-if="viewType === 'table' && dashboardStore.activeMainMode !== 'dpe'"
       v-loading="isLoading"
       element-loading-text="Chargement des adresses..."
@@ -184,13 +181,13 @@
       :addresses="addresses as IAddressDetail[]"
       @edit-property="openPropertyDialog"
     />
-    
-        <MapView
-          v-show="viewType === 'map'"
-          :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
-          :city-center="dashboardStore.cityCenter"
-          :dpe-points="dashboardStore.dpePoints"
-          @edit-property="openPropertyDialog"
+
+    <MapView
+      v-show="viewType === 'map'"
+      :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
+      :city-center="dashboardStore.cityCenter"
+      :dpe-points="dashboardStore.dpePoints"
+      @edit-property="openPropertyDialog"
     />
 
     <PropertyForm />
@@ -217,7 +214,7 @@ import StreetAutocomplete from './DashboardComponents/Input/StreetAutocomplete.v
 import NumeroAutocomplete from './DashboardComponents/Input/NumeroAutocomplete.vue';
 import PropertyTable from './DashboardComponents/PropertyTable.vue';
 import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
-import PropertyForm from './DashboardComponents/PropertyDialog.vue';
+import PropertyForm from './DashboardComponents/PropertyDialog/index.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
 import Button from '@/components/OwnReusableComponents/button/Button.vue';
@@ -313,8 +310,6 @@ watch(
       COMPUTED BINDINGS
 ------------------------------------ */
 const mapAddresses = computed(() => {
-   
-   
   return dashboardStore.activeMainMode === 'dpe'
     ? []
     : dashboardStore.addresses;

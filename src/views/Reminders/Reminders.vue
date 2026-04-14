@@ -100,7 +100,7 @@ import ReminderFilters from './components/ReminderFilters.vue';
 import ReminderCard from './components/ReminderCard.vue';
 import RemindersTable from './components/RemindersTable.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
-import PropertyForm from '@/views/DashboardComponents/PropertyDialog.vue';
+import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
 const remindersStore = useRemindersStore();

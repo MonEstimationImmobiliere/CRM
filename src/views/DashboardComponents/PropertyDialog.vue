@@ -1,7 +1,7 @@
 <template>
   <el-drawer
     v-model="visible"
-    size="40%"
+    size="50%"
     :style="{
       borderRadius: '10px',
       height: '98%',
@@ -857,7 +857,7 @@ const toggleFavorite = async () => {
 }
 
 .property-tabs {
-  background-color: white;
+  background-color: red;
   border-radius: 8px;
   box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
 }

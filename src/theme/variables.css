@@ -1,0 +1,290 @@
+/* For information on how to create your own theme, please see:
+http://ionicframework.com/docs/theming/ */
+
+@import '../theme/unified-theme.css';
+
+/* Device-specific utility classes */
+/* These classes are automatically added to the body by the device detection plugin */
+
+/* Mobile-specific styles */
+.device-mobile {
+  --app-padding: 16px;
+  --card-margin: 16px;
+  --content-max-width: 100%;
+}
+
+/* Tablet-specific styles */
+.device-tablet {
+  --app-padding: 24px;
+  --card-margin: 20px;
+  --content-max-width: 768px;
+}
+
+/* Desktop-specific styles */
+.device-desktop {
+  --app-padding: 32px;
+  --card-margin: 24px;
+  --content-max-width: 1200px;
+}
+
+/* Touch device optimizations */
+.touch-device {
+  /* Larger touch targets */
+  --touch-target-size: 44px;
+
+  /* Remove hover effects that don't work on touch */
+  --hover-opacity: 1;
+  --hover-transform: none;
+}
+
+.no-touch {
+  /* Smaller targets for mouse/keyboard users */
+  --touch-target-size: 32px;
+
+  /* Enable hover effects */
+  --hover-opacity: 0.8;
+  --hover-transform: scale(1.02);
+}
+
+/* Orientation-specific styles */
+.orientation-portrait {
+  /* Portrait mode: optimize for vertical scrolling */
+  --content-padding-top: 20px;
+}
+
+.orientation-landscape {
+  /* Landscape mode: optimize for horizontal layout */
+  --content-padding-top: 16px;
+}
+
+/* Utility classes for responsive design */
+.mobile-only {
+  display: block;
+}
+
+.tablet-only,
+.desktop-only {
+  display: none;
+}
+
+.device-tablet .mobile-only,
+.device-desktop .mobile-only {
+  display: none;
+}
+
+.device-tablet .tablet-only {
+  display: block;
+}
+
+.device-desktop .desktop-only {
+  display: block;
+}
+
+/* Responsive grid system */
+.responsive-grid {
+  display: grid;
+  gap: var(--app-padding);
+  padding: var(--app-padding);
+}
+
+.device-mobile .responsive-grid {
+  grid-template-columns: 1fr;
+}
+
+.device-tablet .responsive-grid {
+  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+}
+
+.device-desktop .responsive-grid {
+  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
+}
+
+/* Global background styles */
+ion-content {
+  --background: transparent;
+}
+
+ion-modal {
+  --border-radius: 24px;
+  --width: auto;
+  --height: auto;
+  --background: var(--ion-card-background, #ffffff);
+}
+
+ion-modal::part(content) {
+  background: var(--ion-card-background, #ffffff);
+}
+
+/* Ensure consistent modal background across all platforms */
+.ios ion-modal,
+.md ion-modal {
+  --background: var(--ion-card-background, #ffffff) !important;
+  --ion-background-color: var(--ion-card-background, #ffffff) !important;
+}
+
+.ios ion-modal::part(content),
+.md ion-modal::part(content) {
+  background: var(--ion-card-background, #ffffff) !important;
+}
+
+/* Override Ionic dark mode modal background (prefers-color-scheme: dark) */
+@media (prefers-color-scheme: dark) {
+  :root.ios ion-modal,
+  :root.md ion-modal {
+    --ion-background-color: var(--ion-card-background, #ffffff) !important;
+    --background: var(--ion-card-background, #ffffff) !important;
+  }
+
+  :root.ios ion-modal::part(content),
+  :root.md ion-modal::part(content) {
+    background: var(--ion-card-background, #ffffff) !important;
+  }
+}
+
+/* ===================================
+ * GLOBAL INPUT STYLES
+ * Utilise les variables CSS du unified-theme.css
+ * =================================== */
+
+/* Ion Input */
+ion-input {
+  --background: var(--ion-input-background);
+  --color: var(--ion-input-color);
+  --placeholder-color: var(--ion-input-placeholder-color);
+  --border-color: var(--ion-input-border-color);
+  --border-radius: 10px;
+  --border-width: 1px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+ion-input::part(native) {
+  color: var(--ion-input-color);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+ion-input::part(label) {
+  color: var(--ion-text-color-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+ion-input::part(placeholder) {
+  color: var(--ion-input-placeholder-color);
+  opacity: 0.9;
+}
+
+ion-input:hover {
+  --border-color: var(--ion-input-border-color-hover);
+}
+
+ion-input:focus-within {
+  --border-color: var(--ion-input-border-color-focus);
+  --box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.18);
+}
+
+/* Ion Textarea */
+ion-textarea {
+  --background: var(--ion-input-background);
+  --color: var(--ion-input-color);
+  --placeholder-color: var(--ion-input-placeholder-color);
+  --border-color: var(--ion-input-border-color);
+  --border-radius: 10px;
+  --border-width: 1px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+ion-textarea::part(native) {
+  color: var(--ion-input-color);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+ion-textarea::part(label) {
+  color: var(--ion-text-color-secondary);
+  font-weight: 600;
+  font-size: 13px;
+  margin-bottom: 8px;
+}
+
+ion-textarea::part(placeholder) {
+  color: var(--ion-input-placeholder-color);
+  opacity: 0.9;
+}
+
+ion-textarea:hover {
+  --border-color: var(--ion-input-border-color-hover);
+}
+
+ion-textarea:focus-within {
+  --border-color: var(--ion-input-border-color-focus);
+  --box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.18);
+}
+
+/* Ion Select */
+ion-select {
+  --background: var(--ion-input-background);
+  --color: var(--ion-input-color);
+  --placeholder-color: var(--ion-input-placeholder-color);
+  --border-color: var(--ion-input-border-color);
+  --border-radius: 10px;
+  --border-width: 1px;
+  --padding-start: 14px;
+  --padding-end: 14px;
+  --padding-top: 12px;
+  --padding-bottom: 12px;
+  transition:
+    border-color 0.2s ease,
+    box-shadow 0.2s ease;
+}
+
+ion-select::part(text) {
+  color: var(--ion-input-color);
+  font-weight: 500;
+  font-size: 16px;
+}
+
+ion-select::part(placeholder) {
+  color: var(--ion-input-placeholder-color);
+  font-weight: 500;
+}
+
+ion-select:hover {
+  --border-color: var(--ion-input-border-color-hover);
+}
+
+ion-select:focus-within {
+  --border-color: var(--ion-input-border-color-focus);
+  --box-shadow: 0 0 0 3px rgba(var(--ion-color-primary-rgb), 0.18);
+}
+
+/* Ion Searchbar */
+ion-searchbar {
+  --background: var(--ion-input-background);
+  --color: var(--ion-input-color);
+  --placeholder-color: var(--ion-input-placeholder-color);
+  --icon-color: var(--ion-icon-color-primary);
+  --clear-button-color: var(--ion-icon-color-primary);
+  --border-radius: 10px;
+}
+
+ion-searchbar .searchbar-input {
+  color: var(--ion-input-color);
+}
+
+ion-searchbar:focus-within {
+  --border-color: var(--ion-input-border-color-focus);
+}

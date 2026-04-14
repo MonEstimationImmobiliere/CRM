@@ -4,6 +4,10 @@
 @import url('./_dashboard.css');
 @import url('./_apple-components.css');
 @import url('./_apple-utilities.css');
+@import url('../theme/unified-theme.css');
+@import url('../theme//general-design-tokens.css');
+@import url('../theme/component-design-token.css');
+@import url('../theme//variables.css');
 
 * {
   margin: 0;
