@@ -1,110 +1,131 @@
 <template>
-  <el-drawer
-    v-model="visible"
-    size="50%"
-    :show-close="false"
-    :style="{
-      borderRadius: '10px',
-      height: '98%',
-      bottom: 0,
-      backgroundColor: 'var(--ion-background-color)',
-      top: 'unset',
-      '--el-drawer-padding-primary': '0',
-    }"
-  >
-    <template #header="{ titleId }">
-      <div class="header-container">
-        <button
-          type="button"
-          class="el-button el-button--default app-button empty-default-slot icon-only squared border"
-          @click="closeDialog"
-        >
-          <!----><!----><span
-            ><div
-              data-v-3a4a5748=""
-              class="icon-wrapper"
-              style="width: 16px; height: 16px"
-            >
-              <svg
-                data-v-bc71ed1a=""
-                data-v-3a4a5748=""
-                xmlns="http://www.w3.org/2000/svg"
-                fill="currentColor"
-                viewBox="0 0 24 24"
-                data-path="Bold.InterfaceEssential.FormValidation.Close"
-                class="icon icon start fill"
-                style="--icon-size: 16px"
-              >
-                <path
-                  d="M14.3 12.18a.24.24 0 0 1 0-.35l9.26-9.27a1.49 1.49 0 0 0 0-2.12 1.51 1.51 0 0 0-2.12 0L12.18 9.7a.25.25 0 0 1-.36 0L2.56.44a1.51 1.51 0 0 0-2.12 0 1.49 1.49 0 0 0 0 2.12l9.26 9.27a.24.24 0 0 1 0 .35L.44 21.44a1.49 1.49 0 0 0 0 2.12 1.51 1.51 0 0 0 2.12 0l9.26-9.26a.25.25 0 0 1 .36 0l9.26 9.26a1.51 1.51 0 0 0 2.12 0 1.49 1.49 0 0 0 0-2.12Z"
-                ></path>
-              </svg>
-            </div>
-            <!----><!----><!----></span
-          >
-        </button>
-        <div></div>
-        <h4 :id="titleId" class="title-header">{{ dialogTitle }}</h4>
-        <div class="header-actions">
-          <el-button @click="toggleFavorite" size="small" circle>
-            <el-icon>
-              <StarFilled
-                v-if="
-                  Number(store.selectedProperty?.favorite) === 1 ||
-                  store.selectedProperty?.favorite === true
-                "
-                style="color: #f56c6c"
-              />
-              <Star v-else style="color: #909399" />
-            </el-icon>
-          </el-button>
-        </div>
-      </div>
-    </template>
-
-    <el-form
-      v-if="store.selectedProperty"
-      :model="store.selectedProperty"
-      label-width="180px"
-      class="property-form"
+  <Teleport to="body">
+    <el-drawer
+      v-model="visible"
+      size="40%"
+      :show-close="false"
+      modal-class="darker-drawer-overlay"
+      :style="{
+        borderRadius: '10px',
+        height: '98%',
+        bottom: 0,
+        backgroundColor: 'var(--ion-background-color)',
+        top: 'unset',
+        '--el-drawer-padding-primary': '0',
+      }"
     >
-      <el-tabs v-model="activeTab" class="property-tabs">
-        <el-tab-pane label="Contact" name="contact">
-          <ContactTab />
-        </el-tab-pane>
+      <template #header="{ titleId }">
+        <div class="header-container">
+          <button
+            type="button"
+            class="el-button el-button--default app-button empty-default-slot icon-only squared border"
+            @click="closeDialog"
+          >
+            <!----><!----><span
+              ><div
+                data-v-3a4a5748=""
+                class="icon-wrapper"
+                style="width: 16px; height: 16px"
+              >
+                <svg
+                  data-v-bc71ed1a=""
+                  data-v-3a4a5748=""
+                  xmlns="http://www.w3.org/2000/svg"
+                  fill="currentColor"
+                  viewBox="0 0 24 24"
+                  data-path="Bold.InterfaceEssential.FormValidation.Close"
+                  class="icon icon start fill"
+                  style="--icon-size: 16px"
+                >
+                  <path
+                    d="M14.3 12.18a.24.24 0 0 1 0-.35l9.26-9.27a1.49 1.49 0 0 0 0-2.12 1.51 1.51 0 0 0-2.12 0L12.18 9.7a.25.25 0 0 1-.36 0L2.56.44a1.51 1.51 0 0 0-2.12 0 1.49 1.49 0 0 0 0 2.12l9.26 9.27a.24.24 0 0 1 0 .35L.44 21.44a1.49 1.49 0 0 0 0 2.12 1.51 1.51 0 0 0 2.12 0l9.26-9.26a.25.25 0 0 1 .36 0l9.26 9.26a1.51 1.51 0 0 0 2.12 0 1.49 1.49 0 0 0 0-2.12Z"
+                  ></path>
+                </svg>
+              </div>
+              <!----><!----><!----></span
+            >
+          </button>
+          <div></div>
+          <h4 :id="titleId" class="title-header">{{ dialogTitle }}</h4>
+          <div class="header-actions">
+            <el-button @click="toggleFavorite" size="small" circle>
+              <el-icon>
+                <StarFilled
+                  v-if="
+                    Number(store.selectedProperty?.favorite) === 1 ||
+                    store.selectedProperty?.favorite === true
+                  "
+                  style="color: #f56c6c"
+                />
+                <Star v-else style="color: #909399" />
+              </el-icon>
+            </el-button>
+          </div>
+        </div>
+      </template>
 
-        <el-tab-pane label="Caractéristiques" name="characteristics">
-          <CharacteristicsTab @open-unit-dialog="openUnitDialog" />
-        </el-tab-pane>
+      <el-form
+        v-if="store.selectedProperty"
+        :model="store.selectedProperty"
+        label-width="180px"
+        class="property-form"
+        @submit.prevent
+      >
+        <el-tabs v-model="activeTab" class="property-tabs">
+          <el-tab-pane
+            n
+            e
+            label="Contact"
+            name="contact"
+            :disabled="isTypeUndefined"
+          >
+            <ContactTab />
+          </el-tab-pane>
 
-        <el-tab-pane label="Commentaires" name="comments">
-          <CommentsTab />
-        </el-tab-pane>
+          <el-tab-pane label="Caractéristiques" name="characteristics">
+            <CharacteristicsTab
+              :property-type="propertyType"
+              @open-unit-dialog="openUnitDialog"
+            />
+          </el-tab-pane>
 
-        <el-tab-pane label="Rappels" name="reminders">
-          <RemindersTab />
-        </el-tab-pane>
-      </el-tabs>
+          <el-tab-pane
+            label="Commentaires"
+            name="comments"
+            :disabled="isTypeUndefined"
+          >
+            <CommentsTab />
+          </el-tab-pane>
 
-      <div class="dialog-footer">
-        <!-- <el-button @click="closeDialog" size="large">Annuler</el-button> -->
-        <Button type="primary" @click="saveProperty"> Sauvegarder </Button>
-        <Button @click="openReminderDialog"> Créer un rappel </Button>
-      </div>
-    </el-form>
-  </el-drawer>
+          <el-tab-pane
+            label="Rappels"
+            name="reminders"
+            :disabled="isTypeUndefined"
+          >
+            <RemindersTab />
+          </el-tab-pane>
+        </el-tabs>
 
-  <PropertyReminderForm
-    v-model="showReminderDialog"
-    :property-id="store.selectedProperty?.id ?? 0"
-    :property-address="propertyAddress"
-  />
+        <div class="dialog-footer">
+          <!-- <el-button @click="closeDialog" size="large">Annuler</el-button> -->
+          <Button type="primary" @click="saveProperty"> Sauvegarder </Button>
+          <Button @click="openReminderDialog"> Créer un rappel </Button>
+        </div>
+      </el-form>
+    </el-drawer>
 
-  <UnitDialog v-model="showUnitDialog" @save="createUnit" />
+    <PropertyReminderForm
+      v-model="showReminderDialog"
+      :property-id="store.selectedProperty?.id ?? 0"
+      :property-address="propertyAddress"
+    />
+
+    <UnitDialog v-model="showUnitDialog" @save="createUnit" />
+  </Teleport>
 </template>
 
 <script setup lang="ts">
-import { computed, ref } from 'vue';
+import { computed, ref, watch } from 'vue';
 import {
   ElForm,
   ElIcon,
@@ -133,7 +154,22 @@ const { selectedCity } = useDashboardStore();
 
 const showUnitDialog = ref(false);
 const showReminderDialog = ref(false);
-const activeTab = ref('contact');
+const activeTab = ref('characteristics');
+
+const propertyType = computed<string>(
+  () => (store.selectedProperty as any)?.property_type ?? ''
+);
+
+const isTypeUndefined = computed<boolean>(
+  () => !propertyType.value || propertyType.value === 'inconnu'
+);
+
+// Forcer l'onglet Caractéristiques tant que le type n'est pas défini
+watch(isTypeUndefined, isUndefined => {
+  if (isUndefined) {
+    activeTab.value = 'characteristics';
+  }
+});
 
 const visible = computed<boolean>({
   get: () => store.isDialogVisible,
@@ -414,5 +450,11 @@ const toggleFavorite = async () => {
 
 :deep(.el-drawer.ltr) {
   top: unset !important;
+}
+</style>
+
+<style>
+.darker-drawer-overlay {
+  background-color: rgba(0, 0, 0, 0.75) !important;
 }
 </style>
