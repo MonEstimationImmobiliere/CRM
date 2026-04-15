@@ -102,15 +102,9 @@
             name="reminders"
             :disabled="isTypeUndefined"
           >
-            <RemindersTab />
+            <RemindersTab @open-reminder-dialog="openReminderDialog" />
           </el-tab-pane>
         </el-tabs>
-
-        <div class="dialog-footer">
-          <!-- <el-button @click="closeDialog" size="large">Annuler</el-button> -->
-          <Button type="primary" @click="saveProperty"> Sauvegarder </Button>
-          <Button @click="openReminderDialog"> Créer un rappel </Button>
-        </div>
       </el-form>
     </el-drawer>
 
@@ -146,7 +140,6 @@ import CommentsTab from './CommentsTab.vue';
 import RemindersTab from './RemindersTab.vue';
 import PropertyReminderForm from '../PropertyReminderForm.vue';
 import UnitDialog from '../UnitDialog.vue';
-import Button from '@/components/OwnReusableComponents/button/Button.vue';
 
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
@@ -173,7 +166,13 @@ watch(isTypeUndefined, isUndefined => {
 
 const visible = computed<boolean>({
   get: () => store.isDialogVisible,
-  set: (value: boolean) => store.setDialogVisible(value),
+  set: async (value: boolean) => {
+    if (!value) {
+      await saveProperty();
+      store.selectProperty(null);
+    }
+    store.setDialogVisible(value);
+  },
 });
 
 const isEditing = computed<boolean>(
@@ -203,8 +202,7 @@ const propertyAddress = computed(() =>
 );
 
 const closeDialog = (): void => {
-  store.setDialogVisible(false);
-  store.selectProperty(null);
+  visible.value = false;
 };
 
 const openUnitDialog = () => {
@@ -248,7 +246,6 @@ const saveProperty = async (): Promise<void> => {
     }
 
     ElMessage.success('Propriété sauvegardée');
-    closeDialog();
   } catch (error: any) {
     console.error('Error saving property:', error);
     ElMessage.error(
@@ -414,14 +411,6 @@ const toggleFavorite = async () => {
 :deep(.el-tabs__active-bar) {
   background-color: var(--ion-text-color);
   height: var(--ion-border-3);
-}
-
-.dialog-footer {
-  display: flex;
-  justify-content: flex-start;
-  gap: var(--ion-space-4);
-  margin-top: var(--ion-space-6);
-  padding: 0 var(--ion-space-5);
 }
 
 .title-header {
