@@ -1,6 +1,6 @@
 <template>
   <section class="block dashboardContainer">
-    <div class="headerFilterInfoContainer">
+    <EMCard class="headerFilterInfoContainer" :border-hover="false">
       <!-- LIGNE 1 -->
       <div class="headerTopRow">
         <div class="autoCompleteContainer">
@@ -23,18 +23,18 @@
             @select="handleNumeroSelect"
             @clear="handleNumeroClear"
           />
-        </div>
-
-        <div class="headerRightContainer">
-          <div class="ownerSearchContainer">
+          <div>
             <el-input
               v-model="selectedOwnerName"
               clearable
+              size="large"
               placeholder="Nom du propriétaire"
               @keyup.enter="dashboardStore.querySearchAddress()"
             />
           </div>
+        </div>
 
+        <div class="headerRightContainer">
           <ViewToggle v-model="viewType" :options="viewOptions" />
         </div>
       </div>
@@ -155,7 +155,7 @@
           </div>
         </div>
       </div>
-    </div>
+    </EMCard>
 
     <!-- TABLE DES ADRESSES -->
     <div
@@ -200,7 +200,7 @@
       IMPORTS
 ------------------------------------ */
 import { computed, onMounted, watch } from 'vue';
-import { DataBoard, Grid, Location } from '@element-plus/icons-vue';
+import { DataBoard, Location } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
 
 // Stores
@@ -217,7 +217,6 @@ import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog/index.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
-import Button from '@/components/OwnReusableComponents/button/Button.vue';
 
 /* ------------------------------------
       STORES
@@ -309,11 +308,11 @@ watch(
 /* ------------------------------------
       COMPUTED BINDINGS
 ------------------------------------ */
-const mapAddresses = computed(() => {
-  return dashboardStore.activeMainMode === 'dpe'
-    ? []
-    : dashboardStore.addresses;
-});
+// const mapAddresses = computed(() => {
+//   return dashboardStore.activeMainMode === 'dpe'
+//     ? []
+//     : dashboardStore.addresses;
+// });
 
 const selectedOwnerName = computed({
   get: () => dashboardStore.selectedOwnerName,
@@ -513,9 +512,9 @@ const handleTableNumeroClick = (row: {
 //   await dashboardStore.querySearchAddress();
 // };
 
-const querySearchEstimation = async () => {
-  await dashboardStore.querySearchEstimation();
-};
+// const querySearchEstimation = async () => {
+//   await dashboardStore.querySearchEstimation();
+// };
 
 /* ------------------------------------
       VIEW SWITCH
@@ -568,7 +567,7 @@ const openPropertyDialog = (property: any) => {
 .autoCompleteContainer {
   display: flex;
   align-items: center;
-  justify-content: center;
+  /* justify-content: center; */
   gap: 20px;
 }
 
@@ -585,27 +584,22 @@ const openPropertyDialog = (property: any) => {
   min-width: 0;
 }
 
-.ownerSearchContainer {
-  flex: 1;
-  min-width: 260px;
-  max-width: 520px;
-}
-
 .headerFilterInfoContainer {
-  display: flex;
+  /* display: flex;
   flex-direction: column;
   gap: 18px;
   margin-bottom: 20px;
   background: var(--apple-card-bg);
   padding: 20px;
   border-radius: var(--apple-radius);
-  box-shadow: var(--apple-shadow);
+  box-shadow: var(--apple-shadow); */
 }
 
 .headerTopRow {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  width: 100%;
   gap: 20px;
   flex-wrap: wrap;
 }
@@ -631,11 +625,6 @@ const openPropertyDialog = (property: any) => {
   align-items: center;
   gap: 16px;
   flex-wrap: wrap;
-}
-
-.ownerSearchContainer {
-  min-width: 260px;
-  max-width: 320px;
 }
 
 .modeBar {
