@@ -62,6 +62,12 @@ const displayValue = computed({
     return props.modelValue?.value || '';
   },
   set: val => {
+    // Si une ville était sélectionnée et l'utilisateur modifie le champ → clear
+    if (props.modelValue?.codeInsee) {
+      emit('update:modelValue', null);
+      emit('clear');
+      return;
+    }
     emit('update:modelValue', { value: val });
   },
 });
