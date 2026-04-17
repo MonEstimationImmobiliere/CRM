@@ -34,7 +34,7 @@
     <el-form
       v-if="store.selectedProperty"
       :model="store.selectedProperty"
-      label-width="180px"
+      label-position="top"
       class="property-form"
     >
       <el-tabs v-model="activeTab" class="property-tabs">

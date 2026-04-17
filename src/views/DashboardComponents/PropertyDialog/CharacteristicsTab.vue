@@ -80,209 +80,206 @@
         :border="true"
         :noShadow="true"
       >
-        <div class="card-content">
-          <el-form-item label="Type de bien">
-            <el-radio-group
-              :model-value="prop.property_type ?? 'inconnu'"
-              @update:model-value="prop.property_type = $event"
-              size="large"
-            >
-              <template v-if="prop.row_type === 'address'">
-                <el-radio-button label="inconnu">Inconnu</el-radio-button>
-                <el-radio-button label="maison">Maison</el-radio-button>
-                <el-radio-button label="immeuble">Immeuble</el-radio-button>
-                <el-radio-button label="terrain">Terrain</el-radio-button>
-                <el-radio-button label="commerce">Commerce</el-radio-button>
-              </template>
-              <template v-else-if="prop.row_type === 'unit'">
-                <el-radio-button label="appartement"
-                  >Appartement</el-radio-button
-                >
-                <el-radio-button label="local_commercial"
-                  >Local commercial</el-radio-button
-                >
-                <el-radio-button label="parking">Parking</el-radio-button>
-                <el-radio-button label="cave">Cave</el-radio-button>
-              </template>
-            </el-radio-group>
-          </el-form-item>
-
-          <el-button
-            v-if="prop.row_type === 'address'"
-            type="primary"
-            size="small"
-            @click="$emit('open-unit-dialog')"
+        <el-form-item label="Type de bien">
+          <el-radio-group
+            :model-value="prop.property_type ?? 'inconnu'"
+            @update:model-value="prop.property_type = $event"
+            label-position="top"
           >
-            Créer une unité
-          </el-button>
-
-          <div class="grid-row">
-            <el-form-item label="Année de construction">
-              <el-input-number
-                :model-value="prop.year_built ?? undefined"
-                @update:model-value="prop.year_built = $event ?? null"
-                :min="1800"
-                :max="currentYear"
-                size="large"
-                class="w-full"
-              />
-            </el-form-item>
-            <el-form-item label="Année d'acquisition">
-              <el-input-number
-                :model-value="prop.year_buy ?? undefined"
-                @update:model-value="prop.year_buy = $event ?? null"
-                :min="1800"
-                :max="currentYear"
-                size="large"
-                class="w-full"
-              />
-            </el-form-item>
-          </div>
-
-          <!-- Surfaces -->
-          <div class="grid-row">
-            <el-form-item label="Surface habitable">
-              <el-input-number
-                :model-value="prop.surface"
-                @update:model-value="prop.surface = $event"
-                :min="0"
-                :precision="2"
-                :step="1"
-                size="large"
-                class="w-full"
+            <template v-if="prop.row_type === 'address'">
+              <el-radio-button label="inconnu">Inconnu</el-radio-button>
+              <el-radio-button label="maison">Maison</el-radio-button>
+              <el-radio-button label="immeuble">Immeuble</el-radio-button>
+              <el-radio-button label="terrain">Terrain</el-radio-button>
+              <el-radio-button label="commerce">Commerce</el-radio-button>
+            </template>
+            <template v-else-if="prop.row_type === 'unit'">
+              <el-radio-button label="appartement">Appartement</el-radio-button>
+              <el-radio-button label="local_commercial"
+                >Local commercial</el-radio-button
               >
-                <template #suffix>m²</template>
-              </el-input-number>
-            </el-form-item>
-            <el-form-item
-              v-if="isType('maison', 'terrain', 'inconnu')"
-              label="Surface du terrain"
-            >
-              <el-input-number
-                :model-value="prop.area ?? undefined"
-                @update:model-value="prop.area = $event ?? null"
-                :min="0"
-                :precision="2"
-                :step="1"
-                size="large"
-                class="w-full"
-              >
-                <template #suffix>m²</template>
-              </el-input-number>
-            </el-form-item>
-          </div>
+              <el-radio-button label="parking">Parking</el-radio-button>
+              <el-radio-button label="cave">Cave</el-radio-button>
+            </template>
+          </el-radio-group>
+        </el-form-item>
 
-          <!-- Appartement / Local commercial : étage, lot, charges -->
-          <template v-if="isType('appartement', 'local_commercial')">
-            <div class="grid-row">
-              <el-form-item label="Étage">
-                <el-input-number
-                  :model-value="prop.floor ?? undefined"
-                  @update:model-value="prop.floor = $event ?? null"
-                  :min="0"
-                  size="large"
-                  class="w-full"
-                />
-              </el-form-item>
-              <el-form-item label="Numéro de lot">
-                <el-input
-                  :model-value="prop.lot_number ?? ''"
-                  @update:model-value="prop.lot_number = $event || null"
-                  size="large"
-                  class="w-full"
-                />
-              </el-form-item>
-            </div>
-            <el-form-item label="Charges copropriété (€/mois)">
-              <el-input-number
-                :model-value="prop.condo_fees ?? undefined"
-                @update:model-value="prop.condo_fees = $event ?? null"
-                :min="0"
-                :step="10"
-                size="large"
-                class="w-full"
-              />
-            </el-form-item>
-          </template>
+        <!-- <el-button
+          v-if="prop.row_type === 'address'"
+          type="primary"
+          size="small"
+          @click="$emit('open-unit-dialog')"
+        >
+          Créer une unité
+        </el-button> -->
 
-          <!-- Maison / Immeuble : niveaux -->
-          <el-form-item
-            v-if="isType('maison', 'immeuble')"
-            label="Nombre de niveaux"
-          >
+        <div class="grid-row">
+          <el-form-item label="Année de construction" label-position="top">
             <el-input-number
-              :model-value="prop.floors_count ?? undefined"
-              @update:model-value="prop.floors_count = $event ?? null"
-              :min="1"
+              label-position="top"
+              :model-value="prop.year_built ?? undefined"
+              @update:model-value="prop.year_built = $event ?? null"
+              :min="1800"
+              :max="currentYear"
               size="large"
               class="w-full"
             />
           </el-form-item>
-
-          <!-- Terrain : viabilisé, constructible, PLU -->
-          <template v-if="isType('terrain')">
-            <div class="checkbox-container">
-              <el-checkbox
-                :model-value="prop.serviced ?? false"
-                @update:model-value="prop.serviced = $event"
-                label="Viabilisé"
-                size="large"
-              />
-              <el-checkbox
-                :model-value="prop.buildable ?? false"
-                @update:model-value="prop.buildable = $event"
-                label="Constructible"
-                size="large"
-              />
-            </div>
-            <el-form-item label="Référence PLU">
-              <el-input
-                :model-value="prop.plu ?? ''"
-                @update:model-value="prop.plu = $event || null"
-                size="large"
-                class="w-full"
-                placeholder="Ex : Zone UA, UB..."
-              />
-            </el-form-item>
-          </template>
-
-          <!-- Commerce / Local commercial : surface utile, vitrine, bail, ERP -->
-          <template v-if="isType('commerce', 'local_commercial')">
-            <el-form-item label="Surface utile (m²)">
-              <el-input-number
-                :model-value="prop.usable_area ?? undefined"
-                @update:model-value="prop.usable_area = $event ?? null"
-                :min="0"
-                :precision="2"
-                size="large"
-                class="w-full"
-              />
-            </el-form-item>
-            <div class="checkbox-container">
-              <el-checkbox
-                :model-value="prop.storefront ?? false"
-                @update:model-value="prop.storefront = $event"
-                label="Vitrine"
-                size="large"
-              />
-              <el-checkbox
-                :model-value="prop.erp ?? false"
-                @update:model-value="prop.erp = $event"
-                label="ERP (Établissement Recevant du Public)"
-                size="large"
-              />
-            </div>
-            <el-form-item label="Type de bail commercial">
-              <el-input
-                :model-value="prop.commercial_lease ?? ''"
-                @update:model-value="prop.commercial_lease = $event || null"
-                size="large"
-                class="w-full"
-                placeholder="Ex : 3-6-9, précaire..."
-              />
-            </el-form-item>
-          </template>
+          <el-form-item label="Année d'acquisition" label-position="top">
+            <el-input-number
+              :model-value="prop.year_buy ?? undefined"
+              @update:model-value="prop.year_buy = $event ?? null"
+              :min="1800"
+              :max="currentYear"
+              size="large"
+              class="w-full"
+            />
+          </el-form-item>
         </div>
+
+        <!-- Surfaces -->
+        <div class="grid-row">
+          <el-form-item label="Surface habitable">
+            <el-input-number
+              :model-value="prop.surface"
+              @update:model-value="prop.surface = $event"
+              :min="0"
+              :precision="2"
+              :step="1"
+              size="large"
+              class="w-full"
+            >
+              <template #suffix>m²</template>
+            </el-input-number>
+          </el-form-item>
+          <el-form-item
+            v-if="isType('maison', 'terrain', 'inconnu')"
+            label="Surface du terrain"
+          >
+            <el-input-number
+              :model-value="prop.area ?? undefined"
+              @update:model-value="prop.area = $event ?? null"
+              :min="0"
+              :precision="2"
+              :step="1"
+              size="large"
+              class="w-full"
+            >
+              <template #suffix>m²</template>
+            </el-input-number>
+          </el-form-item>
+        </div>
+
+        <!-- Appartement / Local commercial : étage, lot, charges -->
+        <template v-if="isType('appartement', 'local_commercial')">
+          <div class="grid-row">
+            <el-form-item label="Étage">
+              <el-input-number
+                :model-value="prop.floor ?? undefined"
+                @update:model-value="prop.floor = $event ?? null"
+                :min="0"
+                size="large"
+                class="w-full"
+              />
+            </el-form-item>
+            <el-form-item label="Numéro de lot">
+              <el-input
+                :model-value="prop.lot_number ?? ''"
+                @update:model-value="prop.lot_number = $event || null"
+                size="large"
+                class="w-full"
+              />
+            </el-form-item>
+          </div>
+          <el-form-item label="Charges copropriété (€/mois)">
+            <el-input-number
+              :model-value="prop.condo_fees ?? undefined"
+              @update:model-value="prop.condo_fees = $event ?? null"
+              :min="0"
+              :step="10"
+              size="large"
+              class="w-full"
+            />
+          </el-form-item>
+        </template>
+
+        <!-- Maison / Immeuble : niveaux -->
+        <el-form-item
+          v-if="isType('maison', 'immeuble')"
+          label="Nombre de niveaux"
+        >
+          <el-input-number
+            :model-value="prop.floors_count ?? undefined"
+            @update:model-value="prop.floors_count = $event ?? null"
+            :min="1"
+            size="large"
+            class="w-full"
+          />
+        </el-form-item>
+
+        <!-- Terrain : viabilisé, constructible, PLU -->
+        <template v-if="isType('terrain')">
+          <div class="checkbox-container">
+            <el-checkbox
+              :model-value="prop.serviced ?? false"
+              @update:model-value="prop.serviced = $event"
+              label="Viabilisé"
+              size="large"
+            />
+            <el-checkbox
+              :model-value="prop.buildable ?? false"
+              @update:model-value="prop.buildable = $event"
+              label="Constructible"
+              size="large"
+            />
+          </div>
+          <el-form-item label="Référence PLU">
+            <el-input
+              :model-value="prop.plu ?? ''"
+              @update:model-value="prop.plu = $event || null"
+              size="large"
+              class="w-full"
+              placeholder="Ex : Zone UA, UB..."
+            />
+          </el-form-item>
+        </template>
+
+        <!-- Commerce / Local commercial : surface utile, vitrine, bail, ERP -->
+        <template v-if="isType('commerce', 'local_commercial')">
+          <el-form-item label="Surface utile (m²)">
+            <el-input-number
+              :model-value="prop.usable_area ?? undefined"
+              @update:model-value="prop.usable_area = $event ?? null"
+              :min="0"
+              :precision="2"
+              size="large"
+              class="w-full"
+            />
+          </el-form-item>
+          <div class="checkbox-container">
+            <el-checkbox
+              :model-value="prop.storefront ?? false"
+              @update:model-value="prop.storefront = $event"
+              label="Vitrine"
+              size="large"
+            />
+            <el-checkbox
+              :model-value="prop.erp ?? false"
+              @update:model-value="prop.erp = $event"
+              label="ERP (Établissement Recevant du Public)"
+              size="large"
+            />
+          </div>
+          <el-form-item label="Type de bail commercial">
+            <el-input
+              :model-value="prop.commercial_lease ?? ''"
+              @update:model-value="prop.commercial_lease = $event || null"
+              size="large"
+              class="w-full"
+              placeholder="Ex : 3-6-9, précaire..."
+            />
+          </el-form-item>
+        </template>
       </EMCard>
 
       <!-- Caractéristiques générales -->
@@ -330,22 +327,42 @@
             v-if="!isType('commerce', 'local_commercial', 'terrain')"
           >
             <el-form-item label="Chambres">
-              <el-input-number
+              <!-- <el-input-number
                 :model-value="prop.bedrooms ?? undefined"
                 @update:model-value="prop.bedrooms = $event ?? null"
                 :min="0"
                 size="large"
                 class="w-full"
-              />
-            </el-form-item>
-            <el-form-item label="Salles de bains">
-              <el-input-number
-                :model-value="prop.bathrooms"
-                @update:model-value="prop.bathrooms = $event"
-                :min="0"
+              /> -->
+              <el-select
+                :model-value="prop.bedrooms ?? undefined"
+                @update:model-value="prop.bedrooms = $event ?? null"
                 size="large"
-                class="w-full"
-              />
+              >
+                <el-option
+                  v-for="n in 9"
+                  :key="n"
+                  :value="String(n)"
+                  :label="String(n)"
+                />
+                <el-option value="10+" label="10+" />
+              </el-select>
+            </el-form-item>
+
+            <el-form-item label="Salles de bains">
+              <el-select
+                :model-value="prop.bathrooms ?? undefined"
+                @update:model-value="prop.bathrooms = $event ?? null"
+                size="large"
+              >
+                <el-option
+                  v-for="n in 9"
+                  :key="n"
+                  :value="String(n)"
+                  :label="String(n)"
+                />
+                <el-option value="10+" label="10+" />
+              </el-select>
             </el-form-item>
           </div>
         </div>
@@ -362,30 +379,38 @@
         :noShadow="true"
       >
         <div class="card-content-grid">
-          <el-checkbox
-            :model-value="prop.fitted_kitchen"
-            @update:model-value="prop.fitted_kitchen = $event"
-            label="Cuisine aménagée"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.equipped_kitchen"
-            @update:model-value="prop.equipped_kitchen = $event"
-            label="Cuisine équipée"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.american_kitchen"
-            @update:model-value="prop.american_kitchen = $event"
-            label="Cuisine américaine"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.scullery"
-            @update:model-value="prop.scullery = $event"
-            label="Arrière-cuisine"
-            size="large"
-          />
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.fitted_kitchen"
+              @update:model-value="prop.fitted_kitchen = $event"
+              size="large"
+            />
+            <span class="switch-label">Cuisine aménagée</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.equipped_kitchen"
+              @update:model-value="prop.equipped_kitchen = $event"
+              size="large"
+            />
+            <span class="switch-label">Cuisine équipée</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.american_kitchen"
+              @update:model-value="prop.american_kitchen = $event"
+              size="large"
+            />
+            <span class="switch-label">Cuisine américaine</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.scullery"
+              @update:model-value="prop.scullery = $event"
+              size="large"
+            />
+            <span class="switch-label">Arrière-cuisine</span>
+          </div>
         </div>
       </EMCard>
 
@@ -461,108 +486,132 @@
         :noShadow="true"
       >
         <div class="card-content-grid">
-          <el-checkbox
-            v-if="!isType('parking', 'cave')"
-            :model-value="prop.cheminee"
-            @update:model-value="prop.cheminee = $event"
-            label="Cheminée d'appoint"
-            size="large"
-          />
-          <el-checkbox
-            v-if="!isType('parking', 'cave')"
-            :model-value="prop.district_heating"
-            @update:model-value="prop.district_heating = $event"
-            label="Chauffage collectif"
-            size="large"
-          />
-          <el-checkbox
-            v-if="!isType('parking', 'cave')"
-            :model-value="prop.patio"
-            @update:model-value="prop.patio = $event"
-            label="Terrasse"
-            size="large"
-          />
-          <el-checkbox
+          <div v-if="!isType('parking', 'cave')" class="switch-item">
+            <el-switch
+              :model-value="prop.cheminee"
+              @update:model-value="prop.cheminee = $event"
+              size="large"
+            />
+            <span class="switch-label">Cheminée d'appoint</span>
+          </div>
+          <div v-if="!isType('parking', 'cave')" class="switch-item">
+            <el-switch
+              :model-value="prop.district_heating"
+              @update:model-value="prop.district_heating = $event"
+              size="large"
+            />
+            <span class="switch-label">Chauffage collectif</span>
+          </div>
+          <div v-if="!isType('parking', 'cave')" class="switch-item">
+            <el-switch
+              :model-value="prop.patio"
+              @update:model-value="prop.patio = $event"
+              size="large"
+            />
+            <span class="switch-label">Terrasse</span>
+          </div>
+          <div
             v-if="isType('maison', 'immeuble', 'inconnu')"
-            :model-value="prop.garage"
-            @update:model-value="prop.garage = $event"
-            label="Garage"
-            size="large"
-          />
-          <el-checkbox
-            v-if="isType('maison', 'inconnu')"
-            :model-value="prop.pool"
-            @update:model-value="prop.pool = $event"
-            label="Piscine"
-            size="large"
-          />
-          <el-checkbox
-            v-if="!isType('parking', 'cave')"
-            :model-value="prop.veranda"
-            @update:model-value="prop.veranda = $event"
-            label="Véranda"
-            size="large"
-          />
-          <el-checkbox
-            v-if="isType('maison', 'inconnu')"
-            :model-value="prop.garden"
-            @update:model-value="prop.garden = $event"
-            label="Jardin"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.parking"
-            @update:model-value="prop.parking = $event"
-            label="Parking privé"
-            size="large"
-          />
-          <el-checkbox
-            v-if="isType('maison', 'inconnu')"
-            :model-value="prop.carport"
-            @update:model-value="prop.carport = $event"
-            label="Carport"
-            size="large"
-          />
-          <el-checkbox
-            v-if="!isType('parking', 'cave', 'terrain')"
-            :model-value="prop.kitchen_ext"
-            @update:model-value="prop.kitchen_ext = $event"
-            label="Cuisine extérieure"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.elevator"
-            @update:model-value="prop.elevator = $event"
-            label="Ascenseur"
-            size="large"
-          />
-          <el-checkbox
-            v-if="!isType('parking')"
-            :model-value="prop.balcony"
-            @update:model-value="prop.balcony = $event"
-            label="Balcon"
-            size="large"
-          />
-          <el-checkbox
-            :model-value="prop.cellar"
-            @update:model-value="prop.cellar = $event"
-            label="Cave"
-            size="large"
-          />
-          <el-checkbox
+            class="switch-item"
+          >
+            <el-switch
+              :model-value="prop.garage"
+              @update:model-value="prop.garage = $event"
+              size="large"
+            />
+            <span class="switch-label">Garage</span>
+          </div>
+          <div v-if="isType('maison', 'inconnu')" class="switch-item">
+            <el-switch
+              :model-value="prop.pool"
+              @update:model-value="prop.pool = $event"
+              size="large"
+            />
+            <span class="switch-label">Piscine</span>
+          </div>
+          <div v-if="!isType('parking', 'cave')" class="switch-item">
+            <el-switch
+              :model-value="prop.veranda"
+              @update:model-value="prop.veranda = $event"
+              size="large"
+            />
+            <span class="switch-label">Véranda</span>
+          </div>
+          <div v-if="isType('maison', 'inconnu')" class="switch-item">
+            <el-switch
+              :model-value="prop.garden"
+              @update:model-value="prop.garden = $event"
+              size="large"
+            />
+            <span class="switch-label">Jardin</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.parking"
+              @update:model-value="prop.parking = $event"
+              size="large"
+            />
+            <span class="switch-label">Parking privé</span>
+          </div>
+          <div v-if="isType('maison', 'inconnu')" class="switch-item">
+            <el-switch
+              :model-value="prop.carport"
+              @update:model-value="prop.carport = $event"
+              size="large"
+            />
+            <span class="switch-label">Carport</span>
+          </div>
+          <div v-if="!isType('parking', 'cave', 'terrain')" class="switch-item">
+            <el-switch
+              :model-value="prop.kitchen_ext"
+              @update:model-value="prop.kitchen_ext = $event"
+              size="large"
+            />
+            <span class="switch-label">Cuisine extérieure</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.elevator"
+              @update:model-value="prop.elevator = $event"
+              size="large"
+            />
+            <span class="switch-label">Ascenseur</span>
+          </div>
+          <div v-if="!isType('parking')" class="switch-item">
+            <el-switch
+              :model-value="prop.balcony"
+              @update:model-value="prop.balcony = $event"
+              size="large"
+            />
+            <span class="switch-label">Balcon</span>
+          </div>
+          <div class="switch-item">
+            <el-switch
+              :model-value="prop.cellar"
+              @update:model-value="prop.cellar = $event"
+              size="large"
+            />
+            <span class="switch-label">Cave</span>
+          </div>
+          <div
             v-if="isType('immeuble', 'appartement', 'inconnu')"
-            :model-value="prop.bike_room"
-            @update:model-value="prop.bike_room = $event"
-            label="Local vélo"
-            size="large"
-          />
-          <el-checkbox
-            v-if="isType('immeuble', 'inconnu')"
-            :model-value="prop.guardian"
-            @update:model-value="prop.guardian = $event"
-            label="Gardien"
-            size="large"
-          />
+            class="switch-item"
+          >
+            <el-switch
+              :model-value="prop.bike_room"
+              @update:model-value="prop.bike_room = $event"
+              size="large"
+            />
+            <span class="switch-label">Local vélo</span>
+          </div>
+          <div v-if="isType('immeuble', 'inconnu')" class="switch-item">
+            <el-switch
+              :model-value="prop.guardian"
+              @update:model-value="prop.guardian = $event"
+              size="large"
+            />
+            <span class="switch-label">Gardien</span>
+          </div>
         </div>
       </EMCard>
 
@@ -586,37 +635,45 @@
               <el-radio-button label="plat">Toit plat</el-radio-button>
             </el-radio-group>
           </el-form-item>
-          <div class="checkbox-container">
-            <el-checkbox
-              :model-value="prop.adjoining"
-              @update:model-value="prop.adjoining = $event"
-              label="Mitoyenneté"
-              size="large"
-            />
-            <el-checkbox
-              :model-value="prop.basement"
-              @update:model-value="prop.basement = $event"
-              label="Sous-sol"
-              size="large"
-            />
-            <el-checkbox
-              :model-value="prop.dependency"
-              @update:model-value="prop.dependency = $event"
-              label="Dépendance"
-              size="large"
-            />
-            <el-checkbox
-              :model-value="prop.ground"
-              @update:model-value="prop.ground = $event"
-              label="Plain-pied"
-              size="large"
-            />
+          <div class="card-content-grid">
+            <div class="switch-item">
+              <el-switch
+                :model-value="prop.adjoining"
+                @update:model-value="prop.adjoining = $event"
+                size="large"
+              />
+              <span class="switch-label">Mitoyenneté</span>
+            </div>
+            <div class="switch-item">
+              <el-switch
+                :model-value="prop.basement"
+                @update:model-value="prop.basement = $event"
+                size="large"
+              />
+              <span class="switch-label">Sous-sol</span>
+            </div>
+            <div class="switch-item">
+              <el-switch
+                :model-value="prop.dependency"
+                @update:model-value="prop.dependency = $event"
+                size="large"
+              />
+              <span class="switch-label">Dépendance</span>
+            </div>
+            <div class="switch-item">
+              <el-switch
+                :model-value="prop.ground"
+                @update:model-value="prop.ground = $event"
+                size="large"
+              />
+              <span class="switch-label">Plain-pied</span>
+            </div>
           </div>
         </div>
       </EMCard>
 
       <!-- Commentaires -->
-      <EMCard
+      <!-- <EMCard
         title="Commentaires"
         titleSize="S"
         :border="true"
@@ -631,7 +688,7 @@
             placeholder="Ajoutez vos commentaires ici..."
           />
         </div>
-      </EMCard>
+      </EMCard> -->
 
       <!-- Prix estimé -->
       <EMCard title="Prix estimé" titleSize="S" :border="true" :noShadow="true">
@@ -663,7 +720,7 @@ import {
   ElRadioGroup,
   ElRadioButton,
   ElCheckbox,
-  ElButton,
+  ElSwitch,
   ElSelect,
   ElOption,
   ElInput,
@@ -890,11 +947,6 @@ function onNoUnit() {
 }
 
 /* ── Formulaire ── */
-.card-content {
-  display: flex;
-  flex-direction: column;
-  gap: var(--ion-space-3);
-}
 
 .card-content-grid {
   display: grid;
@@ -902,9 +954,22 @@ function onNoUnit() {
   gap: var(--ion-space-3);
 }
 
+.switch-item {
+  display: flex;
+  align-items: center;
+  /* justify-content: space-between; */
+  gap: var(--ion-space-3);
+}
+
+.switch-label {
+  font-size: var(--ion-text-sm);
+  color: var(--ion-text-color);
+  font-weight: var(--ion-font-medium, 500);
+}
+
 .grid-row {
-  display: grid;
-  grid-template-columns: 1fr 1fr;
+  display: flex;
+  flex-wrap: wrap;
   gap: var(--ion-space-4);
 }
 
@@ -931,9 +996,17 @@ function onNoUnit() {
 }
 
 /* ── Deep overrides ── */
+:deep(.el-form-item) {
+  display: flex;
+  flex-direction: column;
+}
 :deep(.el-form-item__label) {
   color: var(--ion-text-color);
   font-weight: var(--ion-font-medium);
+  justify-content: flex-start;
+}
+:deep(.el-form-item__content) {
+  margin-left: 0 !important;
 }
 :deep(.el-radio-group) {
   display: flex;

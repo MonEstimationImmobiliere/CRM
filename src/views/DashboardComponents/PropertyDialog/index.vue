@@ -72,21 +72,18 @@
         @submit.prevent
       >
         <el-tabs v-model="activeTab" class="property-tabs">
-          <el-tab-pane
-            n
-            e
-            label="Contact"
-            name="contact"
-            :disabled="isTypeUndefined"
-          >
-            <ContactTab />
-          </el-tab-pane>
-
           <el-tab-pane label="Caractéristiques" name="characteristics">
             <CharacteristicsTab
               :property-type="propertyType"
               @open-unit-dialog="openUnitDialog"
             />
+          </el-tab-pane>
+          <el-tab-pane
+            label="Contact"
+            name="contact"
+            :disabled="isTypeUndefined"
+          >
+            <ContactTab />
           </el-tab-pane>
 
           <el-tab-pane
