@@ -228,27 +228,35 @@ const dashboardStore = useDashboardStore();
       WATCHERS AUTOMATIQUES
 ------------------------------------ */
 
-// 🟦 Si la ville change → relancer la recherche (si ville non vide)
+// 🟦 Ville change → reset ou recherche
 watch(
   () => dashboardStore.selectedCity,
   (newVal, oldVal) => {
-    if (newVal !== oldVal) {
-      dashboardStore.querySearchAddress();
+    if (newVal === oldVal) return;
+
+    if (!newVal) {
+      // Ville supprimée → vider automatiquement
+      dashboardStore.addresses = [];
+      dashboardStore.cityCenter = null;
+      dashboardStore.noResultsFound = false;
+      dashboardStore.isDataLoaded = false;
+      return;
     }
+
+    dashboardStore.debouncedSearch();
   }
 );
 
-// 🟧 Si la rue change → relancer la recherche
+// 🟧 Rue change → recherche
 watch(
   () => dashboardStore.selectedStreet,
   (newVal, oldVal) => {
-    // Empêcher exécution si c'est juste une sélection identique
-    if (newVal !== oldVal) {
-      dashboardStore.querySearchAddress();
-      // Si on vide la rue et qu'on est en mode card, revenir en mode table
-      if (!newVal && dashboardStore.viewType === 'card') {
-        dashboardStore.viewType = 'table';
-      }
+    if (newVal === oldVal) return;
+
+    dashboardStore.debouncedSearch();
+    // Si on vide la rue et qu'on est en mode card, revenir en mode table
+    if (!newVal && dashboardStore.viewType === 'card') {
+      dashboardStore.viewType = 'table';
     }
   }
 );
@@ -262,30 +270,12 @@ watch(
   }
 );
 
-// 🟥 Si le numéro change → relancer la recherche
+// 🟥 Numéro change → recherche
 watch(
   () => dashboardStore.selectedNumeroFull,
   (newVal, oldVal) => {
-    if (newVal !== oldVal) {
-      dashboardStore.querySearchAddress();
-    }
-  }
-);
-
-watch(
-  () => dashboardStore.selectedCity,
-  newCity => {
-    if (!newCity) {
-      // Ville supprimée → vider automatiquement
-      dashboardStore.addresses = [];
-      dashboardStore.cityCenter = null;
-      dashboardStore.noResultsFound = false;
-      dashboardStore.isDataLoaded = false;
-      return;
-    }
-
-    // Sinon relancer la recherche automatique
-    dashboardStore.querySearchAddress();
+    if (newVal === oldVal) return;
+    dashboardStore.debouncedSearch();
   }
 );
 
@@ -413,7 +403,6 @@ const handleCityClear = () => {
   dashboardStore.selectedStreet = null;
   dashboardStore.selectedCodeInsee = '';
   dashboardStore.selectedCodeIdFantoir = '';
-  dashboardStore.selectedStreet = null;
   dashboardStore.selectedNumero = '';
   dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
@@ -468,11 +457,7 @@ const handleGroupedStreetClick = (streetRow: any) => {
   dashboardStore.selectedNumero = '';
   dashboardStore.selectedRep = '';
   dashboardStore.selectedNumeroFull = null;
-
-  // Lancer la recherche
-  setTimeout(() => {
-    dashboardStore.querySearchAddress();
-  }, 10);
+  // La recherche est déclenchée automatiquement par le watcher sur selectedStreet
 };
 
 const handleTableNumeroClick = (row: {
@@ -498,11 +483,7 @@ const handleTableNumeroClick = (row: {
   dashboardStore.selectedNumeroFull = numeroFull;
   dashboardStore.selectedNumero = row.numero;
   dashboardStore.selectedRep = row.rep || '';
-
-  // 4️⃣ RECHERCHE AUTO
-  setTimeout(() => {
-    dashboardStore.querySearchAddress();
-  }, 10);
+  // La recherche est déclenchée automatiquement par le watcher sur selectedNumeroFull
 };
 /* ------------------------------------
       RECHERCHE

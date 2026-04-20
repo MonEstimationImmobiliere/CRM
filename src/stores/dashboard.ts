@@ -99,8 +99,43 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const dpeFilterRange = ref<'1m' | '3m' | '6m' | '1y'>('3m');
   const dvfFilterRange = ref<'1y' | '2y' | '3y' | '5y'>('1y');
   const majFilterRange = ref<'7d' | '30d' | '3m' | '6m'>('30d');
+  const favoritesOnly = ref(false);
+
+  // Compteur pour protection contre les race conditions
+  let searchVersion = 0;
+  let debounceTimer: ReturnType<typeof setTimeout> | null = null;
 
   // --- Helpers ---
+
+  function buildSearchParams(ownerName: string | null = null): SearchParams {
+    return {
+      city: selectedCity.value,
+      street: selectedStreet.value,
+      codeInsee: selectedCodeInsee.value,
+      codeIdFantoir: selectedCodeIdFantoir.value || null,
+      numero: selectedNumero.value || null,
+      rep: selectedRep.value || null,
+      ownerName,
+      activeMainMode: activeMainMode.value,
+      majFilterRange: majFilterRange.value,
+      dpeFilterRange: dpeFilterRange.value,
+      dvfFilterRange: dvfFilterRange.value,
+    };
+  }
+
+  function isSameSearch(ownerName: string | null = null): boolean {
+    if (!lastSearchParams.value) return false;
+    const current = buildSearchParams(ownerName);
+    return JSON.stringify(current) === JSON.stringify(lastSearchParams.value);
+  }
+
+  function finalizeSearch(results: (IAddressGrouped | IAddressDetail)[], ownerName: string | null = null) {
+    addresses.value = results;
+    cityCenter.value = computeCenter(results);
+    lastSearchParams.value = buildSearchParams(ownerName);
+    isDataLoaded.value = true;
+    noResultsFound.value = results.length === 0;
+  }
 
   function formatDateLocal(date: Date): string {
     const year = date.getFullYear();
@@ -128,6 +163,18 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
 
     querySearchAddress();
+  }
+
+  /**
+   * Version debouncée pour les watchers — regroupe les mutations rapides
+   * (ex: changement ville + reset rue + reset numéro = 1 seul appel)
+   */
+  function debouncedSearch(delay = 50) {
+    if (debounceTimer) clearTimeout(debounceTimer);
+    debounceTimer = setTimeout(() => {
+      debounceTimer = null;
+      querySearchAddress();
+    }, delay);
   }
 
   /** Calcule le centre géographique d'une liste d'adresses */
@@ -223,282 +270,115 @@ export const useDashboardStore = defineStore('dashboard', () => {
       dpePoints.value = [];
     }
 
+    const ownerName = selectedOwnerName.value.trim();
+
+    // Skip si les paramètres n'ont pas changé
+    if (isSameSearch(ownerName || null)) {
+      return;
+    }
+
+    const currentVersion = ++searchVersion;
+
     try {
       isLoading.value = true;
 
-      const ownerName = selectedOwnerName.value.trim();
+      let results: (IAddressGrouped | IAddressDetail)[] = [];
+      let needDpe = false;
 
       // ===========================
       // PRIORITE 1 : PROPRIETAIRE
       // ===========================
       if (ownerName) {
-        addresses.value = await PropertyService.getAddressesByOwner(ownerName);
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
+        results = await PropertyService.getAddressesByOwner(ownerName);
+        if (currentVersion !== searchVersion) return;
+        finalizeSearch(results, ownerName);
         return;
       }
 
       // ===========================
       // PRIORITE 2 : MODES GLOBAUX
       // ===========================
-      if (activeMainMode.value === 'favorites') {
-        addresses.value = await PropertyService.getFavoriteAddresses();
+      switch (activeMainMode.value) {
+        case 'favorites':
+          results = await PropertyService.getFavoriteAddresses();
+          if (currentVersion !== searchVersion) return;
+          finalizeSearch(results);
+          return;
 
-        cityCenter.value = computeCenter(addresses.value);
+        case 'estimations':
+          results = await PropertyService.getEstimationAddresses();
+          if (currentVersion !== searchVersion) return;
+          finalizeSearch(results);
+          return;
 
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
+        case 'rappels':
+          results = await PropertyService.getReminderAddresses();
+          if (currentVersion !== searchVersion) return;
+          finalizeSearch(results);
+          return;
 
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-        return;
-      }
+        case 'maj':
+          results = await PropertyService.getMajAddresses(majFilterRange.value);
+          if (currentVersion !== searchVersion) return;
+          finalizeSearch(results);
+          return;
 
-      if (activeMainMode.value === 'estimations') {
-        addresses.value = await PropertyService.getEstimationAddresses();
+        case 'dvf':
+          results = await PropertyService.getDvfAddresses(dvfFilterRange.value);
+          if (currentVersion !== searchVersion) return;
+          finalizeSearch(results);
+          return;
 
-        cityCenter.value = computeCenter(addresses.value);
+        case 'dpe':
+          needDpe = true;
+          break;
 
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-        return;
-      }
-
-      if (activeMainMode.value === 'rappels') {
-        addresses.value = await PropertyService.getReminderAddresses();
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-        return;
-      }
-
-      if (activeMainMode.value === 'maj') {
-        addresses.value = await PropertyService.getMajAddresses(
-          majFilterRange.value
-        );
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          majFilterRange: majFilterRange.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-        return;
+        default:
+          // prospection
+          break;
       }
 
       // ===========================
-      // MODE DPE : garde recherche normale + points DPE filtrés
+      // MODE DPE / PROSPECTION : recherche géographique
       // ===========================
-      if (activeMainMode.value === 'dpe') {
-        if (
-          selectedCity.value &&
-          !selectedStreet.value &&
-          !selectedNumero.value &&
-          !selectedRep.value
-        ) {
-          addresses.value =
-            await PropertyService.getAddressesGroupedByCodeInsee(
-              selectedCodeInsee.value
-            );
-        } else if (selectedCodeIdFantoir.value) {
-          addresses.value = await PropertyService.getAddressesByFantoir(
-            selectedCodeIdFantoir.value,
-            'address',
-            selectedNumero.value || undefined,
-            selectedRep.value || undefined
-          );
-        } else {
-          addresses.value = [];
-        }
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-
-        await fetchDPE();
-        return;
-      }
-
-      // ===========================
-      // MODE DVF : à brancher ensuite
-      // ===========================
-      if (activeMainMode.value === 'dvf') {
-        addresses.value = await PropertyService.getDvfAddresses(
-          dvfFilterRange.value
-        );
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: selectedStreet.value,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: selectedCodeIdFantoir.value || null,
-          numero: selectedNumero.value || null,
-          rep: selectedRep.value || null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-        return;
-      }
-
-      // ===========================
-      // PROSPECTION / RECHERCHE CLASSIQUE
-      // ===========================
-      if (
+      const isCityOnly =
         selectedCity.value &&
         !selectedStreet.value &&
         !selectedNumero.value &&
-        !selectedRep.value
-      ) {
-        addresses.value = await PropertyService.getAddressesGroupedByCodeInsee(
+        !selectedRep.value;
+
+      if (isCityOnly) {
+        results = await PropertyService.getAddressesGroupedByCodeInsee(
           selectedCodeInsee.value
         );
-
-        cityCenter.value = computeCenter(addresses.value);
-
-        lastSearchParams.value = {
-          city: selectedCity.value,
-          street: null,
-          codeInsee: selectedCodeInsee.value,
-          codeIdFantoir: null,
-          numero: null,
-          rep: null,
-          ownerName: null,
-          activeMainMode: activeMainMode.value,
-          dpeFilterRange: dpeFilterRange.value,
-          dvfFilterRange: dvfFilterRange.value,
-        };
-
-        isDataLoaded.value = true;
-        noResultsFound.value = addresses.value.length === 0;
-
-        await fetchDPE();
-        return;
-      }
-
-      if (!selectedCodeIdFantoir.value) {
+      } else if (selectedCodeIdFantoir.value) {
+        results = await PropertyService.getAddressesByFantoir(
+          selectedCodeIdFantoir.value,
+          'address',
+          selectedNumero.value || undefined,
+          selectedRep.value || undefined
+        );
+      } else {
+        // Pas assez de critères
         addresses.value = [];
         noResultsFound.value = false;
         return;
       }
 
-      addresses.value = await PropertyService.getAddressesByFantoir(
-        selectedCodeIdFantoir.value,
-        'address',
-        selectedNumero.value || undefined,
-        selectedRep.value || undefined
-      );
+      if (currentVersion !== searchVersion) return;
+      finalizeSearch(results);
 
-      cityCenter.value = computeCenter(addresses.value);
-
-      lastSearchParams.value = {
-        city: selectedCity.value,
-        street: selectedStreet.value,
-        codeInsee: selectedCodeInsee.value,
-        codeIdFantoir: selectedCodeIdFantoir.value,
-        numero: selectedNumero.value,
-        rep: selectedRep.value,
-        ownerName: null,
-        activeMainMode: activeMainMode.value,
-        dpeFilterRange: dpeFilterRange.value,
-        dvfFilterRange: dvfFilterRange.value,
-      };
-
-      isDataLoaded.value = true;
-      noResultsFound.value = addresses.value.length === 0;
-
-      await fetchDPE();
+      if (needDpe || activeMainMode.value === 'prospection') {
+        await fetchDPE();
+      }
     } catch {
+      if (currentVersion !== searchVersion) return;
       noResultsFound.value = true;
       addresses.value = [];
     } finally {
-      isLoading.value = false;
+      if (currentVersion === searchVersion) {
+        isLoading.value = false;
+      }
     }
   }
 
@@ -587,6 +467,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     noResultsFound.value = false;
     showCustomPropertyDialog.value = false;
     majFilterRange.value = '30d';
+    favoritesOnly.value = false;
   }
 
   async function createCustomProperty(
@@ -650,10 +531,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
     dpeFilterRange,
     dvfFilterRange,
     majFilterRange,
+    favoritesOnly,
 
     // Actions
     fetchDPE,
     querySearchAddress,
+    debouncedSearch,
     querySearchEstimation,
     querySearchRappel,
     querySearchMaj,

@@ -272,8 +272,10 @@ const handleSaveProperty = async (): Promise<void> => {
   try {
     console.log('saveProperty payload avant envoi', filteredProperty);
 
+    let saved: any;
+
     if (isEditing.value) {
-      const saved = await store.saveProperty(filteredProperty);
+      saved = await store.saveProperty(filteredProperty);
       console.log('property mise à jour', saved);
     } else {
       filteredProperty.city =
@@ -282,12 +284,13 @@ const handleSaveProperty = async (): Promise<void> => {
         selectedCity?.value ||
         '';
 
-      const saved = await store.saveProperty(filteredProperty);
+      saved = await store.saveProperty(filteredProperty);
       console.log('property créée', saved);
     }
 
-    if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
-      await dashboardStore.querySearchAddress();
+    // Mise à jour locale au lieu de recharger toute la liste
+    if (saved && dashboardStore.isDataLoaded) {
+      dashboardStore.updateAddress(saved);
     }
 
     ElMessage.success('Propriété sauvegardée');

@@ -195,7 +195,7 @@
             <el-button
               type="primary"
               size="small"
-              @click="$emit('edit-property', row)"
+              @click.stop="handleRowClick(row)"
             >
               Ouvrir
             </el-button>
