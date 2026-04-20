@@ -129,7 +129,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return JSON.stringify(current) === JSON.stringify(lastSearchParams.value);
   }
 
-  function finalizeSearch(results: (IAddressGrouped | IAddressDetail)[], ownerName: string | null = null) {
+  function finalizeSearch(
+    results: (IAddressGrouped | IAddressDetail)[],
+    ownerName: string | null = null
+  ) {
     addresses.value = results;
     cityCenter.value = computeCenter(results);
     lastSearchParams.value = buildSearchParams(ownerName);
