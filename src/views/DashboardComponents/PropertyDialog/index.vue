@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch } from 'vue';
+import { computed, ref, watch, nextTick } from 'vue';
 import {
   ElForm,
   ElIcon,
@@ -146,6 +146,44 @@ const showUnitDialog = ref(false);
 const showReminderDialog = ref(false);
 const activeTab = ref('characteristics');
 
+// Snapshot de la property à l'ouverture pour détecter les modifications
+const propertySnapshot = ref<string | null>(null);
+
+const serializeProperty = (prop: any): string => {
+  const copy = { ...prop };
+  delete copy.comment_rappel;
+  return JSON.stringify(copy);
+};
+
+// Prendre le snapshot APRÈS le rendu DOM (nextTick) pour capturer
+// les valeurs normalisées par les composants (el-input-number, el-switch, etc.)
+watch(
+  () => store.selectedProperty,
+  async newVal => {
+    if (store.isDialogVisible && !propertySnapshot.value && newVal) {
+      await nextTick();
+      // Re-vérifier les conditions après le gap asynchrone
+      if (
+        store.isDialogVisible &&
+        !propertySnapshot.value &&
+        store.selectedProperty
+      ) {
+        propertySnapshot.value = serializeProperty(store.selectedProperty);
+      }
+    }
+  }
+);
+
+// Reset du snapshot à la fermeture
+watch(
+  () => store.isDialogVisible,
+  isVisible => {
+    if (!isVisible) {
+      propertySnapshot.value = null;
+    }
+  }
+);
+
 const propertyType = computed<string>(
   () => (store.selectedProperty as any)?.property_type ?? ''
 );
@@ -165,7 +203,7 @@ const visible = computed<boolean>({
   get: () => store.isDialogVisible,
   set: async (value: boolean) => {
     if (!value) {
-      await saveProperty();
+      await handleSaveProperty();
       store.selectProperty(null);
     }
     store.setDialogVisible(value);
@@ -211,8 +249,18 @@ const openReminderDialog = () => {
   showReminderDialog.value = true;
 };
 
-const saveProperty = async (): Promise<void> => {
+const hasPropertyChanged = (): boolean => {
+  if (!store.selectedProperty || !propertySnapshot.value) return false;
+  return serializeProperty(store.selectedProperty) !== propertySnapshot.value;
+};
+
+const handleSaveProperty = async (): Promise<void> => {
   if (!store.selectedProperty) return;
+
+  if (!hasPropertyChanged()) {
+    console.log('Aucune modification détectée, sauvegarde ignorée');
+    return;
+  }
 
   const filteredProperty = { ...store.selectedProperty } as any;
   delete filteredProperty.comment_rappel;
