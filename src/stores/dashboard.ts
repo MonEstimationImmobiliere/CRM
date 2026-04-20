@@ -182,9 +182,16 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
   /** Calcule le centre géographique d'une liste d'adresses */
   function computeCenter(addressList: (IAddressGrouped | IAddressDetail)[]) {
-    if (addressList.length === 0) return null;
-    const lats = addressList.map(a => Number(a.lat));
-    const lons = addressList.map(a => Number(a.lon));
+    const valid = addressList.filter(a => {
+      const lat = Number(a.lat);
+      const lon = Number(a.lon);
+      return (
+        !Number.isNaN(lat) && !Number.isNaN(lon) && (lat !== 0 || lon !== 0)
+      );
+    });
+    if (valid.length === 0) return null;
+    const lats = valid.map(a => Number(a.lat));
+    const lons = valid.map(a => Number(a.lon));
     return {
       lat: lats.reduce((a, b) => a + b, 0) / lats.length,
       lon: lons.reduce((a, b) => a + b, 0) / lons.length,

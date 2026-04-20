@@ -2,6 +2,13 @@
   <section class="mapContainer">
     <div class="map-wrapper">
       <div id="map" class="map"></div>
+      <button
+        class="recenter-btn"
+        title="Recentrer la carte"
+        @click="handleRecenter"
+      >
+        <el-icon :size="20"><MapLocation /></el-icon>
+      </button>
     </div>
   </section>
 </template>
@@ -10,6 +17,7 @@
 import { onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
+import { MapLocation } from '@element-plus/icons-vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
 import { useMapPopups, type MapAddress } from '@/composables/useMapPopups';
@@ -54,7 +62,6 @@ const remindersStore = useRemindersStore();
 let dpePopup: maplibregl.Popup | null = null;
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
-let lastRecenterCityKey = '';
 
 const currentMode = computed(() => dashboard.activeMainMode || 'prospection');
 
@@ -112,7 +119,7 @@ function getPointColor(address: Address, mode: string): string {
 
   switch (mode) {
     case 'prospection':
-          return getProspectionFreshnessColor(addr.date_maj);
+      return getProspectionFreshnessColor(addr.date_maj);
 
     case 'estimations':
       return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
@@ -231,9 +238,9 @@ onMounted(async () => {
 
 onUnmounted(() => {
   if (dpePopup) {
-      dpePopup.remove();
-      dpePopup = null;
-    }
+    dpePopup.remove();
+    dpePopup = null;
+  }
   popups.close();
   if (map) {
     map.remove();
@@ -375,7 +382,6 @@ function setupDpeInteractions() {
     })
       .setLngLat(coordinates)
       .setHTML(
-        
         `
         <div style="
           font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
@@ -432,8 +438,7 @@ function setupDpeInteractions() {
     if (map) map.getCanvas().style.cursor = 'pointer';
   });
 
-  map.on('mouseleave', 'dpe-dots', () => {
-   });
+  map.on('mouseleave', 'dpe-dots', () => {});
 }
 
 /* -------------------------------------
@@ -485,10 +490,10 @@ async function recenterMap() {
   }
 }
 
-function getCityKey() {
-  const city = dashboard.selectedCity;
-  if (!city) return '';
-  return `${city.value || ''}|${dashboard.selectedCodeInsee || ''}`;
+function handleRecenter() {
+  if (!map || !mapLoaded) return;
+  map.resize();
+  recenterMap();
 }
 
 /* -------------------------------------
@@ -499,8 +504,11 @@ function avg(arr: number[]) {
 }
 
 function flyTo(lon: number | string, lat: number | string, zoom: number) {
+  const lng = parseFloat(String(lon));
+  const lt = parseFloat(String(lat));
+  if (Number.isNaN(lng) || Number.isNaN(lt)) return;
   map!.flyTo({
-    center: [parseFloat(String(lon)), parseFloat(String(lat))],
+    center: [lng, lt],
     zoom,
     speed: 1.1,
   });
@@ -522,48 +530,44 @@ function setSourceData(sourceName: string, features: any[]) {
 /* -------------------------------------
    WATCHERS
 ------------------------------------- */
-  function setupWatchers() {
-    watch(
-      () => props.addresses,
-      () => {
-        updateAddressPoints();
-        updateAddressPointsWithColors();
-        updateLayerVisibility();
-      },
-      { deep: true, immediate: true }
+function setupWatchers() {
+  watch(
+    () => props.addresses,
+    () => {
+      updateAddressPoints();
+      updateAddressPointsWithColors();
+      updateLayerVisibility();
+    },
+    { deep: true, immediate: true }
   );
-  
-    watch(
-      () => props.dpePoints,
-      () => {
-        updateDpePoints();
-        updateLayerVisibility();
-      },
-      { deep: true, immediate: true }
+
+  watch(
+    () => props.dpePoints,
+    () => {
+      updateDpePoints();
+      updateLayerVisibility();
+    },
+    { deep: true, immediate: true }
   );
-  
-    watch(
-      () => props.cityCenter,
-      newCenter => {
-      if (!newCenter || !dashboard.selectedCity) return;
-  
-      const currentCityKey = getCityKey();
-  
-        if (currentCityKey && currentCityKey !== lastRecenterCityKey) {
-          lastRecenterCityKey = currentCityKey;
-          popups.close();
-          recenterMap();
-        }
-      }
+
+  // Recentrer dès que le centre change (ville ou résultats)
+  watch(
+    () => props.cityCenter,
+    newCenter => {
+      if (!newCenter) return;
+      popups.close();
+      recenterMap();
+    },
+    { immediate: true }
   );
-  
-    watch(
-      () => dashboard.activeMainMode,
-      () => {
-        updateAddressPointsWithColors();
-        updateLayerVisibility();
-      },
-      { immediate: true }
+
+  watch(
+    () => dashboard.activeMainMode,
+    () => {
+      updateAddressPointsWithColors();
+      updateLayerVisibility();
+    },
+    { immediate: true }
   );
 
   watch(
@@ -575,31 +579,44 @@ function setSourceData(sourceName: string, features: any[]) {
     },
     { deep: true }
   );
-  
-    watch(
-      () => dashboard.selectedStreet,
-      newStreet => {
-        popups.close();
-        if (!newStreet) return;
-        recenterMap();
-      }
+
+  watch(
+    () => dashboard.selectedStreet,
+    newStreet => {
+      popups.close();
+      if (!newStreet) return;
+      recenterMap();
+    }
   );
-  
-    watch(
-      () => dashboard.selectedNumeroFull,
-      newNumero => {
-        popups.close();
-        if (!newNumero) return;
-        recenterMap();
-      }
+
+  watch(
+    () => dashboard.selectedNumeroFull,
+    newNumero => {
+      popups.close();
+      if (!newNumero) return;
+      recenterMap();
+    }
   );
-  
-    watch(
-      () => dashboard.selectedCity,
-      () => {
-        popups.close();
-        lastRecenterCityKey = '';
+
+  watch(
+    () => dashboard.selectedCity,
+    newCity => {
+      popups.close();
+      if (!newCity) return;
+    }
+  );
+
+  // Quand on bascule sur la vue map → resize + recenter
+  watch(
+    () => dashboard.viewType,
+    newType => {
+      if (newType === 'map' && map && mapLoaded) {
+        nextTick(() => {
+          map!.resize();
+          recenterMap();
+        });
       }
+    }
   );
 }
 </script>
@@ -608,7 +625,7 @@ function setSourceData(sourceName: string, features: any[]) {
 .mapContainer {
   width: 100%;
   position: relative;
-min-width: 0;
+  min-width: 0;
   overflow: hidden;
 }
 
@@ -626,4 +643,29 @@ min-width: 0;
   height: 100%;
 }
 
+.recenter-btn {
+  position: absolute;
+  top: 12px;
+  right: 52px;
+  z-index: 2;
+  width: 36px;
+  height: 36px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  color: #333;
+  transition:
+    background 0.15s,
+    color 0.15s;
+}
+
+.recenter-btn:hover {
+  background: #f0f0f0;
+  color: #2563eb;
+}
 </style>
