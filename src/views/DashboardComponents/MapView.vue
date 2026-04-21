@@ -123,29 +123,29 @@ function getPointColor(address: Address, mode: string): string {
 
     case 'estimations':
       return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
-        ? COLORS.estimation
+        ? COLORS.estimations
         : COLORS.none;
 
     case 'rappels': {
       const hasReminder =
         addr.id !== null && reminderPropertyIds.value.has(addr.id);
-      return hasReminder ? COLORS.rappel : COLORS.none;
+      return hasReminder ? COLORS.rappels : COLORS.none;
     }
 
     case 'favorites':
       return Number(addr.favorite) === 1 || addr.favorite === true
-        ? COLORS.favoris
+        ? COLORS.favorites
         : COLORS.none;
 
     case 'maj':
-      return addr.date_maj ? '#8b5cf6' : COLORS.none;
+      return addr.date_maj ? COLORS.maj : COLORS.none;
 
     case 'dpe':
       return COLORS.none;
 
     case 'dvf':
       return addr.nombre_ventes && addr.nombre_ventes > 0
-        ? COLORS.dvf || '#ef4444'
+        ? COLORS.dvf
         : COLORS.none;
 
     default:

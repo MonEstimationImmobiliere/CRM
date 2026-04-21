@@ -16,6 +16,7 @@ const defaultPropertyData: Partial<IProperty> = {
   unit_id: null as any,
   unit_label: '',
   row_type: '',
+  price: null,
   owner: '',
   email: '',
   phone: '',

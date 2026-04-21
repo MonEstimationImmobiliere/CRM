@@ -1,7 +1,8 @@
 // src/stores/dashboard.ts
 import { defineStore } from 'pinia';
-import { ref } from 'vue';
+import { ref, computed } from 'vue';
 import { PropertyService } from '@/api/property.service';
+import { useRemindersStore } from '@/stores/reminders';
 import type { IAddressGrouped, IAddressDetail } from '@/types/address';
 import type { IDpeResult } from '@/types/dpe';
 
@@ -42,16 +43,6 @@ interface SearchParams {
   numero: string | null;
   rep: string | null;
   ownerName: string | null;
-  activeMainMode:
-    | 'prospection'
-    | 'favorites'
-    | 'estimations'
-    | 'rappels'
-    | 'dpe'
-    | 'dvf';
-  majFilterRange?: '7d' | '30d' | '3m' | '6m';
-  dpeFilterRange?: '1m' | '3m' | '6m' | '1y';
-  dvfFilterRange?: '1y' | '2y' | '3y' | '5y';
 }
 
 /**
@@ -116,10 +107,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       numero: selectedNumero.value || null,
       rep: selectedRep.value || null,
       ownerName,
-      activeMainMode: activeMainMode.value,
-      majFilterRange: majFilterRange.value,
-      dpeFilterRange: dpeFilterRange.value,
-      dvfFilterRange: dvfFilterRange.value,
     };
   }
 
@@ -163,9 +150,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
     if (mode === 'dpe') {
       viewType.value = 'map';
+      fetchDPE();
     }
 
-    querySearchAddress();
+    // Les modes sont des filtres client-side sur les adresses déjà chargées
+    // → pas d'appel API, filteredAddresses computed gère le filtrage
   }
 
   /**
@@ -275,6 +264,97 @@ export const useDashboardStore = defineStore('dashboard', () => {
     }
   }
 
+  // ===========================
+  // FILTRE CLIENT-SIDE : computed réactif
+  // ===========================
+  const filteredAddresses = computed(() => {
+    const mode = activeMainMode.value;
+    const all = addresses.value;
+    console.log(
+      `[filteredAddresses] mode=${mode} total=${all.length} all=`,
+      all
+    );
+
+    switch (mode) {
+      case 'favorites':
+        return all.filter(a => {
+          const fav = (a as any).favorite;
+          return Number(fav) === 1 || fav === true;
+        });
+
+      case 'estimations':
+        return all.filter(a => {
+          const price = (a as any).price ?? (a as any).dernier_prix_estime;
+          return price != null && Number(price) > 0;
+        });
+
+      case 'rappels': {
+        const reminderStore = useRemindersStore();
+        const allReminders = [
+          ...reminderStore.reminders,
+          ...reminderStore.agencyReminders,
+        ];
+        const reminderIds = new Set(
+          allReminders.map(r => Number(r.property_id))
+        );
+
+        return all.filter(a => {
+          const id = Number((a as any).id);
+          return id > 0 && reminderIds.has(id);
+        });
+      }
+
+      case 'maj':
+        return all.filter(a => {
+          const dateMaj = (a as any).date_maj;
+          if (!dateMaj) return false;
+          const d = new Date(dateMaj);
+          if (Number.isNaN(d.getTime())) return false;
+          const diffDays = (Date.now() - d.getTime()) / 86400000;
+          switch (majFilterRange.value) {
+            case '7d':
+              return diffDays <= 7;
+            case '30d':
+              return diffDays <= 30;
+            case '3m':
+              return diffDays <= 90;
+            case '6m':
+              return diffDays <= 180;
+            default:
+              return true;
+          }
+        });
+
+      case 'dvf':
+        return all.filter(a => {
+          const dateVente = (a as any).date_derniere_vente;
+          if (!dateVente) return false;
+          const d = new Date(dateVente);
+          if (Number.isNaN(d.getTime())) return false;
+          const diffDays = (Date.now() - d.getTime()) / 86400000;
+          switch (dvfFilterRange.value) {
+            case '1y':
+              return diffDays <= 365;
+            case '2y':
+              return diffDays <= 730;
+            case '3y':
+              return diffDays <= 1095;
+            case '5y':
+              return diffDays <= 1825;
+            default:
+              return true;
+          }
+        });
+
+      // prospection, dpe : pas de filtrage
+      default:
+        return all;
+    }
+  });
+
+  // ===========================
+  // RECHERCHE GEOGRAPHIQUE (toujours la même, quel que soit le mode)
+  // ===========================
   async function querySearchAddress() {
     if (activeMainMode.value !== 'dpe') {
       dpePoints.value = [];
@@ -282,7 +362,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
     const ownerName = selectedOwnerName.value.trim();
 
-    // Skip si les paramètres n'ont pas changé
+    // Skip si les paramètres géographiques n'ont pas changé
     if (isSameSearch(ownerName || null)) {
       return;
     }
@@ -293,7 +373,6 @@ export const useDashboardStore = defineStore('dashboard', () => {
       isLoading.value = true;
 
       let results: (IAddressGrouped | IAddressDetail)[] = [];
-      let needDpe = false;
 
       // ===========================
       // PRIORITE 1 : PROPRIETAIRE
@@ -306,50 +385,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
       }
 
       // ===========================
-      // PRIORITE 2 : MODES GLOBAUX
-      // ===========================
-      switch (activeMainMode.value) {
-        case 'favorites':
-          results = await PropertyService.getFavoriteAddresses();
-          if (currentVersion !== searchVersion) return;
-          finalizeSearch(results);
-          return;
-
-        case 'estimations':
-          results = await PropertyService.getEstimationAddresses();
-          if (currentVersion !== searchVersion) return;
-          finalizeSearch(results);
-          return;
-
-        case 'rappels':
-          results = await PropertyService.getReminderAddresses();
-          if (currentVersion !== searchVersion) return;
-          finalizeSearch(results);
-          return;
-
-        case 'maj':
-          results = await PropertyService.getMajAddresses(majFilterRange.value);
-          if (currentVersion !== searchVersion) return;
-          finalizeSearch(results);
-          return;
-
-        case 'dvf':
-          results = await PropertyService.getDvfAddresses(dvfFilterRange.value);
-          if (currentVersion !== searchVersion) return;
-          finalizeSearch(results);
-          return;
-
-        case 'dpe':
-          needDpe = true;
-          break;
-
-        default:
-          // prospection
-          break;
-      }
-
-      // ===========================
-      // MODE DPE / PROSPECTION : recherche géographique
+      // RECHERCHE GEOGRAPHIQUE
       // ===========================
       const isCityOnly =
         selectedCity.value &&
@@ -378,10 +414,12 @@ export const useDashboardStore = defineStore('dashboard', () => {
       if (currentVersion !== searchVersion) return;
       finalizeSearch(results);
 
-      if (needDpe || activeMainMode.value === 'prospection') {
+      // Fetch DPE si on est en mode DPE
+      if (activeMainMode.value === 'dpe') {
         await fetchDPE();
       }
-    } catch {
+    } catch (error) {
+      console.error('[querySearch] error:', error);
       if (currentVersion !== searchVersion) return;
       noResultsFound.value = true;
       addresses.value = [];
@@ -542,6 +580,9 @@ export const useDashboardStore = defineStore('dashboard', () => {
     dvfFilterRange,
     majFilterRange,
     favoritesOnly,
+
+    // Computed
+    filteredAddresses,
 
     // Actions
     fetchDPE,

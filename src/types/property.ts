@@ -79,9 +79,7 @@ export interface IProperty {
   numero_appartement?: string;
   /** Nom de la commune (utilisé par certaines vues) */
   nom_commune?: string;
-
   property_type: PropertyType;
-
   surface: number;
   area: number | null;
   floor_number: number | null;

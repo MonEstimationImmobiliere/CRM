@@ -38,6 +38,9 @@ export const useRemindersStore = defineStore('reminders', () => {
         ReminderService.getAgencyReminders(),
       ]);
 
+      console.log('[loadReminders] userReminders:', userReminders);
+      console.log('[loadReminders] sharedReminders:', sharedReminders);
+
       reminders.value = userReminders
         .filter(r => r.id)
         .map(r => ({ ...r, sharing: r.sharing || false }));

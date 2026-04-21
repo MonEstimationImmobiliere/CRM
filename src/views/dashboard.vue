@@ -93,7 +93,6 @@
               v-model="dashboardStore.majFilterRange"
               size="small"
               class="modeSelect"
-              @change="dashboardStore.querySearchAddress()"
             >
               <el-option label="< 7 jours" value="7d" />
               <el-option label="< 30 jours" value="30d" />
@@ -121,7 +120,7 @@
               v-model="dashboardStore.dpeFilterRange"
               size="small"
               class="modeSelect"
-              @change="dashboardStore.querySearchAddress()"
+              @change="dashboardStore.fetchDPE()"
             >
               <el-option label="Dernier mois" value="1m" />
               <el-option label="3 derniers mois" value="3m" />
@@ -145,7 +144,6 @@
               v-model="dashboardStore.dvfFilterRange"
               size="small"
               class="modeSelect"
-              @change="dashboardStore.querySearchAddress()"
             >
               <el-option label="< 1 an" value="1y" />
               <el-option label="< 2 ans" value="2y" />
@@ -173,14 +171,34 @@
         @select-street="handleGroupedStreetClick"
         @select-numero="handleTableNumeroClick"
       />
+      <div
+        v-else-if="!isLoading && dashboardStore.isDataLoaded"
+        class="empty-state"
+      >
+        <el-icon class="empty-state-icon"><Search /></el-icon>
+        <p class="empty-state-title">Aucun résultat correspondant</p>
+        <p class="empty-state-subtitle">{{ emptyStateMessage }}</p>
+      </div>
     </div>
 
     <!-- MODE CARD -->
-    <PropertyTableCard
-      v-else-if="viewType === 'card' && addresses.length > 0"
-      :addresses="addresses as IAddressDetail[]"
-      @edit-property="openPropertyDialog"
-    />
+    <div
+      v-else-if="viewType === 'card' && dashboardStore.activeMainMode !== 'dpe'"
+    >
+      <PropertyTableCard
+        v-if="addresses.length > 0"
+        :addresses="addresses as IAddressDetail[]"
+        @edit-property="openPropertyDialog"
+      />
+      <div
+        v-else-if="!isLoading && dashboardStore.isDataLoaded"
+        class="empty-state"
+      >
+        <el-icon class="empty-state-icon"><Search /></el-icon>
+        <p class="empty-state-title">Aucun résultat correspondant</p>
+        <p class="empty-state-subtitle">{{ emptyStateMessage }}</p>
+      </div>
+    </div>
 
     <MapView
       v-show="viewType === 'map'"
@@ -200,7 +218,7 @@
       IMPORTS
 ------------------------------------ */
 import { computed, onMounted, watch } from 'vue';
-import { DataBoard, Location } from '@element-plus/icons-vue';
+import { DataBoard, Location, Search } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
 
 // Stores
@@ -368,11 +386,28 @@ const viewType = computed({
   set: v => (dashboardStore.viewType = v),
 });
 
-// --- Résultats des adresses ---
-const addresses = computed(() => dashboardStore.addresses);
+// --- Résultats des adresses (filtrées par mode actif) ---
+const addresses = computed(() => dashboardStore.filteredAddresses);
 
 // --- Loading ---
 const isLoading = computed(() => dashboardStore.isLoading);
+
+// --- Message d'état vide contextuel ---
+const MODE_LABELS: Record<string, string> = {
+  favorites: 'favoris',
+  estimations: 'estimations',
+  rappels: 'rappels',
+  maj: 'mises à jour',
+  dvf: 'ventes DVF',
+};
+
+const emptyStateMessage = computed(() => {
+  const mode = dashboardStore.activeMainMode;
+  if (mode !== 'prospection' && MODE_LABELS[mode]) {
+    return `Aucune adresse ne correspond au filtre « ${MODE_LABELS[mode]} » pour cette recherche.`;
+  }
+  return 'Essayez de modifier vos critères de recherche.';
+});
 
 // --- Vérifier si seulement la ville est sélectionnée (pas de rue ni numéro) ---
 const isCityOnly = computed(() => {
@@ -722,5 +757,38 @@ const openPropertyDialog = (property: any) => {
   min-width: 0;
   overflow-x: hidden;
   box-sizing: border-box;
+}
+
+.empty-state {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 60px 20px;
+  text-align: center;
+  background: var(--apple-card-bg, #fff);
+  border-radius: var(--apple-radius, 12px);
+  box-shadow: var(--apple-shadow, 0 1px 3px rgba(0, 0, 0, 0.08));
+  border: 1px solid #e5e7eb;
+}
+
+.empty-state-icon {
+  font-size: 48px;
+  color: #d1d5db;
+  margin-bottom: 16px;
+}
+
+.empty-state-title {
+  font-size: 18px;
+  font-weight: 600;
+  color: #374151;
+  margin: 0 0 8px;
+}
+
+.empty-state-subtitle {
+  font-size: 14px;
+  color: #9ca3af;
+  margin: 0;
+  max-width: 360px;
 }
 </style>
