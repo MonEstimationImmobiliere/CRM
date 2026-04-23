@@ -106,12 +106,13 @@ const remindersStore = useRemindersStore();
 const selectedCity = ref<string>('');
 const selectedPropertyType = ref<string>('');
 
-const favorites = computed(() => store.favorites);
+//const favorites = computed(() => store.favorites);
+const favorites = computed(() => store.favoriteAddresses);
 const favoritesViewType = computed(() => store.favoritesViewType);
 
 onMounted(async () => {
   try {
-    await store.loadFavoritesProperties();
+    await store.loadFavoriteAddresses();
   } catch (error) {
     ElMessage({
       message: 'Erreur lors du chargement des favoris',
@@ -121,36 +122,31 @@ onMounted(async () => {
   }
 });
 
-// Computed pour obtenir les villes disponibles
 const availableCities = computed(() => {
-  const cities = favorites.value
-    .map(property => property.city || null)
+  return favorites.value
+    .map(property => property.city || property.nom_commune || null)
     .filter(
       (city): city is string =>
         city !== null && city !== undefined && city !== ''
-    ) // Filtrer les valeurs nulles/undefined
-    .filter((city, index, array) => array.indexOf(city) === index) // Supprimer les doublons
-    .sort(); // Trier alphabétiquement
-  return cities;
+    )
+    .filter((city, index, array) => array.indexOf(city) === index)
+    .sort();
 });
 
-// Computed pour obtenir les types de propriétés disponibles
 const availablePropertyTypes = computed(() => {
   const types = favorites.value
     .map(property => property.property_type || null)
-    .filter((type, index, array) => array.indexOf(type) === index); // Supprimer les doublons
+    .filter((type, index, array) => array.indexOf(type) === index);
 
-  // Séparer les types valides et les valeurs nulles/undefined
   const validTypes = types
     .filter(
       (type): type is NonNullable<typeof type> =>
         type !== null && type !== undefined
     )
-    .sort(); // Trier alphabétiquement
+    .sort();
 
   const hasNullTypes = types.some(type => type === null || type === undefined);
 
-  // Ajouter "Non renseigné" si il y a des propriétés sans type
   const result: string[] = [...validTypes];
   if (hasNullTypes) {
     result.push('Non renseigné');
@@ -159,24 +155,20 @@ const availablePropertyTypes = computed(() => {
   return result;
 });
 
-// Computed pour les favoris filtrés
 const filteredFavorites = computed(() => {
   let filtered = favorites.value;
 
-  // Filtre par ville
   if (selectedCity.value) {
     filtered = filtered.filter(
-      property => (property.city || null) === selectedCity.value
+      property =>
+        (property.city || property.nom_commune || '') === selectedCity.value
     );
   }
 
-  // Filtre par type de propriété
   if (selectedPropertyType.value) {
     if (selectedPropertyType.value === 'Non renseigné') {
-      // Filtrer les propriétés sans type (null ou undefined)
       filtered = filtered.filter(property => !property.property_type);
     } else {
-      // Filtrer par type de propriété spécifique
       filtered = filtered.filter(
         property => property.property_type === selectedPropertyType.value
       );
@@ -188,14 +180,16 @@ const filteredFavorites = computed(() => {
 
 const toggleFavorite = async (propertyData: any) => {
   try {
-    const newFavoriteState = await store.toggleFavorite(
-      propertyData.id_fantoir_long
-    );
+    const savedRow = await store.toggleFavorite(propertyData.id, propertyData);
+
+    propertyData.id = savedRow.id;
+    propertyData.favorite = savedRow.favorite;
+
     ElMessage({
-      message: newFavoriteState
+      message: savedRow.favorite
         ? 'Propriété ajoutée aux favoris'
         : 'Propriété retirée des favoris',
-      type: newFavoriteState ? 'success' : 'info',
+      type: savedRow.favorite ? 'success' : 'info',
       duration: 2000,
     });
   } catch (error) {
