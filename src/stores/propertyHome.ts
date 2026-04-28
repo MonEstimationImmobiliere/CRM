@@ -377,33 +377,31 @@ export const usePropertyStore = defineStore('property', () => {
     return Boolean(property?.favorite);
   };*/
 
-   const isFavorite = (propertyIdentifier: number | string): boolean => {
-  const property = properties.value.find(
-    p =>
-      Number(p.id) === Number(propertyIdentifier) ||
-      String(p.id_fantoir_long) === String(propertyIdentifier)
-  );
+  const isFavorite = (propertyIdentifier: number | string): boolean => {
+    const property = properties.value.find(
+      p =>
+        Number(p.id) === Number(propertyIdentifier) ||
+        String(p.id_fantoir_long) === String(propertyIdentifier)
+    );
 
-  return Boolean(property?.favorite);
-};
+    return Boolean(property?.favorite);
+  };
 
-const favoriteAddresses = ref<any[]>([]);
+  const favoriteAddresses = ref<any[]>([]);
 
-const loadFavoriteAddresses = async () => {
-  const rows = await PropertyService.getFavoriteAddresses();
+  const loadFavoriteAddresses = async () => {
+    const rows = await PropertyService.getFavoriteAddresses();
 
-  favoriteAddresses.value = rows.map((row: any) => ({
-    ...defaultPropertyData,
-    ...row,
-    numero: String(row.numero ?? ''),
-    city: row.city || row.nom_commune || '',
-    nom_commune: row.nom_commune || row.city || '',
-    favorite:
-      row.favorite === true ||
-      row.favorite === 1 ||
-      row.favorite === '1',
-  }));
-};
+    favoriteAddresses.value = rows.map((row: any) => ({
+      ...defaultPropertyData,
+      ...row,
+      numero: String(row.numero ?? ''),
+      city: row.city || row.nom_commune || '',
+      nom_commune: row.nom_commune || row.city || '',
+      favorite:
+        row.favorite === true || row.favorite === 1 || row.favorite === '1',
+    }));
+  };
 
   const loadFavoritesProperties = async () => {
     const favoriteProperties = await PropertyService.getFavorites();
@@ -463,8 +461,10 @@ const loadFavoriteAddresses = async () => {
     setFavoritesViewType,
     defaultPropertyData,
     favorites,
+    favoriteAddresses,
     toggleFavorite,
     isFavorite,
+    loadFavoriteAddresses,
     loadFavoritesProperties,
   };
 });
