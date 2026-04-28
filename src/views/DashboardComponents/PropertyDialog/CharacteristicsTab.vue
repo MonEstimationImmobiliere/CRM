@@ -35,18 +35,27 @@
          ÉTAPE 2 — Question bifurcation unité
     ══════════════════════════════════════════════ -->
     <EMCard
-      v-if="
-        props.propertyType &&
-        props.propertyType !== 'inconnu' &&
-        !unitQuestionAnswered
-      "
-      title="Souhaitez-vous créer une unité ?"
+      v-if="props.propertyType && props.propertyType !== 'inconnu'"
       titleSize="S"
       :border="true"
       :noShadow="true"
       class="unit-question-card"
     >
-      <div class="unit-question-content">
+      <template #header-left>
+        <button
+          type="button"
+          class="unit-dropdown-toggle"
+          @click="unitCardOpen = !unitCardOpen"
+        >
+          <h3 class="em-card-title title-size-S">
+            Souhaitez-vous créer une unité ?
+          </h3>
+          <el-icon class="unit-dropdown-arrow" :class="{ open: unitCardOpen }">
+            <ArrowDownBold />
+          </el-icon>
+        </button>
+      </template>
+      <div v-if="unitCardOpen" class="unit-question-content">
         <p class="unit-question-hint">
           Une <strong>unité</strong> correspond à un lot individuel
           (appartement, local, parking…) rattaché à ce bien principal.
@@ -724,7 +733,9 @@ import {
   ElSelect,
   ElOption,
   ElInput,
+  ElIcon,
 } from 'element-plus';
+import { ArrowDownBold } from '@element-plus/icons-vue';
 import EMCard from '@/components/OwnReusableComponents/card/EMCard.vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 
@@ -747,6 +758,7 @@ const currentYear = new Date().getFullYear();
 
 // ─── État du flux ──────────────────────────────────────────────────────────
 const unitQuestionAnswered = ref(false);
+const unitCardOpen = ref(false);
 
 // Réinitialiser le flux dès que le type redevient 'inconnu' ou vide
 watch(
@@ -754,6 +766,7 @@ watch(
   newType => {
     if (!newType || newType === 'inconnu') {
       unitQuestionAnswered.value = false;
+      unitCardOpen.value = true;
     }
   }
 );
@@ -763,6 +776,7 @@ watch(
   () => store.selectedProperty,
   () => {
     unitQuestionAnswered.value = false;
+    unitCardOpen.value = false;
   }
 );
 
@@ -815,6 +829,7 @@ function onCreateUnit() {
 
 function onNoUnit() {
   unitQuestionAnswered.value = true;
+  unitCardOpen.value = false;
   emit('type-confirmed');
 }
 </script>
@@ -904,6 +919,28 @@ function onNoUnit() {
   font-size: var(--ion-text-sm);
   font-weight: var(--ion-font-semibold, 600);
   border: 1px solid var(--ion-color-primary, #3b82f6);
+}
+
+.unit-dropdown-toggle {
+  display: flex;
+  align-items: center;
+  gap: var(--ion-space-2);
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 0;
+  font-family: inherit;
+  width: 100%;
+}
+
+.unit-dropdown-arrow {
+  font-size: 0.7rem;
+  transition: transform 0.25s ease;
+  color: var(--ion-text-color-secondary, #6b7280);
+}
+
+.unit-dropdown-arrow.open {
+  transform: rotate(180deg);
 }
 
 .unit-question-actions {

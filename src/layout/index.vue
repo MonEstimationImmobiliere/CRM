@@ -14,8 +14,8 @@ import type { Layout } from 'types/layout';
 const _isMobile = isMobile();
 const sidebarRelated = reactive<Layout.SidebarRelated>({
   collapsed: true,
-  width: '15rem',
-  collapsedWidth: '3rem',
+  width: '13rem',
+  collapsedWidth: '4rem',
 });
 const loading = reactive<Layout.Loading>({
   logout: false,

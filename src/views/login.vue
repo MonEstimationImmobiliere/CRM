@@ -17,8 +17,8 @@ interface LoginForm {
 
 const refForm = ref<ComponentPublicInstance<FormInstance> | null>(null);
 const form = reactive<LoginForm>({
-  username: '',
-  password: '',
+  username: 'bite@exemple.com',
+  password: 'bite',
   showPassword: false,
   remember: true,
 });
