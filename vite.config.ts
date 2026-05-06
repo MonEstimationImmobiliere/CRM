@@ -56,7 +56,7 @@ export default defineConfig({
 
   // Support des BigInt (requis par certaines dépendances)
   optimizeDeps: {
-    esbuildOptions: {
+    rolldownOptions: {
       target: 'esnext',
     },
   },
