@@ -282,7 +282,7 @@ const getRowClass = (r: Reminder): string => {
   border-radius: var(--table-radius);
   overflow: hidden;
   background: #fff;
-  box-shadow: var(--table-shadow);
+  /* box-shadow: var(--table-shadow); */
 }
 
 /* ── Table base ──────────────────────────────── */

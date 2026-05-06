@@ -1,16 +1,46 @@
 <template>
-  <div class="reminders-filters">
-    <el-radio-group
-      :model-value="activeFilter"
-      @update:model-value="$emit('update:activeFilter', String($event))"
-      size="large"
-    >
-      <el-radio-button label="all">Tous</el-radio-button>
-      <el-radio-button label="overdue">En retard</el-radio-button>
-      <el-radio-button label="today">Aujourd'hui</el-radio-button>
-      <el-radio-button label="upcoming">À venir</el-radio-button>
-      <el-radio-button label="completed">Terminés</el-radio-button>
-    </el-radio-group>
+  <div class="headerBottomRow">
+    <div class="modeBar">
+      <button
+        class="modePill"
+        :class="{ active: activeFilter === 'all' }"
+        @click="$emit('update:activeFilter', 'all')"
+      >
+        Tous
+      </button>
+      <button
+        class="modePill"
+        :class="{ active: activeFilter === 'overdue' }"
+        @click="$emit('update:activeFilter', 'overdue')"
+      >
+        <span class="modeDot overdue"></span>
+        En retard
+      </button>
+      <button
+        class="modePill"
+        :class="{ active: activeFilter === 'today' }"
+        @click="$emit('update:activeFilter', 'today')"
+      >
+        <span class="modeDot today"></span>
+        Aujourd'hui
+      </button>
+      <button
+        class="modePill"
+        :class="{ active: activeFilter === 'upcoming' }"
+        @click="$emit('update:activeFilter', 'upcoming')"
+      >
+        <span class="modeDot upcoming"></span>
+        À venir
+      </button>
+      <button
+        class="modePill"
+        :class="{ active: activeFilter === 'completed' }"
+        @click="$emit('update:activeFilter', 'completed')"
+      >
+        <span class="modeDot completed"></span>
+        Terminés
+      </button>
+    </div>
 
     <div class="filter-actions">
       <el-select
@@ -56,12 +86,73 @@ defineEmits<{
 </script>
 
 <style scoped>
-.reminders-filters {
+.headerBottomRow {
   display: flex;
+  flex-direction: column;
+  align-items: flex-start;
   justify-content: space-between;
+  flex-wrap: wrap;
+  gap: 16px;
+  width: 100%;
+}
+
+.modeBar {
+  display: flex;
   align-items: center;
-  margin-bottom: 24px;
-  gap: 20px;
+  gap: 10px;
+  flex-wrap: wrap;
+}
+
+.modePill {
+  display: inline-flex;
+  align-items: center;
+  gap: 8px;
+  border: none;
+  background: #f3f4f6;
+  color: #374151;
+  padding: 10px 16px;
+  border-radius: 999px;
+  font-size: 14px;
+  font-weight: 600;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.modePill:hover {
+  background: #e5e7eb;
+}
+
+.modePill.active {
+  background: #2563eb;
+  color: white;
+  box-shadow: 0 2px 8px rgba(37, 99, 235, 0.25);
+}
+
+.modeDot {
+  width: 9px;
+  height: 9px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.modePill.active .modeDot {
+  box-shadow: 0 0 0 2px rgba(255, 255, 255, 0.35);
+}
+
+.modeDot.overdue {
+  background: #ef4444;
+}
+
+.modeDot.today {
+  background: #f97316;
+}
+
+.modeDot.upcoming {
+  background: #3b82f6;
+}
+
+.modeDot.completed {
+  background: #10b981;
 }
 
 .filter-actions {
@@ -74,7 +165,7 @@ defineEmits<{
 }
 
 @media (max-width: 768px) {
-  .reminders-filters {
+  .headerBottomRow {
     flex-direction: column;
     align-items: stretch;
     gap: 16px;

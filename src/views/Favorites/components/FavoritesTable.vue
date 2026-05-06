@@ -169,14 +169,14 @@ const handleRowClick = (row: any) => {
 <style scoped>
 .favorites-table-container {
   padding: 16px 0;
-  max-height: 70vh;
 }
 
 .modern-favorites-table {
   border-radius: var(--table-radius);
   overflow: hidden;
-  box-shadow: var(--table-shadow);
+  /* box-shadow: var(--table-shadow); */
   border: 1px solid #c4c3c3;
+  max-height: 70vh;
 }
 
 :deep(.el-table) {

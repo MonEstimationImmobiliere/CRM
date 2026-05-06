@@ -1,8 +1,17 @@
 <template>
   <div class="favorites-page">
-    <div class="favorites-header">
-      <h1>Mes Propriétés Favorites</h1>
-      <div class="header-controls">
+    <EMCard class="headerFilterInfoContainer" :border-hover="false">
+      <div class="headerTopRow">
+        <h2>Mes Propriétés Favorites</h2>
+        <div class="headerRightContainer">
+          <!-- <el-tag size="large" type="info"
+            >{{ filteredFavorites.length }} favori(s)</el-tag
+          > -->
+          <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
+        </div>
+      </div>
+
+      <div class="headerBottomRow">
         <div class="filters-container">
           <div class="city-filter">
             <el-select
@@ -37,15 +46,8 @@
             </el-select>
           </div>
         </div>
-        <div class="header-stats">
-          <el-tag size="large" type="info"
-            >{{ filteredFavorites.length }} favori(s)</el-tag
-          >
-        </div>
       </div>
-
-      <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
-    </div>
+    </EMCard>
 
     <div
       v-if="filteredFavorites.length === 0 && favorites.length > 0"
@@ -261,29 +263,50 @@ const currentFavoritesView = computed({
 
 <style scoped>
 .favorites-page {
-  padding: var(--page-padding);
-  /* max-width: 1400px; */
-  margin: 0 auto;
+  /* padding: 0 20px; */
 }
 
-.favorites-header {
+.headerFilterInfoContainer {
   display: flex;
-  justify-content: space-between;
   align-items: center;
-  margin-bottom: 24px;
+  flex-direction: row;
+  justify-content: space-between;
+  margin-bottom: 20px;
+  background: var(--apple-card-bg);
+  padding: 20px;
+  border-radius: var(--apple-radius);
+  box-shadow: var(--apple-shadow);
+  gap: 20px;
 }
 
-.favorites-header h1 {
+.headerTopRow {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  width: 100%;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.headerTopRow h1 {
   margin: 0;
   color: var(--page-title-color);
   font-size: var(--page-title-size);
   font-weight: var(--page-title-weight);
 }
 
-.header-controls {
+.headerBottomRow {
+  display: flex;
+  align-items: center;
+  justify-content: flex-start;
+  flex-wrap: wrap;
+}
+
+.headerRightContainer {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
 }
 
 .filters-container {
@@ -300,11 +323,6 @@ const currentFavoritesView = computed({
 
 .filter-select {
   width: 200px;
-}
-
-.header-stats {
-  display: flex;
-  gap: 12px;
 }
 
 .loading-container {

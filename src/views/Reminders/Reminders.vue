@@ -1,10 +1,22 @@
 <template>
   <div class="reminders-page">
     <!-- Header bar: title + add button + view toggle -->
-    <div class="reminders-header">
-      <h1>Mes Rappels</h1>
+    <EMCard class="headerFilterInfoContainer" :border-hover="false">
+      <div class="headerTopRow">
+        <h2>Mes Rappels</h2>
 
-      <div class="header-right">
+        <div class="headerRightContainer">
+          <ViewToggle v-model="currentRemindersView" :options="viewOptions" />
+        </div>
+      </div>
+
+      <div class="headerBottomRow">
+        <!-- Filters -->
+        <ReminderFilters
+          v-model:active-filter="activeFilter"
+          v-model:type-filter="typeFilter"
+          v-model:priority-filter="priorityFilter"
+        />
         <el-button
           type="primary"
           @click="showCreateDialog = true"
@@ -13,10 +25,8 @@
           <el-icon><Plus /></el-icon>
           Nouveau rappel
         </el-button>
-
-        <ViewToggle v-model="currentRemindersView" :options="viewOptions" />
       </div>
-    </div>
+    </EMCard>
 
     <!-- Statistics Cards -->
 
@@ -26,13 +36,6 @@
       :upcoming-count="upcomingReminders.length"
       :completed-count="completedReminders.length"
     /> -->
-
-    <!-- Filters -->
-    <ReminderFilters
-      v-model:active-filter="activeFilter"
-      v-model:type-filter="typeFilter"
-      v-model:priority-filter="priorityFilter"
-    />
 
     <!-- Reminders List -->
     <div class="reminders-list">
@@ -303,30 +306,42 @@ const openPropertyById = async (propertyId: number) => {
 
 <style scoped>
 .reminders-page {
-  padding: var(--page-padding);
-  /* max-width: 1400px; */
-  margin: 0 auto;
+  /* padding: 0 20px; */
 }
 
 /* ── Header ──────────────────────────────── */
-.reminders-header {
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
+.headerFilterInfoContainer {
   margin-bottom: 20px;
+  border-radius: var(--apple-radius);
 }
 
-.reminders-header h1 {
+.headerTopRow {
+  display: flex;
+  align-items: flex-start;
+  justify-content: space-between;
+  width: 100%;
+  gap: 20px;
+  flex-wrap: wrap;
+}
+
+.headerTopRow h1 {
   margin: 0;
   color: var(--page-title-color);
   font-size: var(--page-title-size);
   font-weight: var(--page-title-weight);
 }
 
-.header-right {
+.headerRightContainer {
   display: flex;
   align-items: center;
   gap: 16px;
+  flex-wrap: wrap;
+}
+.headerBottomRow {
+  display: flex;
+  flex-direction: row;
+  justify-content: flex-start;
+  align-items: center;
 }
 
 .add-reminder-btn {
