@@ -39,6 +39,7 @@ declare module 'vue' {
     ElTable: typeof import('element-plus/es')['ElTable']
     ElTableColumn: typeof import('element-plus/es')['ElTableColumn']
     ElTag: typeof import('element-plus/es')['ElTag']
+    ElTooltip: typeof import('element-plus/es')['ElTooltip']
     EMCard: typeof import('./src/components/OwnReusableComponents/card/EMCard.vue')['default']
     EMDateTimeInput: typeof import('./src/components/OwnReusableComponents/input/EMDateTimeInput.vue')['default']
     EMInput: typeof import('./src/components/OwnReusableComponents/input/EMInput.vue')['default']

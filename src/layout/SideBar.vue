@@ -23,10 +23,18 @@
       @confirm="logout"
     />
 
-    <div class="sidebar-user-name">
-      <el-icon><Avatar /></el-icon>
-      <span>Utilisateur {{ user.name }}</span>
-    </div>
+    <el-tooltip
+      :content="'Utilisateur ' + user.name"
+      placement="right"
+      :disabled="!sidebarRelated?.collapsed"
+    >
+      <div class="sidebar-user-name">
+        <el-icon><Avatar /></el-icon>
+        <span v-show="!sidebarRelated?.collapsed"
+          >Utilisateur {{ user.name }}</span
+        >
+      </div>
+    </el-tooltip>
   </div>
 </template>
 
@@ -221,5 +229,11 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
   gap: 10px;
   font-size: 14px;
   color: #333333;
+}
+
+.sideBar-logout-container{
+  display: flex;
+  align-items: center;
+  justify-conter: center;
 }
 </style>
