@@ -3,11 +3,9 @@ import { computed } from 'vue';
 import { onBeforeMount, provide, reactive, ref } from 'vue';
 import HeadBar from './HeadBar.vue';
 import SideBar from './SideBar.vue';
-import TabsBar from './TabsBar.vue';
+// import TabsBar from './TabsBar.vue';
 import isMobile from '@/composables/isMobile';
-import Logo from '@/assets/logo.svg';
 import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg';
-import Logo2 from '@/assets/logo.png';
 
 import type { Layout } from 'types/layout';
 
@@ -21,9 +19,9 @@ const loading = reactive<Layout.Loading>({
   logout: false,
 });
 const keepAlivePages = ref<Layout.keepAlivePages>(new Set());
-const getKeepAlivePages = computed(() => {
-  return Array.from(keepAlivePages.value);
-});
+// const getKeepAlivePages = computed(() => {
+//   return Array.from(keepAlivePages.value);
+// });
 const asideWidth = computed(() => {
   return sidebarRelated?.collapsed
     ? sidebarRelated?.collapsedWidth
@@ -70,7 +68,7 @@ provide('loading', loading);
     <ElContainer>
       <ElHeader>
         <HeadBar></HeadBar>
-        <TabsBar :withIcons="true"></TabsBar>
+        <!-- <TabsBar :withIcons="true"></TabsBar> -->
       </ElHeader>
       <ElMain id="content-window">
         <Transition name="slide-left" mode="out-in">

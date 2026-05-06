@@ -169,6 +169,7 @@ const handleRowClick = (row: any) => {
 <style scoped>
 .favorites-table-container {
   padding: 16px 0;
+  max-height: 70vh;
 }
 
 .modern-favorites-table {

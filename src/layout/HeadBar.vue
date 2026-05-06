@@ -29,8 +29,8 @@ const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated');
 
 <style scoped lang="postcss">
 header {
-  height: 2.5rem;
   display: flex;
+  padding-top: 10px;
   justify-content: space-between;
   align-items: center;
   flex-wrap: nowrap;
@@ -57,7 +57,9 @@ header {
 .icon-sidebar-trigger {
   cursor: pointer;
   margin-right: 1.2rem;
-  font-size: 1.2rem;
+  margin-left: 1.2rem;
+
+  font-size: 1.6rem;
 
   &.collapsed {
     transform: rotate(180deg);

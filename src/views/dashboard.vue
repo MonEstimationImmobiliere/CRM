@@ -1,5 +1,5 @@
 <template>
-  <section class="block dashboardContainer">
+  <section>
     <EMCard class="headerFilterInfoContainer" :border-hover="false">
       <!-- LIGNE 1 -->
       <div class="headerTopRow">

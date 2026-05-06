@@ -252,7 +252,7 @@ onUnmounted(() => {
    UPDATE DES POINTS ADRESSES
 ------------------------------------- */
 function updateAddressPoints() {
-  if (!mapLoaded) return;
+  if (!mapLoaded || !map) return;
 
   const features = props.addresses
     .filter(a => a.lat && a.lon)
@@ -272,7 +272,7 @@ function updateAddressPoints() {
    UPDATE DES POINTS DPE
 ------------------------------------- */
 function updateDpePoints() {
-  if (!mapLoaded) return;
+  if (!mapLoaded || !map) return;
 
   const features = (props.dpePoints || [])
     .filter(p => p.lat && p.lon)
@@ -506,8 +506,8 @@ function avg(arr: number[]) {
 function flyTo(lon: number | string, lat: number | string, zoom: number) {
   const lng = parseFloat(String(lon));
   const lt = parseFloat(String(lat));
-  if (Number.isNaN(lng) || Number.isNaN(lt)) return;
-  map!.flyTo({
+  if (Number.isNaN(lng) || Number.isNaN(lt) || !map) return;
+  map.flyTo({
     center: [lng, lt],
     zoom,
     speed: 1.1,
@@ -519,9 +519,8 @@ function emptyGeoJSON() {
 }
 
 function setSourceData(sourceName: string, features: any[]) {
-  const src = map!.getSource(sourceName) as
-    | maplibregl.GeoJSONSource
-    | undefined;
+  if (!map) return;
+  const src = map.getSource(sourceName) as maplibregl.GeoJSONSource | undefined;
   if (src) {
     src.setData({ type: 'FeatureCollection', features });
   }

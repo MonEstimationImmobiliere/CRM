@@ -262,7 +262,7 @@ const currentFavoritesView = computed({
 <style scoped>
 .favorites-page {
   padding: var(--page-padding);
-  max-width: 1400px;
+  /* max-width: 1400px; */
   margin: 0 auto;
 }
 
