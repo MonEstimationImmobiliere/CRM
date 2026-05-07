@@ -6,7 +6,7 @@
       :show-close="false"
       modal-class="darker-drawer-overlay"
       :style="{
-        borderRadius: '10px',
+        borderRadius: '20px 0 0 0',
         height: '98%',
         bottom: 0,
         backgroundColor: 'var(--ion-background-color)',
@@ -116,7 +116,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, ref, watch, nextTick } from 'vue';
+import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
 import {
   ElForm,
   ElIcon,
@@ -324,7 +324,7 @@ const createUnit = async (payload: {
       await store.selectProperty(createdRoot as any);
     }
 
-    const unitResponse = await UnitService.save({
+    await UnitService.save({
       id_fantoir_long: rootProperty.id_fantoir_long,
       id_fantoir: rootProperty.id_fantoir,
       code_insee: rootProperty.code_insee,
@@ -337,31 +337,11 @@ const createUnit = async (payload: {
       unit_label: payload.unit_label,
     });
 
-    const createdUnit = (unitResponse as any)?.unit ?? unitResponse;
-
-    await store.saveProperty({
-      id: 0,
-      row_type: 'unit',
-      unit_id: createdUnit.id,
-      id_fantoir_long:
-        createdUnit.id_fantoir_long || rootProperty.id_fantoir_long,
-      id_fantoir: createdUnit.id_fantoir || rootProperty.id_fantoir,
-      code_insee: createdUnit.code_insee || rootProperty.code_insee,
-      code_postal: createdUnit.code_postal || rootProperty.code_postal,
-      nom_voie: createdUnit.nom_voie || rootProperty.nom_voie,
-      numero: createdUnit.numero || rootProperty.numero,
-      rep: createdUnit.rep || rootProperty.rep,
-      city:
-        createdUnit.city || rootProperty.city || rootProperty.nom_commune || '',
-      nom_commune:
-        createdUnit.city || rootProperty.nom_commune || rootProperty.city || '',
-      property_type: payload.unit_type,
-      favorite: 0,
-    } as any);
-
     ElMessage.success('Unité créée avec sa property');
 
-    if (dashboardStore.selectedCodeIdFantoir && dashboardStore.isDataLoaded) {
+    // Force le rafraîchissement complet des adresses depuis le serveur
+    if (dashboardStore.selectedCodeIdFantoir) {
+      dashboardStore.lastSearchParams = null; // Ignore le cache de la dernière recherche
       await dashboardStore.querySearchAddress();
     }
   } catch (error: any) {
@@ -410,6 +390,25 @@ const toggleFavorite = async () => {
     });
   }
 };
+
+const handleKeyDown = (e: KeyboardEvent) => {
+  if (visible.value && e.key === 'Enter') {
+    const target = e.target as HTMLElement;
+    if (target.tagName.toLowerCase() === 'textarea') {
+      return;
+    }
+    e.preventDefault();
+    closeDialog();
+  }
+};
+
+onMounted(() => {
+  window.addEventListener('keydown', handleKeyDown);
+});
+
+onUnmounted(() => {
+  window.removeEventListener('keydown', handleKeyDown);
+});
 </script>
 
 <style scoped>
@@ -477,6 +476,7 @@ const toggleFavorite = async () => {
   padding-top: var(--ion-space-5);
   width: 100%;
   padding: 20px;
+  border-radius: 20px 20px 0 0;
 }
 
 .header-actions {

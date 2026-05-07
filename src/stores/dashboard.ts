@@ -469,11 +469,44 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   function updateAddress(property: IAddressDetail) {
-    const index = addresses.value.findIndex(
-      a =>
-        'id_fantoir_long' in a && a.id_fantoir_long === property.id_fantoir_long
-    );
+    const index = addresses.value.findIndex(a => {
+      const aId = Number((a as any).id || 0);
+      const pId = Number((property as any).id || 0);
 
+      // 1. Check strict via ID de BDD si le composant a été sauvegardé
+      if (aId > 0 && pId > 0 && aId === pId) {
+        return true;
+      }
+
+      if (
+        !('id_fantoir_long' in a) ||
+        a.id_fantoir_long !== property.id_fantoir_long
+      ) {
+        return false;
+      }
+
+      const propIsUnit =
+        (property as any).row_type === 'unit' ||
+        Number((property as any).unit_id || 0) > 0;
+      const rowIsUnit =
+        (a as any).row_type === 'unit' || Number((a as any).unit_id || 0) > 0;
+
+      if (propIsUnit && rowIsUnit) {
+        return (
+          Number((a as any).unit_id || 0) ===
+          Number((property as any).unit_id || 0)
+        );
+      } else if (!propIsUnit && !rowIsUnit) {
+        return true;
+      }
+
+      return false;
+    });
+    console.log('updateAddress', {
+      property,
+      index,
+      existing: addresses.value[index],
+    });
     if (index !== -1) {
       addresses.value[index] = {
         ...addresses.value[index],

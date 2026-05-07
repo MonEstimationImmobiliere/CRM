@@ -31,57 +31,63 @@
       </div>
     </EMCard>
 
-    <!-- ══════════════════════════════════════════════
+    <template v-if="showFullForm">
+      <!-- ══════════════════════════════════════════════
          ÉTAPE 2 — Question bifurcation unité
     ══════════════════════════════════════════════ -->
-    <EMCard
-      v-if="props.propertyType && props.propertyType !== 'inconnu'"
-      titleSize="S"
-      :border="true"
-      :noShadow="true"
-      class="unit-question-card"
-    >
-      <template #header-left>
-        <button
-          type="button"
-          class="unit-dropdown-toggle"
-          @click="unitCardOpen = !unitCardOpen"
-        >
-          <h3 class="em-card-title title-size-S">
-            Souhaitez-vous créer une unité ?
-          </h3>
-          <el-icon class="unit-dropdown-arrow" :class="{ open: unitCardOpen }">
-            <ArrowDownBold />
-          </el-icon>
-        </button>
-      </template>
-      <div v-if="unitCardOpen" class="unit-question-content">
-        <p class="unit-question-hint">
-          Une <strong>unité</strong> correspond à un lot individuel
-          (appartement, local, parking…) rattaché à ce bien principal.
-        </p>
-        <div class="unit-question-type">
-          <span class="selected-type-badge">{{ selectedTypeLabel }}</span>
-        </div>
-        <div class="unit-question-actions">
+      <EMCard
+        titleSize="S"
+        :border="true"
+        :noShadow="true"
+        class="unit-question-card"
+      >
+        <template #header-left>
           <button
             type="button"
-            class="unit-btn unit-btn--yes"
-            @click="onCreateUnit"
+            class="unit-dropdown-toggle"
+            @click="unitCardOpen = !unitCardOpen"
           >
-            <span>✓</span> Oui, créer une unité
+            <h3 class="em-card-title title-size-S">
+              Souhaitez-vous créer une unité ?
+            </h3>
+            <el-icon
+              class="unit-dropdown-arrow"
+              :class="{ open: unitCardOpen }"
+            >
+              <ArrowDownBold />
+            </el-icon>
           </button>
-          <button type="button" class="unit-btn unit-btn--no" @click="onNoUnit">
-            <span>→</span> Non, afficher le formulaire
-          </button>
+        </template>
+        <div v-if="unitCardOpen" class="unit-question-content">
+          <p class="unit-question-hint">
+            Une <strong>unité</strong> correspond à un lot individuel
+            (appartement, local, parking…) rattaché à ce bien principal.
+          </p>
+          <div class="unit-question-type">
+            <span class="selected-type-badge">{{ selectedTypeLabel }}</span>
+          </div>
+          <div class="unit-question-actions">
+            <button
+              type="button"
+              class="unit-btn unit-btn--yes"
+              @click="onCreateUnit"
+            >
+              <span>✓</span> Oui, créer une unité
+            </button>
+            <button
+              type="button"
+              class="unit-btn unit-btn--no"
+              @click="onNoUnit"
+            >
+              <span>→</span> Non, merci
+            </button>
+          </div>
         </div>
-      </div>
-    </EMCard>
+      </EMCard>
 
-    <!-- ══════════════════════════════════════════════
+      <!-- ══════════════════════════════════════════════
          ÉTAPE 3 — Formulaire complet (adaptatif)
     ══════════════════════════════════════════════ -->
-    <template v-if="showFullForm && prop">
       <!-- Informations principales -->
       <EMCard
         title="Informations principales"
@@ -757,7 +763,6 @@ const prop = computed<any>(() => store.selectedProperty);
 const currentYear = new Date().getFullYear();
 
 // ─── État du flux ──────────────────────────────────────────────────────────
-const unitQuestionAnswered = ref(false);
 const unitCardOpen = ref(false);
 
 // Réinitialiser le flux dès que le type redevient 'inconnu' ou vide
@@ -765,7 +770,6 @@ watch(
   () => props.propertyType,
   newType => {
     if (!newType || newType === 'inconnu') {
-      unitQuestionAnswered.value = false;
       unitCardOpen.value = true;
     }
   }
@@ -775,15 +779,13 @@ watch(
 watch(
   () => store.selectedProperty,
   () => {
-    unitQuestionAnswered.value = false;
     unitCardOpen.value = false;
   }
 );
 
 const showFullForm = computed<boolean>(() => {
-  // Propriété existante (déjà en base) → afficher directement
-  if (prop.value?.id && Number(prop.value.id) > 0) return true;
-  return props.propertyType !== '' && unitQuestionAnswered.value;
+  if (!props.propertyType || props.propertyType === 'inconnu') return false;
+  return true;
 });
 
 // ─── Options de type de bien ───────────────────────────────────────────────
@@ -822,13 +824,11 @@ function selectType(value: string) {
 }
 
 function onCreateUnit() {
-  unitQuestionAnswered.value = true;
   emit('open-unit-dialog');
   emit('type-confirmed');
 }
 
 function onNoUnit() {
-  unitQuestionAnswered.value = true;
   unitCardOpen.value = false;
   emit('type-confirmed');
 }
