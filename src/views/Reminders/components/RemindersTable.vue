@@ -21,6 +21,7 @@
             :key="reminder.id"
             class="rt-row"
             :class="getRowClass(reminder)"
+            @click="$emit('action', { action: 'edit', reminder: reminder })"
           >
             <!-- Priority strip -->
             <td class="rt-cell rt-cell--strip">

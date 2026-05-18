@@ -244,9 +244,14 @@ const openUnitDialog = () => {
   showUnitDialog.value = true;
 };
 
-const openReminderDialog = () => {
+const openReminderDialog = async () => {
   if (!store.selectedProperty?.id_fantoir_long) return;
-  showReminderDialog.value = true;
+
+  const savedProperty = await handleSaveProperty();
+
+  if (savedProperty?.id || Number(store.selectedProperty?.id) > 0) {
+    showReminderDialog.value = true;
+  }
 };
 
 const hasPropertyChanged = (): boolean => {
@@ -254,12 +259,13 @@ const hasPropertyChanged = (): boolean => {
   return serializeProperty(store.selectedProperty) !== propertySnapshot.value;
 };
 
-const handleSaveProperty = async (): Promise<void> => {
-  if (!store.selectedProperty) return;
+const handleSaveProperty = async (): Promise<any> => {
+  if (!store.selectedProperty) return null;
 
-  if (!hasPropertyChanged()) {
+  // Forcer la sauvegarde si c'est une nouvelle propriété, sinon vérifier les changements
+  if (isEditing.value && !hasPropertyChanged()) {
     console.log('Aucune modification détectée, sauvegarde ignorée');
-    return;
+    return store.selectedProperty;
   }
 
   const filteredProperty = { ...store.selectedProperty } as any;
@@ -293,7 +299,13 @@ const handleSaveProperty = async (): Promise<void> => {
       dashboardStore.updateAddress(saved);
     }
 
+    // Si c'est une création, on force la sélection pour mettre à jour l'ID localement
+    if (!isEditing.value && saved) {
+      store.selectProperty(saved as any);
+    }
+
     ElMessage.success('Propriété sauvegardée');
+    return saved;
   } catch (error: any) {
     console.error('Error saving property:', error);
     ElMessage.error(
@@ -301,6 +313,7 @@ const handleSaveProperty = async (): Promise<void> => {
         error?.message ||
         'Erreur lors de la sauvegarde'
     );
+    return null;
   }
 };
 

@@ -224,7 +224,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
         `https://data.ademe.fr/data-fair/api/v1/datasets/meg-83tjwtg8dyz4vv7h1dqe/lines` +
         `?code_insee_ban_eq=${encodeURIComponent(codeInsee)}` +
         `&date_etablissement_dpe_gte=${from}` +
-        `&sort=-date_etablissement_dpe` +
+        // `&sort=-date_etablissement_dpe` +
         `&select=_geopoint,adresse_ban,type_batiment,etiquette_dpe,date_etablissement_dpe` +
         `&size=5000`;
 

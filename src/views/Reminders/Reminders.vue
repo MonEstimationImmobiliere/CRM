@@ -285,6 +285,7 @@ const openPropertyById = async (propertyId: number) => {
     const property = propertyStore.properties.find(
       (p: any) => p.id === propertyId
     );
+    console.log('Property found for ID', propertyId, property);
 
     if (property?.id_fantoir_long) {
       await propertyStore.selectProperty(property);
