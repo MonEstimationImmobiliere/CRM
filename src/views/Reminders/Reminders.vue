@@ -12,11 +12,11 @@
 
       <div class="headerBottomRow">
         <!-- Filters -->
-        <ReminderFilters
+        <!-- <ReminderFilters
           v-model:active-filter="activeFilter"
           v-model:type-filter="typeFilter"
           v-model:priority-filter="priorityFilter"
-        />
+        /> -->
         <el-button
           type="primary"
           @click="showCreateDialog = true"

@@ -626,6 +626,8 @@ function setupWatchers() {
   position: relative;
   min-width: 0;
   overflow: hidden;
+  max-height: 73vh;
+  border-radius: 18px;
 }
 
 .map-wrapper {
