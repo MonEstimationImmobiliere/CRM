@@ -3,6 +3,7 @@ import { ref, computed, watch } from 'vue';
 import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
 import { NotificationService } from '@/utils/notifications';
 import { ReminderService } from '@/api/reminder.service';
+import { UserService, type AgencyUser } from '@/api/user.service';
 import {
   isOverdue as helperIsOverdue,
   isToday as helperIsToday,
@@ -25,6 +26,7 @@ export interface Reminder extends IReminder {
 export const useRemindersStore = defineStore('reminders', () => {
   const reminders = ref<Reminder[]>([]);
   const agencyReminders = ref<Reminder[]>([]);
+  const agencyUsers = ref<AgencyUser[]>([]);
   const loading = ref(false);
   const selectedReminder = ref<Reminder | null>(null);
   const remindersViewType = ref<'table' | 'card'>('table');
@@ -390,10 +392,45 @@ export const useRemindersStore = defineStore('reminders', () => {
     remindersViewType.value = viewType;
   };
 
+  const loadAgencyUsers = async () => {
+    try {
+      agencyUsers.value = await UserService.getUsersFromSameAgency();
+    } catch {
+      agencyUsers.value = [];
+    }
+  };
+
+  const loadRemindersByScope = async (
+    scope: 'me' | 'agency' | 'user',
+    userId?: number
+  ) => {
+    try {
+      loading.value = true;
+      let data: Reminder[];
+      if (scope === 'me') {
+        data = await ReminderService.getUserReminders();
+      } else if (scope === 'agency') {
+        data = await ReminderService.getAgencyReminders();
+      } else if (scope === 'user' && userId !== undefined) {
+        data = await ReminderService.getRemindersByUser(userId);
+      } else {
+        data = await ReminderService.getUserReminders();
+      }
+      reminders.value = data
+        .filter(r => r.id)
+        .map(r => ({ ...r, sharing: r.sharing || false }));
+    } catch {
+      // keep current data
+    } finally {
+      loading.value = false;
+    }
+  };
+
   return {
     // State
     reminders,
     agencyReminders,
+    agencyUsers,
     loading,
     selectedReminder,
     remindersViewType,
@@ -426,5 +463,7 @@ export const useRemindersStore = defineStore('reminders', () => {
     isReminderToday,
     isReminderUpcoming,
     setRemindersViewType,
+    loadAgencyUsers,
+    loadRemindersByScope,
   };
 });

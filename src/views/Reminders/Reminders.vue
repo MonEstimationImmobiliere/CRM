@@ -12,11 +12,11 @@
 
       <div class="headerBottomRow">
         <!-- Filters -->
-        <!-- <ReminderFilters
-          v-model:active-filter="activeFilter"
-          v-model:type-filter="typeFilter"
-          v-model:priority-filter="priorityFilter"
-        /> -->
+        <RemindersFilters
+          v-model:sharing-filter="sharingFilter"
+          v-model:selected-user="selectedUser"
+        />
+
         <el-button
           type="primary"
           @click="showCreateDialog = true"
@@ -61,6 +61,7 @@
         :reminders="filteredReminders"
         @action="handleAction"
         @update-status="updateStatus"
+        @update-sharing="updateSharing"
       />
 
       <!-- Card View -->
@@ -99,7 +100,7 @@ import ViewToggle from '@/components/ViewToggle.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { sortReminders } from '@/utils/reminderHelpers';
 
-import ReminderFilters from './components/ReminderFilters.vue';
+import RemindersFilters from './components/RemindersFilters.vue';
 import ReminderCard from './components/ReminderCard.vue';
 import RemindersTable from './components/RemindersTable.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
@@ -113,6 +114,8 @@ const propertyStore = usePropertyStore();
 const activeFilter = ref('all');
 const typeFilter = ref('');
 const priorityFilter = ref('');
+const sharingFilter = ref('all');
+const selectedUser = ref<number | null>(null);
 const showCreateDialog = ref(false);
 const editingReminder = ref<Reminder | null>(null);
 const saving = ref(false);
@@ -149,6 +152,14 @@ const filteredReminders = computed(() => {
   }
   if (priorityFilter.value) {
     filtered = filtered.filter(r => r.priority === priorityFilter.value);
+  }
+  if (sharingFilter.value === 'agency') {
+    filtered = filtered.filter(r => !!r.sharing);
+  } else if (sharingFilter.value === 'personal') {
+    filtered = filtered.filter(r => !r.sharing);
+  } else if (sharingFilter.value === 'user') {
+    // reminders already loaded by scope in store via the filter component
+    filtered = remindersStore.reminders;
   }
 
   return sortReminders(filtered);
@@ -265,6 +276,17 @@ const updateStatus = async (
     ElMessage[type](msg);
   } catch {
     ElMessage.error('Erreur lors de la mise à jour du statut');
+  }
+};
+
+const updateSharing = async (reminder: Reminder, sharing: boolean) => {
+  try {
+    await remindersStore.updateReminder(reminder.id, { sharing });
+    ElMessage.success(
+      sharing ? "Rappel partagé avec l'agence" : 'Rappel repassé en privé'
+    );
+  } catch {
+    ElMessage.error('Erreur lors de la mise à jour du partage');
   }
 };
 

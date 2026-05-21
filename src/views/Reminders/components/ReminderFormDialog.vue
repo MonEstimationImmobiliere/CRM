@@ -56,6 +56,13 @@
           <el-option label="Terminé" value="completed" />
         </el-select>
       </el-form-item>
+
+      <el-form-item label="Partager">
+        <EMToggleSwitch
+          v-model="form.sharing"
+          label="Partager ce rappel avec l'agence"
+        />
+      </el-form-item>
     </el-form>
 
     <template #footer>
@@ -83,6 +90,7 @@
 <script setup lang="ts">
 import { ref, watch } from 'vue';
 import { House } from '@element-plus/icons-vue';
+import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import type { Reminder } from '@/stores/reminders';
 
@@ -144,10 +152,11 @@ function disabledDate(time: Date): boolean {
   return time.getTime() < today.getTime();
 }
 
-// Populate form when editing a reminder
+// Populate form when dialog opens or editing target changes
 watch(
-  () => props.editingReminder,
-  reminder => {
+  [() => props.visible, () => props.editingReminder],
+  ([isVisible, reminder]) => {
+    if (!isVisible) return;
     if (reminder) {
       form.value = {
         title: reminder.title,

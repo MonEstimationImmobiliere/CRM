@@ -46,6 +46,7 @@ declare module 'vue' {
     EMInputTextarea: typeof import('./src/components/OwnReusableComponents/input/EMInputTextarea.vue')['default']
     EMInputTextForm: typeof import('./src/components/OwnReusableComponents/input/EMInputTextForm.vue')['default']
     EMNumberInput: typeof import('./src/components/OwnReusableComponents/input/EMNumberInput.vue')['default']
+    EMToggleSwitch: typeof import('./src/components/OwnReusableComponents/switch/EMToggleSwitch.vue')['default']
     IonCustomCard: typeof import('./src/components/OwnReusableComponents/card/IonCustomCard.vue')['default']
     LiquidGlassCard: typeof import('./src/components/OwnReusableComponents/card/LiquidGlassCard.vue')['default']
     Loading: typeof import('./src/components/Loading.vue')['default']

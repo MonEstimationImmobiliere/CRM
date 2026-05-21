@@ -11,6 +11,30 @@ export type ReminderType = 'rappel' | 'estimation' | 'visite' | 'autre';
 export type ReminderPriority = 'low' | 'medium' | 'high';
 
 /**
+ * Créateur du rappel (renvoyé directement par l'API dans l'objet reminder)
+ */
+export interface IReminderCreator {
+  id: number;
+  name: string;
+  email: string;
+}
+
+/**
+ * Bien immobilier associé au rappel (renvoyé directement par l'API)
+ */
+export interface IReminderProperty {
+  id: number;
+  owner: string | null;
+  phone: string | null;
+  email: string | null;
+  numero: number;
+  rep: string | null;
+  nom_voie: string;
+  code_postal: string;
+  city: string;
+}
+
+/**
  * Interface pour les données d'un rappel (Reminder)
  * Utilisé pour les endpoints /reminders/user et /reminders/agency
  */
@@ -28,6 +52,10 @@ export interface IReminder {
   sharing: boolean;
   created_at: string;
   updated_at: string;
+  /** Créateur du rappel — inclus directement par l'API */
+  creator?: IReminderCreator | null;
+  /** Bien immobilier lié — inclus directement par l'API */
+  property?: IReminderProperty | null;
 }
 
 /**

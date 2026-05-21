@@ -8,12 +8,21 @@ import type {
 
 export const ReminderService = {
   async getUserReminders(): Promise<ReminderList> {
-    const response = await apiService.get<ReminderList>('/reminders/user');
+    const response = await apiService.get<ReminderList>('/reminders?scope=me');
     return response.data;
   },
 
   async getAgencyReminders(): Promise<ReminderList> {
-    const response = await apiService.get<ReminderList>('/reminders/agency');
+    const response = await apiService.get<ReminderList>(
+      '/reminders?scope=agency'
+    );
+    return response.data;
+  },
+
+  async getRemindersByUser(userId: number): Promise<ReminderList> {
+    const response = await apiService.get<ReminderList>(
+      `/reminders?scope=user&user_id=${userId}`
+    );
     return response.data;
   },
 

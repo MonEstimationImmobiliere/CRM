@@ -12,6 +12,9 @@
             <th class="rt-th rt-th--progress" style="width: 220px">
               Avancement
             </th>
+            <th class="rt-th" style="width: 140px">Propriétaire</th>
+            <th class="rt-th" style="width: 160px">Email</th>
+            <th class="rt-th" style="width: 90px">Partage</th>
             <th class="rt-th" style="width: 50px"></th>
           </tr>
         </thead>
@@ -49,6 +52,9 @@
                 </div>
                 <span v-if="reminder.description" class="rt-desc">
                   {{ reminder.description }}
+                </span>
+                <span v-if="reminder.property" class="rt-property-addr">
+                  {{ getPropertyAddress(reminder.property) }}
                 </span>
               </div>
             </td>
@@ -110,7 +116,7 @@
                       getStatus(reminder) === 'completed',
                   }"
                 ></div>
-                <button
+                <!-- <button
                   class="progress-step"
                   :class="{
                     'step--active': getStatus(reminder) === 'progress',
@@ -121,7 +127,7 @@
                 >
                   <span class="step-dot"></span>
                   <span class="step-label">En cours</span>
-                </button>
+                </button> -->
                 <div
                   class="progress-line"
                   :class="{
@@ -140,6 +146,30 @@
                   <span class="step-label">Terminé</span>
                 </button>
               </div>
+            </td>
+
+            <!-- Owner (property owner) -->
+            <td class="rt-cell rt-cell--owner">
+              <span class="rt-owner-name">
+                {{ reminder.property?.owner ?? 'Nom non défini' }}
+              </span>
+            </td>
+
+            <!-- Creator email -->
+            <td class="rt-cell rt-cell--email">
+              <span class="rt-email" :title="reminder.creator?.email">
+                {{ reminder.creator?.email ?? '—' }}
+              </span>
+            </td>
+
+            <!-- Sharing toggle -->
+            <td class="rt-cell rt-cell--sharing" @click.stop>
+              <EMToggleSwitch
+                :model-value="!!reminder.sharing"
+                @update:model-value="
+                  val => $emit('update-sharing', reminder, val)
+                "
+              />
             </td>
 
             <!-- Actions dropdown -->
@@ -193,6 +223,8 @@
 <script setup lang="ts">
 import { Edit, Delete, DocumentCopy } from '@element-plus/icons-vue';
 import type { Reminder } from '@/stores/reminders';
+import type { IReminderProperty } from '@/types/reminder';
+import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import {
   getPriorityLabel,
   getTypeLabel,
@@ -215,7 +247,17 @@ defineEmits<{
     reminder: Reminder,
     status: 'todo' | 'progress' | 'completed',
   ];
+  'update-sharing': [reminder: Reminder, sharing: boolean];
 }>();
+
+const getPropertyAddress = (property: IReminderProperty): string => {
+  const parts: string[] = [];
+  if (property.numero) parts.push(String(property.numero));
+  if (property.rep) parts.push(property.rep);
+  parts.push(property.nom_voie);
+  parts.push(`${property.code_postal} ${property.city}`);
+  return parts.join(' ');
+};
 
 /* ── Helpers ────────────────────────────────────── */
 
@@ -380,6 +422,50 @@ const getRowClass = (r: Reminder): string => {
 
 .rt-cell--progress {
   padding: var(--table-cell-padding);
+}
+
+.rt-cell--sharing {
+  padding: var(--table-cell-padding);
+  text-align: center;
+}
+
+.rt-cell--owner {
+  padding: var(--table-cell-padding);
+  max-width: 140px;
+}
+
+.rt-owner-name {
+  font-size: 0.8rem;
+  font-weight: 500;
+  color: #374151;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.rt-cell--email {
+  padding: var(--table-cell-padding);
+  max-width: 160px;
+}
+
+.rt-email {
+  font-size: 0.75rem;
+  color: #64748b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  display: block;
+}
+
+.rt-property-addr {
+  display: block;
+  font-size: 0.7rem;
+  color: #94a3b8;
+  margin-top: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* ── Priority strip ──────────────────────────── */
