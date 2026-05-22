@@ -11,11 +11,19 @@
       </div>
 
       <div class="headerBottomRow">
-        <!-- Filters -->
+        <!-- Scope filters -->
         <RemindersFilters
           v-model:sharing-filter="sharingFilter"
           v-model:selected-user="selectedUser"
+          v-model:selected-agency="selectedAgency"
+          :user-role="userStore.role"
         />
+
+        <!-- Completed / À faire toggle -->
+        <el-radio-group v-model="completedFilter" class="completed-toggle">
+          <el-radio-button :label="false">À faire</el-radio-button>
+          <el-radio-button :label="true">Terminé</el-radio-button>
+        </el-radio-group>
 
         <el-button
           type="primary"
@@ -59,6 +67,7 @@
       <RemindersTable
         v-else-if="currentRemindersView === 'table'"
         :reminders="filteredReminders"
+        :user-role="userStore.role"
         @action="handleAction"
         @update-status="updateStatus"
         @update-sharing="updateSharing"
@@ -70,6 +79,7 @@
           v-for="reminder in filteredReminders"
           :key="reminder.id"
           :reminder="reminder"
+          :user-role="userStore.role"
           @action="handleAction"
           @update-status="updateStatus"
         />
@@ -82,7 +92,7 @@
       :editing-reminder="editingReminder"
       :saving="saving"
       @save="saveReminder"
-      @open-property="openPropertyById"
+      @open-property="openProperty"
     />
 
     <!-- Property Dialog -->
@@ -91,8 +101,9 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
+import { ref, computed, watch } from 'vue';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
+import { useUserStore } from '@/stores/user';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { Plus, Document } from '@element-plus/icons-vue';
 import { DataBoard, Grid } from '@element-plus/icons-vue';
@@ -109,6 +120,7 @@ import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
 const remindersStore = useRemindersStore();
 const propertyStore = usePropertyStore();
+const userStore = useUserStore();
 
 // Reactive state
 const activeFilter = ref('all');
@@ -116,6 +128,8 @@ const typeFilter = ref('');
 const priorityFilter = ref('');
 const sharingFilter = ref('all');
 const selectedUser = ref<number | null>(null);
+const selectedAgency = ref<number | null>(null);
+const completedFilter = ref(false);
 const showCreateDialog = ref(false);
 const editingReminder = ref<Reminder | null>(null);
 const saving = ref(false);
@@ -153,17 +167,31 @@ const filteredReminders = computed(() => {
   if (priorityFilter.value) {
     filtered = filtered.filter(r => r.priority === priorityFilter.value);
   }
-  if (sharingFilter.value === 'agency') {
-    filtered = filtered.filter(r => !!r.sharing);
-  } else if (sharingFilter.value === 'personal') {
-    filtered = filtered.filter(r => !r.sharing);
-  } else if (sharingFilter.value === 'user') {
-    // reminders already loaded by scope in store via the filter component
-    filtered = remindersStore.reminders;
-  }
-
   return sortReminders(filtered);
 });
+
+// Resolve sharingFilter to API scope
+const getApiScope = (): 'me' | 'all' | 'agency' | 'user' => {
+  if (sharingFilter.value === 'personal') return 'me';
+  if (sharingFilter.value === 'user') return 'user';
+  if (sharingFilter.value === 'agency') return 'agency';
+  return 'all';
+};
+
+// Reload when any filter changes (immediate: true triggers the initial fetch on mount)
+watch(
+  [sharingFilter, selectedUser, selectedAgency, completedFilter],
+  () => {
+    const scope = getApiScope();
+    if (scope === 'user' && !selectedUser.value) return; // wait for user selection
+    remindersStore.loadRemindersByScope(scope, {
+      userId: selectedUser.value ?? undefined,
+      agencyId: selectedAgency.value ?? undefined,
+      completed: completedFilter.value,
+    });
+  },
+  { immediate: true }
+);
 
 // Empty state message
 const emptyMessage = computed(() => {
@@ -301,22 +329,31 @@ const currentRemindersView = computed({
     remindersStore.setRemindersViewType(v as 'table' | 'card'),
 });
 
-const openPropertyById = async (propertyId: number) => {
+const openProperty = async (reminder: Reminder) => {
   try {
-    // Find the property in the store by numeric id
-    const property = propertyStore.properties.find(
-      (p: any) => p.id === propertyId
-    );
-    console.log('Property found for ID', propertyId, property);
+    const propertyId = reminder.property_id;
+    // Use the reminder's embedded property data to avoid mixing in the
+    // prospection global state (city, etc.)
+    const embeddedProperty = reminder.property;
 
-    if (property?.id_fantoir_long) {
-      await propertyStore.selectProperty(property);
-    } else {
-      // Fallback: create a minimal property object so the dialog can fetch it
+    if (embeddedProperty) {
       await propertyStore.selectProperty({
         ...propertyStore.defaultPropertyData,
         id: propertyId,
+        city: embeddedProperty.city,
+        code_postal: embeddedProperty.code_postal,
+        nom_voie: embeddedProperty.nom_voie,
+        numero: embeddedProperty.numero,
+        rep: embeddedProperty.rep,
       });
+    } else {
+      // Fallback: look up in already-loaded properties list
+      const found = propertyStore.properties.find(
+        (p: any) => p.id === propertyId
+      );
+      await propertyStore.selectProperty(
+        found ?? { ...propertyStore.defaultPropertyData, id: propertyId }
+      );
     }
 
     showCreateDialog.value = false;
@@ -328,10 +365,6 @@ const openPropertyById = async (propertyId: number) => {
 </script>
 
 <style scoped>
-.reminders-page {
-  /* padding: 0 20px; */
-}
-
 /* ── Header ──────────────────────────────── */
 .headerFilterInfoContainer {
   margin-bottom: 20px;
@@ -365,6 +398,12 @@ const openPropertyById = async (propertyId: number) => {
   flex-direction: row;
   justify-content: flex-start;
   align-items: center;
+  gap: 12px;
+  flex-wrap: wrap;
+}
+
+.completed-toggle {
+  margin-left: 4px;
 }
 
 .add-reminder-btn {

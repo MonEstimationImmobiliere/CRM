@@ -1,12 +1,15 @@
 <template>
   <div class="reminders-filters">
-    <el-radio-group v-model="localSharingFilter" @change="onSharingChange">
+    <el-radio-group v-model="localSharingFilter">
       <el-radio-button label="all">Tous</el-radio-button>
       <el-radio-button label="personal">Personnel</el-radio-button>
-      <el-radio-button label="agency">Agence</el-radio-button>
       <el-radio-button label="user">Collègue</el-radio-button>
+      <el-radio-button v-if="userRole === 'admin'" label="agency"
+        >Agence</el-radio-button
+      >
     </el-radio-group>
 
+    <!-- Colleague selector -->
     <el-select
       v-if="localSharingFilter === 'user'"
       v-model="localSelectedUser"
@@ -14,49 +17,81 @@
       class="user-select"
       :loading="loadingUsers"
       no-data-text="Pas de donnée disponible"
-      @visible-change="onSelectOpen"
+      @visible-change="onUserSelectOpen"
     >
       <el-option
         v-for="user in agencyUsers"
         :key="user.id"
-        :label="user.email"
+        :label="user.name"
         :value="user.id"
       >
         <span class="user-option__name">{{ user.name }}</span>
         <span class="user-option__email">{{ user.email }}</span>
       </el-option>
     </el-select>
+
+    <!-- Agency selector (admin only) -->
+    <el-select
+      v-if="localSharingFilter === 'agency' && userRole === 'admin'"
+      v-model="localSelectedAgency"
+      placeholder="Choisir une agence"
+      class="user-select"
+      :loading="loadingAgencies"
+      no-data-text="Pas de donnée disponible"
+      @visible-change="onAgencySelectOpen"
+    >
+      <el-option
+        v-for="agency in agencies"
+        :key="agency.id"
+        :label="agency.name"
+        :value="agency.id"
+      />
+    </el-select>
   </div>
 </template>
 
 <script setup lang="ts">
-import { ref, computed, watch } from 'vue';
+import { ref, computed } from 'vue';
 import { storeToRefs } from 'pinia';
 import { useRemindersStore } from '@/stores/reminders';
 
 const props = defineProps<{
   sharingFilter: string;
   selectedUser: number | null;
+  selectedAgency: number | null;
+  userRole: string;
 }>();
 
 const emit = defineEmits<{
   'update:sharingFilter': [value: string];
   'update:selectedUser': [value: number | null];
+  'update:selectedAgency': [value: number | null];
 }>();
 
 const remindersStore = useRemindersStore();
-const { agencyUsers } = storeToRefs(remindersStore);
+const { agencyUsers, agencies } = storeToRefs(remindersStore);
 
 const loadingUsers = ref(false);
+const loadingAgencies = ref(false);
 
 const localSharingFilter = computed({
   get: () => props.sharingFilter,
-  set: val => emit('update:sharingFilter', val),
+  set: val => {
+    emit('update:sharingFilter', val);
+    // Reset subordinate selections when scope changes
+    if (val !== 'user') emit('update:selectedUser', null);
+    if (val !== 'agency') emit('update:selectedAgency', null);
+  },
 });
 
 const localSelectedUser = computed({
   get: () => props.selectedUser,
   set: val => emit('update:selectedUser', val),
+});
+
+const localSelectedAgency = computed({
+  get: () => props.selectedAgency,
+  set: val => emit('update:selectedAgency', val),
 });
 
 const fetchUsers = async () => {
@@ -69,27 +104,23 @@ const fetchUsers = async () => {
   }
 };
 
-const onSelectOpen = (visible: boolean) => {
+const fetchAgencies = async () => {
+  if (agencies.value.length > 0) return;
+  loadingAgencies.value = true;
+  try {
+    await remindersStore.loadAgencies();
+  } finally {
+    loadingAgencies.value = false;
+  }
+};
+
+const onUserSelectOpen = (visible: boolean) => {
   if (visible) fetchUsers();
 };
 
-const onSharingChange = (val: string | number | boolean | undefined) => {
-  const scope = String(val ?? '');
-  if (scope !== 'user') {
-    emit('update:selectedUser', null);
-  }
-  if (scope === 'agency') {
-    remindersStore.loadRemindersByScope('agency');
-  } else if (scope === 'me' || scope === 'all' || scope === 'personal') {
-    remindersStore.loadRemindersByScope('me');
-  }
+const onAgencySelectOpen = (visible: boolean) => {
+  if (visible) fetchAgencies();
 };
-
-watch(localSelectedUser, userId => {
-  if (localSharingFilter.value === 'user' && userId !== null) {
-    remindersStore.loadRemindersByScope('user', userId);
-  }
-});
 </script>
 
 <style scoped>

@@ -73,7 +73,7 @@
             v-if="editingReminder && editingReminder.property_id"
             type="info"
             plain
-            @click="$emit('open-property', editingReminder!.property_id)"
+            @click="$emit('open-property', editingReminder!)"
           >
             <el-icon><House /></el-icon>
             Voir la propriété
@@ -114,7 +114,7 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean];
   save: [form: ReminderFormData, editingReminder: Reminder | null];
-  'open-property': [propertyId: number];
+  'open-property': [reminder: Reminder];
 }>();
 
 const formRef = ref<FormInstance>();

@@ -2,6 +2,8 @@ import { defineStore } from 'pinia';
 import { ref } from 'vue';
 import apiService from '@/api/apiRequests';
 
+export type UserRole = 'agent' | 'agency_manager' | 'admin';
+
 interface LoginResponse {
   user: {
     name: string;
@@ -10,6 +12,7 @@ interface LoginResponse {
     avatar: string | null;
     status: string;
     id: number | null;
+    role?: string;
   };
   token: string;
 }
@@ -21,6 +24,7 @@ interface UserInfo {
   avatar: string | null;
   status: 'active' | 'inactive';
   id: number | null;
+  role?: string;
 }
 
 export const useUserStore = defineStore('user', () => {
@@ -32,6 +36,7 @@ export const useUserStore = defineStore('user', () => {
   const phone = ref('');
   const avatar = ref<string | null>(null);
   const status = ref<'active' | 'inactive'>('active');
+  const role = ref<UserRole>('agent');
 
   // Actions
   async function login(userEmail: string, password: string) {
@@ -46,6 +51,7 @@ export const useUserStore = defineStore('user', () => {
       phone.value = response.data.user.phone || '';
       token.value = response.data.token || '';
       id.value = response.data.user.id || null;
+      role.value = (response.data.user.role as UserRole) || 'agent';
 
       if (token.value) {
         apiService.setToken(token.value);
@@ -83,6 +89,7 @@ export const useUserStore = defineStore('user', () => {
       avatar.value = data.avatar;
       status.value = data.status;
       id.value = data.id;
+      role.value = (data.role as UserRole) || 'agent';
       token.value = userToken;
       apiService.setToken(userToken);
     }
@@ -96,6 +103,7 @@ export const useUserStore = defineStore('user', () => {
     phone.value = '';
     avatar.value = null;
     status.value = 'active';
+    role.value = 'agent';
   }
 
   function setUserId(newId: number | null) {
@@ -111,6 +119,7 @@ export const useUserStore = defineStore('user', () => {
     phone,
     avatar,
     status,
+    role,
     // Actions
     login,
     logout,

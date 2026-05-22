@@ -67,6 +67,7 @@
               Dupliquer
             </el-dropdown-item>
             <el-dropdown-item
+              v-if="userRole !== 'agent'"
               :command="{ action: 'delete', reminder }"
               :icon="Delete"
               divided
@@ -185,6 +186,7 @@ interface ActionCommand {
 
 const props = defineProps<{
   reminder: Reminder;
+  userRole: string;
 }>();
 
 defineEmits<{

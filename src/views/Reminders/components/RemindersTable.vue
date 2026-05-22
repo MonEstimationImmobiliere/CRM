@@ -13,7 +13,7 @@
               Avancement
             </th>
             <th class="rt-th" style="width: 140px">Propriétaire</th>
-            <th class="rt-th" style="width: 160px">Email</th>
+            <th class="rt-th" style="width: 160px">Agent</th>
             <th class="rt-th" style="width: 90px">Partage</th>
             <th class="rt-th" style="width: 50px"></th>
           </tr>
@@ -155,10 +155,10 @@
               </span>
             </td>
 
-            <!-- Creator email -->
+            <!-- Creator name -->
             <td class="rt-cell rt-cell--email">
               <span class="rt-email" :title="reminder.creator?.email">
-                {{ reminder.creator?.email ?? '—' }}
+                {{ reminder.creator?.name ?? '—' }}
               </span>
             </td>
 
@@ -201,7 +201,12 @@
                     <el-dropdown-item command="duplicate" :icon="DocumentCopy">
                       Dupliquer
                     </el-dropdown-item>
-                    <el-dropdown-item command="delete" :icon="Delete" divided>
+                    <el-dropdown-item
+                      v-if="userRole !== 'agent'"
+                      command="delete"
+                      :icon="Delete"
+                      divided
+                    >
                       Supprimer
                     </el-dropdown-item>
                   </el-dropdown-menu>
@@ -239,6 +244,7 @@ interface ActionCommand {
 
 defineProps<{
   reminders: Reminder[];
+  userRole: string;
 }>();
 
 defineEmits<{

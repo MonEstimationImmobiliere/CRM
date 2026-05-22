@@ -6,6 +6,14 @@ import type {
   ReminderList,
 } from '@/types/reminder';
 
+export type ReminderScope = 'me' | 'all' | 'agency' | 'user';
+
+export interface ReminderScopeOptions {
+  userId?: number;
+  agencyId?: number;
+  completed?: boolean;
+}
+
 export const ReminderService = {
   async getUserReminders(): Promise<ReminderList> {
     const response = await apiService.get<ReminderList>('/reminders?scope=me');
@@ -22,6 +30,26 @@ export const ReminderService = {
   async getRemindersByUser(userId: number): Promise<ReminderList> {
     const response = await apiService.get<ReminderList>(
       `/reminders?scope=user&user_id=${userId}`
+    );
+    return response.data;
+  },
+
+  async getRemindersByScope(
+    scope: ReminderScope,
+    options?: ReminderScopeOptions
+  ): Promise<ReminderList> {
+    const params = new URLSearchParams({ scope });
+    if (scope === 'user' && options?.userId) {
+      params.set('user_id', String(options.userId));
+    }
+    if (scope === 'agency' && options?.agencyId) {
+      params.set('agency_id', String(options.agencyId));
+    }
+    if (options?.completed) {
+      params.set('completed', '1');
+    }
+    const response = await apiService.get<ReminderList>(
+      `/reminders?${params.toString()}`
     );
     return response.data;
   },
