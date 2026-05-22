@@ -13,14 +13,65 @@
               Avancement
             </th>
             <th class="rt-th" style="width: 140px">Propriétaire</th>
-            <th class="rt-th" style="width: 160px">Agent</th>
+            <th class="rt-th" style="width: 160px">
+              <div class="rt-th-filter">
+                <span>Agent</span>
+                <el-dropdown
+                  trigger="click"
+                  placement="bottom-end"
+                  :hide-on-click="false"
+                >
+                  <el-icon
+                    class="rt-filter-icon"
+                    :class="{
+                      'rt-filter-icon--active': agentFilter.length > 0,
+                    }"
+                    @click.stop
+                  >
+                    <svg
+                      viewBox="0 0 1024 1024"
+                      width="12"
+                      height="12"
+                      fill="currentColor"
+                    >
+                      <path
+                        d="M880 112H144c-17.7 0-32 14.3-32 32v64c0 8.8 3.5 17.3 9.7 23.5L512 672v238c0 12.9 7.9 24.5 19.9 29.2 3.9 1.5 8 2.3 12.1 2.3 8.3 0 16.3-3.3 22.2-9.1l192-192c6-6 9.4-14.1 9.4-22.6V672l390.3-440.5c6.2-6.2 9.7-14.7 9.7-23.5v-64c0-17.7-14.3-32-32-32z"
+                      />
+                    </svg>
+                  </el-icon>
+                  <template #dropdown>
+                    <div class="rt-filter-panel" @click.stop>
+                      <el-checkbox-group
+                        v-model="agentFilter"
+                        class="rt-filter-list"
+                      >
+                        <el-checkbox
+                          v-for="name in uniqueAgents"
+                          :key="name"
+                          :label="name"
+                          :value="name"
+                        />
+                      </el-checkbox-group>
+                      <div class="rt-filter-actions">
+                        <el-button size="small" text @click="agentFilter = []"
+                          >Réinit.</el-button
+                        >
+                        <el-button size="small" type="primary" @click.stop
+                          >OK</el-button
+                        >
+                      </div>
+                    </div>
+                  </template>
+                </el-dropdown>
+              </div>
+            </th>
             <th class="rt-th" style="width: 90px">Partage</th>
             <th class="rt-th" style="width: 50px"></th>
           </tr>
         </thead>
         <tbody>
           <tr
-            v-for="reminder in reminders"
+            v-for="reminder in displayReminders"
             :key="reminder.id"
             class="rt-row"
             :class="getRowClass(reminder)"
@@ -226,6 +277,7 @@
 </template>
 
 <script setup lang="ts">
+import { ref, computed } from 'vue';
 import { Edit, Delete, DocumentCopy } from '@element-plus/icons-vue';
 import type { Reminder } from '@/stores/reminders';
 import type { IReminderProperty } from '@/types/reminder';
@@ -242,10 +294,25 @@ interface ActionCommand {
   reminder: Reminder;
 }
 
-defineProps<{
+const props = defineProps<{
   reminders: Reminder[];
   userRole: string;
 }>();
+
+// ── Agent filter ────────────────────────────────
+const agentFilter = ref<string[]>([]);
+
+const uniqueAgents = computed(() => [
+  ...new Set(props.reminders.map(r => r.creator?.name ?? '').filter(Boolean)),
+]);
+
+const displayReminders = computed(() =>
+  agentFilter.value.length === 0
+    ? props.reminders
+    : props.reminders.filter(r =>
+        agentFilter.value.includes(r.creator?.name ?? '')
+      )
+);
 
 defineEmits<{
   action: [command: ActionCommand];
@@ -362,6 +429,47 @@ const getRowClass = (r: Reminder): string => {
 
 .rt-th--progress {
   text-align: center;
+}
+
+/* ── Agent filter header ─────────────────────── */
+.rt-th-filter {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+}
+
+.rt-filter-icon {
+  cursor: pointer;
+  color: #9ca3af;
+  flex-shrink: 0;
+  transition: color 0.15s;
+}
+
+.rt-filter-icon:hover,
+.rt-filter-icon--active {
+  color: var(--el-color-primary);
+}
+
+.rt-filter-panel {
+  padding: 8px;
+  min-width: 160px;
+}
+
+.rt-filter-list {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  max-height: 200px;
+  overflow-y: auto;
+  padding-bottom: 8px;
+  border-bottom: 1px solid #e5e7eb;
+  margin-bottom: 8px;
+}
+
+.rt-filter-actions {
+  display: flex;
+  justify-content: flex-end;
+  gap: 6px;
 }
 
 /* ── Rows ────────────────────────────────────── */

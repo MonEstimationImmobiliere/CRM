@@ -116,6 +116,7 @@ import ReminderCard from './components/ReminderCard.vue';
 import RemindersTable from './components/RemindersTable.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
+import { PropertyService } from '@/api';
 import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
 const remindersStore = useRemindersStore();
@@ -332,29 +333,20 @@ const currentRemindersView = computed({
 const openProperty = async (reminder: Reminder) => {
   try {
     const propertyId = reminder.property_id;
-    // Use the reminder's embedded property data to avoid mixing in the
-    // prospection global state (city, etc.)
-    const embeddedProperty = reminder.property;
 
-    if (embeddedProperty) {
-      await propertyStore.selectProperty({
-        ...propertyStore.defaultPropertyData,
-        id: propertyId,
-        city: embeddedProperty.city,
-        code_postal: embeddedProperty.code_postal,
-        nom_voie: embeddedProperty.nom_voie,
-        numero: embeddedProperty.numero,
-        rep: embeddedProperty.rep,
-      });
-    } else {
-      // Fallback: look up in already-loaded properties list
-      const found = propertyStore.properties.find(
-        (p: any) => p.id === propertyId
-      );
-      await propertyStore.selectProperty(
-        found ?? { ...propertyStore.defaultPropertyData, id: propertyId }
-      );
+    // 1. Chercher dans le store local (données complètes avec property_type)
+    let fullProperty: any = propertyStore.properties.find(
+      (p: any) => p.id === propertyId
+    );
+
+    // 2. Si absent du store, fetch depuis l'API pour obtenir les données complètes
+    if (!fullProperty) {
+      fullProperty = await PropertyService.getProperty(propertyId);
     }
+
+    // Ne pas pré-spread defaultPropertyData : selectProperty le fait en interne,
+    // et defaultPropertyData.row_type = '' bloquerait le fallback 'address' via ??
+    await propertyStore.selectProperty(fullProperty);
 
     showCreateDialog.value = false;
     propertyStore.setDialogVisible(true);
