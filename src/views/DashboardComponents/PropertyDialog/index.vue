@@ -337,18 +337,21 @@ const createUnit = async (payload: {
       await store.selectProperty(createdRoot as any);
     }
 
-    await UnitService.save({
-      id_fantoir_long: rootProperty.id_fantoir_long,
-      id_fantoir: rootProperty.id_fantoir,
-      code_insee: rootProperty.code_insee,
-      code_postal: rootProperty.code_postal,
-      nom_voie: rootProperty.nom_voie,
-      numero: rootProperty.numero,
-      rep: rootProperty.rep,
-      city: rootProperty.city || rootProperty.nom_commune || '',
-      unit_type: payload.unit_type,
-      unit_label: payload.unit_label,
-    });
+await UnitService.save({
+  property_id: rootProperty.id,
+
+  id_fantoir_long: rootProperty.id_fantoir_long,
+  id_fantoir: rootProperty.id_fantoir,
+  code_insee: rootProperty.code_insee,
+  code_postal: rootProperty.code_postal,
+  nom_voie: rootProperty.nom_voie,
+  numero: rootProperty.numero,
+  rep: rootProperty.rep,
+  city: rootProperty.city || rootProperty.nom_commune || '',
+
+  unit_type: payload.unit_type,
+  unit_label: payload.unit_label,
+});
 
     ElMessage.success('Unité créée avec sa property');
 
