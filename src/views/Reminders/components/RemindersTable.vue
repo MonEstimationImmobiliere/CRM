@@ -107,74 +107,37 @@ label_cell<template>
 
 <td class="actions-cell" @click.stop>
   <div class="actions-wrapper">
-    <el-button
-      size="small"
-      type="info"
-      plain
-      :disabled="!reminder.property_id"
-      @click="$emit('action', { action: 'open-property', reminder })"
-    >
-      Ouvrir
-    </el-button>
+<el-button
+  size="small"
+  type="primary"
+  circle
+  :disabled="!reminder.property_id"
+  @click="$emit('action', { action: 'open-property', reminder })"
+>
+  <el-icon><Edit /></el-icon>
+</el-button>
 
-    <el-button
-      size="small"
-      plain
-      @click="$emit('action', { action: 'edit', reminder })"
-    >
-      Modifier
-    </el-button>
+<el-button
+  size="small"
+  plain
+  circle
+  @click="$emit('action', { action: 'edit', reminder })"
+>
+  <el-icon><EditPen /></el-icon>
+</el-button>
 
-    <el-button
-      size="small"
-      type="primary"
-      plain
-      :disabled="!reminder.property_id"
-      @click="$emit('action', { action: 'new-reminder', reminder })"
-    >
-      Nouveau
-    </el-button>
+<el-button
+  size="small"
+  type="success"
+  circle
+  :disabled="!reminder.property_id"
+  @click="$emit('action', { action: 'new-reminder', reminder })"
+>
+  <el-icon><Plus /></el-icon>
+</el-button>
   </div>
 </td>
-        <!--    <td class="center">
-              <el-dropdown
-                trigger="click"
-                placement="bottom-end"
-                @command="
-                  (cmd: string) =>
-                    $emit('action', { action: cmd, reminder })
-                "
-              >
-                <button class="actions-trigger" @click.stop>
-                  <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
-                    <circle cx="8" cy="3" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="8" r="1.5" fill="currentColor" />
-                    <circle cx="8" cy="13" r="1.5" fill="currentColor" />
-                  </svg>
-                </button>
 
-                <template #dropdown>
-                  <el-dropdown-menu>
-                    <el-dropdown-item command="edit" :icon="Edit">
-                      Modifier
-                    </el-dropdown-item>
-                    <el-dropdown-item command="duplicate" :icon="DocumentCopy">
-                      Dupliquer
-                    </el-dropdown-item>
-                    <el-dropdown-item
-                      v-if="userRole !== 'agent'"
-                      command="delete"
-                      :icon="Delete"
-                      divided
-                    >
-                      Supprimer
-                    </el-dropdown-item>
-                  </el-dropdown-menu>
-                </template>
-              </el-dropdown>
-
-
-            </td>-->
 
           </tr>
         </tbody>
@@ -193,6 +156,7 @@ import type { Reminder } from '@/stores/reminders';
 import type { IReminderProperty } from '@/types/reminder';
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import { getTypeLabel, isOverdue, isToday } from '@/utils/reminderHelpers';
+import { EditPen, Plus } from '@element-plus/icons-vue';
 
 interface ActionCommand {
   action: string;
@@ -550,13 +514,13 @@ td {
 }
 
 .actions-cell {
-  width: 170px;
-  text-align: right;
+  width: 130px;
+  text-align: center;
 }
 
 .actions-wrapper {
   display: flex;
-  justify-content: flex-end;
+  justify-content: center;
   align-items: center;
   gap: 8px;
 }
@@ -564,7 +528,6 @@ td {
 .actions-wrapper .el-button {
   margin: 0;
 }
-
 
 
 </style>

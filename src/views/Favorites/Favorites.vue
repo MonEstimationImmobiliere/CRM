@@ -230,15 +230,28 @@ const toggleFavorite = async (propertyData: any) => {
   }
 };
 
-const openPropertyDialog = (property: any) => {
-  store.selectProperty({
+const openPropertyDialog = async (property: any) => {
+  const unitId = Number(property.unit_id ?? 0);
+
+  const normalizedProperty = {
     ...store.defaultPropertyData,
     ...property,
+
+    id: Number(property.id ?? 0) > 0 ? Number(property.id) : 0,
+
     id_fantoir_long: property.id_fantoir_long,
-  });
+
+    unit_id: unitId > 0 ? unitId : null,
+
+    row_type:
+      property.row_type ||
+      (unitId > 0 ? 'unit' : 'address'),
+  };
+
+  await store.selectProperty(normalizedProperty);
+
   store.setDialogVisible(true);
 };
-
 const clearFilters = () => {
   selectedCity.value = '';
   selectedPropertyType.value = '';

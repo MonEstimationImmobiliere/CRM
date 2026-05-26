@@ -68,15 +68,7 @@
       <div class="dialog-footer">
         <el-button @click="$emit('update:visible', false)">Annuler</el-button>
         <div class="footer-right">
-          <el-button
-            v-if="editingReminder && editingReminder.property_id"
-            type="info"
-            plain
-            @click="$emit('open-property', editingReminder!)"
-          >
-            <el-icon><House /></el-icon>
-            Voir la propriété
-          </el-button>
+ 
           <el-button type="primary" :loading="saving" @click="handleSave">
             {{ editingReminder ? 'Sauvegarder' : 'Créer' }}
           </el-button>
@@ -88,7 +80,7 @@
 
 <script setup lang="ts">
 import { ref, watch } from 'vue';
-import { House } from '@element-plus/icons-vue';
+
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import type { FormInstance, FormRules } from 'element-plus';
 import type { Reminder } from '@/stores/reminders';
@@ -113,7 +105,6 @@ const props = defineProps<{
 const emit = defineEmits<{
   'update:visible': [value: boolean];
   save: [form: ReminderFormData, editingReminder: Reminder | null];
-  'open-property': [reminder: Reminder];
 }>();
 
 const formRef = ref<FormInstance>();
