@@ -176,11 +176,34 @@ const saveInProgress = ref(false);
 const propertySnapshot = ref<string | null>(null);
 
 const serializeProperty = (prop: any): string => {
-  const copy = { ...prop };
+  if (!prop) return '';
+
+  const copy: any = { ...prop };
+
+  // Champs à ignorer pour la détection de modification
   delete copy.comment_rappel;
+  delete copy.unit;
+  delete copy.created_at;
+  delete copy.updated_at;
+  delete copy.update_by;
+  delete copy.created_by;
+
+  // Normalisations pour éviter les faux changements
+  Object.keys(copy).forEach(key => {
+    if (copy[key] === undefined) copy[key] = null;
+    if (copy[key] === '') copy[key] = null;
+
+    if (copy[key] === true) copy[key] = 1;
+    if (copy[key] === false) copy[key] = 0;
+  });
+
+  copy.id = Number(copy.id ?? 0);
+  copy.unit_id = Number(copy.unit_id ?? 0) > 0 ? Number(copy.unit_id) : null;
+  copy.row_type =
+    copy.row_type || (copy.unit_id ? 'unit' : 'address');
+
   return JSON.stringify(copy);
 };
-
 // Prendre le snapshot APRÈS ouverture du drawer ET après chargement de selectedProperty
 watch(
   [() => store.isDialogVisible, () => store.selectedProperty],
@@ -276,11 +299,41 @@ const openReminderDialog = async () => {
   }
 };
 
-const hasPropertyChanged = (): boolean => {
-  if (!store.selectedProperty || !propertySnapshot.value) return false;
-  return serializeProperty(store.selectedProperty) !== propertySnapshot.value;
+const hasNewPropertyMeaningfulData = (property: any): boolean => {
+  const propertyType = String(property.property_type ?? '').trim().toLowerCase();
+
+  return Boolean(
+    // on ignore les types par défaut
+    (propertyType &&
+      propertyType !== 'inconnu' &&
+      propertyType !== 'address' &&
+      propertyType !== 'immeuble') ||
+
+      property.owner ||
+      property.email ||
+      property.phone ||
+      Number(property.price ?? 0) > 0 ||
+      Number(property.surface ?? 0) > 0 ||
+      Number(property.area ?? 0) > 0 ||
+      property.comment ||
+      property.date_rappel
+  );
 };
 
+const hasPropertyChanged = (): boolean => {
+  if (!store.selectedProperty || !propertySnapshot.value) return false;
+
+  const current = serializeProperty(store.selectedProperty);
+  const changed = current !== propertySnapshot.value;
+
+  if (changed) {
+    console.log('PROPERTY CHANGED');
+    console.log('SNAPSHOT =', propertySnapshot.value);
+    console.log('CURRENT  =', current);
+  }
+
+  return changed;
+};
 const handleSaveProperty = async (): Promise<any> => {
   if (saveInProgress.value) {
     console.warn('Sauvegarde déjà en cours, ignorée');
@@ -313,6 +366,11 @@ const handleSaveProperty = async (): Promise<any> => {
         ? Number(filteredProperty.unit_id)
         : null;
 
+        if (!isEditing.value && !hasNewPropertyMeaningfulData(filteredProperty)) {
+  console.log('Nouvelle fiche vide, création ignorée');
+  return null;
+}
+
     console.log('saveProperty payload avant envoi', filteredProperty);
 
     const saved = await store.saveProperty(filteredProperty);
@@ -321,15 +379,23 @@ const handleSaveProperty = async (): Promise<any> => {
       dashboardStore.updateAddress(saved);
     }
 
-    if (saved) {
-      store.selectedProperty = {
-        ...store.selectedProperty,
-        ...saved,
-      };
-    }
+if (saved) {
+  store.selectedProperty = {
+    ...store.selectedProperty,
+    ...saved,
+  };
 
-    ElMessage.success('Propriété sauvegardée');
-    return saved;
+  await nextTick();
+
+  propertySnapshot.value = serializeProperty(
+    store.selectedProperty
+  );
+}
+   if (saved) {
+  ElMessage.success('Propriété sauvegardée');
+}
+
+return saved;
   } catch (error: any) {
     console.error('Error saving property:', error);
     ElMessage.error(

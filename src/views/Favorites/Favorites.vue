@@ -88,6 +88,13 @@
 
     <!-- Dialog PropertyForm -->
     <PropertyForm />
+
+    <ReminderFormDialog
+  v-model:visible="showReminderDialog"
+  :editing-reminder="reminderToCreate"
+  :saving="savingReminder"
+  @save="saveReminder"
+/>
   </div>
 </template>
 
@@ -101,6 +108,13 @@ import ViewToggle from '@/components/ViewToggle.vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
+
+import ReminderFormDialog from '@/views/Reminders/components/ReminderFormDialog.vue';
+import type { ReminderFormData } from '@/views/Reminders/components/ReminderFormDialog.vue';
+
+const showReminderDialog = ref(false);
+const savingReminder = ref(false);
+const reminderToCreate = ref<any | null>(null);
 
 const store = usePropertyStore();
 const remindersStore = useRemindersStore();
@@ -230,36 +244,47 @@ const clearFilters = () => {
   selectedPropertyType.value = '';
 };
 
-const createReminderForProperty = async (property: any) => {
+const createReminderForProperty = (property: any) => {
   const tomorrow = new Date();
   tomorrow.setDate(tomorrow.getDate() + 1);
 
-  const propertyAddress =
-    `${property.numero || ''} ${property.nom_voie || ''}`.trim();
+  reminderToCreate.value = {
+    id: 0,
+    title: 'Rappel',
+    description: '',
+    date: tomorrow.toISOString().split('T')[0],
+    type: 'rappel',
+    priority: 'low',
+    status: 'todo',
+    completed: false,
+    sharing: true,
+    property_id: property.id || 0,
+    property,
+  };
+
+  showReminderDialog.value = true;
+};
+
+const saveReminder = async (
+  form: ReminderFormData,
+  editingReminder: any | null
+) => {
+  savingReminder.value = true;
 
   try {
     await remindersStore.addReminder({
-      title: `Rappel - ${propertyAddress || 'Propriété'}`,
-      description: 'Rappel rapide depuis les favoris',
-      date: tomorrow.toISOString().split('T')[0],
-      type: 'rappel',
-      priority: 'medium',
-      sharing: false,
-      property_id: property.id || 0,
-      completed: false,
+      ...form,
+      completed: form.status === 'completed',
     });
 
-    ElMessage({
-      message: 'Rappel créé avec succès !',
-      type: 'success',
-      duration: 3000,
-    });
-  } catch {
-    ElMessage({
-      message: 'Erreur lors de la création du rappel',
-      type: 'error',
-      duration: 3000,
-    });
+    showReminderDialog.value = false;
+    reminderToCreate.value = null;
+
+    ElMessage.success('Rappel créé avec succès');
+  } catch (error) {
+    ElMessage.error('Erreur lors de la création du rappel');
+  } finally {
+    savingReminder.value = false;
   }
 };
 

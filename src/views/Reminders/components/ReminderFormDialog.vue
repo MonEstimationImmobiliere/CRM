@@ -7,9 +7,8 @@
     @close="resetForm"
   >
     <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-      <el-form-item label="Titre" prop="title">
-        <el-input v-model="form.title" placeholder="Titre du rappel" />
-      </el-form-item>
+   
+
 
       <el-form-item label="Description">
         <el-input
@@ -41,28 +40,28 @@
         </el-select>
       </el-form-item>
 
-      <el-form-item label="Priorité">
-        <el-select v-model="form.priority" class="full-width">
-          <el-option label="Haute" value="high" />
-          <el-option label="Moyenne" value="medium" />
-          <el-option label="Basse" value="low" />
-        </el-select>
-      </el-form-item>
 
-      <el-form-item label="Statut">
-        <el-select v-model="form.status" class="full-width">
-          <el-option label="À faire" value="todo" />
-          <el-option label="En cours" value="progress" />
-          <el-option label="Terminé" value="completed" />
-        </el-select>
-      </el-form-item>
 
-      <el-form-item label="Partager">
-        <EMToggleSwitch
-          v-model="form.sharing"
-          label="Partager ce rappel avec l'agence"
-        />
-      </el-form-item>
+<el-collapse>
+  <el-collapse-item title="Options avancées" name="advanced">
+    <el-form-item label="Statut">
+      <el-select v-model="form.status" class="full-width">
+        <el-option label="À faire" value="todo" />
+        <el-option label="En cours" value="progress" />
+        <el-option label="Terminé" value="completed" />
+      </el-select>
+    </el-form-item>
+
+    <el-form-item label="Partager">
+      <EMToggleSwitch
+        v-model="form.sharing"
+        label="Partager ce rappel avec l'agence"
+      />
+    </el-form-item>
+  </el-collapse-item>
+</el-collapse>
+
+
     </el-form>
 
     <template #footer>
@@ -134,11 +133,11 @@ const rules: FormRules<ReminderFormData> = {
 const getEmptyForm = (): ReminderFormData => ({
   title: '',
   description: '',
-  date: '',
+  date: new Date().toISOString().split('T')[0],
   type: 'rappel',
-  priority: 'medium',
-  status: 'todo',
-  sharing: false,
+priority: 'low',
+status: 'todo',
+sharing: true,
   property_id: 0,
 });
 
@@ -165,7 +164,11 @@ watch(
         type: reminder.type,
         priority: reminder.priority,
         status: reminder.status || (reminder.completed ? 'completed' : 'todo'),
-        sharing: reminder.sharing || false,
+        sharing:
+  reminder.sharing === undefined ||
+  reminder.sharing === null
+    ? true
+    : reminder.sharing,
         property_id: reminder.property_id,
       };
     } else {
@@ -183,7 +186,21 @@ const handleSave = async () => {
   if (!formRef.value) return;
   await formRef.value.validate(valid => {
     if (valid) {
-      emit('save', { ...form.value }, props.editingReminder);
+      emit(
+  'save',
+  {
+    ...form.value,
+    title:
+      form.value.type === 'estimation'
+        ? 'Estimation'
+        : form.value.type === 'visite'
+          ? 'Visite'
+          : form.value.type === 'autre'
+            ? 'Autre'
+            : 'Rappel',
+  },
+  props.editingReminder
+);
     }
   });
 };

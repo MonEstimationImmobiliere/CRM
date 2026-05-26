@@ -27,7 +27,7 @@
 
         <el-button
           type="primary"
-          @click="showCreateDialog = true"
+          @click="openNewReminderDialog"
           class="add-reminder-btn"
         >
           <el-icon><Plus /></el-icon>
@@ -137,6 +137,10 @@ const saving = ref(false);
 
 const openedPropertyId = ref<number | null>(null);
 
+  const openNewReminderDialog = () => {
+  editingReminder.value = null;
+  showCreateDialog.value = true;
+};
 // Store destructuring
 const {
   todayReminders,
@@ -180,6 +184,15 @@ const getApiScope = (): 'me' | 'all' | 'agency' | 'user' => {
   if (sharingFilter.value === 'agency') return 'agency';
   return 'all';
 };
+
+watch(
+  () => showCreateDialog.value,
+  isVisible => {
+    if (!isVisible) {
+      editingReminder.value = null;
+    }
+  }
+);
 
 // Reload when any filter changes (immediate: true triggers the initial fetch on mount)
 watch(
@@ -248,6 +261,26 @@ const emptyMessage = computed(() => {
   );
 });
 
+const createNewReminderFromProperty = (reminder: Reminder) => {
+  editingReminder.value = {
+    ...reminder,
+
+    id: 0,
+
+    title: 'Rappel',
+
+    description: '',
+
+date: new Date().toISOString().split('T')[0],
+
+    status: 'todo',
+
+    completed: false,
+  } as any;
+
+  showCreateDialog.value = true;
+};
+
 // Action handler from ReminderCard dropdown
 const handleAction = ({
   action,
@@ -258,7 +291,8 @@ const handleAction = ({
 }) => {
   if (action === 'edit') editReminder(reminder);
   else if (action === 'delete') deleteReminder(reminder);
-  else if (action === 'duplicate') duplicateReminder(reminder);
+  else if (action === 'new-reminder') createNewReminderFromProperty(reminder);
+  else if (action === 'open-property') openProperty(reminder);
 };
 
 const editReminder = (reminder: Reminder) => {

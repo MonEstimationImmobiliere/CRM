@@ -12,7 +12,7 @@ label_cell<template>
             <th style="width: 150px">Agent</th>
             <th style="width: 80px">Fait</th>
             <th style="width: 90px">Partage</th>
-            <th style="width: 50px"></th>
+            <th style="width: 190px"></th>
           </tr>
         </thead>
 
@@ -39,13 +39,13 @@ label_cell<template>
       </span>
     </template>
 
-    <span v-else>Adresse non définie</span>
+    <span v-else>Rappel Général</span>
   </div>
 </td>
 
             <td>
               <span class="owner-name">
-                {{ reminder.property?.owner ?? 'Nom non défini' }}
+                {{ reminder.property?.owner ?? '-' }}
               </span>
             </td>
 
@@ -105,7 +105,38 @@ label_cell<template>
               />
             </td>
 
-            <td class="center">
+<td class="actions-cell" @click.stop>
+  <div class="actions-wrapper">
+    <el-button
+      size="small"
+      type="info"
+      plain
+      :disabled="!reminder.property_id"
+      @click="$emit('action', { action: 'open-property', reminder })"
+    >
+      Ouvrir
+    </el-button>
+
+    <el-button
+      size="small"
+      plain
+      @click="$emit('action', { action: 'edit', reminder })"
+    >
+      Modifier
+    </el-button>
+
+    <el-button
+      size="small"
+      type="primary"
+      plain
+      :disabled="!reminder.property_id"
+      @click="$emit('action', { action: 'new-reminder', reminder })"
+    >
+      Nouveau
+    </el-button>
+  </div>
+</td>
+        <!--    <td class="center">
               <el-dropdown
                 trigger="click"
                 placement="bottom-end"
@@ -141,7 +172,10 @@ label_cell<template>
                   </el-dropdown-menu>
                 </template>
               </el-dropdown>
-            </td>
+
+
+            </td>-->
+
           </tr>
         </tbody>
       </table>
@@ -514,4 +548,23 @@ td {
     min-width: 1100px;
   }
 }
+
+.actions-cell {
+  width: 170px;
+  text-align: right;
+}
+
+.actions-wrapper {
+  display: flex;
+  justify-content: flex-end;
+  align-items: center;
+  gap: 8px;
+}
+
+.actions-wrapper .el-button {
+  margin: 0;
+}
+
+
+
 </style>
