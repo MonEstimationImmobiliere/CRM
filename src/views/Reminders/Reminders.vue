@@ -135,6 +135,8 @@ const showCreateDialog = ref(false);
 const editingReminder = ref<Reminder | null>(null);
 const saving = ref(false);
 
+const openedPropertyId = ref<number | null>(null);
+
 // Store destructuring
 const {
   todayReminders,
@@ -192,6 +194,45 @@ watch(
     });
   },
   { immediate: true }
+);
+
+watch(
+  () => propertyStore.isDialogVisible,
+  async (isVisible, wasVisible) => {
+    if (wasVisible && !isVisible) {
+      const savedProperty = propertyStore.selectedProperty
+        ? { ...propertyStore.selectedProperty }
+        : null;
+
+      try {
+        const scope = getApiScope();
+
+        await remindersStore.loadRemindersByScope(scope, {
+          userId: selectedUser.value ?? undefined,
+          agencyId: selectedAgency.value ?? undefined,
+          completed: completedFilter.value,
+        });
+
+        if (savedProperty?.id) {
+          remindersStore.reminders.forEach((reminder: any) => {
+            if (Number(reminder.property_id) === Number(savedProperty.id)) {
+              reminder.property = {
+                ...(reminder.property || {}),
+                ...savedProperty,
+              };
+            }
+          });
+        }
+
+        openedPropertyId.value = null;
+
+        console.log('Reminders rechargés + property patchée après fermeture');
+      } catch (error) {
+        console.error('Erreur refresh reminders après property dialog:', error);
+        ElMessage.error('Erreur lors du rafraîchissement des rappels');
+      }
+    }
+  }
 );
 
 // Empty state message
@@ -332,12 +373,16 @@ const currentRemindersView = computed({
 
 const openProperty = async (reminder: Reminder) => {
   try {
-    const propertyId = reminder.property?.id ?? reminder.property_id;
+    const propertyId =
+      Number(reminder.property?.id ?? 0) ||
+      Number(reminder.property_id ?? 0);
 
-    if (!propertyId) {
+    if (propertyId <= 0) {
       ElMessage.error('Aucune propriété liée à ce rappel');
       return;
     }
+
+    openedPropertyId.value = propertyId;
 
     const response: any = await PropertyService.getProperty(propertyId);
 
@@ -347,14 +392,40 @@ const openProperty = async (reminder: Reminder) => {
       response?.data ??
       response;
 
-    await propertyStore.selectProperty({
-      ...fullProperty,
-      row_type: fullProperty.unit_id ? 'unit' : 'address',
-    });
+    if (!fullProperty || Number(fullProperty.id ?? 0) <= 0) {
+      ElMessage.error('Propriété introuvable');
+      return;
+    }
 
-    showCreateDialog.value = false;
-    propertyStore.setDialogVisible(true);
-  } catch {
+    const unitId =
+      Number(fullProperty.unit?.id ?? 0) ||
+      Number(fullProperty.unit_id ?? 0);
+
+    const normalizedProperty = {
+      ...fullProperty,
+
+      id: Number(fullProperty.id),
+
+      unit_id: unitId > 0 ? unitId : null,
+
+      row_type:
+        unitId > 0
+          ? 'unit'
+          : 'address',
+    };
+
+    console.log('OPEN PROPERTY FROM REMINDER', normalizedProperty);
+
+showCreateDialog.value = false;
+editingReminder.value = null;
+
+await propertyStore.selectProperty(normalizedProperty);
+
+propertyStore.setDialogVisible(true);
+
+  } catch (error) {
+    console.error('OPEN PROPERTY ERROR', error);
+
     ElMessage.error("Impossible d'ouvrir la fiche de la propriété");
   }
 };

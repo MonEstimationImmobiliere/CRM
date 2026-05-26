@@ -1,7 +1,8 @@
 <template>
   <Teleport to="body">
     <el-drawer
-      v-model="visible"
+  :model-value="store.isDialogVisible"
+  @close="closeDialog"
       size="40%"
       :show-close="false"
       modal-class="darker-drawer-overlay"
@@ -166,7 +167,11 @@ const { selectedCity } = useDashboardStore();
 const showUnitDialog = ref(false);
 const showReminderDialog = ref(false);
 const activeTab = ref('characteristics');
-
+const isEditing = computed<boolean>(
+  () => Number(store.selectedProperty?.id ?? 0) > 0
+);
+const isSavingProperty = ref(false);
+const saveInProgress = ref(false);
 // Snapshot de la property à l'ouverture pour détecter les modifications
 const propertySnapshot = ref<string | null>(null);
 
@@ -176,23 +181,25 @@ const serializeProperty = (prop: any): string => {
   return JSON.stringify(copy);
 };
 
-// Prendre le snapshot APRÈS le rendu DOM (nextTick) pour capturer
-// les valeurs normalisées par les composants (el-input-number, el-switch, etc.)
+// Prendre le snapshot APRÈS ouverture du drawer ET après chargement de selectedProperty
 watch(
-  () => store.selectedProperty,
-  async newVal => {
-    if (store.isDialogVisible && !propertySnapshot.value && newVal) {
-      await nextTick();
-      // Re-vérifier les conditions après le gap asynchrone
-      if (
-        store.isDialogVisible &&
-        !propertySnapshot.value &&
-        store.selectedProperty
-      ) {
-        propertySnapshot.value = serializeProperty(store.selectedProperty);
-      }
+  [() => store.isDialogVisible, () => store.selectedProperty],
+  async ([isVisible, selected]) => {
+    if (!isVisible || !selected) return;
+    if (propertySnapshot.value) return;
+
+    await nextTick();
+
+    if (
+      store.isDialogVisible &&
+      store.selectedProperty &&
+      !propertySnapshot.value
+    ) {
+      propertySnapshot.value = serializeProperty(store.selectedProperty);
+      console.log('SNAPSHOT PROPERTY =', propertySnapshot.value);
     }
-  }
+  },
+  { immediate: true }
 );
 
 // Reset du snapshot à la fermeture
@@ -204,7 +211,6 @@ watch(
     }
   }
 );
-
 const propertyType = computed<string>(
   () => (store.selectedProperty as any)?.property_type ?? ''
 );
@@ -220,20 +226,7 @@ watch(isTypeUndefined, isUndefined => {
   }
 });
 
-const visible = computed<boolean>({
-  get: () => store.isDialogVisible,
-  set: async (value: boolean) => {
-    if (!value) {
-      await handleSaveProperty();
-      store.selectProperty(null);
-    }
-    store.setDialogVisible(value);
-  },
-});
 
-const isEditing = computed<boolean>(
-  () => Number(store.selectedProperty?.id ?? 0) > 0
-);
 
 const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return 'Nouvelle propriété';
@@ -257,8 +250,16 @@ const propertyAddress = computed(() =>
   `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim()
 );
 
-const closeDialog = (): void => {
-  visible.value = false;
+const closeDialog = async (): Promise<void> => {
+  if (saveInProgress.value) return;
+
+  await handleSaveProperty();
+
+  store.setDialogVisible(false);
+
+  await nextTick();
+
+  store.selectProperty(null);
 };
 
 const openUnitDialog = () => {
@@ -281,48 +282,50 @@ const hasPropertyChanged = (): boolean => {
 };
 
 const handleSaveProperty = async (): Promise<any> => {
-  if (!store.selectedProperty) return null;
-
-  // Forcer la sauvegarde si c'est une nouvelle propriété, sinon vérifier les changements
-  if (isEditing.value && !hasPropertyChanged()) {
-    console.log('Aucune modification détectée, sauvegarde ignorée');
+  if (saveInProgress.value) {
+    console.warn('Sauvegarde déjà en cours, ignorée');
     return store.selectedProperty;
   }
 
-  const filteredProperty = { ...store.selectedProperty } as any;
-  delete filteredProperty.comment_rappel;
+  if (!store.selectedProperty) return null;
 
-  filteredProperty.id_fantoir_long = String(
-    store.selectedProperty.id_fantoir_long || ''
-  );
+  saveInProgress.value = true;
 
   try {
-    console.log('saveProperty payload avant envoi', filteredProperty);
-
-    let saved: any;
-
-    if (isEditing.value) {
-      saved = await store.saveProperty(filteredProperty);
-      console.log('property mise à jour', saved);
-    } else {
-      filteredProperty.city =
-        filteredProperty.city ||
-        filteredProperty.nom_commune ||
-        selectedCity?.value ||
-        '';
-
-      saved = await store.saveProperty(filteredProperty);
-      console.log('property créée', saved);
+    if (isEditing.value && !hasPropertyChanged()) {
+      console.log('Aucune modification détectée, sauvegarde ignorée');
+      return store.selectedProperty;
     }
 
-    // Mise à jour locale au lieu de recharger toute la liste
+    const filteredProperty = { ...store.selectedProperty } as any;
+    delete filteredProperty.comment_rappel;
+
+    filteredProperty.id_fantoir_long = String(
+      store.selectedProperty.id_fantoir_long || ''
+    );
+
+    filteredProperty.row_type =
+      filteredProperty.row_type ||
+      (Number(filteredProperty.unit_id ?? 0) > 0 ? 'unit' : 'address');
+
+    filteredProperty.unit_id =
+      Number(filteredProperty.unit_id ?? 0) > 0
+        ? Number(filteredProperty.unit_id)
+        : null;
+
+    console.log('saveProperty payload avant envoi', filteredProperty);
+
+    const saved = await store.saveProperty(filteredProperty);
+
     if (saved && dashboardStore.isDataLoaded) {
       dashboardStore.updateAddress(saved);
     }
 
-    // Si c'est une création, on force la sélection pour mettre à jour l'ID localement
-    if (!isEditing.value && saved) {
-      store.selectProperty(saved as any);
+    if (saved) {
+      store.selectedProperty = {
+        ...store.selectedProperty,
+        ...saved,
+      };
     }
 
     ElMessage.success('Propriété sauvegardée');
@@ -335,6 +338,8 @@ const handleSaveProperty = async (): Promise<any> => {
         'Erreur lors de la sauvegarde'
     );
     return null;
+  } finally {
+    saveInProgress.value = false;
   }
 };
 
@@ -429,11 +434,13 @@ const toggleFavorite = async () => {
 };
 
 const handleKeyDown = (e: KeyboardEvent) => {
-  if (visible.value && e.key === 'Enter') {
+  if (store.isDialogVisible && e.key === 'Enter') {
     const target = e.target as HTMLElement;
+
     if (target.tagName.toLowerCase() === 'textarea') {
       return;
     }
+
     e.preventDefault();
     closeDialog();
   }

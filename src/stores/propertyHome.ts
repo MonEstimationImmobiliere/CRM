@@ -82,20 +82,31 @@ export const usePropertyStore = defineStore('property', () => {
   let response;
   let saved: any;
 
-  const normalizedProperty = {
-    ...property,
-    unit_id:
-      Number((property as any).unit_id ?? 0) > 0
-        ? Number((property as any).unit_id)
-        : null,
+let normalizedProperty: any = {
+  ...property,
+  id:
+    Number((property as any).id ?? 0) > 0
+      ? Number((property as any).id)
+      : Number((property as any).property_id ?? 0) > 0
+        ? Number((property as any).property_id)
+        : 0,
 
-    row_type:
-      (property as any).row_type ||
-      (Number((property as any).unit_id ?? 0) > 0 ? 'unit' : 'address'),
-  };
+  unit_id:
+    Number((property as any).unit_id ?? 0) > 0
+      ? Number((property as any).unit_id)
+      : null,
 
-  const propertyId = Number(normalizedProperty.id ?? 0);
-  const unitId = Number(normalizedProperty.unit_id ?? 0);
+  row_type:
+    (property as any).row_type ||
+    (Number((property as any).unit_id ?? 0) > 0 ? 'unit' : 'address'),
+};
+
+const propertyId = Number(normalizedProperty.id ?? 0);
+const unitId = Number(normalizedProperty.unit_id ?? 0);
+
+  if (propertyId <= 0 && Number((property as any).property_id ?? 0) > 0) {
+  normalizedProperty.id = Number((property as any).property_id);
+}
 
   console.log('STORE saveProperty full property =', property);
   console.log('STORE saveProperty normalizedProperty =', normalizedProperty);
@@ -107,12 +118,14 @@ export const usePropertyStore = defineStore('property', () => {
       propertyId,
       normalizedProperty
     );
-  } else {
-    if (unitId > 0) {
-      throw new Error(
-        `Impossible de créer une nouvelle property pour unit_id=${unitId} sans property.id. La fiche a perdu son ID.`
-      );
-    }
+} else {
+  if (unitId > 0) {
+    console.error('PROPERTY UNIT SANS ID AU MOMENT SAVE =', normalizedProperty);
+
+    throw new Error(
+      `Sécurité : impossible de créer une nouvelle property unit sans id. unit_id=${unitId}. La fiche ouverte depuis reminder a perdu son property.id.`
+    );
+  }
 
     console.log('CREATE PROPERTY FROM SAVE PROPERTY', normalizedProperty);
 

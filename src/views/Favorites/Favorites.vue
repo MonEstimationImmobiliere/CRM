@@ -92,7 +92,7 @@
 </template>
 
 <script setup lang="ts">
-import { computed, onMounted, ref } from 'vue';
+import { computed, onMounted, ref, watch } from 'vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
@@ -123,6 +123,19 @@ onMounted(async () => {
     });
   }
 });
+
+watch(
+  () => store.isDialogVisible,
+  async (isVisible, wasVisible) => {
+    if (wasVisible && !isVisible) {
+      try {
+        await store.loadFavoriteAddresses();
+      } catch (error) {
+        ElMessage.error('Erreur lors du rafraîchissement des favoris');
+      }
+    }
+  }
+);
 
 const availableCities = computed(() => {
   return favorites.value
