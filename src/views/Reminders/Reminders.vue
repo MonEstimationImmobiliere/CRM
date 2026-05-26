@@ -149,34 +149,30 @@ const {
   completedReminders,
 } = remindersStore;
 
+const isReminderCompleted = (r: Reminder): boolean => {
+  return r.completed === true || r.completed === 1 || r.completed === '1';
+};
+
 // Filtered & sorted reminders
 const filteredReminders = computed(() => {
-  let filtered = remindersStore.reminders;
+  let filtered = [...remindersStore.reminders];
 
-  switch (activeFilter.value) {
-    case 'overdue':
-      filtered = overdueReminders;
-      break;
-    case 'today':
-      filtered = todayReminders;
-      break;
-    case 'upcoming':
-      filtered = upcomingReminders;
-      break;
-    case 'completed':
-      filtered = completedReminders;
-      break;
-  }
+  filtered = filtered.filter(r =>
+    completedFilter.value
+      ? isReminderCompleted(r)
+      : !isReminderCompleted(r)
+  );
 
   if (typeFilter.value) {
     filtered = filtered.filter(r => r.type === typeFilter.value);
   }
+
   if (priorityFilter.value) {
     filtered = filtered.filter(r => r.priority === priorityFilter.value);
   }
+
   return sortReminders(filtered);
 });
-
 // Resolve sharingFilter to API scope
 const getApiScope = (): 'me' | 'all' | 'agency' | 'user' => {
   if (sharingFilter.value === 'personal') return 'me';
@@ -370,15 +366,19 @@ const updateStatus = async (
   try {
     await remindersStore.updateReminderStatus(reminder.id, status);
 
-    const messages: Record<string, { msg: string; type: 'success' | 'info' }> =
-      {
-        completed: { msg: 'Rappel marqué comme terminé', type: 'success' },
-        progress: { msg: 'Rappel marqué comme en cours', type: 'info' },
-        todo: { msg: 'Rappel marqué comme à faire', type: 'info' },
-      };
-    const { msg, type } = messages[status];
-    ElMessage[type](msg);
-  } catch {
+    await remindersStore.loadRemindersByScope(getApiScope(), {
+      userId: selectedUser.value ?? undefined,
+      agencyId: selectedAgency.value ?? undefined,
+      completed: completedFilter.value,
+    });
+
+    ElMessage.success(
+      status === 'completed'
+        ? 'Rappel marqué comme terminé'
+        : 'Rappel marqué comme à faire'
+    );
+  } catch (error) {
+    console.error(error);
     ElMessage.error('Erreur lors de la mise à jour du statut');
   }
 };

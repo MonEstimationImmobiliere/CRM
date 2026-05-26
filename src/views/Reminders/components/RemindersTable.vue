@@ -71,7 +71,7 @@ label_cell<template>
 
               <td>
           <div class="label-cell">
-            <p :class="{ done: reminder.completed }">
+          <p :class="{ done: isReminderCompleted(reminder) }">
               {{ reminder.description || 'Aucun détail' }}
             </p>
           </div>
@@ -86,7 +86,7 @@ label_cell<template>
 
             <td class="center" @click.stop>
               <EMToggleSwitch
-                :model-value="!!reminder.completed"
+                :model-value="isReminderCompleted(reminder)"
                 @update:model-value="
                   val =>
                     $emit(
@@ -187,6 +187,10 @@ const getBasePropertyAddress = (property: IReminderProperty): string => {
   return parts.join(' ');
 };
 
+const isReminderCompleted = (r: Reminder): boolean => {
+  return r.completed === true || r.completed === 1 || r.completed === '1';
+};
+
 const getPropertyUnitLabel = (property: IReminderProperty): string => {
   const p = property as any;
   const unit = p.unit;
@@ -230,7 +234,7 @@ const formatShortDate = (dateStr: string): string => {
 };
 
 const getDaysLeftText = (r: Reminder): string => {
-  if (r.completed) return 'Terminé';
+  if (isReminderCompleted(r)) return 'Terminé';
 
   const d = getDiffDays(r.date);
 
@@ -242,7 +246,7 @@ const getDaysLeftText = (r: Reminder): string => {
 };
 
 const getDateBlockClass = (r: Reminder): string => {
-  if (r.completed) return 'done';
+ if (isReminderCompleted(r)) return 'done';
 
   const d = getDiffDays(r.date);
 
@@ -254,8 +258,8 @@ const getDateBlockClass = (r: Reminder): string => {
 };
 
 const getRowClass = (r: Reminder): string => {
-  if (r.completed) return 'row-done';
-  if (isOverdue(r.date, r.completed)) return 'row-overdue';
+  if (isReminderCompleted(r)) return 'row-done';
+  if (isOverdue(r.date, isReminderCompleted(r))) return 'row-overdue';
   if (isToday(r.date)) return 'row-today';
   return '';
 };
