@@ -24,32 +24,18 @@
         </template>
       </el-table-column>
 
-      <!-- City Column -->
-      <el-table-column label="Ville" prop="city" sortable min-width="120">
-        <template #default="{ row }">
-          <div class="city-info">
-            <span class="city-name">{{ getPropertyCity(row) }}</span>
-          </div>
-        </template>
-      </el-table-column>
-
-      <!-- Address Number Column -->
-      <el-table-column label="N°" prop="numero" sortable min-width="80">
-        <template #default="{ row }">
-          <span class="address-number">{{ row.numero || '-' }}</span>
-        </template>
-      </el-table-column>
-
-      <!-- Street Name Column -->
-      <el-table-column label="Rue" prop="nom_voie" sortable min-width="200">
-        <template #default="{ row }">
-          <div class="street-info">
-            <span class="street-name">{{
-              row.nom_voie || 'Non renseigné'
-            }}</span>
-          </div>
-        </template>
-      </el-table-column>
+<el-table-column label="Adresse" sortable min-width="280">
+  <template #default="{ row }">
+    <div class="address-info">
+      <span class="street-name">
+        {{ getFullAddress(row) }}
+      </span>
+      <span v-if="getUnitLabel(row)" class="unit-label">
+        {{ getUnitLabel(row) }}
+      </span>
+    </div>
+  </template>
+</el-table-column>
 
       <!-- Property Type Column -->
       <el-table-column
@@ -164,6 +150,34 @@ const getRowClass = () => {
 const handleRowClick = (row: any) => {
   emit('edit-property', row);
 };
+
+const getFullAddress = (row: any): string => {
+  const parts: string[] = [];
+
+  if (row.numero) parts.push(String(row.numero));
+  if (row.rep) parts.push(row.rep);
+  if (row.nom_voie) parts.push(row.nom_voie);
+
+  const cityLine = `${row.code_postal ?? ''} ${row.city ?? ''}`.trim();
+  if (cityLine) parts.push(cityLine);
+
+  return parts.join(' ') || 'Adresse non renseignée';
+};
+
+const getUnitLabel = (row: any): string => {
+  const parts: string[] = [];
+
+  if (row.apart_number) {
+    parts.push(`Appartement ${row.apart_number}`);
+  }
+
+  if (row.unit_label) {
+    parts.push(row.unit_label);
+  }
+
+  return parts.join(' / ');
+};
+
 </script>
 
 <style scoped>
@@ -286,5 +300,16 @@ const handleRowClick = (row: any) => {
     flex-direction: column;
     gap: 4px;
   }
+}
+
+.address-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.unit-label {
+  font-size: 12px;
+  color: #64748b;
 }
 </style>

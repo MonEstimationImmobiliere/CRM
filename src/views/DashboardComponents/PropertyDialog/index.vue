@@ -42,8 +42,10 @@
                   ></path>
                 </svg>
               </div>
-              <!----><!----><!----></span
+              <!----><!----><!----></span              
             >
+
+            
           </button>
           <div></div>
           <h4 :id="titleId" class="title-header">{{ dialogTitle }}</h4>
@@ -61,8 +63,27 @@
               </el-icon>
             </el-button>
           </div>
+
+
+
+          
         </div>
+
+
+
+
       </template>
+
+
+<div class="property-debug">
+  <span>Property ID: {{ store.selectedProperty?.id ?? '—' }}</span>
+  <span>Unit ID: {{ store.selectedProperty?.unit_id ?? '—' }}</span>
+  <span>Row type: {{ store.selectedProperty?.row_type ?? '—' }}</span>
+
+  <span v-if="store.selectedProperty?.unit?.apart_number">
+    Appartement: {{ store.selectedProperty.unit.apart_number }}
+  </span>
+</div>
 
       <el-form
         v-if="store.selectedProperty"
@@ -509,5 +530,14 @@ onUnmounted(() => {
 <style>
 .darker-drawer-overlay {
   background-color: rgba(0, 0, 0, 0.75) !important;
+}
+
+.property-debug {
+  display: flex;
+  gap: 12px;
+  justify-content: center;
+  font-size: 12px;
+  color: #64748b;
+  margin-top: 6px;
 }
 </style>

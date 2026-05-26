@@ -15,7 +15,7 @@ const defaultPropertyData: Partial<IProperty> = {
   rep: '',
   unit_id: null as any,
   unit_label: '',
-  row_type: '',
+  row_type: 'address',
   price: null,
   owner: '',
   email: '',
@@ -76,42 +76,101 @@ export const usePropertyStore = defineStore('property', () => {
     });
   }
 
-  const saveProperty = async (property: Partial<IProperty>) => {
-    let response;
-    let saved: any;
 
-    const propertyId = Number(property.id ?? 0);
 
-    console.log('STORE saveProperty property.id =', property.id);
-    console.log('STORE saveProperty propertyId =', propertyId);
+ const saveProperty = async (property: Partial<IProperty>) => {
+  let response;
+  let saved: any;
 
-    if (propertyId > 0) {
-      response = await PropertyService.updateProperty(propertyId, property);
-    } else {
-      console.log('CREATE PROPERTY FROM FAVORITE', property);
-      response = await PropertyService.createProperty(property);
-    }
+  const normalizedProperty = {
+    ...property,
+    unit_id:
+      Number((property as any).unit_id ?? 0) > 0
+        ? Number((property as any).unit_id)
+        : null,
 
-    // Normalisation de la réponse API
-    const resp: any = response;
-
-    saved = resp?.property ?? resp?.data?.property ?? resp?.data ?? resp;
-
-    console.log('STORE saveProperty normalized saved =', saved);
-
-    if (!saved || Number(saved.id ?? 0) <= 0) {
-      throw new Error("La propriété sauvegardée ne contient pas d'id valide");
-    }
-
-    if (propertyId > 0) {
-      updatePropertyInStore(saved);
-    } else {
-      addProperty(saved);
-    }
-
-    return saved;
+    row_type:
+      (property as any).row_type ||
+      (Number((property as any).unit_id ?? 0) > 0 ? 'unit' : 'address'),
   };
 
+  const propertyId = Number(normalizedProperty.id ?? 0);
+  const unitId = Number(normalizedProperty.unit_id ?? 0);
+
+  console.log('STORE saveProperty full property =', property);
+  console.log('STORE saveProperty normalizedProperty =', normalizedProperty);
+  console.log('STORE saveProperty propertyId =', propertyId);
+  console.log('STORE saveProperty unitId =', unitId);
+
+  if (propertyId > 0) {
+    response = await PropertyService.updateProperty(
+      propertyId,
+      normalizedProperty
+    );
+  } else {
+    if (unitId > 0) {
+      throw new Error(
+        `Impossible de créer une nouvelle property pour unit_id=${unitId} sans property.id. La fiche a perdu son ID.`
+      );
+    }
+
+    console.log('CREATE PROPERTY FROM SAVE PROPERTY', normalizedProperty);
+
+    response = await PropertyService.createProperty(normalizedProperty);
+  }
+
+  const resp: any = response;
+
+  saved =
+    resp?.property ??
+    resp?.data?.property ??
+    resp?.data ??
+    resp;
+
+  console.log('STORE saveProperty normalized saved =', saved);
+
+  if (!saved || Number(saved.id ?? 0) <= 0) {
+    throw new Error("La propriété sauvegardée ne contient pas d'id valide");
+  }
+
+  const savedNormalized = {
+    ...normalizedProperty,
+    ...saved,
+
+    id: Number(saved.id),
+    row_type:
+      saved.row_type ||
+      normalizedProperty.row_type ||
+      (Number(saved.unit_id ?? normalizedProperty.unit_id ?? 0) > 0
+        ? 'unit'
+        : 'address'),
+
+    unit_id:
+      Number(saved.unit_id ?? normalizedProperty.unit_id ?? 0) > 0
+        ? Number(saved.unit_id ?? normalizedProperty.unit_id)
+        : null,
+
+    favorite:
+      saved.favorite === true ||
+      saved.favorite === 1 ||
+      saved.favorite === '1',
+  };
+
+  if (propertyId > 0) {
+    updatePropertyInStore(savedNormalized);
+  } else {
+    addProperty(savedNormalized);
+  }
+
+  selectedProperty.value = {
+    ...selectedProperty.value,
+    ...savedNormalized,
+  };
+
+  console.log('STORE selectedProperty AFTER SAVE =', selectedProperty.value);
+
+  return savedNormalized;
+};
   function updatePropertyInStore(updatedProperty: Partial<IProperty>) {
     const index = properties.value.findIndex(
       p =>
@@ -162,82 +221,124 @@ export const usePropertyStore = defineStore('property', () => {
     }
   }
 
-  const selectProperty = async (
-    property: Partial<IProperty> | null | undefined
-  ) => {
-    if (!property) {
-      selectedProperty.value = { ...defaultPropertyData };
+const selectProperty = async (
+  property: Partial<IProperty> | null | undefined
+) => {
+  if (!property) {
+    selectedProperty.value = { ...defaultPropertyData };
+    return;
+  }
+
+  try {
+    // Cas 1 : la property existe déjà en base
+    if (property.id && Number(property.id) > 0) {
+      const data = await PropertyService.getProperty(Number(property.id));
+
+      const unitId =
+        (data as any).unit_id ??
+        (property as any).unit_id ??
+        null;
+
+      selectedProperty.value = {
+        ...defaultPropertyData,
+        ...property,
+        ...data,
+
+        city: (data as any).city || (data as any).nom_commune || '',
+        nom_commune: (data as any).nom_commune || (data as any).city || '',
+
+        favorite:
+          Number((data as any).favorite ?? (property as any).favorite ?? 0) === 1,
+
+        unit_id: unitId,
+        unit: (data as any).unit ?? (property as any).unit ?? null,
+
+        row_type:
+          (property as any).row_type ??
+          (data as any).row_type ??
+          (unitId ? 'unit' : 'address'),
+
+        property_type:
+          (data as any).property_type ??
+          (property as any).property_type ??
+          'inconnu',
+      };
+
       return;
     }
 
-    try {
-      // Cas 1 : la property existe déjà en base
-      if (property.id && Number(property.id) > 0) {
-        const data = await PropertyService.getProperty(Number(property.id));
+    // Cas 2 : pas encore de property en base
+    const rawUnitId = Number((property as any).unit_id ?? 0);
+const unitId = rawUnitId > 0 ? rawUnitId : null;
 
-        selectedProperty.value = {
-          ...defaultPropertyData,
-          ...property,
-          ...data,
-          city: (data as any).city || (data as any).nom_commune || '',
-          nom_commune: (data as any).nom_commune || (data as any).city || '',
-          favorite:
-            Number(
-              (data as any).favorite ?? (property as any).favorite ?? 0
-            ) === 1,
-          unit_id: (data as any).unit_id ?? (property as any).unit_id ?? null,
-          row_type:
-            (property as any).row_type ?? (data as any).row_type ?? 'address',
-          property_type:
-            (data as any).property_type ??
-            (property as any).property_type ??
-            'inconnu',
-        };
-        return;
-      }
-
-      // Cas 2 : pas encore de property en base
-      selectedProperty.value = {
-        ...defaultPropertyData,
-        ...property,
-        city: (property as any).city || (property as any).nom_commune || '',
-        nom_commune:
-          (property as any).nom_commune || (property as any).city || '',
-        favorite: Number((property as any).favorite ?? 0) === 1,
-        unit_id: (property as any).unit_id ?? null,
-        row_type: (property as any).row_type ?? 'address',
-        property_type: (property as any).property_type ?? 'inconnu',
-      };
-    } catch (error: any) {
-      console.error('Erreur selectProperty:', error);
-
-      selectedProperty.value = {
-        ...defaultPropertyData,
-        ...property,
-        id: 0,
-        city: (property as any).city || (property as any).nom_commune || '',
-        nom_commune:
-          (property as any).nom_commune || (property as any).city || '',
-        favorite: Number((property as any).favorite ?? 0) === 1,
-        unit_id: (property as any).unit_id ?? null,
-        row_type: (property as any).row_type ?? 'address',
-        property_type: (property as any).property_type ?? 'inconnu',
-      };
-    }
-  };
-
-  function loadPropertyBaseData(property: any) {
     selectedProperty.value = {
       ...defaultPropertyData,
       ...property,
-      id_fantoir_long: property.id_fantoir_long,
-      city: property.city || property.nom_commune || '',
-      nom_commune: property.nom_commune || property.city || '',
-      unit_id: property.unit_id ?? null,
-      favorite: Boolean(property.favorite),
+
+      city: (property as any).city || (property as any).nom_commune || '',
+      nom_commune: (property as any).nom_commune || (property as any).city || '',
+
+      favorite: Number((property as any).favorite ?? 0) === 1,
+
+      unit_id: unitId,
+      unit: (property as any).unit ?? null,
+
+      row_type:
+        (property as any).row_type ||
+        (unitId ? 'unit' : 'address'),
+
+      property_type: (property as any).property_type ?? 'inconnu',
+    };
+  } catch (error: any) {
+    console.error('Erreur selectProperty:', error);
+
+    const rawUnitId = Number((property as any).unit_id ?? 0);
+const unitId = rawUnitId > 0 ? rawUnitId : null;
+
+    selectedProperty.value = {
+      ...defaultPropertyData,
+      ...property,
+
+      id: 0,
+
+      city: (property as any).city || (property as any).nom_commune || '',
+      nom_commune: (property as any).nom_commune || (property as any).city || '',
+
+      favorite: Number((property as any).favorite ?? 0) === 1,
+
+      unit_id: unitId,
+      unit: (property as any).unit ?? null,
+
+      row_type:
+        (property as any).row_type ||
+        (unitId ? 'unit' : 'address'),
+
+      property_type: (property as any).property_type ?? 'inconnu',
     };
   }
+};
 
+function loadPropertyBaseData(property: any) {
+  const rawUnitId = Number(property?.unit_id ?? 0);
+  const unitId = rawUnitId > 0 ? rawUnitId : null;
+
+  selectedProperty.value = {
+    ...defaultPropertyData,
+    ...property,
+
+    id_fantoir_long: property.id_fantoir_long,
+    city: property.city || property.nom_commune || '',
+    nom_commune: property.nom_commune || property.city || '',
+
+    unit_id: unitId,
+
+    row_type:
+      property.row_type ||
+      (unitId ? 'unit' : 'address'),
+
+    favorite: Boolean(property.favorite),
+  };
+}
   function setDialogVisible(visible: boolean) {
     isDialogVisible.value = visible;
   }
@@ -246,136 +347,223 @@ export const usePropertyStore = defineStore('property', () => {
     properties.value.filter(property => property.favorite === true)
   );
 
-  const toggleFavorite = async (
-    propertyId: number | string,
-    sourceRow: any = null
-  ): Promise<any> => {
-    const numericId = Number(propertyId);
-    const rowType = String(sourceRow?.row_type ?? '')
-      .trim()
-      .toLowerCase();
+const toggleFavorite = async (
+  propertyId: number | string,
+  sourceRow: any = null
+): Promise<any> => {
+  const numericId = Number(propertyId);
 
-    console.log('TOGGLE FAVORITE CALLED', {
-      propertyId,
-      numericId,
-      rowType,
-      sourceRow,
-    });
+  const rowType = String(sourceRow?.row_type ?? '')
+    .trim()
+    .toLowerCase();
 
-    // =========================
-    // CAS 1 : property existe déjà
-    // =========================
-    if (numericId > 0) {
-      const existingResponse: any =
-        await PropertyService.getProperty(numericId);
+  const unitId = Number(sourceRow?.unit_id ?? 0);
 
-      const existing =
-        existingResponse?.property ??
-        existingResponse?.data?.property ??
-        existingResponse?.data ??
-        existingResponse;
+  console.log('TOGGLE FAVORITE CALLED', {
+    propertyId,
+    numericId,
+    rowType,
+    unitId,
+    sourceRow,
+  });
 
-      console.log('EXISTING PROPERTY FOR FAVORITE =', existing);
+  // =========================
+  // CAS 1 : property existe déjà
+  // =========================
+  if (numericId > 0) {
+    const existingResponse: any = await PropertyService.getProperty(numericId);
 
-      if (!existing || !existing.id) {
-        throw new Error('Propriété introuvable');
-      }
+    const existing =
+      existingResponse?.property ??
+      existingResponse?.data?.property ??
+      existingResponse?.data ??
+      existingResponse;
 
-      const updatedProperty: any = {
-        ...existing,
-        favorite: existing.favorite ? 0 : 1,
-      };
-
-      await PropertyService.updateProperty(
-        Number(updatedProperty.id),
-        updatedProperty
-      );
-
-      updatePropertyInStore(updatedProperty);
-
-      if (
-        selectedProperty.value &&
-        Number(selectedProperty.value.id) === Number(updatedProperty.id)
-      ) {
-        selectedProperty.value = {
-          ...selectedProperty.value,
-          ...updatedProperty,
-        } as any;
-      }
-
-      return updatedProperty;
+    if (!existing || !existing.id) {
+      throw new Error('Propriété introuvable');
     }
 
-    // =========================
-    // CAS 2 : adresse racine sans property encore créée
-    // =========================
-    if (rowType === 'address') {
-      const propertyToCreate: any = {
-        ...defaultPropertyData,
-        ...sourceRow,
-        id: 0,
-        unit_id: 0,
-        row_type: 'address',
-        id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
-        id_fantoir: sourceRow?.id_fantoir || '',
-        code_insee: sourceRow?.code_insee || '',
-        code_postal: sourceRow?.code_postal || '',
-        nom_voie: sourceRow?.nom_voie || '',
-        numero: sourceRow?.numero || '',
-        rep: sourceRow?.rep || '',
-        city: sourceRow?.city || sourceRow?.nom_commune || '',
-        nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
-        favorite: 1,
-      };
+    const updatedProperty: any = {
+      ...existing,
+      favorite: existing.favorite ? 0 : 1,
+    };
 
-      console.log('CREATE ROOT PROPERTY FROM FAVORITE', propertyToCreate);
-
-      const createdResponse: any =
-        await PropertyService.createProperty(propertyToCreate);
-
-      const created =
-        createdResponse?.property ??
-        createdResponse?.data?.property ??
-        createdResponse?.data ??
-        createdResponse;
-
-      console.log('CREATED ROOT PROPERTY =', created);
-
-      if (!created || !created.id) {
-        throw new Error("La property racine n'a pas été créée correctement");
-      }
-
-      addProperty(created);
-
-      if (sourceRow) {
-        sourceRow.id = created.id;
-        sourceRow.favorite = created.favorite;
-      }
-
-      if (
-        selectedProperty.value &&
-        selectedProperty.value.row_type === 'address' &&
-        selectedProperty.value.id_fantoir_long === created.id_fantoir_long
-      ) {
-        selectedProperty.value = {
-          ...selectedProperty.value,
-          ...created,
-        } as any;
-      }
-
-      return created;
-    }
-
-    throw new Error("La fiche du logement n'est pas encore créée.");
-  };
-
-  /*const isFavorite = (propertyId: number): boolean => {
-    const property = properties.value.find(
-      p => Number(p.id) === Number(propertyId)
+    const updatedResponse: any = await PropertyService.updateProperty(
+      Number(updatedProperty.id),
+      updatedProperty
     );
 
-    return Boolean(property?.favorite);
-  };*/
+    const updated =
+      updatedResponse?.property ??
+      updatedResponse?.data?.property ??
+      updatedResponse?.data ??
+      updatedProperty;
+
+    updatePropertyInStore(updated);
+
+    if (sourceRow) {
+      sourceRow.id = updated.id;
+      sourceRow.favorite = updated.favorite;
+      sourceRow.unit_id = updated.unit_id ?? sourceRow.unit_id ?? 0;
+      sourceRow.property_type =
+        updated.property_type ?? sourceRow.property_type;
+    }
+
+    if (
+      selectedProperty.value &&
+      Number(selectedProperty.value.id) === Number(updated.id)
+    ) {
+      selectedProperty.value = {
+        ...selectedProperty.value,
+        ...updated,
+      } as any;
+    }
+
+    return updated;
+  }
+
+  // =========================
+  // CAS 2 : unit sans property encore créée
+  // =========================
+  if (rowType === 'unit') {
+    if (!unitId || unitId <= 0) {
+      throw new Error("Impossible de créer la property : unit_id manquant");
+    }
+
+    const propertyToCreate: any = {
+      ...defaultPropertyData,
+
+      id: 0,
+      row_type: 'unit',
+      unit_id: unitId,
+
+      id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
+      id_fantoir: sourceRow?.id_fantoir || '',
+      code_insee: sourceRow?.code_insee || '',
+      code_postal: sourceRow?.code_postal || '',
+      nom_voie: sourceRow?.nom_voie || '',
+      numero: sourceRow?.numero || '',
+      rep: sourceRow?.rep || '',
+      city: sourceRow?.city || sourceRow?.nom_commune || '',
+      nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
+
+      property_type:
+        sourceRow?.property_type ||
+        sourceRow?.type_code ||
+        sourceRow?.unit_type ||
+        'appartement',
+
+      favorite: 1,
+    };
+
+    console.log('CREATE UNIT PROPERTY FROM FAVORITE', propertyToCreate);
+
+    const createdResponse: any =
+      await PropertyService.createProperty(propertyToCreate);
+
+    const created =
+      createdResponse?.property ??
+      createdResponse?.data?.property ??
+      createdResponse?.data ??
+      createdResponse;
+
+    if (!created || !created.id) {
+      throw new Error("La property unit n'a pas été créée correctement");
+    }
+
+    addProperty(created);
+
+    if (sourceRow) {
+      sourceRow.id = created.id;
+      sourceRow.favorite = created.favorite;
+      sourceRow.unit_id = created.unit_id ?? unitId;
+      sourceRow.property_type = created.property_type;
+    }
+
+    if (
+      selectedProperty.value &&
+      selectedProperty.value.row_type === 'unit' &&
+      Number(selectedProperty.value.unit_id) === unitId
+    ) {
+      selectedProperty.value = {
+        ...selectedProperty.value,
+        ...created,
+      } as any;
+    }
+
+    return created;
+  }
+
+  // =========================
+  // CAS 3 : adresse racine sans property encore créée
+  // =========================
+  if (rowType === 'address') {
+    const propertyToCreate: any = {
+      ...defaultPropertyData,
+      ...sourceRow,
+
+      id: 0,
+      unit_id: 0,
+      row_type: 'address',
+
+      id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
+      id_fantoir: sourceRow?.id_fantoir || '',
+      code_insee: sourceRow?.code_insee || '',
+      code_postal: sourceRow?.code_postal || '',
+      nom_voie: sourceRow?.nom_voie || '',
+      numero: sourceRow?.numero || '',
+      rep: sourceRow?.rep || '',
+      city: sourceRow?.city || sourceRow?.nom_commune || '',
+      nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
+
+      property_type:
+        sourceRow?.property_type ||
+        sourceRow?.type_code ||
+        'immeuble',
+
+      favorite: 1,
+    };
+
+    console.log('CREATE ROOT PROPERTY FROM FAVORITE', propertyToCreate);
+
+    const createdResponse: any =
+      await PropertyService.createProperty(propertyToCreate);
+
+    const created =
+      createdResponse?.property ??
+      createdResponse?.data?.property ??
+      createdResponse?.data ??
+      createdResponse;
+
+    if (!created || !created.id) {
+      throw new Error("La property racine n'a pas été créée correctement");
+    }
+
+    addProperty(created);
+
+    if (sourceRow) {
+      sourceRow.id = created.id;
+      sourceRow.favorite = created.favorite;
+      sourceRow.unit_id = 0;
+      sourceRow.property_type = created.property_type;
+    }
+
+    if (
+      selectedProperty.value &&
+      selectedProperty.value.row_type === 'address' &&
+      selectedProperty.value.id_fantoir_long === created.id_fantoir_long
+    ) {
+      selectedProperty.value = {
+        ...selectedProperty.value,
+        ...created,
+      } as any;
+    }
+
+    return created;
+  }
+
+  throw new Error("Impossible de déterminer le type de ligne pour le favori.");
+};
 
   const isFavorite = (propertyIdentifier: number | string): boolean => {
     const property = properties.value.find(

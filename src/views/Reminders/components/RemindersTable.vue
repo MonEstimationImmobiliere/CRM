@@ -1,249 +1,127 @@
-<template>
+label_cell<template>
   <div class="reminders-table-container">
     <div class="table-wrapper">
       <table class="rt-table">
         <thead>
           <tr>
-            <th class="rt-th rt-th--priority" style="width: 4px"></th>
-            <th class="rt-th" style="width: 200px">Rappel</th>
-            <th class="rt-th" style="width: 110px">Type</th>
-            <th class="rt-th" style="width: 150px">Échéance</th>
-            <th class="rt-th" style="width: 100px">Statut</th>
-            <th class="rt-th rt-th--progress" style="width: 220px">
-              Avancement
-            </th>
-            <th class="rt-th" style="width: 140px">Propriétaire</th>
-            <th class="rt-th" style="width: 160px">
-              <div class="rt-th-filter">
-                <span>Agent</span>
-                <el-dropdown
-                  trigger="click"
-                  placement="bottom-end"
-                  :hide-on-click="false"
-                >
-                  <el-icon
-                    class="rt-filter-icon"
-                    :class="{
-                      'rt-filter-icon--active': agentFilter.length > 0,
-                    }"
-                    @click.stop
-                  >
-                    <svg
-                      viewBox="0 0 1024 1024"
-                      width="12"
-                      height="12"
-                      fill="currentColor"
-                    >
-                      <path
-                        d="M880 112H144c-17.7 0-32 14.3-32 32v64c0 8.8 3.5 17.3 9.7 23.5L512 672v238c0 12.9 7.9 24.5 19.9 29.2 3.9 1.5 8 2.3 12.1 2.3 8.3 0 16.3-3.3 22.2-9.1l192-192c6-6 9.4-14.1 9.4-22.6V672l390.3-440.5c6.2-6.2 9.7-14.7 9.7-23.5v-64c0-17.7-14.3-32-32-32z"
-                      />
-                    </svg>
-                  </el-icon>
-                  <template #dropdown>
-                    <div class="rt-filter-panel" @click.stop>
-                      <el-checkbox-group
-                        v-model="agentFilter"
-                        class="rt-filter-list"
-                      >
-                        <el-checkbox
-                          v-for="name in uniqueAgents"
-                          :key="name"
-                          :label="name"
-                          :value="name"
-                        />
-                      </el-checkbox-group>
-                      <div class="rt-filter-actions">
-                        <el-button size="small" text @click="agentFilter = []"
-                          >Réinit.</el-button
-                        >
-                        <el-button size="small" type="primary" @click.stop
-                          >OK</el-button
-                        >
-                      </div>
-                    </div>
-                  </template>
-                </el-dropdown>
-              </div>
-            </th>
-            <th class="rt-th" style="width: 90px">Partage</th>
-            <th class="rt-th" style="width: 50px"></th>
+            <th style="width: 260px">Adresse du bien</th>
+            <th style="width: 160px">Propriétaire</th>
+            <th style="width: 130px">Échéance</th>
+            <th style="width: 120px">Type</th>
+            <th>Libellé</th>
+            <th style="width: 150px">Agent</th>
+            <th style="width: 80px">Fait</th>
+            <th style="width: 90px">Partage</th>
+            <th style="width: 50px"></th>
           </tr>
         </thead>
+
         <tbody>
           <tr
-            v-for="reminder in displayReminders"
+            v-for="reminder in reminders"
             :key="reminder.id"
             class="rt-row"
             :class="getRowClass(reminder)"
-            @click="$emit('action', { action: 'edit', reminder: reminder })"
+            @click="$emit('action', { action: 'edit', reminder })"
           >
-            <!-- Priority strip -->
-            <td class="rt-cell rt-cell--strip">
-              <div
-                class="priority-strip"
-                :class="'strip--' + reminder.priority"
-              ></div>
-            </td>
+<td>
+  <div class="address-cell">
 
-            <!-- Title + description + priority badge -->
-            <td class="rt-cell rt-cell--main">
-              <div class="main-cell">
-                <div class="main-cell__top">
-                  <span
-                    class="rt-title"
-                    :class="{ 'rt-title--done': reminder.completed }"
-                  >
-                    {{ reminder.title }}
-                  </span>
-                  <span
-                    class="priority-dot"
-                    :class="'dot--' + reminder.priority"
-                    :title="getPriorityLabel(reminder.priority)"
-                  ></span>
-                </div>
-                <span v-if="reminder.description" class="rt-desc">
-                  {{ reminder.description }}
-                </span>
-                <span v-if="reminder.property" class="rt-property-addr">
-                  {{ getPropertyAddress(reminder.property) }}
-                </span>
-              </div>
-            </td>
+    <!--<pre style="font-size: 10px; white-space: pre-wrap">
+{{ reminder }}
+    </pre>-->
 
-            <!-- Type -->
-            <td class="rt-cell">
-              <span
-                v-if="reminder.type"
-                class="rt-type-badge"
-                :class="'type--' + reminder.type"
-              >
-                {{ getTypeLabel(reminder.type) }}
-              </span>
-              <span v-else class="rt-muted">—</span>
-            </td>
+    <template v-if="reminder.property">
+      <strong>{{ getBasePropertyAddress(reminder.property) }}</strong>
 
-            <!-- Date + countdown -->
-            <td class="rt-cell">
-              <div class="date-block" :class="getDateBlockClass(reminder)">
-                <span class="date-block__date">
-                  {{ formatShortDate(reminder.date) }}
-                </span>
-                <span class="date-block__countdown">
-                  {{ getDaysLeftText(reminder) }}
-                </span>
-              </div>
-            </td>
+      <span v-if="getPropertyUnitLabel(reminder.property)">
+        {{ getPropertyUnitLabel(reminder.property) }}
+      </span>
+    </template>
 
-            <!-- Status pill -->
-            <td class="rt-cell">
-              <span class="status-pill" :class="'pill--' + getStatus(reminder)">
-                <span class="status-pill__dot"></span>
-                {{ getStatusLabel(getStatus(reminder)) }}
-              </span>
-            </td>
+    <span v-else>Adresse non définie</span>
+  </div>
+</td>
 
-            <!-- Progress buttons -->
-            <td class="rt-cell rt-cell--progress">
-              <div class="progress-track">
-                <button
-                  class="progress-step"
-                  :class="{
-                    'step--active': getStatus(reminder) === 'todo',
-                    'step--done':
-                      getStatus(reminder) === 'progress' ||
-                      getStatus(reminder) === 'completed',
-                  }"
-                  title="À faire"
-                  @click.stop="$emit('update-status', reminder, 'todo')"
-                >
-                  <span class="step-dot"></span>
-                  <span class="step-label">À faire</span>
-                </button>
-                <div
-                  class="progress-line"
-                  :class="{
-                    'line--filled':
-                      getStatus(reminder) === 'progress' ||
-                      getStatus(reminder) === 'completed',
-                  }"
-                ></div>
-                <!-- <button
-                  class="progress-step"
-                  :class="{
-                    'step--active': getStatus(reminder) === 'progress',
-                    'step--done': getStatus(reminder) === 'completed',
-                  }"
-                  title="En cours"
-                  @click.stop="$emit('update-status', reminder, 'progress')"
-                >
-                  <span class="step-dot"></span>
-                  <span class="step-label">En cours</span>
-                </button> -->
-                <div
-                  class="progress-line"
-                  :class="{
-                    'line--filled': getStatus(reminder) === 'completed',
-                  }"
-                ></div>
-                <button
-                  class="progress-step"
-                  :class="{
-                    'step--active': getStatus(reminder) === 'completed',
-                  }"
-                  title="Terminé"
-                  @click.stop="$emit('update-status', reminder, 'completed')"
-                >
-                  <span class="step-dot"></span>
-                  <span class="step-label">Terminé</span>
-                </button>
-              </div>
-            </td>
-
-            <!-- Owner (property owner) -->
-            <td class="rt-cell rt-cell--owner">
-              <span class="rt-owner-name">
+            <td>
+              <span class="owner-name">
                 {{ reminder.property?.owner ?? 'Nom non défini' }}
               </span>
             </td>
 
-            <!-- Creator name -->
-            <td class="rt-cell rt-cell--email">
-              <span class="rt-email" :title="reminder.creator?.email">
+            <td>
+              <div class="date-block" :class="getDateBlockClass(reminder)">
+                <strong>{{ formatShortDate(reminder.date) }}</strong>
+                <span>{{ getDaysLeftText(reminder) }}</span>
+              </div>
+            </td>
+
+
+                        <td>
+              <span
+                v-if="reminder.type"
+                class="type-badge"
+                :class="'type--' + reminder.type"
+              >
+                {{ getTypeLabel(reminder.type) }}
+              </span>
+              <span v-else class="muted">—</span>
+            </td>
+
+
+              <td>
+          <div class="label-cell">
+            <p :class="{ done: reminder.completed }">
+              {{ reminder.description || 'Aucun détail' }}
+            </p>
+          </div>
+        </td>
+
+
+            <td>
+              <span class="agent-name" :title="reminder.creator?.email">
                 {{ reminder.creator?.name ?? '—' }}
               </span>
             </td>
 
-            <!-- Sharing toggle -->
-            <td class="rt-cell rt-cell--sharing" @click.stop>
+            <td class="center" @click.stop>
               <EMToggleSwitch
-                :model-value="!!reminder.sharing"
+                :model-value="!!reminder.completed"
                 @update:model-value="
-                  val => $emit('update-sharing', reminder, val)
+                  val =>
+                    $emit(
+                      'update-status',
+                      reminder,
+                      val ? 'completed' : 'todo'
+                    )
                 "
               />
             </td>
 
-            <!-- Actions dropdown -->
-            <td class="rt-cell rt-cell--actions">
+            <td class="center" @click.stop>
+              <EMToggleSwitch
+                :model-value="!!reminder.sharing"
+                @update:model-value="val => $emit('update-sharing', reminder, val)"
+              />
+            </td>
+
+            <td class="center">
               <el-dropdown
                 trigger="click"
                 placement="bottom-end"
                 @command="
                   (cmd: string) =>
-                    $emit('action', { action: cmd, reminder: reminder })
+                    $emit('action', { action: cmd, reminder })
                 "
               >
-                <button
-                  class="actions-trigger"
-                  aria-label="Actions"
-                  @click.stop
-                >
+                <button class="actions-trigger" @click.stop>
                   <svg width="16" height="16" viewBox="0 0 16 16" fill="none">
                     <circle cx="8" cy="3" r="1.5" fill="currentColor" />
                     <circle cx="8" cy="8" r="1.5" fill="currentColor" />
                     <circle cx="8" cy="13" r="1.5" fill="currentColor" />
                   </svg>
                 </button>
+
                 <template #dropdown>
                   <el-dropdown-menu>
                     <el-dropdown-item command="edit" :icon="Edit">
@@ -268,7 +146,6 @@
         </tbody>
       </table>
 
-      <!-- Empty state -->
       <div v-if="reminders.length === 0" class="rt-empty">
         Aucun rappel trouvé
       </div>
@@ -277,118 +154,116 @@
 </template>
 
 <script setup lang="ts">
-import { ref, computed } from 'vue';
 import { Edit, Delete, DocumentCopy } from '@element-plus/icons-vue';
 import type { Reminder } from '@/stores/reminders';
 import type { IReminderProperty } from '@/types/reminder';
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
-import {
-  getPriorityLabel,
-  getTypeLabel,
-  isOverdue,
-  isToday,
-} from '@/utils/reminderHelpers';
+import { getTypeLabel, isOverdue, isToday } from '@/utils/reminderHelpers';
 
 interface ActionCommand {
   action: string;
   reminder: Reminder;
 }
 
-const props = defineProps<{
+defineProps<{
   reminders: Reminder[];
   userRole: string;
 }>();
 
-// ── Agent filter ────────────────────────────────
-const agentFilter = ref<string[]>([]);
-
-const uniqueAgents = computed(() => [
-  ...new Set(props.reminders.map(r => r.creator?.name ?? '').filter(Boolean)),
-]);
-
-const displayReminders = computed(() =>
-  agentFilter.value.length === 0
-    ? props.reminders
-    : props.reminders.filter(r =>
-        agentFilter.value.includes(r.creator?.name ?? '')
-      )
-);
-
 defineEmits<{
   action: [command: ActionCommand];
-  'update-status': [
-    reminder: Reminder,
-    status: 'todo' | 'progress' | 'completed',
-  ];
+  'update-status': [reminder: Reminder, status: 'todo' | 'completed'];
   'update-sharing': [reminder: Reminder, sharing: boolean];
 }>();
 
-const getPropertyAddress = (property: IReminderProperty): string => {
+const getBasePropertyAddress = (property: IReminderProperty): string => {
   const parts: string[] = [];
+
   if (property.numero) parts.push(String(property.numero));
   if (property.rep) parts.push(property.rep);
-  parts.push(property.nom_voie);
-  parts.push(`${property.code_postal} ${property.city}`);
+  if (property.nom_voie) parts.push(property.nom_voie);
+
+  const cityLine = `${property.code_postal ?? ''} ${property.city ?? ''}`.trim();
+  if (cityLine) parts.push(cityLine);
+
   return parts.join(' ');
 };
 
-/* ── Helpers ────────────────────────────────────── */
+const getPropertyUnitLabel = (property: IReminderProperty): string => {
+  const p = property as any;
+  const unit = p.unit;
 
-const getStatus = (r: Reminder): 'todo' | 'progress' | 'completed' => {
-  if (r.status) return r.status;
-  if (r.completed) return 'completed';
-  return 'todo';
+  if (!unit) return '';
+
+  if (unit.unit_label) {
+    return unit.unit_label;
+  }
+
+  if (unit.apart_number) {
+    return `Appartement ${unit.apart_number}`;
+  }
+
+  if (unit.unit_type) {
+    return unit.unit_type;
+  }
+
+  return '';
 };
-
-const getStatusLabel = (s: string) =>
-  ({ todo: 'À faire', progress: 'En cours', completed: 'Terminé' })[s] ?? s;
 
 const getDiffDays = (date: string): number => {
   const today = new Date();
   today.setHours(0, 0, 0, 0);
+
   const target = new Date(date);
   target.setHours(0, 0, 0, 0);
+
   return Math.ceil(
     (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
   );
 };
 
 const formatShortDate = (dateStr: string): string => {
-  const d = new Date(dateStr);
-  return d.toLocaleDateString('fr-FR', {
+  if (!dateStr) return '—';
+
+  return new Date(dateStr).toLocaleDateString('fr-FR', {
     day: 'numeric',
     month: 'short',
   });
 };
 
 const getDaysLeftText = (r: Reminder): string => {
-  if (r.completed) return '✓ Terminé';
+  if (r.completed) return 'Terminé';
+
   const d = getDiffDays(r.date);
+
   if (d < 0) return `${Math.abs(d)}j de retard`;
   if (d === 0) return "Aujourd'hui";
   if (d === 1) return 'Demain';
+
   return `J-${d}`;
 };
 
 const getDateBlockClass = (r: Reminder): string => {
-  if (r.completed) return 'date-block--done';
+  if (r.completed) return 'done';
+
   const d = getDiffDays(r.date);
-  if (d < 0) return 'date-block--overdue';
-  if (d === 0) return 'date-block--today';
-  if (d <= 3) return 'date-block--soon';
-  return '';
+
+  if (d < 0) return 'overdue';
+
+  if (d <= 3) return 'warning';
+
+  return 'ok';
 };
 
 const getRowClass = (r: Reminder): string => {
-  if (isOverdue(r.date, r.completed)) return 'rt-row--overdue';
-  if (isToday(r.date) && !r.completed) return 'rt-row--today';
-  if (r.completed) return 'rt-row--done';
+  if (r.completed) return 'row-done';
+  if (isOverdue(r.date, r.completed)) return 'row-overdue';
+  if (isToday(r.date)) return 'row-today';
   return '';
 };
 </script>
 
 <style scoped>
-/* ── Container ───────────────────────────────── */
 .reminders-table-container {
   padding: 0;
 }
@@ -398,18 +273,15 @@ const getRowClass = (r: Reminder): string => {
   border-radius: var(--table-radius);
   overflow: hidden;
   background: #fff;
-  /* box-shadow: var(--table-shadow); */
 }
 
-/* ── Table base ──────────────────────────────── */
 .rt-table {
   width: 100%;
   border-collapse: collapse;
   table-layout: fixed;
 }
 
-/* ── Header ──────────────────────────────────── */
-.rt-th {
+th {
   text-align: left;
   padding: var(--table-cell-padding);
   font-size: 0.75rem;
@@ -420,255 +292,164 @@ const getRowClass = (r: Reminder): string => {
   background: #f7f7f7;
   border-bottom: 1px solid #c4c3c3;
   white-space: nowrap;
-  user-select: none;
 }
 
-.rt-th--priority {
-  padding: 0;
-}
-
-.rt-th--progress {
-  text-align: center;
-}
-
-/* ── Agent filter header ─────────────────────── */
-.rt-th-filter {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.rt-filter-icon {
-  cursor: pointer;
-  color: #9ca3af;
-  flex-shrink: 0;
-  transition: color 0.15s;
-}
-
-.rt-filter-icon:hover,
-.rt-filter-icon--active {
-  color: var(--el-color-primary);
-}
-
-.rt-filter-panel {
-  padding: 8px;
-  min-width: 160px;
-}
-
-.rt-filter-list {
-  display: flex;
-  flex-direction: column;
-  gap: 4px;
-  max-height: 200px;
-  overflow-y: auto;
-  padding-bottom: 8px;
-  border-bottom: 1px solid #e5e7eb;
-  margin-bottom: 8px;
-}
-
-.rt-filter-actions {
-  display: flex;
-  justify-content: flex-end;
-  gap: 6px;
-}
-
-/* ── Rows ────────────────────────────────────── */
-.rt-row {
-  transition: all 0.3s ease;
-  cursor: pointer;
-  border-bottom: 1px solid var(--table-border-color);
-}
-
-.rt-row:last-child {
-  border-bottom: none;
-}
-
-.rt-row:hover {
-  background-color: var(--table-row-hover) !important;
-  transform: var(--btn-hover-translate);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.rt-row--overdue {
-  background-color: #fff5f5;
-}
-
-.rt-row--overdue:hover {
-  background-color: #fff0f0 !important;
-  transform: var(--btn-hover-translate);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.rt-row--today {
-  background-color: #fffdf5;
-}
-
-.rt-row--today:hover {
-  background-color: #fffceb !important;
-  transform: var(--btn-hover-translate);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-.rt-row--done {
-  opacity: 0.55;
-}
-
-.rt-row--done:hover {
-  opacity: 0.75;
-}
-
-/* ── Cells ───────────────────────────────────── */
-.rt-cell {
+td {
   padding: var(--table-cell-padding);
   vertical-align: middle;
   font-size: 0.875rem;
+  border-bottom: 1px solid var(--table-border-color);
 }
 
-.rt-cell--strip {
-  padding: 0;
-  width: 4px;
+.rt-row {
+  cursor: pointer;
+  transition: all 0.2s ease;
 }
 
-.rt-cell--actions {
-  padding: var(--table-cell-padding);
-  text-align: center;
+.rt-row:hover {
+  background-color: var(--table-row-hover);
 }
 
-.rt-cell--progress {
-  padding: var(--table-cell-padding);
+.row-overdue {
+  background-color: #fff5f5;
 }
 
-.rt-cell--sharing {
-  padding: var(--table-cell-padding);
-  text-align: center;
+.row-today {
+  background-color: #fffdf5;
 }
 
-.rt-cell--owner {
-  padding: var(--table-cell-padding);
-  max-width: 140px;
+.row-done {
+  opacity: 0.55;
+  background-color: #f8fafc;
 }
 
-.rt-owner-name {
+.address-cell {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.address-cell strong {
+  font-size: 0.85rem;
+  font-weight: 600;
+  color: #1e293b;
+  line-height: 1.3;
+}
+
+.address-cell span {
+  color: #94a3b8;
+}
+
+.owner-name,
+.agent-name {
+  display: block;
   font-size: 0.8rem;
-  font-weight: 500;
   color: #374151;
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  display: block;
 }
 
-.rt-cell--email {
-  padding: var(--table-cell-padding);
-  max-width: 160px;
+.date-block {
+  display: inline-flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 6px 10px;
+  border-radius: 10px;
+  min-width: 90px;
 }
 
-.rt-email {
-  font-size: 0.75rem;
-  color: #64748b;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
-  display: block;
+.date-block strong {
+  font-size: 0.82rem;
+  font-weight: 700;
 }
 
-.rt-property-addr {
-  display: block;
+.date-block span {
   font-size: 0.7rem;
+  font-weight: 600;
+}
+
+/* Rouge = dépassé */
+.date-block.overdue {
+  background: #fef2f2;
+}
+
+.date-block.overdue strong,
+.date-block.overdue span {
+  color: #dc2626;
+}
+
+/* Orange = moins de 4 jours */
+.date-block.warning {
+  background: #fff7ed;
+}
+
+.date-block.warning strong,
+.date-block.warning span {
+  color: #ea580c;
+}
+
+/* Vert = OK */
+.date-block.ok {
+  background: #f0fdf4;
+}
+
+.date-block.ok strong,
+.date-block.ok span {
+  color: #16a34a;
+}
+
+/* Gris = terminé */
+.date-block.done {
+  background: #f1f5f9;
+}
+
+.date-block.done strong,
+.date-block.done span {
   color: #94a3b8;
-  margin-top: 2px;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
 }
 
-/* ── Priority strip ──────────────────────────── */
-.priority-strip {
-  width: 4px;
-  height: 100%;
-  min-height: 52px;
-  border-radius: 0 4px 4px 0;
-}
-
-.strip--high {
-  background: #ef4444;
-}
-
-.strip--medium {
-  background: #f59e0b;
-}
-
-.strip--low {
-  background: #22c55e;
-}
-
-/* ── Main cell (title) ───────────────────────── */
-.main-cell {
+.label-cell {
   display: flex;
   flex-direction: column;
-  gap: 3px;
+  gap: 4px;
   min-width: 0;
 }
 
-.main-cell__top {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.rt-title {
-  font-weight: 500;
+.label-cell p {
+  font-size: 0.9rem;
+  font-weight: 600;
   color: #1e293b;
-  font-size: 0.875rem;
-  white-space: nowrap;
-  overflow: hidden;
-  text-overflow: ellipsis;
+  line-height: 1.35;
 }
 
-.rt-title--done {
+.label-cell strong.done {
   text-decoration: line-through;
   color: #94a3b8;
 }
 
-.priority-dot {
-  flex-shrink: 0;
-  width: 8px;
-  height: 8px;
-  border-radius: 50%;
-}
-
-.dot--high {
-  background: #ef4444;
-  box-shadow: 0 0 0 3px rgba(239, 68, 68, 0.15);
-}
-
-.dot--medium {
-  background: #f59e0b;
-  box-shadow: 0 0 0 3px rgba(245, 158, 11, 0.15);
-}
-
-.dot--low {
-  background: #22c55e;
-  box-shadow: 0 0 0 3px rgba(34, 197, 94, 0.15);
-}
-
-.rt-desc {
-  font-size: 0.75rem;
-  color: #94a3b8;
-  white-space: nowrap;
+.label-cell p {
+  margin: 0;
+  font-size: 0.78rem;
+  color: #64748b;
+  line-height: 1.4;
+  display: -webkit-box;
+  -webkit-line-clamp: 3;
+  -webkit-box-orient: vertical;
   overflow: hidden;
-  text-overflow: ellipsis;
-  max-width: 260px;
 }
 
-/* ── Type badge ──────────────────────────────── */
-.rt-type-badge {
+.label-cell p.done {
+  text-decoration: line-through;
+  color: #94a3b8;
+}
+
+.type-badge {
   display: inline-block;
   font-size: 0.7rem;
   font-weight: 600;
   padding: 3px 10px;
   border-radius: 20px;
-  letter-spacing: 0.02em;
 }
 
 .type--rappel {
@@ -691,193 +472,16 @@ const getRowClass = (r: Reminder): string => {
   color: #64748b;
 }
 
-.rt-muted {
+.muted {
   color: #d1d5db;
 }
 
-/* ── Date block ──────────────────────────────── */
-.date-block {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
+.center {
+  text-align: center;
 }
 
-.date-block__date {
-  font-weight: 600;
-  font-size: 0.8rem;
-  color: #334155;
-}
-
-.date-block__countdown {
-  font-size: 0.7rem;
-  font-weight: 500;
-  color: #94a3b8;
-}
-
-.date-block--overdue .date-block__date {
-  color: #dc2626;
-}
-
-.date-block--overdue .date-block__countdown {
-  color: #ef4444;
-  font-weight: 700;
-}
-
-.date-block--today .date-block__date {
-  color: #d97706;
-}
-
-.date-block--today .date-block__countdown {
-  color: #f59e0b;
-  font-weight: 700;
-}
-
-.date-block--soon .date-block__countdown {
-  color: #3b82f6;
-}
-
-.date-block--done .date-block__date {
-  color: #94a3b8;
-}
-
-.date-block--done .date-block__countdown {
-  color: #22c55e;
-}
-
-/* ── Status pill ─────────────────────────────── */
-.status-pill {
-  display: inline-flex;
-  align-items: center;
-  gap: 6px;
-  font-size: 0.7rem;
-  font-weight: 600;
-  padding: 4px 12px;
-  border-radius: 20px;
-  white-space: nowrap;
-}
-
-.status-pill__dot {
-  width: 6px;
-  height: 6px;
-  border-radius: 50%;
-  flex-shrink: 0;
-}
-
-.pill--todo {
-  background: #eff6ff;
-  color: #3b82f6;
-}
-
-.pill--todo .status-pill__dot {
-  background: #3b82f6;
-}
-
-.pill--progress {
-  background: #fffbeb;
-  color: #d97706;
-}
-
-.pill--progress .status-pill__dot {
-  background: #f59e0b;
-  animation: pulse-dot 2s infinite;
-}
-
-.pill--completed {
-  background: #ecfdf5;
-  color: #059669;
-}
-
-.pill--completed .status-pill__dot {
-  background: #22c55e;
-}
-
-@keyframes pulse-dot {
-  0%,
-  100% {
-    opacity: 1;
-  }
-  50% {
-    opacity: 0.3;
-  }
-}
-
-/* ── Progress track (stepper) ────────────────── */
-.progress-track {
-  display: flex;
-  align-items: center;
-  justify-content: center;
-  gap: 0;
-}
-
-.progress-step {
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  gap: 3px;
-  background: none;
-  border: none;
-  cursor: pointer;
-  padding: 4px 6px;
-  border-radius: 6px;
-  transition: background 0.15s;
-}
-
-.progress-step:hover {
-  background: #f1f5f9;
-}
-
-.step-dot {
-  width: 14px;
-  height: 14px;
-  border-radius: 50%;
-  border: 2px solid #d1d5db;
-  background: #fff;
-  transition: all 0.2s;
-}
-
-.step-label {
-  font-size: 0.6rem;
-  color: #94a3b8;
-  font-weight: 500;
-  white-space: nowrap;
-}
-
-.progress-line {
-  width: 20px;
-  height: 2px;
-  background: #e2e8f0;
-  flex-shrink: 0;
-  transition: background 0.2s;
-  margin-bottom: 14px;
-}
-
-.line--filled {
-  background: #22c55e;
-}
-
-.step--active .step-dot {
-  border-color: #3b82f6;
-  background: #3b82f6;
-  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2);
-}
-
-.step--active .step-label {
-  color: #3b82f6;
-  font-weight: 700;
-}
-
-.step--done .step-dot {
-  border-color: #22c55e;
-  background: #22c55e;
-}
-
-.step--done .step-label {
-  color: #22c55e;
-}
-
-/* ── Actions trigger ─────────────────────────── */
 .actions-trigger {
-  display: flex;
+  display: inline-flex;
   align-items: center;
   justify-content: center;
   width: 30px;
@@ -887,7 +491,6 @@ const getRowClass = (r: Reminder): string => {
   background: transparent;
   color: #94a3b8;
   cursor: pointer;
-  transition: all 0.15s;
 }
 
 .actions-trigger:hover {
@@ -895,7 +498,6 @@ const getRowClass = (r: Reminder): string => {
   color: #475569;
 }
 
-/* ── Empty ───────────────────────────────────── */
 .rt-empty {
   text-align: center;
   padding: 60px 20px;
@@ -903,25 +505,13 @@ const getRowClass = (r: Reminder): string => {
   font-size: 0.9rem;
 }
 
-/* ── Responsive ──────────────────────────────── */
 @media (max-width: 900px) {
-  .rt-th--progress,
-  .rt-cell--progress {
-    display: none;
-  }
-}
-
-@media (max-width: 640px) {
-  .rt-cell {
-    padding: 10px 8px;
+  .table-wrapper {
+    overflow-x: auto;
   }
 
-  .rt-title {
-    font-size: 0.8rem;
-  }
-
-  .rt-desc {
-    display: none;
+  .rt-table {
+    min-width: 1100px;
   }
 }
 </style>

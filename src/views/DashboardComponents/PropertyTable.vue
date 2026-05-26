@@ -242,9 +242,15 @@ function isFavoriteValue(value: unknown): boolean {
 }
 
 const getRowKey = (row: any) => {
-  return Number(row.id) > 0
-    ? `property_${row.id}`
-    : `address_${row.id_fantoir_long}`;
+  if (Number(row.id) > 0) {
+    return `property_${row.id}`;
+  }
+
+  if (Number(row.unit_id ?? 0) > 0) {
+    return `unit_${row.unit_id}`;
+  }
+
+  return `address_${row.id_fantoir_long}`;
 };
 
 function getMonthsDiff(dateRappel: string | null): number {
@@ -339,12 +345,16 @@ const handleRowClick = (row: any) => {
     return;
   }
 
-  console.log('ROW CLICK id_fantoir_long =', row.id_fantoir_long);
-
-  emit('edit-property', {
+  const normalizedRow = {
     ...row,
     id_fantoir_long: row.id_fantoir_long,
-  });
+    row_type: row.row_type || (Number(row.unit_id ?? 0) > 0 ? 'unit' : 'address'),
+    unit_id: Number(row.unit_id ?? 0) > 0 ? Number(row.unit_id) : null,
+  };
+
+  console.log('ROW CLICK normalized =', normalizedRow);
+
+  emit('edit-property', normalizedRow);
 };
 
 const sortByNumeroAndRep = (
@@ -374,10 +384,31 @@ const getRowClass = ({ row }: any) => {
 
 const toggleFavorite = async (row: any) => {
   try {
-    const savedRow = await store.toggleFavorite(row.id, row);
+    const normalizedRow = {
+      ...row,
+      row_type:
+        row.row_type ||
+        (Number(row.unit_id ?? 0) > 0 ? 'unit' : 'address'),
 
-    row.id = savedRow.id;
-    row.favorite = savedRow.favorite;
+      unit_id:
+        Number(row.unit_id ?? 0) > 0 ? Number(row.unit_id) : null,
+    };
+
+    const savedRow = await store.toggleFavorite(
+      normalizedRow.id ?? 0,
+      normalizedRow
+    );
+
+    Object.assign(row, {
+      ...savedRow,
+      row_type:
+        savedRow.row_type ||
+        normalizedRow.row_type,
+      unit_id:
+        Number(savedRow.unit_id ?? normalizedRow.unit_id ?? 0) > 0
+          ? Number(savedRow.unit_id ?? normalizedRow.unit_id)
+          : null,
+    });
 
     ElMessage.success(
       savedRow.favorite ? 'Ajouté aux favoris' : 'Retiré des favoris'
@@ -385,8 +416,9 @@ const toggleFavorite = async (row: any) => {
 
     dashboardStore.updateAddress({
       ...row,
-      id: savedRow.id,
-      favorite: savedRow.favorite,
+      ...savedRow,
+      row_type: row.row_type,
+      unit_id: row.unit_id,
     });
   } catch (e) {
     console.error('toggleFavorite error:', e);

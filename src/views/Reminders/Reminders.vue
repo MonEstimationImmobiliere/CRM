@@ -332,21 +332,25 @@ const currentRemindersView = computed({
 
 const openProperty = async (reminder: Reminder) => {
   try {
-    const propertyId = reminder.property_id;
+    const propertyId = reminder.property?.id ?? reminder.property_id;
 
-    // 1. Chercher dans le store local (données complètes avec property_type)
-    let fullProperty: any = propertyStore.properties.find(
-      (p: any) => p.id === propertyId
-    );
-
-    // 2. Si absent du store, fetch depuis l'API pour obtenir les données complètes
-    if (!fullProperty) {
-      fullProperty = await PropertyService.getProperty(propertyId);
+    if (!propertyId) {
+      ElMessage.error('Aucune propriété liée à ce rappel');
+      return;
     }
 
-    // Ne pas pré-spread defaultPropertyData : selectProperty le fait en interne,
-    // et defaultPropertyData.row_type = '' bloquerait le fallback 'address' via ??
-    await propertyStore.selectProperty(fullProperty);
+    const response: any = await PropertyService.getProperty(propertyId);
+
+    const fullProperty =
+      response?.property ??
+      response?.data?.property ??
+      response?.data ??
+      response;
+
+    await propertyStore.selectProperty({
+      ...fullProperty,
+      row_type: fullProperty.unit_id ? 'unit' : 'address',
+    });
 
     showCreateDialog.value = false;
     propertyStore.setDialogVisible(true);

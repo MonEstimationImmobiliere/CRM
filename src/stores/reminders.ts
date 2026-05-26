@@ -234,46 +234,32 @@ export const useRemindersStore = defineStore('reminders', () => {
   });
 
   // Actions
-  const addReminder = async (reminderData: IReminderCreate) => {
-    try {
-      const newReminder = await ReminderService.createReminder({
-        ...reminderData,
-        sharing: reminderData.sharing || false,
-      });
+const addReminder = async (reminderData: IReminderCreate) => {
+  try {
+    const newReminder = await ReminderService.createReminder({
+      ...reminderData,
+      sharing: reminderData.sharing || false,
+    });
 
-      const reminderWithDefaults: Reminder = {
-        ...newReminder,
-        sharing: newReminder.sharing || false,
-      };
+    const reminderWithDefaults: Reminder = {
+      ...newReminder,
+      sharing: newReminder.sharing || false,
+    };
 
-      invalidateCache();
-      reminders.value.push(reminderWithDefaults);
-      NotificationService.reminderCreated(reminderWithDefaults.title);
-      return reminderWithDefaults;
-    } catch {
-      // Fallback local
-      const now = new Date().toISOString();
-      const localReminder: Reminder = {
-        id: Date.now(),
-        property_id: reminderData.property_id,
-        created_by: 0,
-        updated_by: 0,
-        title: reminderData.title,
-        description: reminderData.description || null,
-        date: reminderData.date,
-        type: reminderData.type,
-        priority: reminderData.priority,
-        completed: reminderData.completed || false,
-        sharing: reminderData.sharing || false,
-        created_at: now,
-        updated_at: now,
-      };
-      invalidateCache();
-      reminders.value.push(localReminder);
-      NotificationService.reminderCreated(localReminder.title);
-      return localReminder;
-    }
-  };
+    invalidateCache();
+    reminders.value.push(reminderWithDefaults);
+    NotificationService.reminderCreated(reminderWithDefaults.title);
+    return reminderWithDefaults;
+} catch (error: any) {
+  console.error('Erreur API création rappel complète', {
+    status: error?.response?.status,
+    data: error?.response?.data,
+    message: error?.message,
+  });
+
+  throw error;
+}
+};
 
   const updateReminder = async (
     id: number,
