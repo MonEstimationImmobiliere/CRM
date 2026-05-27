@@ -1,8 +1,8 @@
 <template>
   <Teleport to="body">
     <el-drawer
-  :model-value="store.isDialogVisible"
-  @close="closeDialog"
+      :model-value="store.isDialogVisible"
+      @close="closeDialog"
       size="40%"
       :show-close="false"
       modal-class="darker-drawer-overlay"
@@ -22,34 +22,27 @@
             class="el-button el-button--default app-button empty-default-slot icon-only squared border"
             @click="closeDialog"
           >
-            <!----><!----><span
-              ><div
-                data-v-3a4a5748=""
-                class="icon-wrapper"
-                style="width: 16px; height: 16px"
-              >
+            <span>
+              <div class="icon-wrapper" style="width: 16px; height: 16px">
                 <svg
-                  data-v-bc71ed1a=""
-                  data-v-3a4a5748=""
                   xmlns="http://www.w3.org/2000/svg"
                   fill="currentColor"
                   viewBox="0 0 24 24"
-                  data-path="Bold.InterfaceEssential.FormValidation.Close"
                   class="icon icon start fill"
                   style="--icon-size: 16px"
                 >
                   <path
                     d="M14.3 12.18a.24.24 0 0 1 0-.35l9.26-9.27a1.49 1.49 0 0 0 0-2.12 1.51 1.51 0 0 0-2.12 0L12.18 9.7a.25.25 0 0 1-.36 0L2.56.44a1.51 1.51 0 0 0-2.12 0 1.49 1.49 0 0 0 0 2.12l9.26 9.27a.24.24 0 0 1 0 .35L.44 21.44a1.49 1.49 0 0 0 0 2.12 1.51 1.51 0 0 0 2.12 0l9.26-9.26a.25.25 0 0 1 .36 0l9.26 9.26a1.51 1.51 0 0 0 2.12 0 1.49 1.49 0 0 0 0-2.12Z"
-                  ></path>
+                  />
                 </svg>
               </div>
-              <!----><!----><!----></span              
-            >
-
-            
+            </span>
           </button>
+
           <div></div>
+
           <h4 :id="titleId" class="title-header">{{ dialogTitle }}</h4>
+
           <div class="header-actions">
             <el-button @click="toggleFavorite" size="small" circle>
               <el-icon>
@@ -64,27 +57,18 @@
               </el-icon>
             </el-button>
           </div>
-
-
-
-          
         </div>
-
-
-
-
       </template>
 
+      <div class="property-debug">
+        <span>Property ID: {{ store.selectedProperty?.id ?? '—' }}</span>
+        <span>Unit ID: {{ store.selectedProperty?.unit_id ?? '—' }}</span>
+        <span>Row type: {{ store.selectedProperty?.row_type ?? '—' }}</span>
 
-<div class="property-debug">
-  <span>Property ID: {{ store.selectedProperty?.id ?? '—' }}</span>
-  <span>Unit ID: {{ store.selectedProperty?.unit_id ?? '—' }}</span>
-  <span>Row type: {{ store.selectedProperty?.row_type ?? '—' }}</span>
-
-  <span v-if="store.selectedProperty?.unit?.apart_number">
-    Appartement: {{ store.selectedProperty.unit.apart_number }}
-  </span>
-</div>
+        <span v-if="store.selectedProperty?.unit?.apart_number">
+          Appartement: {{ store.selectedProperty.unit.apart_number }}
+        </span>
+      </div>
 
       <el-form
         v-if="store.selectedProperty"
@@ -98,8 +82,11 @@
             <CharacteristicsTab
               :property-type="propertyType"
               @open-unit-dialog="openUnitDialog"
+              @edit-unit="openEditUnitDialog"
+                @type-confirmed="handleSaveProperty"
             />
           </el-tab-pane>
+
           <el-tab-pane
             label="Contact"
             name="contact"
@@ -127,13 +114,18 @@
       </el-form>
     </el-drawer>
 
-    <PropertyReminderForm
-      v-model="showReminderDialog"
-      :property-id="store.selectedProperty?.id ?? 0"
-      :property-address="propertyAddress"
-    />
+    <ReminderFormDialog
+  v-model:visible="showReminderDialog"
+  :editing-reminder="null"
+  :saving="savingReminder"
+  @save="handleSaveReminder"
+/>
 
-    <UnitDialog v-model="showUnitDialog" @save="createUnit" />
+    <UnitDialog
+      v-model="showUnitDialog"
+      :editing-unit="editingUnit"
+      @save="handleSaveUnit"
+    />
   </Teleport>
 </template>
 
@@ -157,30 +149,63 @@ import ContactTab from './ContactTab.vue';
 import CharacteristicsTab from './CharacteristicsTab.vue';
 import CommentsTab from './CommentsTab.vue';
 import RemindersTab from './RemindersTab.vue';
-import PropertyReminderForm from '../PropertyReminderForm.vue';
+//import PropertyReminderForm from '../PropertyReminderForm.vue';
+import ReminderFormDialog from '@/views/Reminders/components/ReminderFormDialog.vue';
+import { useRemindersStore } from '@/stores/reminders';
 import UnitDialog from '../UnitDialog.vue';
 
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
-const { selectedCity } = useDashboardStore();
 
 const showUnitDialog = ref(false);
 const showReminderDialog = ref(false);
+const editingUnit = ref<any | null>(null);
+
 const activeTab = ref('characteristics');
+
 const isEditing = computed<boolean>(
   () => Number(store.selectedProperty?.id ?? 0) > 0
 );
-const isSavingProperty = ref(false);
+
 const saveInProgress = ref(false);
-// Snapshot de la property à l'ouverture pour détecter les modifications
 const propertySnapshot = ref<string | null>(null);
+
+  const remindersStore = useRemindersStore();
+
+const savingReminder = ref(false);
+
+const handleSaveReminder = async (form: any) => {
+  if (!store.selectedProperty?.id) {
+    ElMessage.error('La propriété doit être sauvegardée');
+    return;
+  }
+
+  savingReminder.value = true;
+
+  try {
+    await remindersStore.addReminder({
+      ...form,
+      property_id: store.selectedProperty.id,
+      completed: form.status === 'completed',
+    });
+
+    ElMessage.success('Rappel créé avec succès');
+
+    showReminderDialog.value = false;
+  } catch (error) {
+    console.error(error);
+
+    ElMessage.error('Erreur lors de la création du rappel');
+  } finally {
+    savingReminder.value = false;
+  }
+};
 
 const serializeProperty = (prop: any): string => {
   if (!prop) return '';
 
   const copy: any = { ...prop };
 
-  // Champs à ignorer pour la détection de modification
   delete copy.comment_rappel;
   delete copy.unit;
   delete copy.created_at;
@@ -188,7 +213,6 @@ const serializeProperty = (prop: any): string => {
   delete copy.update_by;
   delete copy.created_by;
 
-  // Normalisations pour éviter les faux changements
   Object.keys(copy).forEach(key => {
     if (copy[key] === undefined) copy[key] = null;
     if (copy[key] === '') copy[key] = null;
@@ -199,12 +223,11 @@ const serializeProperty = (prop: any): string => {
 
   copy.id = Number(copy.id ?? 0);
   copy.unit_id = Number(copy.unit_id ?? 0) > 0 ? Number(copy.unit_id) : null;
-  copy.row_type =
-    copy.row_type || (copy.unit_id ? 'unit' : 'address');
+  copy.row_type = copy.row_type || (copy.unit_id ? 'unit' : 'address');
 
   return JSON.stringify(copy);
 };
-// Prendre le snapshot APRÈS ouverture du drawer ET après chargement de selectedProperty
+
 watch(
   [() => store.isDialogVisible, () => store.selectedProperty],
   async ([isVisible, selected]) => {
@@ -225,15 +248,18 @@ watch(
   { immediate: true }
 );
 
-// Reset du snapshot à la fermeture
 watch(
   () => store.isDialogVisible,
   isVisible => {
     if (!isVisible) {
       propertySnapshot.value = null;
+      editingUnit.value = null;
+      showUnitDialog.value = false;
+      showReminderDialog.value = false;
     }
   }
 );
+
 const propertyType = computed<string>(
   () => (store.selectedProperty as any)?.property_type ?? ''
 );
@@ -242,14 +268,11 @@ const isTypeUndefined = computed<boolean>(
   () => !propertyType.value || propertyType.value === 'inconnu'
 );
 
-// Forcer l'onglet Caractéristiques tant que le type n'est pas défini
 watch(isTypeUndefined, isUndefined => {
   if (isUndefined) {
     activeTab.value = 'characteristics';
   }
 });
-
-
 
 const dialogTitle = computed<string>(() => {
   if (!store.selectedProperty) return 'Nouvelle propriété';
@@ -261,16 +284,16 @@ const dialogTitle = computed<string>(() => {
     store.selectedProperty.city ||
     '';
   const numero = store.selectedProperty.numero || '';
-  const rep = store.selectedProperty.rep
-    ? ` ${store.selectedProperty.rep}`
-    : '';
+  const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : '';
   const voie = store.selectedProperty.nom_voie || '';
 
   return `${numero}${rep} ${voie}, ${codePostal} ${city}`;
 });
 
 const propertyAddress = computed(() =>
-  `${store.selectedProperty?.numero || ''} ${store.selectedProperty?.nom_voie || ''}`.trim()
+  `${store.selectedProperty?.numero || ''} ${
+    store.selectedProperty?.nom_voie || ''
+  }`.trim()
 );
 
 const closeDialog = async (): Promise<void> => {
@@ -286,6 +309,46 @@ const closeDialog = async (): Promise<void> => {
 };
 
 const openUnitDialog = () => {
+  editingUnit.value = null;
+  showUnitDialog.value = true;
+};
+
+const openEditUnitDialog = () => {
+  if (!store.selectedProperty) return;
+
+  editingUnit.value = {
+    ...(store.selectedProperty.unit ?? {}),
+    id: store.selectedProperty.unit?.id ?? store.selectedProperty.unit_id ?? null,
+    unit_type:
+      store.selectedProperty.unit?.unit_type ??
+      store.selectedProperty.property_type ??
+      'appartement',
+    unit_label:
+      store.selectedProperty.unit?.unit_label ??
+      store.selectedProperty.unit_label ??
+      '',
+    apart_number:
+      store.selectedProperty.unit?.apart_number ??
+      store.selectedProperty.apart_number ??
+      null,
+    floor_number:
+      store.selectedProperty.unit?.floor_number ??
+      store.selectedProperty.floor_number ??
+      null,
+    staircase:
+      store.selectedProperty.unit?.staircase ??
+      store.selectedProperty.staircase ??
+      '',
+    building:
+      store.selectedProperty.unit?.building ??
+      store.selectedProperty.building ??
+      '',
+    lot_number:
+      store.selectedProperty.unit?.lot_number ??
+      store.selectedProperty.lot_number ??
+      '',
+  };
+
   showUnitDialog.value = true;
 };
 
@@ -303,12 +366,10 @@ const hasNewPropertyMeaningfulData = (property: any): boolean => {
   const propertyType = String(property.property_type ?? '').trim().toLowerCase();
 
   return Boolean(
-    // on ignore les types par défaut
     (propertyType &&
       propertyType !== 'inconnu' &&
       propertyType !== 'address' &&
       propertyType !== 'immeuble') ||
-
       property.owner ||
       property.email ||
       property.phone ||
@@ -334,6 +395,7 @@ const hasPropertyChanged = (): boolean => {
 
   return changed;
 };
+
 const handleSaveProperty = async (): Promise<any> => {
   if (saveInProgress.value) {
     console.warn('Sauvegarde déjà en cours, ignorée');
@@ -366,10 +428,10 @@ const handleSaveProperty = async (): Promise<any> => {
         ? Number(filteredProperty.unit_id)
         : null;
 
-        if (!isEditing.value && !hasNewPropertyMeaningfulData(filteredProperty)) {
-  console.log('Nouvelle fiche vide, création ignorée');
-  return null;
-}
+    if (!isEditing.value && !hasNewPropertyMeaningfulData(filteredProperty)) {
+      console.log('Nouvelle fiche vide, création ignorée');
+      return null;
+    }
 
     console.log('saveProperty payload avant envoi', filteredProperty);
 
@@ -379,23 +441,19 @@ const handleSaveProperty = async (): Promise<any> => {
       dashboardStore.updateAddress(saved);
     }
 
-if (saved) {
-  store.selectedProperty = {
-    ...store.selectedProperty,
-    ...saved,
-  };
+    if (saved) {
+      store.selectedProperty = {
+        ...store.selectedProperty,
+        ...saved,
+      };
 
-  await nextTick();
+      await nextTick();
 
-  propertySnapshot.value = serializeProperty(
-    store.selectedProperty
-  );
-}
-   if (saved) {
-  ElMessage.success('Propriété sauvegardée');
-}
+      propertySnapshot.value = serializeProperty(store.selectedProperty);
+      ElMessage.success('Propriété sauvegardée');
+    }
 
-return saved;
+    return saved;
   } catch (error: any) {
     console.error('Error saving property:', error);
     ElMessage.error(
@@ -409,57 +467,115 @@ return saved;
   }
 };
 
-const createUnit = async (payload: {
-  unit_type: string;
-  unit_label: string;
-}) => {
+const buildUnitPayload = (payload: any, rootProperty: any, unitId?: number | null) => {
+  return {
+    id: unitId ?? undefined,
+
+    property_id: rootProperty.id,
+
+    id_fantoir_long: rootProperty.id_fantoir_long,
+    id_fantoir: rootProperty.id_fantoir,
+    code_insee: rootProperty.code_insee,
+    code_postal: rootProperty.code_postal,
+    nom_voie: rootProperty.nom_voie,
+    numero: rootProperty.numero,
+    rep: rootProperty.rep,
+    city: rootProperty.city || rootProperty.nom_commune || '',
+
+    unit_type: payload.unit_type,
+    unit_label: payload.unit_label,
+    apart_number: payload.apart_number ?? null,
+    floor_number: payload.floor_number ?? null,
+    staircase: payload.staircase || null,
+    building: payload.building || null,
+    lot_number: payload.lot_number || null,
+  };
+};
+
+const createUnit = async (payload: any) => {
   if (!store.selectedProperty) return;
 
+  let rootProperty = store.selectedProperty;
+
+  if (!rootProperty.id || Number(rootProperty.id) === 0) {
+    const propertyToCreate = {
+      ...rootProperty,
+      city: rootProperty.city || rootProperty.nom_commune || '',
+    };
+
+    const createdRoot = await store.saveProperty(propertyToCreate);
+    rootProperty = createdRoot as any;
+    await store.selectProperty(createdRoot as any);
+  }
+
+  const savedUnit = await UnitService.save(buildUnitPayload(payload, rootProperty));
+
+  ElMessage.success('Unité créée avec sa property');
+
+  if (dashboardStore.selectedCodeIdFantoir) {
+    dashboardStore.lastSearchParams = null;
+    await dashboardStore.querySearchAddress();
+  }
+
+  return savedUnit;
+};
+
+const updateUnit = async (payload: any) => {
+  if (!store.selectedProperty) return;
+
+  const unitId =
+    Number(editingUnit.value?.id ?? 0) ||
+    Number(store.selectedProperty.unit?.id ?? 0) ||
+    Number(store.selectedProperty.unit_id ?? 0);
+
+  if (!unitId) {
+    throw new Error("Impossible de retrouver l'identifiant de l'unité");
+  }
+
+  const savedUnit = await UnitService.save(
+    buildUnitPayload(payload, store.selectedProperty, unitId)
+  );
+
+  store.selectedProperty = {
+    ...store.selectedProperty,
+    unit_id: savedUnit?.id ?? unitId,
+    unit: {
+      ...(store.selectedProperty.unit ?? {}),
+      ...payload,
+      ...(savedUnit ?? {}),
+      id: savedUnit?.id ?? unitId,
+    },
+  };
+
+  if (dashboardStore.isDataLoaded) {
+    dashboardStore.updateAddress(store.selectedProperty);
+  }
+
+  propertySnapshot.value = serializeProperty(store.selectedProperty);
+
+  ElMessage.success('Unité modifiée');
+
+  return savedUnit;
+};
+
+const handleSaveUnit = async (payload: any) => {
   try {
-    let rootProperty = store.selectedProperty;
-
-    if (!rootProperty.id || Number(rootProperty.id) === 0) {
-      const propertyToCreate = {
-        ...rootProperty,
-        city: rootProperty.city || rootProperty.nom_commune || '',
-      };
-
-      const createdRoot = await store.saveProperty(propertyToCreate);
-      rootProperty = createdRoot as any;
-      await store.selectProperty(createdRoot as any);
+    if (editingUnit.value?.id || store.selectedProperty?.unit_id) {
+      await updateUnit(payload);
+    } else {
+      await createUnit(payload);
     }
 
-await UnitService.save({
-  property_id: rootProperty.id,
-
-  id_fantoir_long: rootProperty.id_fantoir_long,
-  id_fantoir: rootProperty.id_fantoir,
-  code_insee: rootProperty.code_insee,
-  code_postal: rootProperty.code_postal,
-  nom_voie: rootProperty.nom_voie,
-  numero: rootProperty.numero,
-  rep: rootProperty.rep,
-  city: rootProperty.city || rootProperty.nom_commune || '',
-
-  unit_type: payload.unit_type,
-  unit_label: payload.unit_label,
-});
-
-    ElMessage.success('Unité créée avec sa property');
-
-    // Force le rafraîchissement complet des adresses depuis le serveur
-    if (dashboardStore.selectedCodeIdFantoir) {
-      dashboardStore.lastSearchParams = null; // Ignore le cache de la dernière recherche
-      await dashboardStore.querySearchAddress();
-    }
+    showUnitDialog.value = false;
+    editingUnit.value = null;
   } catch (error: any) {
-    console.error('Erreur création unit:', error);
+    console.error('Erreur sauvegarde unit:', error);
     console.error('Réponse backend unit:', error?.response?.data);
 
     ElMessage.error(
       error?.response?.data?.message ||
         error?.message ||
-        "Impossible de créer l'unité"
+        "Impossible de sauvegarder l'unité"
     );
   }
 };
@@ -529,9 +645,6 @@ onUnmounted(() => {
   display: flex;
   flex-direction: column;
   height: 97%;
-}
-
-.property-tabs {
 }
 
 :deep(.el-tabs__header) {

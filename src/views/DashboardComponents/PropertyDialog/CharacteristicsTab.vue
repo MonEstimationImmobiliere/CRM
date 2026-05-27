@@ -35,12 +35,13 @@
       <!-- ══════════════════════════════════════════════
          ÉTAPE 2 — Question bifurcation unité
     ══════════════════════════════════════════════ -->
-      <EMCard
-        titleSize="S"
-        :border="true"
-        :noShadow="true"
-        class="unit-question-card"
-      >
+<EMCard
+  v-if="!isUnit"
+  titleSize="S"
+  :border="true"
+  :noShadow="true"
+  class="unit-question-card"
+>
         <template #header-left>
           <button
             type="button"
@@ -119,14 +120,85 @@
           </el-radio-group>
         </el-form-item>
 
-        <!-- <el-button
-          v-if="prop.row_type === 'address'"
-          type="primary"
-          size="small"
-          @click="$emit('open-unit-dialog')"
-        >
-          Créer une unité
-        </el-button> -->
+      <div v-if="isUnit" class="unit-info-box">
+  <div class="unit-info-header">
+  <div class="unit-info-title">Informations de l’unité</div>
+
+  <el-button size="small" plain @click="$emit('edit-unit')">
+    Modifier
+  </el-button>
+</div>
+
+  <div class="unit-info-grid">
+    <div v-if="unitValue('unit_label')" class="unit-info-item">
+      <span>Libellé</span>
+      <strong>{{ unitValue('unit_label') }}</strong>
+    </div>
+
+    <template v-if="isType('appartement')">
+      <div v-if="unitValue('apart_number')" class="unit-info-item">
+        <span>N° appartement</span>
+        <strong>{{ unitValue('apart_number') }}</strong>
+      </div>
+
+      <div v-if="unitValue('floor_number')" class="unit-info-item">
+        <span>Étage</span>
+        <strong>{{ unitValue('floor_number') }}</strong>
+      </div>
+
+      <div v-if="unitValue('building')" class="unit-info-item">
+        <span>Bâtiment</span>
+        <strong>{{ unitValue('building') }}</strong>
+      </div>
+
+      <div v-if="unitValue('staircase')" class="unit-info-item">
+        <span>Escalier</span>
+        <strong>{{ unitValue('staircase') }}</strong>
+      </div>
+
+      <div v-if="unitValue('lot_number')" class="unit-info-item">
+        <span>Lot</span>
+        <strong>{{ unitValue('lot_number') }}</strong>
+      </div>
+    </template>
+
+    <template v-else-if="isType('local_commercial')">
+      <div v-if="unitValue('floor_number')" class="unit-info-item">
+        <span>Étage</span>
+        <strong>{{ unitValue('floor_number') }}</strong>
+      </div>
+
+      <div v-if="unitValue('lot_number')" class="unit-info-item">
+        <span>Lot / local</span>
+        <strong>{{ unitValue('lot_number') }}</strong>
+      </div>
+    </template>
+
+    <template v-else-if="isType('parking')">
+      <div v-if="unitValue('lot_number')" class="unit-info-item">
+        <span>N° parking / lot</span>
+        <strong>{{ unitValue('lot_number') }}</strong>
+      </div>
+
+      <div v-if="unitValue('building')" class="unit-info-item">
+        <span>Bâtiment</span>
+        <strong>{{ unitValue('building') }}</strong>
+      </div>
+    </template>
+
+    <template v-else-if="isType('cave')">
+      <div v-if="unitValue('lot_number')" class="unit-info-item">
+        <span>N° cave / lot</span>
+        <strong>{{ unitValue('lot_number') }}</strong>
+      </div>
+
+      <div v-if="unitValue('building')" class="unit-info-item">
+        <span>Bâtiment</span>
+        <strong>{{ unitValue('building') }}</strong>
+      </div>
+    </template>
+  </div>
+</div>
 
         <div class="grid-row">
           <el-form-item label="Année de construction" label-position="top">
@@ -748,8 +820,8 @@ import { usePropertyStore } from '@/stores/propertyHome';
 const emit = defineEmits<{
   'open-unit-dialog': [];
   'type-confirmed': [];
+  'edit-unit': [];
 }>();
-
 const props = defineProps<{
   propertyType: string;
 }>();
@@ -788,6 +860,14 @@ const showFullForm = computed<boolean>(() => {
   return true;
 });
 
+const isUnit = computed<boolean>(() => {
+  return prop.value?.row_type === 'unit' || !!prop.value?.unit;
+});
+
+function unitValue(field: string): any {
+  return prop.value?.unit?.[field] ?? prop.value?.[field] ?? null;
+}
+
 // ─── Options de type de bien ───────────────────────────────────────────────
 const propertyTypeOptions = computed(() => {
   if (prop.value?.row_type === 'unit') {
@@ -820,7 +900,10 @@ function isType(...types: string[]): boolean {
 // ─── Handlers ──────────────────────────────────────────────────────────────
 function selectType(value: string) {
   if (!store.selectedProperty) return;
+
   (store.selectedProperty as any).property_type = value;
+
+  emit('type-confirmed');
 }
 
 function onCreateUnit() {
@@ -1073,5 +1156,51 @@ function onNoUnit() {
   .type-grid {
     grid-template-columns: repeat(2, 1fr);
   }
+}
+
+.unit-info-box {
+  margin: 8px 0 18px;
+  padding: 12px 14px;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+  background: #f8fafc;
+}
+
+.unit-info-title {
+  font-size: 0.8rem;
+  font-weight: 700;
+  color: #334155;
+  margin-bottom: 10px;
+}
+
+.unit-info-grid {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 10px 18px;
+}
+
+.unit-info-item {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 120px;
+}
+
+.unit-info-item span {
+  font-size: 0.72rem;
+  color: #64748b;
+}
+
+.unit-info-item strong {
+  font-size: 0.85rem;
+  color: #0f172a;
+}
+
+.unit-info-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 12px;
+  margin-bottom: 10px;
 }
 </style>
