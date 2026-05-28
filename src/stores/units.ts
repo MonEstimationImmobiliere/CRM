@@ -32,6 +32,7 @@ export const useUnitStore = defineStore('unit', () => {
     lot_number: null,
   });
 
+  
   const loading = ref(false);
   const error = ref<string | null>(null);
 

@@ -5,6 +5,8 @@ import { PropertyService } from '@/api/property.service';
 import { useRemindersStore } from '@/stores/reminders';
 import type { IAddressGrouped, IAddressDetail } from '@/types/address';
 import type { IDpeResult } from '@/types/dpe';
+import type { IDvfPoint } from '@/types/dvf';
+import { DvfService } from '@/api/dvf.service';
 
 /**
  * Interface pour une ville sélectionnée
@@ -75,6 +77,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const selectedRep = ref('');
   const selectedNumeroFull = ref<SelectedNumeroFull | null>(null);
   const dpePoints = ref<DpePoint[]>([]);
+  const dvfPoints = ref<IDvfPoint[]>([]);
   const markers = ref<Record<string, any>>({});
   const filterMode = ref<string | null>(null);
   const selectedOwnerName = ref('');
@@ -153,6 +156,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
       fetchDPE();
     }
 
+    if (mode === 'dvf') {
+  viewType.value = 'map';
+  fetchDVF();
+}
+
     // Les modes sont des filtres client-side sur les adresses déjà chargées
     // → pas d'appel API, filteredAddresses computed gère le filtrage
   }
@@ -188,6 +196,70 @@ export const useDashboardStore = defineStore('dashboard', () => {
   }
 
   // --- Actions ---
+
+async function fetchDVF() {
+  try {
+    const codeInsee =
+      selectedCodeInsee.value ||
+      selectedCity.value?.codeInsee ||
+      selectedCity.value?.code_insee;
+
+      const idFantoir = selectedCodeIdFantoir.value || null;
+
+    if (!codeInsee) {
+      dvfPoints.value = [];
+      return;
+    }
+
+const json = await DvfService.getDVF(
+  codeInsee,
+  dvfFilterRange.value,
+  idFantoir
+);
+    console.log('DVF RAW JSON =', json);
+console.log('DVF codeInsee =', codeInsee);
+console.log('DVF range =', dvfFilterRange.value);
+
+console.log('DVF selectedCodeIdFantoir =', selectedCodeIdFantoir.value);
+
+dvfPoints.value = (json || [])
+.map((p: any) => ({
+  lat: Number(p.lat ?? p.latitude),
+  lon: Number(p.lon ?? p.longitude),
+
+  id_mutation: p.id_mutation || '',
+  numero_disposition: p.numero_disposition ?? null,
+
+  adresse: p.adresse || '',
+  date_mutation: p.date_mutation,
+
+  valeur_fonciere: p.valeur_fonciere
+    ? Number(p.valeur_fonciere)
+    : null,
+
+  main_type: p.main_type || 'autre',
+  line_count: Number(p.line_count ?? 1),
+
+  built_items: p.built_items || [],
+land_items: p.land_items || [],
+total_surface_terrain: p.total_surface_terrain
+  ? Number(p.total_surface_terrain)
+  : null,
+}))
+  .filter(
+    (p: IDvfPoint) =>
+      !Number.isNaN(p.lat) &&
+      !Number.isNaN(p.lon) &&
+      p.lat !== 0 &&
+      p.lon !== 0
+  );
+
+    console.log('DVF POINTS', dvfPoints.value.length);
+  } catch (e) {
+    console.error('fetchDVF error', e);
+    dvfPoints.value = [];
+  }
+}
 
   async function fetchDPE() {
     try {
@@ -360,6 +432,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
       dpePoints.value = [];
     }
 
+    if (activeMainMode.value !== 'dvf') {
+  dvfPoints.value = [];
+}
+
     const ownerName = selectedOwnerName.value.trim();
 
     // Skip si les paramètres géographiques n'ont pas changé
@@ -418,6 +494,10 @@ export const useDashboardStore = defineStore('dashboard', () => {
       if (activeMainMode.value === 'dpe') {
         await fetchDPE();
       }
+
+      if (activeMainMode.value === 'dvf') {
+  await fetchDVF();
+}
     } catch (error) {
       console.error('[querySearch] error:', error);
       if (currentVersion !== searchVersion) return;
@@ -543,6 +623,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     dvfFilterRange.value = '1y';
     addresses.value = [];
     dpePoints.value = [];
+    dvfPoints.value = [];
     isDataLoaded.value = false;
     lastSearchParams.value = null;
     noResultsFound.value = false;
@@ -605,6 +686,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     selectedRep,
     selectedNumeroFull,
     dpePoints,
+    dvfPoints,
     markers,
     filterMode,
     selectedOwnerName,
@@ -619,6 +701,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
 
     // Actions
     fetchDPE,
+    fetchDVF,
     querySearchAddress,
     debouncedSearch,
     querySearchEstimation,

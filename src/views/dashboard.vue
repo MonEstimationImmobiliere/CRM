@@ -134,6 +134,9 @@
               class="modePill"
               :class="{ active: dashboardStore.activeMainMode === 'dvf' }"
               @click="dashboardStore.setMainMode('dvf')"
+
+
+
             >
               <span class="modeDot dvf"></span>
               DVF
@@ -144,6 +147,7 @@
               v-model="dashboardStore.dvfFilterRange"
               size="small"
               class="modeSelect"
+              @change="dashboardStore.fetchDVF()"
             >
               <el-option label="< 1 an" value="1y" />
               <el-option label="< 2 ans" value="2y" />
@@ -157,7 +161,11 @@
 
     <!-- TABLE DES ADRESSES -->
     <div
-      v-if="viewType === 'table' && dashboardStore.activeMainMode !== 'dpe'"
+      v-if="
+  viewType === 'table' &&
+  dashboardStore.activeMainMode !== 'dpe' &&
+  dashboardStore.activeMainMode !== 'dvf'
+"
       v-loading="isLoading"
       element-loading-text="Chargement des adresses..."
       element-loading-background="rgba(255, 255, 255, 0.8)"
@@ -183,7 +191,11 @@
 
     <!-- MODE CARD -->
     <div
-      v-else-if="viewType === 'card' && dashboardStore.activeMainMode !== 'dpe'"
+      v-else-if="
+  viewType === 'card' &&
+  dashboardStore.activeMainMode !== 'dpe' &&
+  dashboardStore.activeMainMode !== 'dvf'
+"
     >
       <PropertyTableCard
         v-if="addresses.length > 0"
@@ -200,13 +212,19 @@
       </div>
     </div>
 
-    <MapView
-      v-show="viewType === 'map'"
-      :addresses="dashboardStore.activeMainMode === 'dpe' ? [] : addresses"
-      :city-center="dashboardStore.cityCenter"
-      :dpe-points="dashboardStore.dpePoints"
-      @edit-property="openPropertyDialog"
-    />
+<MapView
+  v-show="viewType === 'map'"
+  :addresses="
+    dashboardStore.activeMainMode === 'dpe' ||
+    dashboardStore.activeMainMode === 'dvf'
+      ? []
+      : addresses
+  "
+  :city-center="dashboardStore.cityCenter"
+  :dpe-points="dashboardStore.dpePoints"
+  :dvf-points="dashboardStore.dvfPoints"
+  @edit-property="openPropertyDialog"
+/>
 
     <PropertyForm />
     <CreateCustomPropertyDialog />
@@ -235,6 +253,7 @@ import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog/index.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
+
 
 /* ------------------------------------
       STORES
@@ -272,7 +291,11 @@ watch(
     if (newVal === oldVal) return;
 
     dashboardStore.debouncedSearch();
-    // Si on vide la rue et qu'on est en mode card, revenir en mode table
+
+    if (dashboardStore.activeMainMode === 'dvf') {
+      dashboardStore.fetchDVF();
+    }
+
     if (!newVal && dashboardStore.viewType === 'card') {
       dashboardStore.viewType = 'table';
     }

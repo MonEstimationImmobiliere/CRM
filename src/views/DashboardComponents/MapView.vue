@@ -46,10 +46,29 @@ interface DpePoint {
   date: string;
 }
 
+interface DvfPoint {
+  lat: number;
+  lon: number;
+
+  id_mutation?: string;
+  numero_disposition?: number | null;
+
+  adresse: string;
+  date_mutation: string;
+  valeur_fonciere: number | null;
+
+  main_type?: string;
+  line_count?: number;
+  built_items?: any[];
+land_items?: any[];
+total_surface_terrain?: number | null;
+}
+
 const props = defineProps<{
   addresses: Address[];
   cityCenter?: CityCenter | null;
   dpePoints?: DpePoint[];
+  dvfPoints?: DvfPoint[];
 }>();
 
 const emit = defineEmits<{
@@ -225,9 +244,57 @@ onMounted(async () => {
       },
     });
 
+    map!.addSource('dvf_points', {
+  type: 'geojson',
+  data: emptyGeoJSON(),
+});
+
+map!.addLayer({
+  id: 'dvf-dots',
+  type: 'circle',
+  source: 'dvf_points',
+  paint: {
+    'circle-radius': 9,
+    'circle-color': [
+      'match',
+      ['get', 'main_type'],
+      'maison',
+      '#ef4444',
+      'appartement',
+      '#8b5cf6',
+      'terrain',
+      '#22c55e',
+      'dependance',
+      '#f97316',
+      'local_commercial',
+      '#3b82f6',
+      '#6b7280',
+    ],
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff',
+  },
+});
+
+map!.addLayer({
+  id: 'dvf-labels',
+  type: 'symbol',
+  source: 'dvf_points',
+  layout: {
+    'text-field': ['to-string', ['get', 'line_count']],
+    'text-size': 11,
+    'text-font': ['Open Sans Bold'],
+    'text-allow-overlap': true,
+  },
+  paint: {
+    'text-color': '#ffffff',
+  },
+});
+
     setupWatchers();
     popups.setup(map!);
     setupDpeInteractions();
+    setupDvfInteractions();
+    updateDvfPoints();
     updateAddressPoints();
     updateAddressPointsWithColors();
     updateDpePoints();
@@ -248,6 +315,39 @@ onUnmounted(() => {
   }
 });
 
+function updateDvfPoints() {
+  if (!mapLoaded || !map) return;
+
+  const features = (props.dvfPoints || [])
+    .filter(p => p.lat && p.lon)
+    .map(p => ({
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: [parseFloat(String(p.lon)), parseFloat(String(p.lat))],
+      },
+properties: {
+  ...p,
+
+  adresse: p.adresse || '',
+  date_mutation: p.date_mutation || '',
+
+  valeur_fonciere: p.valeur_fonciere ?? null,
+
+  main_type: p.main_type || 'autre',
+  line_count: p.line_count || 1,
+
+  id_mutation: p.id_mutation || '',
+
+built_items: JSON.stringify(p.built_items || []),
+land_items: JSON.stringify(p.land_items || []),
+total_surface_terrain: p.total_surface_terrain ?? null,
+},
+    }));
+
+  setSourceData('dvf_points', features);
+}
+
 /* -------------------------------------
    UPDATE DES POINTS ADRESSES
 ------------------------------------- */
@@ -267,6 +367,8 @@ function updateAddressPoints() {
 
   setSourceData('address_points', features);
 }
+
+
 
 /* -------------------------------------
    UPDATE DES POINTS DPE
@@ -300,6 +402,11 @@ function updateDpePoints() {
 function updateAddressPointsWithColors() {
   if (!mapLoaded || !map) return;
 
+  if (!props.addresses.length) {
+    map.setPaintProperty('address-dots', 'circle-color', COLORS.none);
+    return;
+  }
+
   const mode = currentMode.value;
 
   const colorExpression: any[] = [
@@ -332,11 +439,12 @@ function updateLayerVisibility() {
   if (!mapLoaded || !map) return;
 
   const isDpeMode = dashboard.activeMainMode === 'dpe';
+  const isDvfMode = dashboard.activeMainMode === 'dvf';
 
   map.setLayoutProperty(
     'address-dots',
     'visibility',
-    isDpeMode ? 'none' : 'visible'
+    isDpeMode || isDvfMode ? 'none' : 'visible'
   );
 
   map.setLayoutProperty(
@@ -344,7 +452,179 @@ function updateLayerVisibility() {
     'visibility',
     isDpeMode ? 'visible' : 'none'
   );
+
+  map.setLayoutProperty(
+    'dvf-dots',
+    'visibility',
+    isDvfMode ? 'visible' : 'none'
+  );
+
+  map.setLayoutProperty(
+  'dvf-labels',
+  'visibility',
+  isDvfMode ? 'visible' : 'none'
+);
 }
+
+function setupDvfInteractions() {
+  if (!map) return;
+
+  map.on('click', 'dvf-dots', e => {
+    const feature = e.features?.[0];
+    if (!feature) return;
+
+    const props: any = feature.properties;
+
+    const builtItems = props.built_items
+      ? JSON.parse(props.built_items)
+      : [];
+
+    const landItems = props.land_items
+      ? JSON.parse(props.land_items)
+      : [];
+
+    const builtHtml = builtItems
+      .map((item: any) => {
+const label = item.type_local || 'Bâti';
+
+const surface = item.surface_reelle_bati
+  ? `${item.surface_reelle_bati} m²`
+  : '';
+
+const pieces = item.nombre_pieces_principales
+  ? `${item.nombre_pieces_principales} pièce(s)`
+  : '';
+
+const showCount =
+  item.type_local?.toLowerCase().includes('dépendance') &&
+  !item.surface_reelle_bati &&
+  item.count &&
+  item.count > 1;
+
+const count = showCount ? ` x${item.count}` : '';
+
+   return `
+  <li style="margin-bottom:4px;">
+    ${label}${count}
+    ${surface ? ` — ${surface}` : ''}
+    ${pieces ? ` — ${pieces}` : ''}
+  </li>
+`;
+      })
+      .join('');
+
+    const landHtml = landItems
+      .map((item: any) => {
+        const label = item.nature_culture || 'Terrain';
+
+        const surface = item.surface_terrain
+          ? `${item.surface_terrain} m²`
+          : '';
+
+        const parcelle = item.id_parcelle
+          ? ` — parcelle ${item.id_parcelle}`
+          : '';
+
+return `
+  <li style="margin-bottom:4px;">
+    ${label}
+    ${surface ? ` — ${surface}` : ''}
+  </li>
+`;
+      })
+      .join('');
+
+    const totalTerrain = props.total_surface_terrain
+      ? Number(props.total_surface_terrain).toLocaleString('fr-FR') + ' m²'
+      : null;
+
+    new maplibregl.Popup()
+      .setLngLat(
+        feature.geometry.coordinates as [number, number]
+      )
+      .setHTML(`
+        <div style="
+  width:260px;
+  max-width:260px;
+  overflow-wrap:anywhere;
+  word-break:break-word;
+">
+
+          <div style="font-size:11px;color:#9ca3af;">
+            Mutation : ${props.id_mutation || '-'}
+          </div>
+
+          <div style="font-weight:700;font-size:15px;margin-top:4px;">
+            Vente DVF
+          </div>
+
+          <div style="margin-top:6px;font-size:15px;font-weight:600;">
+            ${
+              props.valeur_fonciere
+                ? new Intl.NumberFormat('fr-FR').format(props.valeur_fonciere) + ' €'
+                : 'Prix inconnu'
+            }
+          </div>
+
+          <div style="margin-top:8px;font-size:13px;">
+            ${props.adresse || ''}
+          </div>
+
+          <div style="font-size:12px;color:#6b7280;">
+            ${props.date_mutation || ''}
+          </div>
+
+          ${
+            builtHtml
+              ? `
+                <div style="font-size:12px;color:#374151;margin-top:10px;">
+                  <strong>Bâti :</strong>
+
+                  <ul style="
+  padding-left:16px;
+  margin:4px 0 0;
+  max-width:230px;
+  overflow-wrap:anywhere;
+">
+                    ${builtHtml}
+                  </ul>
+                </div>
+              `
+              : ''
+          }
+
+     ${
+  totalTerrain
+    ? `
+      <div style="font-size:12px;color:#374151;margin-top:10px;">
+        <strong>Terrain :</strong>
+
+        <div style="margin-top:4px;color:#6b7280;">
+          ${totalTerrain}
+        </div>
+      </div>
+    `
+    : ''
+}
+
+        </div>
+      `)
+      .addTo(map);
+  });
+
+  map.on('mouseenter', 'dvf-dots', () => {
+    if (map) {
+      map.getCanvas().style.cursor = 'pointer';
+    }
+  });
+
+  map.on('mouseleave', 'dvf-dots', () => {
+    if (map) {
+      map.getCanvas().style.cursor = '';
+    }
+  });
+}
+
 function setupDpeInteractions() {
   if (!map) return;
 
@@ -448,6 +728,29 @@ async function recenterMap() {
   await nextTick();
   if (!mapLoaded || !map) return;
 
+  if (dashboard.activeMainMode === 'dvf') {
+  if (dashboard.selectedCity && props.cityCenter) {
+    flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
+    return;
+  }
+
+  const points = props.dvfPoints || [];
+
+  if (points.length === 1) {
+    flyTo(points[0].lon, points[0].lat, 17);
+    return;
+  }
+
+  if (points.length > 1) {
+    const lats = points.map(p => Number(p.lat));
+    const lons = points.map(p => Number(p.lon));
+    flyTo(avg(lons), avg(lats), 10);
+    return;
+  }
+
+  return;
+}
+
   // MODE DPE : toujours prioriser la ville choisie
   if (dashboard.activeMainMode === 'dpe') {
     if (dashboard.selectedCity && props.cityCenter) {
@@ -540,6 +843,18 @@ function setupWatchers() {
     { deep: true, immediate: true }
   );
 
+watch(
+  () => props.dvfPoints,
+  () => {
+    updateDvfPoints();
+    updateLayerVisibility();
+
+    if (dashboard.activeMainMode === 'dvf') {
+      recenterMap();
+    }
+  },
+  { deep: true, immediate: true }
+);
   watch(
     () => props.dpePoints,
     () => {
@@ -560,14 +875,17 @@ function setupWatchers() {
     { immediate: true }
   );
 
-  watch(
-    () => dashboard.activeMainMode,
-    () => {
-      updateAddressPointsWithColors();
-      updateLayerVisibility();
-    },
-    { immediate: true }
-  );
+watch(
+  () => dashboard.activeMainMode,
+  () => {
+    updateAddressPointsWithColors();
+    updateDpePoints();
+    updateDvfPoints();
+    updateLayerVisibility();
+    recenterMap();
+  },
+  { immediate: true }
+);
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],
