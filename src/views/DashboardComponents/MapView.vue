@@ -244,14 +244,46 @@ onMounted(async () => {
       },
     });
 
-    map!.addSource('dvf_points', {
+ map!.addSource('dvf_points', {
   type: 'geojson',
   data: emptyGeoJSON(),
+  cluster: true,
+  clusterMaxZoom: 18,
+  clusterRadius: 35,
+});
+
+map!.addLayer({
+  id: 'dvf-clusters',
+  type: 'circle',
+  source: 'dvf_points',
+  filter: ['has', 'point_count'],
+  paint: {
+    'circle-radius': 15,
+    'circle-color': '#111827',
+    'circle-stroke-width': 2,
+    'circle-stroke-color': '#ffffff',
+  },
+});
+
+map!.addLayer({
+  id: 'dvf-cluster-labels',
+  type: 'symbol',
+  source: 'dvf_points',
+  filter: ['has', 'point_count'],
+  layout: {
+    'text-field': ['to-string', ['get', 'point_count']],
+    'text-size': 12,
+    'text-allow-overlap': true,
+  },
+  paint: {
+    'text-color': '#ffffff',
+  },
 });
 
 map!.addLayer({
   id: 'dvf-dots',
   type: 'circle',
+  filter: ['!', ['has', 'point_count']],
   source: 'dvf_points',
   paint: {
     'circle-radius': 9,
@@ -278,6 +310,7 @@ map!.addLayer({
 map!.addLayer({
   id: 'dvf-labels',
   type: 'symbol',
+  filter: ['!', ['has', 'point_count']],
   source: 'dvf_points',
   layout: {
     'text-field': ['to-string', ['get', 'line_count']],
@@ -464,164 +497,202 @@ function updateLayerVisibility() {
   'visibility',
   isDvfMode ? 'visible' : 'none'
 );
+
+map.setLayoutProperty(
+  'dvf-clusters',
+  'visibility',
+  isDvfMode ? 'visible' : 'none'
+);
+
+map.setLayoutProperty(
+  'dvf-cluster-labels',
+  'visibility',
+  isDvfMode ? 'visible' : 'none'
+);
+
+}
+
+
+
+function buildDvfSaleHtml(props: any, compact = false): string {
+  const builtItems = props.built_items ? JSON.parse(props.built_items) : [];
+
+  const builtHtml = builtItems
+    .map((item: any) => {
+      const label = item.type_local || 'Bâti';
+      const surface = item.surface_reelle_bati
+        ? `${item.surface_reelle_bati} m²`
+        : '';
+      const pieces = item.nombre_pieces_principales
+        ? `${item.nombre_pieces_principales} pièce(s)`
+        : '';
+
+        const lots =
+  item.lots && item.lots.length
+    ? ` — lot ${item.lots.join(', ')}`
+    : '';
+
+      const showCount =
+        item.type_local?.toLowerCase().includes('dépendance') &&
+        !item.surface_reelle_bati &&
+        item.count &&
+        item.count > 1;
+
+      const count = showCount ? ` x${item.count}` : '';
+
+      return `
+        <li style="margin-bottom:3px;">
+          ${label}${count}
+          ${surface ? ` — ${surface}` : ''}
+          ${pieces ? ` — ${pieces}` : ''}
+          ${lots}
+        </li>
+      `;
+    })
+    .join('');
+
+  const totalTerrain = props.total_surface_terrain
+    ? Number(props.total_surface_terrain).toLocaleString('fr-FR') + ' m²'
+    : null;
+
+  return `
+    <div style="
+      ${compact ? 'padding:8px 0;border-bottom:1px solid #e5e7eb;' : ''}
+    ">
+      <div style="font-size:11px;color:#9ca3af;">
+        Mutation : ${props.id_mutation || '-'}
+      </div>
+
+      <div style="font-weight:700;font-size:${compact ? '13px' : '15px'};margin-top:3px;">
+        ${
+          props.valeur_fonciere
+            ? new Intl.NumberFormat('fr-FR').format(props.valeur_fonciere) + ' €'
+            : 'Prix inconnu'
+        }
+      </div>
+
+      <div style="margin-top:5px;font-size:12px;">
+        ${props.adresse || ''}
+      </div>
+
+      <div style="font-size:11px;color:#6b7280;">
+        ${props.date_mutation || ''}
+      </div>
+
+      ${
+        builtHtml
+          ? `
+            <div style="font-size:11px;color:#374151;margin-top:6px;">
+              <strong>Bâti :</strong>
+              <ul style="padding-left:16px;margin:3px 0 0;overflow-wrap:anywhere;">
+                ${builtHtml}
+              </ul>
+            </div>
+          `
+          : ''
+      }
+
+      ${
+        totalTerrain
+          ? `
+            <div style="font-size:11px;color:#374151;margin-top:6px;">
+              <strong>Terrain :</strong>
+              <span style="color:#6b7280;">${totalTerrain}</span>
+            </div>
+          `
+          : ''
+      }
+    </div>
+  `;
 }
 
 function setupDvfInteractions() {
   if (!map) return;
 
+  // Clic sur un cluster DVF : liste des ventes
+  map.on('click', 'dvf-clusters', async e => {
+    const features = map!.queryRenderedFeatures(e.point, {
+      layers: ['dvf-clusters'],
+    });
+
+    const cluster = features[0];
+    if (!cluster) return;
+
+    const clusterId = cluster.properties?.cluster_id;
+    if (clusterId === undefined || clusterId === null) return;
+
+    const source = map!.getSource('dvf_points') as any;
+
+    const leaves = (await source.getClusterLeaves(
+      clusterId,
+      50,
+      0
+    )) as any[];
+
+    const html = leaves
+      .map((leaf: any) => buildDvfSaleHtml(leaf.properties, true))
+      .join('');
+
+    new maplibregl.Popup()
+      .setLngLat((cluster.geometry as any).coordinates)
+      .setHTML(`
+        <div style="
+          width:320px;
+          max-height:360px;
+          overflow:auto;
+          overflow-wrap:anywhere;
+          word-break:break-word;
+        ">
+          <div style="font-weight:700;font-size:14px;margin-bottom:6px;">
+            ${leaves.length} ventes DVF
+          </div>
+
+          ${html}
+        </div>
+      `)
+      .addTo(map!);
+  });
+
+  // Clic sur une vente DVF simple
   map.on('click', 'dvf-dots', e => {
     const feature = e.features?.[0];
     if (!feature) return;
 
     const props: any = feature.properties;
 
-    const builtItems = props.built_items
-      ? JSON.parse(props.built_items)
-      : [];
-
-    const landItems = props.land_items
-      ? JSON.parse(props.land_items)
-      : [];
-
-    const builtHtml = builtItems
-      .map((item: any) => {
-const label = item.type_local || 'Bâti';
-
-const surface = item.surface_reelle_bati
-  ? `${item.surface_reelle_bati} m²`
-  : '';
-
-const pieces = item.nombre_pieces_principales
-  ? `${item.nombre_pieces_principales} pièce(s)`
-  : '';
-
-const showCount =
-  item.type_local?.toLowerCase().includes('dépendance') &&
-  !item.surface_reelle_bati &&
-  item.count &&
-  item.count > 1;
-
-const count = showCount ? ` x${item.count}` : '';
-
-   return `
-  <li style="margin-bottom:4px;">
-    ${label}${count}
-    ${surface ? ` — ${surface}` : ''}
-    ${pieces ? ` — ${pieces}` : ''}
-  </li>
-`;
-      })
-      .join('');
-
-    const landHtml = landItems
-      .map((item: any) => {
-        const label = item.nature_culture || 'Terrain';
-
-        const surface = item.surface_terrain
-          ? `${item.surface_terrain} m²`
-          : '';
-
-        const parcelle = item.id_parcelle
-          ? ` — parcelle ${item.id_parcelle}`
-          : '';
-
-return `
-  <li style="margin-bottom:4px;">
-    ${label}
-    ${surface ? ` — ${surface}` : ''}
-  </li>
-`;
-      })
-      .join('');
-
-    const totalTerrain = props.total_surface_terrain
-      ? Number(props.total_surface_terrain).toLocaleString('fr-FR') + ' m²'
-      : null;
-
     new maplibregl.Popup()
-      .setLngLat(
-        feature.geometry.coordinates as [number, number]
-      )
+      .setLngLat((feature.geometry as any).coordinates)
       .setHTML(`
         <div style="
-  width:260px;
-  max-width:260px;
-  overflow-wrap:anywhere;
-  word-break:break-word;
-">
-
-          <div style="font-size:11px;color:#9ca3af;">
-            Mutation : ${props.id_mutation || '-'}
-          </div>
-
-          <div style="font-weight:700;font-size:15px;margin-top:4px;">
+          width:260px;
+          max-width:260px;
+          overflow-wrap:anywhere;
+          word-break:break-word;
+        ">
+          <div style="font-weight:700;font-size:15px;margin-bottom:4px;">
             Vente DVF
           </div>
 
-          <div style="margin-top:6px;font-size:15px;font-weight:600;">
-            ${
-              props.valeur_fonciere
-                ? new Intl.NumberFormat('fr-FR').format(props.valeur_fonciere) + ' €'
-                : 'Prix inconnu'
-            }
-          </div>
-
-          <div style="margin-top:8px;font-size:13px;">
-            ${props.adresse || ''}
-          </div>
-
-          <div style="font-size:12px;color:#6b7280;">
-            ${props.date_mutation || ''}
-          </div>
-
-          ${
-            builtHtml
-              ? `
-                <div style="font-size:12px;color:#374151;margin-top:10px;">
-                  <strong>Bâti :</strong>
-
-                  <ul style="
-  padding-left:16px;
-  margin:4px 0 0;
-  max-width:230px;
-  overflow-wrap:anywhere;
-">
-                    ${builtHtml}
-                  </ul>
-                </div>
-              `
-              : ''
-          }
-
-     ${
-  totalTerrain
-    ? `
-      <div style="font-size:12px;color:#374151;margin-top:10px;">
-        <strong>Terrain :</strong>
-
-        <div style="margin-top:4px;color:#6b7280;">
-          ${totalTerrain}
-        </div>
-      </div>
-    `
-    : ''
-}
-
+          ${buildDvfSaleHtml(props)}
         </div>
       `)
-      .addTo(map);
+      .addTo(map!);
   });
 
   map.on('mouseenter', 'dvf-dots', () => {
-    if (map) {
-      map.getCanvas().style.cursor = 'pointer';
-    }
+    if (map) map.getCanvas().style.cursor = 'pointer';
   });
 
   map.on('mouseleave', 'dvf-dots', () => {
-    if (map) {
-      map.getCanvas().style.cursor = '';
-    }
+    if (map) map.getCanvas().style.cursor = '';
+  });
+
+  map.on('mouseenter', 'dvf-clusters', () => {
+    if (map) map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'dvf-clusters', () => {
+    if (map) map.getCanvas().style.cursor = '';
   });
 }
 
