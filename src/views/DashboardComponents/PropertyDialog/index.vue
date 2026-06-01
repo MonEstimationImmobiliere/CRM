@@ -350,23 +350,21 @@ const openReminderDialog = async () => {
 };
 
 const hasNewPropertyMeaningfulData = (property: any): boolean => {
-  const propertyTypeVal = (property.property_type || '')
-    .trim()
-    .toLowerCase();
+  const propertyTypeVal = (property.property_type || '').trim().toLowerCase();
 
   return Boolean(
     (propertyTypeVal &&
       propertyTypeVal !== 'inconnu' &&
       propertyTypeVal !== 'address' &&
       propertyTypeVal !== 'immeuble') ||
-      property.owner ||
-      property.email ||
-      property.phone ||
-      Number(property.price ?? 0) > 0 ||
-      Number(property.surface ?? 0) > 0 ||
-      Number(property.area ?? 0) > 0 ||
-      property.comment ||
-      property.date_rappel
+    property.owner ||
+    property.email ||
+    property.phone ||
+    Number(property.price ?? 0) > 0 ||
+    Number(property.surface ?? 0) > 0 ||
+    Number(property.area ?? 0) > 0 ||
+    property.comment ||
+    property.date_rappel
   );
 };
 
@@ -456,11 +454,7 @@ const handleSaveProperty = async (): Promise<any> => {
   }
 };
 
-const buildUnitPayload = (
-  payload: any,
-  rootProperty: any,
-  unitId?: number
-) => {
+const buildUnitPayload = (payload: any, rootProperty: any, unitId?: number) => {
   return {
     id: unitId ?? undefined,
 
