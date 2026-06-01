@@ -6,7 +6,40 @@ label_cell
         <thead>
           <tr>
             <th style="width: 260px">Adresse du bien</th>
-            <th style="width: 160px">Propriétaire</th>
+            <th style="width: 160px">
+              <div class="th-filter">
+                <span>Propriétaire</span>
+                <el-popover placement="bottom" :width="200" trigger="click">
+                  <template #reference>
+                    <el-icon
+                      class="filter-icon"
+                      :class="{ active: selectedOwners.length > 0 }"
+                    >
+                      <Filter />
+                    </el-icon>
+                  </template>
+                  <div class="agent-filter-panel">
+                    <el-checkbox-group v-model="selectedOwners">
+                      <el-checkbox
+                        v-for="owner in ownerFilters"
+                        :key="owner"
+                        :label="owner"
+                        :value="owner"
+                      />
+                    </el-checkbox-group>
+                    <el-button
+                      v-if="selectedOwners.length > 0"
+                      size="small"
+                      link
+                      @click="clearOwnerFilter"
+                      style="margin-top: 8px"
+                    >
+                      Réinitialiser
+                    </el-button>
+                  </div>
+                </el-popover>
+              </div>
+            </th>
             <th style="width: 130px">Échéance</th>
             <th style="width: 120px">Type</th>
             <th>Libellé</th>
@@ -46,7 +79,7 @@ label_cell
             </th>
             <th style="width: 80px">Fait</th>
             <th style="width: 90px">Partage</th>
-            <th style="width: 190px"></th>
+            <th style="width: 190px">Actions</th>
           </tr>
         </thead>
 
@@ -138,34 +171,48 @@ label_cell
             <td class="actions-cell" @click.stop>
               <div class="actions-wrapper">
                 <el-button
-                  size="small"
+                  size="default"
                   type="primary"
                   circle
                   :disabled="!reminder.property_id"
                   @click="
                     $emit('action', { action: 'open-property', reminder })
                   "
+                  title="Ouvrir le bien"
                 >
                   <el-icon><Edit /></el-icon>
                 </el-button>
 
                 <el-button
-                  size="small"
+                  size="default"
                   plain
                   circle
                   @click="$emit('action', { action: 'edit', reminder })"
+                  title="Modifier le rappel"
                 >
                   <el-icon><EditPen /></el-icon>
                 </el-button>
 
                 <el-button
-                  size="small"
+                  size="default"
                   type="success"
                   circle
                   :disabled="!reminder.property_id"
                   @click="$emit('action', { action: 'new-reminder', reminder })"
+                  title="Créer un rappel lié à ce bien"
                 >
                   <el-icon><Plus /></el-icon>
+                </el-button>
+
+                <el-button
+                  size="default"
+                  type="warning"
+                  circle
+                  :disabled="!reminder.property_id"
+                  @click="$emit('action', { action: 'go-to-map', reminder })"
+                  title="Voir sur la carte"
+                >
+                  <el-icon><Location /></el-icon>
                 </el-button>
               </div>
             </td>
@@ -175,8 +222,8 @@ label_cell
 
       <div v-if="filteredReminders.length === 0" class="rt-empty">
         {{
-          selectedAgents.length > 0
-            ? 'Aucun rappel pour les agents sélectionnés'
+          selectedAgents.length > 0 || selectedOwners.length > 0
+            ? 'Aucun rappel pour les filtres sélectionnés'
             : 'Aucun rappel trouvé'
         }}
       </div>
@@ -186,12 +233,12 @@ label_cell
 
 <script setup lang="ts">
 import { computed, ref } from 'vue';
-import { Edit, Delete, DocumentCopy } from '@element-plus/icons-vue';
+import { Edit } from '@element-plus/icons-vue';
 import type { Reminder } from '@/stores/reminders';
 import type { IReminderProperty } from '@/types/reminder';
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import { getTypeLabel, isOverdue, isToday } from '@/utils/reminderHelpers';
-import { EditPen, Plus, Filter } from '@element-plus/icons-vue';
+import { EditPen, Plus, Filter, Location } from '@element-plus/icons-vue';
 
 interface ActionCommand {
   action: string;
@@ -204,6 +251,7 @@ const props = defineProps<{
 }>();
 
 const selectedAgents = ref<string[]>([]);
+const selectedOwners = ref<string[]>([]);
 
 const agentFilters = computed(() => {
   const names = new Set<string>();
@@ -214,16 +262,38 @@ const agentFilters = computed(() => {
   return [...names].sort();
 });
 
+const ownerFilters = computed(() => {
+  const owners = new Set<string>();
+  for (const r of props.reminders) {
+    const owner = r.property?.owner;
+    if (owner) owners.add(owner);
+  }
+  return [...owners].sort();
+});
+
 const filteredReminders = computed(() => {
-  if (selectedAgents.value.length === 0) return props.reminders;
-  return props.reminders.filter(r => {
-    const name = r.creator?.name ?? '';
-    return selectedAgents.value.includes(name);
-  });
+  let list = props.reminders;
+  if (selectedAgents.value.length > 0) {
+    list = list.filter(r => {
+      const name = r.creator?.name ?? '';
+      return selectedAgents.value.includes(name);
+    });
+  }
+  if (selectedOwners.value.length > 0) {
+    list = list.filter(r => {
+      const owner = r.property?.owner ?? '';
+      return selectedOwners.value.includes(owner);
+    });
+  }
+  return list;
 });
 
 const clearAgentFilter = () => {
   selectedAgents.value = [];
+};
+
+const clearOwnerFilter = () => {
+  selectedOwners.value = [];
 };
 
 defineEmits<{
@@ -247,7 +317,7 @@ const getBasePropertyAddress = (property: IReminderProperty): string => {
 };
 
 const isReminderCompleted = (r: Reminder): boolean => {
-  return r.completed === true || r.completed === 1 || r.completed === '1';
+  return r.completed === true;
 };
 
 const getPropertyUnitLabel = (property: IReminderProperty): string => {

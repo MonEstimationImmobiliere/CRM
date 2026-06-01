@@ -284,6 +284,8 @@ const goToMap = (property: any) => {
   const numero = property.numero ? String(property.numero) : '';
   const rep = property.rep || '';
 
+  dashboardStore.lastSearchParams = null;
+
   dashboardStore.setSearchParams(
     city ? { value: city, codeInsee, code_insee: codeInsee } : null,
     property.nom_voie ? { value: property.nom_voie, idFantoir } : null,

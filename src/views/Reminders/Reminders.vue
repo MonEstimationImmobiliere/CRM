@@ -102,9 +102,11 @@
 
 <script setup lang="ts">
 import { ref, computed, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { useRemindersStore, type Reminder } from '@/stores/reminders';
 import { useUserStore } from '@/stores/user';
 import { usePropertyStore } from '@/stores/propertyHome';
+import { useDashboardStore } from '@/stores/dashboard';
 import { Plus, Document } from '@element-plus/icons-vue';
 import { DataBoard, Grid } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
@@ -121,7 +123,9 @@ import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
 const remindersStore = useRemindersStore();
 const propertyStore = usePropertyStore();
+const dashboardStore = useDashboardStore();
 const userStore = useUserStore();
+const router = useRouter();
 
 // Reactive state
 const activeFilter = ref('all');
@@ -137,7 +141,7 @@ const saving = ref(false);
 
 const openedPropertyId = ref<number | null>(null);
 
-  const openNewReminderDialog = () => {
+const openNewReminderDialog = () => {
   editingReminder.value = null;
   showCreateDialog.value = true;
 };
@@ -158,9 +162,7 @@ const filteredReminders = computed(() => {
   let filtered = [...remindersStore.reminders];
 
   filtered = filtered.filter(r =>
-    completedFilter.value
-      ? isReminderCompleted(r)
-      : !isReminderCompleted(r)
+    completedFilter.value ? isReminderCompleted(r) : !isReminderCompleted(r)
   );
 
   if (typeFilter.value) {
@@ -267,7 +269,7 @@ const createNewReminderFromProperty = (reminder: Reminder) => {
 
     description: '',
 
-date: new Date().toISOString().split('T')[0],
+    date: new Date().toISOString().split('T')[0],
 
     status: 'todo',
 
@@ -289,6 +291,7 @@ const handleAction = ({
   else if (action === 'delete') deleteReminder(reminder);
   else if (action === 'new-reminder') createNewReminderFromProperty(reminder);
   else if (action === 'open-property') openProperty(reminder);
+  else if (action === 'go-to-map') goToMap(reminder);
 };
 
 const editReminder = (reminder: Reminder) => {
@@ -408,8 +411,7 @@ const currentRemindersView = computed({
 const openProperty = async (reminder: Reminder) => {
   try {
     const propertyId =
-      Number(reminder.property?.id ?? 0) ||
-      Number(reminder.property_id ?? 0);
+      Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
 
     if (propertyId <= 0) {
       ElMessage.error('Aucune propriété liée à ce rappel');
@@ -432,8 +434,7 @@ const openProperty = async (reminder: Reminder) => {
     }
 
     const unitId =
-      Number(fullProperty.unit?.id ?? 0) ||
-      Number(fullProperty.unit_id ?? 0);
+      Number(fullProperty.unit?.id ?? 0) || Number(fullProperty.unit_id ?? 0);
 
     const normalizedProperty = {
       ...fullProperty,
@@ -442,25 +443,74 @@ const openProperty = async (reminder: Reminder) => {
 
       unit_id: unitId > 0 ? unitId : null,
 
-      row_type:
-        unitId > 0
-          ? 'unit'
-          : 'address',
+      row_type: unitId > 0 ? 'unit' : 'address',
     };
 
     console.log('OPEN PROPERTY FROM REMINDER', normalizedProperty);
 
-showCreateDialog.value = false;
-editingReminder.value = null;
+    showCreateDialog.value = false;
+    editingReminder.value = null;
 
-await propertyStore.selectProperty(normalizedProperty);
+    await propertyStore.selectProperty(normalizedProperty);
 
-propertyStore.setDialogVisible(true);
-
+    propertyStore.setDialogVisible(true);
   } catch (error) {
     console.error('OPEN PROPERTY ERROR', error);
 
     ElMessage.error("Impossible d'ouvrir la fiche de la propriété");
+  }
+};
+
+const goToMap = async (reminder: Reminder) => {
+  const propertyId =
+    Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
+
+  if (propertyId <= 0) {
+    ElMessage.error('Aucune propriété liée à ce rappel');
+    return;
+  }
+
+  try {
+    const response: any = await PropertyService.getProperty(propertyId);
+    const fullProperty =
+      response?.property ??
+      response?.data?.property ??
+      response?.data ??
+      response;
+
+    if (!fullProperty) {
+      ElMessage.error('Propriété introuvable');
+      return;
+    }
+
+    const city = fullProperty.city || fullProperty.nom_commune || '';
+    const codeInsee =
+      fullProperty.code_insee || fullProperty.code_commune || '';
+    const idFantoir = fullProperty.id_fantoir || '';
+    const numero = fullProperty.numero ? String(fullProperty.numero) : '';
+    const rep = fullProperty.rep || '';
+
+    dashboardStore.lastSearchParams = null;
+
+    dashboardStore.setSearchParams(
+      city ? { value: city, codeInsee, code_insee: codeInsee } : null,
+      fullProperty.nom_voie
+        ? { value: fullProperty.nom_voie, idFantoir }
+        : null,
+      codeInsee,
+      idFantoir
+    );
+
+    dashboardStore.selectedNumero = numero;
+    dashboardStore.selectedRep = rep;
+    dashboardStore.viewType = 'map';
+
+    await dashboardStore.querySearchAddress();
+
+    router.push('/');
+  } catch (error) {
+    console.error('GO TO MAP ERROR', error);
+    ElMessage.error('Impossible de localiser la propriété sur la carte');
   }
 };
 </script>

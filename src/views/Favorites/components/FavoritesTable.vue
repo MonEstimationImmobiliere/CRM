@@ -63,6 +63,9 @@
         prop="owner"
         sortable
         min-width="150"
+        :filters="ownerFilters"
+        :filter-method="filterByOwner"
+        filter-placement="bottom"
       >
         <template #default="{ row }">
           <div class="owner-info">
@@ -102,7 +105,8 @@
           <div class="action-buttons">
             <el-button
               type="primary"
-              size="small"
+              size="default"
+              circle
               @click.stop="$emit('edit-property', row)"
               title="Modifier la propriété"
             >
@@ -110,7 +114,8 @@
             </el-button>
             <el-button
               type="success"
-              size="small"
+              size="default"
+              circle
               @click.stop="$emit('create-reminder', row)"
               title="Créer un rappel"
             >
@@ -118,7 +123,8 @@
             </el-button>
             <el-button
               type="warning"
-              size="small"
+              size="default"
+              circle
               @click.stop="$emit('go-to-map', row)"
               title="Voir sur la carte"
             >
@@ -132,6 +138,7 @@
 </template>
 
 <script setup lang="ts">
+import { computed } from 'vue';
 import { StarFilled, Edit, Plus, Location } from '@element-plus/icons-vue';
 import { formatPrice } from '@/helpers/intl';
 import {
@@ -143,7 +150,7 @@ interface Props {
   favorites: any[];
 }
 
-defineProps<Props>();
+const props = defineProps<Props>();
 
 const emit = defineEmits([
   'edit-property',
@@ -185,6 +192,18 @@ const getUnitLabel = (row: any): string => {
   }
 
   return parts.join(' / ');
+};
+
+const ownerFilters = computed(() => {
+  const owners = new Set<string>();
+  for (const fav of props.favorites) {
+    if (fav.owner) owners.add(fav.owner);
+  }
+  return [...owners].sort().map(o => ({ text: o, value: o }));
+});
+
+const filterByOwner = (value: string, row: any) => {
+  return row.owner === value;
 };
 </script>
 
@@ -281,7 +300,7 @@ const getUnitLabel = (row: any): string => {
 }
 
 :deep(.el-button) {
-  border-radius: var(--btn-radius);
+  /* border-radius: var(--btn-radius); */
   transition: all 0.3s ease;
 }
 
