@@ -60,8 +60,8 @@ interface DvfPoint {
   main_type?: string;
   line_count?: number;
   built_items?: any[];
-land_items?: any[];
-total_surface_terrain?: number | null;
+  land_items?: any[];
+  total_surface_terrain?: number | null;
 }
 
 const props = defineProps<{
@@ -244,84 +244,84 @@ onMounted(async () => {
       },
     });
 
- map!.addSource('dvf_points', {
-  type: 'geojson',
-  data: emptyGeoJSON(),
-  cluster: true,
-  clusterMaxZoom: 18,
-  clusterRadius: 35,
-});
+    map!.addSource('dvf_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+      cluster: true,
+      clusterMaxZoom: 18,
+      clusterRadius: 35,
+    });
 
-map!.addLayer({
-  id: 'dvf-clusters',
-  type: 'circle',
-  source: 'dvf_points',
-  filter: ['has', 'point_count'],
-  paint: {
-    'circle-radius': 15,
-    'circle-color': '#111827',
-    'circle-stroke-width': 2,
-    'circle-stroke-color': '#ffffff',
-  },
-});
+    map!.addLayer({
+      id: 'dvf-clusters',
+      type: 'circle',
+      source: 'dvf_points',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-radius': 15,
+        'circle-color': '#111827',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
 
-map!.addLayer({
-  id: 'dvf-cluster-labels',
-  type: 'symbol',
-  source: 'dvf_points',
-  filter: ['has', 'point_count'],
-  layout: {
-    'text-field': ['to-string', ['get', 'point_count']],
-    'text-size': 12,
-    'text-allow-overlap': true,
-  },
-  paint: {
-    'text-color': '#ffffff',
-  },
-});
+    map!.addLayer({
+      id: 'dvf-cluster-labels',
+      type: 'symbol',
+      source: 'dvf_points',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['to-string', ['get', 'point_count']],
+        'text-size': 12,
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    });
 
-map!.addLayer({
-  id: 'dvf-dots',
-  type: 'circle',
-  filter: ['!', ['has', 'point_count']],
-  source: 'dvf_points',
-  paint: {
-    'circle-radius': 9,
-    'circle-color': [
-      'match',
-      ['get', 'main_type'],
-      'maison',
-      '#ef4444',
-      'appartement',
-      '#8b5cf6',
-      'terrain',
-      '#22c55e',
-      'dependance',
-      '#f97316',
-      'local_commercial',
-      '#3b82f6',
-      '#6b7280',
-    ],
-    'circle-stroke-width': 2,
-    'circle-stroke-color': '#ffffff',
-  },
-});
+    map!.addLayer({
+      id: 'dvf-dots',
+      type: 'circle',
+      filter: ['!', ['has', 'point_count']],
+      source: 'dvf_points',
+      paint: {
+        'circle-radius': 9,
+        'circle-color': [
+          'match',
+          ['get', 'main_type'],
+          'maison',
+          '#ef4444',
+          'appartement',
+          '#8b5cf6',
+          'terrain',
+          '#22c55e',
+          'dependance',
+          '#f97316',
+          'local_commercial',
+          '#3b82f6',
+          '#6b7280',
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
 
-map!.addLayer({
-  id: 'dvf-labels',
-  type: 'symbol',
-  filter: ['!', ['has', 'point_count']],
-  source: 'dvf_points',
-  layout: {
-    'text-field': ['to-string', ['get', 'line_count']],
-    'text-size': 11,
-    'text-font': ['Open Sans Bold'],
-    'text-allow-overlap': true,
-  },
-  paint: {
-    'text-color': '#ffffff',
-  },
-});
+    map!.addLayer({
+      id: 'dvf-labels',
+      type: 'symbol',
+      filter: ['!', ['has', 'point_count']],
+      source: 'dvf_points',
+      layout: {
+        'text-field': ['to-string', ['get', 'line_count']],
+        'text-size': 11,
+        'text-font': ['Open Sans Bold'],
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    });
 
     setupWatchers();
     popups.setup(map!);
@@ -359,23 +359,23 @@ function updateDvfPoints() {
         type: 'Point',
         coordinates: [parseFloat(String(p.lon)), parseFloat(String(p.lat))],
       },
-properties: {
-  ...p,
+      properties: {
+        ...p,
 
-  adresse: p.adresse || '',
-  date_mutation: p.date_mutation || '',
+        adresse: p.adresse || '',
+        date_mutation: p.date_mutation || '',
 
-  valeur_fonciere: p.valeur_fonciere ?? null,
+        valeur_fonciere: p.valeur_fonciere ?? null,
 
-  main_type: p.main_type || 'autre',
-  line_count: p.line_count || 1,
+        main_type: p.main_type || 'autre',
+        line_count: p.line_count || 1,
 
-  id_mutation: p.id_mutation || '',
+        id_mutation: p.id_mutation || '',
 
-built_items: JSON.stringify(p.built_items || []),
-land_items: JSON.stringify(p.land_items || []),
-total_surface_terrain: p.total_surface_terrain ?? null,
-},
+        built_items: JSON.stringify(p.built_items || []),
+        land_items: JSON.stringify(p.land_items || []),
+        total_surface_terrain: p.total_surface_terrain ?? null,
+      },
     }));
 
   setSourceData('dvf_points', features);
@@ -400,8 +400,6 @@ function updateAddressPoints() {
 
   setSourceData('address_points', features);
 }
-
-
 
 /* -------------------------------------
    UPDATE DES POINTS DPE
@@ -493,115 +491,185 @@ function updateLayerVisibility() {
   );
 
   map.setLayoutProperty(
-  'dvf-labels',
-  'visibility',
-  isDvfMode ? 'visible' : 'none'
-);
+    'dvf-labels',
+    'visibility',
+    isDvfMode ? 'visible' : 'none'
+  );
 
-map.setLayoutProperty(
-  'dvf-clusters',
-  'visibility',
-  isDvfMode ? 'visible' : 'none'
-);
+  map.setLayoutProperty(
+    'dvf-clusters',
+    'visibility',
+    isDvfMode ? 'visible' : 'none'
+  );
 
-map.setLayoutProperty(
-  'dvf-cluster-labels',
-  'visibility',
-  isDvfMode ? 'visible' : 'none'
-);
-
+  map.setLayoutProperty(
+    'dvf-cluster-labels',
+    'visibility',
+    isDvfMode ? 'visible' : 'none'
+  );
 }
-
-
 
 function buildDvfSaleHtml(props: any, compact = false): string {
   const builtItems = props.built_items ? JSON.parse(props.built_items) : [];
 
-  const builtHtml = builtItems
+  const totalTerrain = props.total_surface_terrain
+    ? Number(props.total_surface_terrain).toLocaleString('fr-FR') + ' m²'
+    : '-';
+
+  const prixFormate = props.valeur_fonciere
+    ? new Intl.NumberFormat('fr-FR').format(props.valeur_fonciere) + ' €'
+    : 'Prix inconnu';
+
+  const dateMutation = props.date_mutation
+    ? new Date(props.date_mutation).toLocaleDateString('fr-FR', {
+        day: '2-digit',
+        month: 'long',
+        year: 'numeric',
+      })
+    : '-';
+
+  if (compact) {
+    return `
+      <div style="padding:8px 0;border-bottom:1px solid #e5e7eb;">
+        <div style="display:flex;justify-content:space-between;align-items:baseline;">
+          <span style="font-size:11px;color:#9ca3af;">MUTATION : ${props.id_mutation || '-'}</span>
+          <span style="font-weight:700;font-size:14px;color:#1e1b4b;">${prixFormate}</span>
+        </div>
+        <div style="font-weight:700;font-size:13px;color:#1e1b4b;margin-top:2px;">${(props.adresse || '').toUpperCase()}</div>
+        <div style="font-size:11px;color:#6b7280;margin-top:2px;">Vendu le ${dateMutation}</div>
+      </div>
+    `;
+  }
+
+  // Build grid cards for each built item
+  const builtCardsHtml = builtItems
     .map((item: any) => {
-      const label = item.type_local || 'Bâti';
-      const surface = item.surface_reelle_bati
+      const typeLocal = item.type_local || '-';
+      const surfaceBati = item.surface_reelle_bati
         ? `${item.surface_reelle_bati} m²`
-        : '';
+        : '-';
       const pieces = item.nombre_pieces_principales
-        ? `${item.nombre_pieces_principales} pièce(s)`
-        : '';
-
-        const lots =
-  item.lots && item.lots.length
-    ? ` — lot ${item.lots.join(', ')}`
-    : '';
-
-      const showCount =
-        item.type_local?.toLowerCase().includes('dépendance') &&
-        !item.surface_reelle_bati &&
-        item.count &&
-        item.count > 1;
-
-      const count = showCount ? ` x${item.count}` : '';
+        ? `${item.nombre_pieces_principales}`
+        : '-';
 
       return `
-        <li style="margin-bottom:3px;">
-          ${label}${count}
-          ${surface ? ` — ${surface}` : ''}
-          ${pieces ? ` — ${pieces}` : ''}
-          ${lots}
-        </li>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;${builtItems.length > 1 ? 'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #e5e7eb;' : ''}">
+          <!-- Type -->
+          <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+            </svg>
+            <div>
+              <div style="font-size:10px;color:#9ca3af;">Type</div>
+              <div style="font-size:13px;font-weight:600;color:#1e1b4b;">${typeLocal}</div>
+            </div>
+          </div>
+
+          <!-- Bâti -->
+          <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <polygon points="1 22 12 2 23 22"/><line x1="4" y1="16" x2="20" y2="16"/>
+            </svg>
+            <div>
+              <div style="font-size:10px;color:#9ca3af;">Bâti</div>
+              <div style="font-size:13px;font-weight:600;color:#1e1b4b;">${surfaceBati}</div>
+            </div>
+          </div>
+
+          <!-- Pièces -->
+          <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+            </svg>
+            <div>
+              <div style="font-size:10px;color:#9ca3af;">Pièces</div>
+              <div style="font-size:13px;font-weight:600;color:#1e1b4b;">${pieces}</div>
+            </div>
+          </div>
+
+          <!-- Terrain -->
+          <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+            <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+              <path d="M2 20l7-7 4 4 9-11"/><path d="M2 20h20"/>
+            </svg>
+            <div>
+              <div style="font-size:10px;color:#9ca3af;">Terrain</div>
+              <div style="font-size:13px;font-weight:600;color:#1e1b4b;">${totalTerrain}</div>
+            </div>
+          </div>
+        </div>
       `;
     })
     .join('');
 
-  const totalTerrain = props.total_surface_terrain
-    ? Number(props.total_surface_terrain).toLocaleString('fr-FR') + ' m²'
-    : null;
+  // Fallback if no built items
+  const fallbackGrid =
+    builtItems.length === 0
+      ? `
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;">
+        <div style="background:#f8f8fa;border-radius:8px;padding:20px 12px;display:flex;align-items:center;gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"/><polyline points="9 22 9 12 15 12 15 22"/>
+          </svg>
+          <div><div style="font-size:10px;color:#9ca3af;">Type</div><div style="font-size:13px;font-weight:600;color:#1e1b4b;">-</div></div>
+        </div>
+        <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <polygon points="1 22 12 2 23 22"/><line x1="4" y1="16" x2="20" y2="16"/>
+          </svg>
+          <div><div style="font-size:10px;color:#9ca3af;">Bâti</div><div style="font-size:13px;font-weight:600;color:#1e1b4b;">-</div></div>
+        </div>
+        <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="3" width="18" height="18" rx="2"/><line x1="3" y1="9" x2="21" y2="9"/><line x1="3" y1="15" x2="21" y2="15"/><line x1="9" y1="3" x2="9" y2="21"/>
+          </svg>
+          <div><div style="font-size:10px;color:#9ca3af;">Pièces</div><div style="font-size:13px;font-weight:600;color:#1e1b4b;">-</div></div>
+        </div>
+        <div style="background:#f8f8fa;border-radius:8px;padding:10px 12px;display:flex;align-items:center;gap:8px;">
+          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="#1e1b4b" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M2 20l7-7 4 4 9-11"/><path d="M2 20h20"/>
+          </svg>
+          <div><div style="font-size:10px;color:#9ca3af;">Terrain</div><div style="font-size:13px;font-weight:600;color:#1e1b4b;">${totalTerrain}</div></div>
+        </div>
+      </div>
+      `
+      : '';
 
   return `
-    <div style="
-      ${compact ? 'padding:8px 0;border-bottom:1px solid #e5e7eb;' : ''}
-    ">
-      <div style="font-size:11px;color:#9ca3af;">
-        Mutation : ${props.id_mutation || '-'}
+    <div style="font-family:-apple-system,BlinkMacSystemFont,'Segoe UI',Roboto,sans-serif;line-height:1.4;padding:12px;">
+      <!-- Header: mutation + prix -->
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:4px;gap:16px;">
+        <span style="font-size:11px;color:#9ca3af;text-transform:uppercase;letter-spacing:0.3px;white-space:nowrap;">
+          Mutation : ${props.id_mutation || '-'}
+        </span>
+        <span style="font-weight:700;font-size:20px;color:#1e1b4b;white-space:nowrap;">
+          ${prixFormate}
+        </span>
       </div>
 
-      <div style="font-weight:700;font-size:${compact ? '13px' : '15px'};margin-top:3px;">
-        ${
-          props.valeur_fonciere
-            ? new Intl.NumberFormat('fr-FR').format(props.valeur_fonciere) + ' €'
-            : 'Prix inconnu'
-        }
+      <!-- Adresse -->
+      <div style="font-weight:700;font-size:16px;color:#1e1b4b;margin-bottom:6px;">
+        ${(props.adresse || '').toUpperCase()}
       </div>
 
-      <div style="margin-top:5px;font-size:12px;">
-        ${props.adresse || ''}
+      <!-- Date + badge -->
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:12px;flex-wrap:wrap;">
+        <span style="font-size:12px;color:#6b7280;display:flex;align-items:center;gap:4px;white-space:nowrap;">
+          <svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="#6b7280" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+            <rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/>
+          </svg>
+          Vendu le ${dateMutation}
+        </span>
+        <span style="font-size:11px;color:#1e1b4b;border:1px solid #1e1b4b;padding:2px 8px;border-radius:4px;font-weight:500;white-space:nowrap;">
+          Prix de marché
+        </span>
       </div>
 
-      <div style="font-size:11px;color:#6b7280;">
-        ${props.date_mutation || ''}
+      <!-- Grille des biens (scrollable si plusieurs) -->
+      <div style="max-height:240px;overflow-y:auto;">
+        ${builtCardsHtml}
+        ${fallbackGrid}
       </div>
-
-      ${
-        builtHtml
-          ? `
-            <div style="font-size:11px;color:#374151;margin-top:6px;">
-              <strong>Bâti :</strong>
-              <ul style="padding-left:16px;margin:3px 0 0;overflow-wrap:anywhere;">
-                ${builtHtml}
-              </ul>
-            </div>
-          `
-          : ''
-      }
-
-      ${
-        totalTerrain
-          ? `
-            <div style="font-size:11px;color:#374151;margin-top:6px;">
-              <strong>Terrain :</strong>
-              <span style="color:#6b7280;">${totalTerrain}</span>
-            </div>
-          `
-          : ''
-      }
     </div>
   `;
 }
@@ -623,23 +691,20 @@ function setupDvfInteractions() {
 
     const source = map!.getSource('dvf_points') as any;
 
-    const leaves = (await source.getClusterLeaves(
-      clusterId,
-      50,
-      0
-    )) as any[];
+    const leaves = (await source.getClusterLeaves(clusterId, 50, 0)) as any[];
 
     const html = leaves
       .map((leaf: any) => buildDvfSaleHtml(leaf.properties, true))
       .join('');
 
-    new maplibregl.Popup()
+    new maplibregl.Popup({ maxWidth: 'none' })
       .setLngLat((cluster.geometry as any).coordinates)
-      .setHTML(`
+      .setHTML(
+        `
         <div style="
-          width:320px;
-          max-height:360px;
-          overflow:auto;
+          min-width:300px;
+          max-height:400px;
+          overflow-y:auto;
           overflow-wrap:anywhere;
           word-break:break-word;
         ">
@@ -649,7 +714,8 @@ function setupDvfInteractions() {
 
           ${html}
         </div>
-      `)
+      `
+      )
       .addTo(map!);
   });
 
@@ -660,22 +726,19 @@ function setupDvfInteractions() {
 
     const props: any = feature.properties;
 
-    new maplibregl.Popup()
+    new maplibregl.Popup({ maxWidth: 'none' })
       .setLngLat((feature.geometry as any).coordinates)
-      .setHTML(`
+      .setHTML(
+        `
         <div style="
-          width:260px;
-          max-width:260px;
+          min-width:300px;
           overflow-wrap:anywhere;
           word-break:break-word;
         ">
-          <div style="font-weight:700;font-size:15px;margin-bottom:4px;">
-            Vente DVF
-          </div>
-
           ${buildDvfSaleHtml(props)}
         </div>
-      `)
+      `
+      )
       .addTo(map!);
   });
 
@@ -782,7 +845,7 @@ function setupDpeInteractions() {
        </div>
       `
       )
-      .addTo(map);
+      .addTo(map as any);
   });
 
   map.on('mouseenter', 'dpe-dots', () => {
@@ -800,27 +863,27 @@ async function recenterMap() {
   if (!mapLoaded || !map) return;
 
   if (dashboard.activeMainMode === 'dvf') {
-  if (dashboard.selectedCity && props.cityCenter) {
-    flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
+    if (dashboard.selectedCity && props.cityCenter) {
+      flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
+      return;
+    }
+
+    const points = props.dvfPoints || [];
+
+    if (points.length === 1) {
+      flyTo(points[0].lon, points[0].lat, 17);
+      return;
+    }
+
+    if (points.length > 1) {
+      const lats = points.map(p => Number(p.lat));
+      const lons = points.map(p => Number(p.lon));
+      flyTo(avg(lons), avg(lats), 10);
+      return;
+    }
+
     return;
   }
-
-  const points = props.dvfPoints || [];
-
-  if (points.length === 1) {
-    flyTo(points[0].lon, points[0].lat, 17);
-    return;
-  }
-
-  if (points.length > 1) {
-    const lats = points.map(p => Number(p.lat));
-    const lons = points.map(p => Number(p.lon));
-    flyTo(avg(lons), avg(lats), 10);
-    return;
-  }
-
-  return;
-}
 
   // MODE DPE : toujours prioriser la ville choisie
   if (dashboard.activeMainMode === 'dpe') {
@@ -914,18 +977,18 @@ function setupWatchers() {
     { deep: true, immediate: true }
   );
 
-watch(
-  () => props.dvfPoints,
-  () => {
-    updateDvfPoints();
-    updateLayerVisibility();
+  watch(
+    () => props.dvfPoints,
+    () => {
+      updateDvfPoints();
+      updateLayerVisibility();
 
-    if (dashboard.activeMainMode === 'dvf') {
-      recenterMap();
-    }
-  },
-  { deep: true, immediate: true }
-);
+      if (dashboard.activeMainMode === 'dvf') {
+        recenterMap();
+      }
+    },
+    { deep: true, immediate: true }
+  );
   watch(
     () => props.dpePoints,
     () => {
@@ -946,17 +1009,17 @@ watch(
     { immediate: true }
   );
 
-watch(
-  () => dashboard.activeMainMode,
-  () => {
-    updateAddressPointsWithColors();
-    updateDpePoints();
-    updateDvfPoints();
-    updateLayerVisibility();
-    recenterMap();
-  },
-  { immediate: true }
-);
+  watch(
+    () => dashboard.activeMainMode,
+    () => {
+      updateAddressPointsWithColors();
+      updateDpePoints();
+      updateDvfPoints();
+      updateLayerVisibility();
+      recenterMap();
+    },
+    { immediate: true }
+  );
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],

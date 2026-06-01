@@ -65,8 +65,8 @@
         <span>Unit ID: {{ store.selectedProperty?.unit_id ?? '—' }}</span>
         <span>Row type: {{ store.selectedProperty?.row_type ?? '—' }}</span>
 
-        <span v-if="store.selectedProperty?.unit?.apart_number">
-          Appartement: {{ store.selectedProperty.unit.apart_number }}
+        <span v-if="(store.selectedProperty as any)?.unit?.apart_number">
+          Appartement: {{ (store.selectedProperty as any).unit.apart_number }}
         </span>
       </div>
 
@@ -83,7 +83,7 @@
               :property-type="propertyType"
               @open-unit-dialog="openUnitDialog"
               @edit-unit="openEditUnitDialog"
-                @type-confirmed="handleSaveProperty"
+              ype-confirmed="handleSaveProperty"
             />
           </el-tab-pane>
 
@@ -115,11 +115,11 @@
     </el-drawer>
 
     <ReminderFormDialog
-  v-model:visible="showReminderDialog"
-  :editing-reminder="null"
-  :saving="savingReminder"
-  @save="handleSaveReminder"
-/>
+      v-model:visible="showReminderDialog"
+      :editing-reminder="null"
+      :saving="savingReminder"
+      @save="handleSaveReminder"
+    />
 
     <UnitDialog
       v-model="showUnitDialog"
@@ -170,7 +170,7 @@ const isEditing = computed<boolean>(
 const saveInProgress = ref(false);
 const propertySnapshot = ref<string | null>(null);
 
-  const remindersStore = useRemindersStore();
+const remindersStore = useRemindersStore();
 
 const savingReminder = ref(false);
 
@@ -284,7 +284,7 @@ const dialogTitle = computed<string>(() => {
     store.selectedProperty.city ||
     '';
   const numero = store.selectedProperty.numero || '';
-  const rep = store.selectedProperty.rep ? ` ${store.selectedProperty.rep}` : '';
+  const rep = store.selectedProperty.rep || '';
   const voie = store.selectedProperty.nom_voie || '';
 
   return `${numero}${rep} ${voie}, ${codePostal} ${city}`;
@@ -316,37 +316,24 @@ const openUnitDialog = () => {
 const openEditUnitDialog = () => {
   if (!store.selectedProperty) return;
 
+  const prop = store.selectedProperty as any;
+
   editingUnit.value = {
-    ...(store.selectedProperty.unit ?? {}),
-    id: store.selectedProperty.unit?.id ?? store.selectedProperty.unit_id ?? null,
+    ...(prop.unit ?? {}),
+    id: prop.unit?.id ?? store.selectedProperty.unit_id ?? null,
     unit_type:
-      store.selectedProperty.unit?.unit_type ??
+      prop.unit?.unit_type ??
       store.selectedProperty.property_type ??
       'appartement',
     unit_label:
-      store.selectedProperty.unit?.unit_label ??
-      store.selectedProperty.unit_label ??
-      '',
+      prop.unit?.unit_label ?? store.selectedProperty.unit_label ?? '',
     apart_number:
-      store.selectedProperty.unit?.apart_number ??
-      store.selectedProperty.apart_number ??
-      null,
+      prop.unit?.apart_number ?? store.selectedProperty.apart_number ?? null,
     floor_number:
-      store.selectedProperty.unit?.floor_number ??
-      store.selectedProperty.floor_number ??
-      null,
-    staircase:
-      store.selectedProperty.unit?.staircase ??
-      store.selectedProperty.staircase ??
-      '',
-    building:
-      store.selectedProperty.unit?.building ??
-      store.selectedProperty.building ??
-      '',
-    lot_number:
-      store.selectedProperty.unit?.lot_number ??
-      store.selectedProperty.lot_number ??
-      '',
+      prop.unit?.floor_number ?? store.selectedProperty.floor_number ?? null,
+    staircase: prop.unit?.staircase ?? prop.staircase ?? '',
+    building: prop.unit?.building ?? prop.building ?? '',
+    lot_number: prop.unit?.lot_number ?? prop.lot_number ?? '',
   };
 
   showUnitDialog.value = true;
@@ -363,13 +350,15 @@ const openReminderDialog = async () => {
 };
 
 const hasNewPropertyMeaningfulData = (property: any): boolean => {
-  const propertyType = String(property.property_type ?? '').trim().toLowerCase();
+  const propertyTypeVal = (property.property_type || '')
+    .trim()
+    .toLowerCase();
 
   return Boolean(
-    (propertyType &&
-      propertyType !== 'inconnu' &&
-      propertyType !== 'address' &&
-      propertyType !== 'immeuble') ||
+    (propertyTypeVal &&
+      propertyTypeVal !== 'inconnu' &&
+      propertyTypeVal !== 'address' &&
+      propertyTypeVal !== 'immeuble') ||
       property.owner ||
       property.email ||
       property.phone ||
@@ -467,7 +456,11 @@ const handleSaveProperty = async (): Promise<any> => {
   }
 };
 
-const buildUnitPayload = (payload: any, rootProperty: any, unitId?: number | null) => {
+const buildUnitPayload = (
+  payload: any,
+  rootProperty: any,
+  unitId?: number
+) => {
   return {
     id: unitId ?? undefined,
 
@@ -500,6 +493,7 @@ const createUnit = async (payload: any) => {
   if (!rootProperty.id || Number(rootProperty.id) === 0) {
     const propertyToCreate = {
       ...rootProperty,
+
       city: rootProperty.city || rootProperty.nom_commune || '',
     };
 
@@ -507,8 +501,9 @@ const createUnit = async (payload: any) => {
     rootProperty = createdRoot as any;
     await store.selectProperty(createdRoot as any);
   }
-
-  const savedUnit = await UnitService.save(buildUnitPayload(payload, rootProperty));
+  const savedUnit = await UnitService.save(
+    buildUnitPayload(payload, rootProperty)
+  );
 
   ElMessage.success('Unité créée avec sa property');
 
@@ -523,9 +518,10 @@ const createUnit = async (payload: any) => {
 const updateUnit = async (payload: any) => {
   if (!store.selectedProperty) return;
 
+  const prop = store.selectedProperty as any;
   const unitId =
     Number(editingUnit.value?.id ?? 0) ||
-    Number(store.selectedProperty.unit?.id ?? 0) ||
+    Number(prop.unit?.id ?? 0) ||
     Number(store.selectedProperty.unit_id ?? 0);
 
   if (!unitId) {
@@ -536,11 +532,11 @@ const updateUnit = async (payload: any) => {
     buildUnitPayload(payload, store.selectedProperty, unitId)
   );
 
-  store.selectedProperty = {
+  (store.selectedProperty as any) = {
     ...store.selectedProperty,
     unit_id: savedUnit?.id ?? unitId,
     unit: {
-      ...(store.selectedProperty.unit ?? {}),
+      ...(prop.unit ?? {}),
       ...payload,
       ...(savedUnit ?? {}),
       id: savedUnit?.id ?? unitId,
@@ -548,7 +544,7 @@ const updateUnit = async (payload: any) => {
   };
 
   if (dashboardStore.isDataLoaded) {
-    dashboardStore.updateAddress(store.selectedProperty);
+    dashboardStore.updateAddress(store.selectedProperty as any);
   }
 
   propertySnapshot.value = serializeProperty(store.selectedProperty);

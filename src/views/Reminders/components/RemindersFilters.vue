@@ -3,14 +3,14 @@
     <el-radio-group v-model="localSharingFilter">
       <el-radio-button label="all">Tous</el-radio-button>
       <el-radio-button label="personal">Personnel</el-radio-button>
-      <el-radio-button label="user">Collègue</el-radio-button>
+      <!-- <el-radio-button label="user">Collègue</el-radio-button> -->
       <el-radio-button v-if="userRole === 'admin'" label="agency"
         >Agence</el-radio-button
       >
     </el-radio-group>
 
     <!-- Colleague selector -->
-    <el-select
+    <!-- <el-select
       v-if="localSharingFilter === 'user'"
       v-model="localSelectedUser"
       placeholder="Choisir un collègue"
@@ -28,7 +28,7 @@
         <span class="user-option__name">{{ user.name }}</span>
         <span class="user-option__email">{{ user.email }}</span>
       </el-option>
-    </el-select>
+    </el-select> -->
 
     <!-- Agency selector (admin only) -->
     <el-select
@@ -71,7 +71,7 @@ const emit = defineEmits<{
 const remindersStore = useRemindersStore();
 const { agencyUsers, agencies } = storeToRefs(remindersStore);
 
-const loadingUsers = ref(false);
+// const loadingUsers = ref(false);
 const loadingAgencies = ref(false);
 
 const localSharingFilter = computed({
@@ -84,25 +84,25 @@ const localSharingFilter = computed({
   },
 });
 
-const localSelectedUser = computed({
-  get: () => props.selectedUser,
-  set: val => emit('update:selectedUser', val),
-});
+// const localSelectedUser = computed({
+//   get: () => props.selectedUser,
+//   set: val => emit('update:selectedUser', val),
+// });
 
 const localSelectedAgency = computed({
   get: () => props.selectedAgency,
   set: val => emit('update:selectedAgency', val),
 });
 
-const fetchUsers = async () => {
-  if (agencyUsers.value.length > 0) return;
-  loadingUsers.value = true;
-  try {
-    await remindersStore.loadAgencyUsers();
-  } finally {
-    loadingUsers.value = false;
-  }
-};
+// const fetchUsers = async () => {
+//   if (agencyUsers.value.length > 0) return;
+//   loadingUsers.value = true;
+//   try {
+//     await remindersStore.loadAgencyUsers();
+//   } finally {
+//     loadingUsers.value = false;
+//   }
+// };
 
 const fetchAgencies = async () => {
   if (agencies.value.length > 0) return;
@@ -114,9 +114,9 @@ const fetchAgencies = async () => {
   }
 };
 
-const onUserSelectOpen = (visible: boolean) => {
-  if (visible) fetchUsers();
-};
+// const onUserSelectOpen = (visible: boolean) => {
+//   if (visible) fetchUsers();
+// };
 
 const onAgencySelectOpen = (visible: boolean) => {
   if (visible) fetchAgencies();

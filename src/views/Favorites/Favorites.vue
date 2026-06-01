@@ -13,6 +13,16 @@
 
       <div class="headerBottomRow">
         <div class="filters-container">
+          <div class="scope-filter">
+            <el-radio-group
+              v-model="selectedScope"
+              size="large"
+              @change="onScopeChange"
+            >
+              <el-radio-button value="personal">Personnel</el-radio-button>
+              <el-radio-button value="agency">Tous</el-radio-button>
+            </el-radio-group>
+          </div>
           <div class="city-filter">
             <el-select
               v-model="selectedCity"
@@ -75,6 +85,7 @@
       @edit-property="openPropertyDialog"
       @toggle-favorite="toggleFavorite"
       @create-reminder="createReminderForProperty"
+      @go-to-map="goToMap"
     />
 
     <!-- Card View -->
@@ -84,23 +95,26 @@
       @edit-property="openPropertyDialog"
       @toggle-favorite="toggleFavorite"
       @create-reminder="createReminderForProperty"
+      @go-to-map="goToMap"
     />
 
     <!-- Dialog PropertyForm -->
     <PropertyForm />
 
     <ReminderFormDialog
-  v-model:visible="showReminderDialog"
-  :editing-reminder="reminderToCreate"
-  :saving="savingReminder"
-  @save="saveReminder"
-/>
+      v-model:visible="showReminderDialog"
+      :editing-reminder="reminderToCreate"
+      :saving="savingReminder"
+      @save="saveReminder"
+    />
   </div>
 </template>
 
 <script setup lang="ts">
 import { computed, onMounted, ref, watch } from 'vue';
+import { useRouter } from 'vue-router';
 import { usePropertyStore } from '@/stores/propertyHome';
+import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
 import { ElMessage } from 'element-plus';
 import { DataBoard, Grid } from '@element-plus/icons-vue';
@@ -117,18 +131,20 @@ const savingReminder = ref(false);
 const reminderToCreate = ref<any | null>(null);
 
 const store = usePropertyStore();
+const dashboardStore = useDashboardStore();
 const remindersStore = useRemindersStore();
+const router = useRouter();
 
 const selectedCity = ref<string>('');
 const selectedPropertyType = ref<string>('');
-
+const selectedScope = ref<'agency' | 'personal'>('personal');
 //const favorites = computed(() => store.favorites);
 const favorites = computed(() => store.favoriteAddresses);
 const favoritesViewType = computed(() => store.favoritesViewType);
 
 onMounted(async () => {
   try {
-    await store.loadFavoriteAddresses();
+    await store.loadFavoriteAddresses(selectedScope.value);
   } catch (error) {
     ElMessage({
       message: 'Erreur lors du chargement des favoris',
@@ -143,7 +159,7 @@ watch(
   async (isVisible, wasVisible) => {
     if (wasVisible && !isVisible) {
       try {
-        await store.loadFavoriteAddresses();
+        await store.loadFavoriteAddresses(selectedScope.value);
       } catch (error) {
         ElMessage.error('Erreur lors du rafraîchissement des favoris');
       }
@@ -239,13 +255,9 @@ const openPropertyDialog = async (property: any) => {
 
     id: Number(property.id ?? 0) > 0 ? Number(property.id) : 0,
 
-    id_fantoir_long: property.id_fantoir_long,
+    id_fantoinit_id: unitId > 0 ? unitId : null,
 
-    unit_id: unitId > 0 ? unitId : null,
-
-    row_type:
-      property.row_type ||
-      (unitId > 0 ? 'unit' : 'address'),
+    row_type: property.row_type || (unitId > 0 ? 'unit' : 'address'),
   };
 
   await store.selectProperty(normalizedProperty);
@@ -255,6 +267,37 @@ const openPropertyDialog = async (property: any) => {
 const clearFilters = () => {
   selectedCity.value = '';
   selectedPropertyType.value = '';
+};
+
+const onScopeChange = async (scope: string | number | boolean | undefined) => {
+  try {
+    await store.loadFavoriteAddresses(scope as 'agency' | 'personal');
+  } catch (error) {
+    ElMessage.error('Erreur lors du chargement des favoris');
+  }
+};
+
+const goToMap = (property: any) => {
+  const city = property.city || property.nom_commune || '';
+  const codeInsee = property.code_insee || property.code_commune || '';
+  const idFantoir = property.id_fantoir || '';
+  const numero = property.numero ? String(property.numero) : '';
+  const rep = property.rep || '';
+
+  dashboardStore.setSearchParams(
+    city ? { value: city, codeInsee, code_insee: codeInsee } : null,
+    property.nom_voie ? { value: property.nom_voie, idFantoir } : null,
+    codeInsee,
+    idFantoir
+  );
+
+  dashboardStore.selectedNumero = numero;
+  dashboardStore.selectedRep = rep;
+
+  dashboardStore.viewType = 'map';
+  dashboardStore.querySearchAddress();
+
+  router.push('/');
 };
 
 const createReminderForProperty = (property: any) => {
@@ -364,6 +407,11 @@ const currentFavoritesView = computed({
   display: flex;
   align-items: center;
   gap: 12px;
+}
+
+.scope-filter {
+  display: flex;
+  align-items: center;
 }
 
 .city-filter,

@@ -102,12 +102,12 @@ export const PropertyService = {
     return response.data;
   },
 
-  async getFavoriteAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
-      params: {
-        favorite: 1,
-      },
-    });
+  async getFavoriteAddresses(
+    scope?: 'agency' | 'personal'
+  ): Promise<IAddressDetail[]> {
+    const response = await apiService.get<IAddressDetail[]>(
+      `/favorite-properties?scope=${scope || ''}`
+    );
     return response.data;
   },
 

@@ -24,18 +24,18 @@
         </template>
       </el-table-column>
 
-<el-table-column label="Adresse" sortable min-width="280">
-  <template #default="{ row }">
-    <div class="address-info">
-      <span class="street-name">
-        {{ getFullAddress(row) }}
-      </span>
-      <span v-if="getUnitLabel(row)" class="unit-label">
-        {{ getUnitLabel(row) }}
-      </span>
-    </div>
-  </template>
-</el-table-column>
+      <el-table-column label="Adresse" sortable min-width="280">
+        <template #default="{ row }">
+          <div class="address-info">
+            <span class="street-name">
+              {{ getFullAddress(row) }}
+            </span>
+            <span v-if="getUnitLabel(row)" class="unit-label">
+              {{ getUnitLabel(row) }}
+            </span>
+          </div>
+        </template>
+      </el-table-column>
 
       <!-- Property Type Column -->
       <el-table-column
@@ -97,7 +97,7 @@
       </el-table-column>
 
       <!-- Actions Column -->
-      <el-table-column label="Actions" width="160" align="center">
+      <el-table-column label="Actions" width="200" align="center">
         <template #default="{ row }">
           <div class="action-buttons">
             <el-button
@@ -116,6 +116,14 @@
             >
               <el-icon><Plus /></el-icon>
             </el-button>
+            <el-button
+              type="warning"
+              size="small"
+              @click.stop="$emit('go-to-map', row)"
+              title="Voir sur la carte"
+            >
+              <el-icon><Location /></el-icon>
+            </el-button>
           </div>
         </template>
       </el-table-column>
@@ -124,7 +132,7 @@
 </template>
 
 <script setup lang="ts">
-import { StarFilled, Edit, Plus } from '@element-plus/icons-vue';
+import { StarFilled, Edit, Plus, Location } from '@element-plus/icons-vue';
 import { formatPrice } from '@/helpers/intl';
 import {
   getPropertyTypeTagType,
@@ -141,6 +149,7 @@ const emit = defineEmits([
   'edit-property',
   'toggle-favorite',
   'create-reminder',
+  'go-to-map',
 ]);
 
 const getRowClass = () => {
@@ -177,7 +186,6 @@ const getUnitLabel = (row: any): string => {
 
   return parts.join(' / ');
 };
-
 </script>
 
 <style scoped>

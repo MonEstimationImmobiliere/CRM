@@ -136,6 +136,15 @@
             <el-icon><Plus /></el-icon>
             Rappel
           </el-button>
+          <el-button
+            type="warning"
+            size="small"
+            @click.stop="$emit('go-to-map', property)"
+            class="action-button"
+          >
+            <el-icon><Location /></el-icon>
+            Carte
+          </el-button>
         </div>
       </el-card>
     </div>
@@ -156,7 +165,14 @@
 
 <script setup lang="ts">
 import { ref, computed } from 'vue';
-import { Search, Sort, StarFilled, Edit, Plus } from '@element-plus/icons-vue';
+import {
+  Search,
+  Sort,
+  StarFilled,
+  Edit,
+  Plus,
+  Location,
+} from '@element-plus/icons-vue';
 import { formatPrice } from '@/helpers/intl';
 import {
   getPropertyTypeTagType,
@@ -173,6 +189,7 @@ const emit = defineEmits([
   'edit-property',
   'toggle-favorite',
   'create-reminder',
+  'go-to-map',
 ]);
 
 const searchTerm = ref('');

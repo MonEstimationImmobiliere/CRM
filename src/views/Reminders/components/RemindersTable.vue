@@ -1,4 +1,5 @@
-label_cell<template>
+label_cell
+<template>
   <div class="reminders-table-container">
     <div class="table-wrapper">
       <table class="rt-table">
@@ -9,7 +10,40 @@ label_cell<template>
             <th style="width: 130px">Échéance</th>
             <th style="width: 120px">Type</th>
             <th>Libellé</th>
-            <th style="width: 150px">Agent</th>
+            <th style="width: 150px">
+              <div class="th-filter">
+                <span>Agent</span>
+                <el-popover placement="bottom" :width="200" trigger="click">
+                  <template #reference>
+                    <el-icon
+                      class="filter-icon"
+                      :class="{ active: selectedAgents.length > 0 }"
+                    >
+                      <Filter />
+                    </el-icon>
+                  </template>
+                  <div class="agent-filter-panel">
+                    <el-checkbox-group v-model="selectedAgents">
+                      <el-checkbox
+                        v-for="agent in agentFilters"
+                        :key="agent"
+                        :label="agent"
+                        :value="agent"
+                      />
+                    </el-checkbox-group>
+                    <el-button
+                      v-if="selectedAgents.length > 0"
+                      size="small"
+                      link
+                      @click="clearAgentFilter"
+                      style="margin-top: 8px"
+                    >
+                      Réinitialiser
+                    </el-button>
+                  </div>
+                </el-popover>
+              </div>
+            </th>
             <th style="width: 80px">Fait</th>
             <th style="width: 90px">Partage</th>
             <th style="width: 190px"></th>
@@ -18,30 +52,31 @@ label_cell<template>
 
         <tbody>
           <tr
-            v-for="reminder in reminders"
+            v-for="reminder in filteredReminders"
             :key="reminder.id"
             class="rt-row"
             :class="getRowClass(reminder)"
             @click="$emit('action', { action: 'edit', reminder })"
           >
-<td>
-  <div class="address-cell">
-
-    <!--<pre style="font-size: 10px; white-space: pre-wrap">
+            <td>
+              <div class="address-cell">
+                <!--<pre style="font-size: 10px; white-space: pre-wrap">
 {{ reminder }}
     </pre>-->
 
-    <template v-if="reminder.property">
-      <strong>{{ getBasePropertyAddress(reminder.property) }}</strong>
+                <template v-if="reminder.property">
+                  <strong>{{
+                    getBasePropertyAddress(reminder.property)
+                  }}</strong>
 
-      <span v-if="getPropertyUnitLabel(reminder.property)">
-        {{ getPropertyUnitLabel(reminder.property) }}
-      </span>
-    </template>
+                  <span v-if="getPropertyUnitLabel(reminder.property)">
+                    {{ getPropertyUnitLabel(reminder.property) }}
+                  </span>
+                </template>
 
-    <span v-else>Rappel Général</span>
-  </div>
-</td>
+                <span v-else>Rappel Général</span>
+              </div>
+            </td>
 
             <td>
               <span class="owner-name">
@@ -56,8 +91,7 @@ label_cell<template>
               </div>
             </td>
 
-
-                        <td>
+            <td>
               <span
                 v-if="reminder.type"
                 class="type-badge"
@@ -68,15 +102,13 @@ label_cell<template>
               <span v-else class="muted">—</span>
             </td>
 
-
-              <td>
-          <div class="label-cell">
-          <p :class="{ done: isReminderCompleted(reminder) }">
-              {{ reminder.description || 'Aucun détail' }}
-            </p>
-          </div>
-        </td>
-
+            <td>
+              <div class="label-cell">
+                <p :class="{ done: isReminderCompleted(reminder) }">
+                  {{ reminder.description || 'Aucun détail' }}
+                </p>
+              </div>
+            </td>
 
             <td>
               <span class="agent-name" :title="reminder.creator?.email">
@@ -89,11 +121,7 @@ label_cell<template>
                 :model-value="isReminderCompleted(reminder)"
                 @update:model-value="
                   val =>
-                    $emit(
-                      'update-status',
-                      reminder,
-                      val ? 'completed' : 'todo'
-                    )
+                    $emit('update-status', reminder, val ? 'completed' : 'todo')
                 "
               />
             </td>
@@ -101,72 +129,102 @@ label_cell<template>
             <td class="center" @click.stop>
               <EMToggleSwitch
                 :model-value="!!reminder.sharing"
-                @update:model-value="val => $emit('update-sharing', reminder, val)"
+                @update:model-value="
+                  val => $emit('update-sharing', reminder, val)
+                "
               />
             </td>
 
-<td class="actions-cell" @click.stop>
-  <div class="actions-wrapper">
-<el-button
-  size="small"
-  type="primary"
-  circle
-  :disabled="!reminder.property_id"
-  @click="$emit('action', { action: 'open-property', reminder })"
->
-  <el-icon><Edit /></el-icon>
-</el-button>
+            <td class="actions-cell" @click.stop>
+              <div class="actions-wrapper">
+                <el-button
+                  size="small"
+                  type="primary"
+                  circle
+                  :disabled="!reminder.property_id"
+                  @click="
+                    $emit('action', { action: 'open-property', reminder })
+                  "
+                >
+                  <el-icon><Edit /></el-icon>
+                </el-button>
 
-<el-button
-  size="small"
-  plain
-  circle
-  @click="$emit('action', { action: 'edit', reminder })"
->
-  <el-icon><EditPen /></el-icon>
-</el-button>
+                <el-button
+                  size="small"
+                  plain
+                  circle
+                  @click="$emit('action', { action: 'edit', reminder })"
+                >
+                  <el-icon><EditPen /></el-icon>
+                </el-button>
 
-<el-button
-  size="small"
-  type="success"
-  circle
-  :disabled="!reminder.property_id"
-  @click="$emit('action', { action: 'new-reminder', reminder })"
->
-  <el-icon><Plus /></el-icon>
-</el-button>
-  </div>
-</td>
-
-
+                <el-button
+                  size="small"
+                  type="success"
+                  circle
+                  :disabled="!reminder.property_id"
+                  @click="$emit('action', { action: 'new-reminder', reminder })"
+                >
+                  <el-icon><Plus /></el-icon>
+                </el-button>
+              </div>
+            </td>
           </tr>
         </tbody>
       </table>
 
-      <div v-if="reminders.length === 0" class="rt-empty">
-        Aucun rappel trouvé
+      <div v-if="filteredReminders.length === 0" class="rt-empty">
+        {{
+          selectedAgents.length > 0
+            ? 'Aucun rappel pour les agents sélectionnés'
+            : 'Aucun rappel trouvé'
+        }}
       </div>
     </div>
   </div>
 </template>
 
 <script setup lang="ts">
+import { computed, ref } from 'vue';
 import { Edit, Delete, DocumentCopy } from '@element-plus/icons-vue';
 import type { Reminder } from '@/stores/reminders';
 import type { IReminderProperty } from '@/types/reminder';
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
 import { getTypeLabel, isOverdue, isToday } from '@/utils/reminderHelpers';
-import { EditPen, Plus } from '@element-plus/icons-vue';
+import { EditPen, Plus, Filter } from '@element-plus/icons-vue';
 
 interface ActionCommand {
   action: string;
   reminder: Reminder;
 }
 
-defineProps<{
+const props = defineProps<{
   reminders: Reminder[];
   userRole: string;
 }>();
+
+const selectedAgents = ref<string[]>([]);
+
+const agentFilters = computed(() => {
+  const names = new Set<string>();
+  for (const r of props.reminders) {
+    const name = r.creator?.name;
+    if (name) names.add(name);
+  }
+  return [...names].sort();
+});
+
+const filteredReminders = computed(() => {
+  if (selectedAgents.value.length === 0) return props.reminders;
+  return props.reminders.filter(r => {
+    const name = r.creator?.name ?? '';
+    return selectedAgents.value.includes(name);
+  });
+});
+
+const clearAgentFilter = () => {
+  selectedAgents.value = [];
+};
 
 defineEmits<{
   action: [command: ActionCommand];
@@ -181,7 +239,8 @@ const getBasePropertyAddress = (property: IReminderProperty): string => {
   if (property.rep) parts.push(property.rep);
   if (property.nom_voie) parts.push(property.nom_voie);
 
-  const cityLine = `${property.code_postal ?? ''} ${property.city ?? ''}`.trim();
+  const cityLine =
+    `${property.code_postal ?? ''} ${property.city ?? ''}`.trim();
   if (cityLine) parts.push(cityLine);
 
   return parts.join(' ');
@@ -246,7 +305,7 @@ const getDaysLeftText = (r: Reminder): string => {
 };
 
 const getDateBlockClass = (r: Reminder): string => {
- if (isReminderCompleted(r)) return 'done';
+  if (isReminderCompleted(r)) return 'done';
 
   const d = getDiffDays(r.date);
 
@@ -533,5 +592,32 @@ td {
   margin: 0;
 }
 
+.th-filter {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+}
 
+.filter-icon {
+  cursor: pointer;
+  font-size: 14px;
+  color: #909399;
+  transition: color 0.2s;
+}
+
+.filter-icon:hover,
+.filter-icon.active {
+  color: #409eff;
+}
+
+.agent-filter-panel {
+  display: flex;
+  flex-direction: column;
+  max-height: 200px;
+  overflow-y: auto;
+}
+
+.agent-filter-panel .el-checkbox {
+  margin-bottom: 4px;
+}
 </style>
