@@ -14,11 +14,7 @@
       <div class="headerBottomRow">
         <div class="filters-container">
           <div class="scope-filter">
-            <el-radio-group
-              v-model="selectedScope"
-              size="large"
-              @change="onScopeChange"
-            >
+            <el-radio-group v-model="selectedScope" @change="onScopeChange">
               <el-radio-button value="personal">Personnel</el-radio-button>
               <el-radio-button value="agency">Tous</el-radio-button>
             </el-radio-group>
@@ -28,7 +24,6 @@
               v-model="selectedCity"
               placeholder="Filtrer par ville"
               clearable
-              size="large"
               class="filter-select"
             >
               <el-option
@@ -44,7 +39,6 @@
               v-model="selectedPropertyType"
               placeholder="Filtrer par type"
               clearable
-              size="large"
               class="filter-select"
             >
               <el-option
@@ -363,21 +357,13 @@ const currentFavoritesView = computed({
 }
 
 .headerFilterInfoContainer {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
   margin-bottom: 20px;
-  background: var(--apple-card-bg);
-  padding: 20px;
   border-radius: var(--apple-radius);
-  box-shadow: var(--apple-shadow);
-  gap: 20px;
 }
 
 .headerTopRow {
   display: flex;
-  align-items: center;
+  align-items: flex-start;
   justify-content: space-between;
   width: 100%;
   gap: 20px;

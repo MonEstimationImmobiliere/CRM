@@ -4,7 +4,6 @@
       :data="favorites"
       class="modern-favorites-table"
       :default-sort="{ prop: 'numero', order: 'ascending' }"
-      height="79vh"
       :row-class-name="getRowClass"
       @row-click="handleRowClick"
       empty-text="Aucune propriété favorite trouvée"
@@ -217,7 +216,6 @@ const filterByOwner = (value: string, row: any) => {
   overflow: hidden;
   /* box-shadow: var(--table-shadow); */
   border: 1px solid #c4c3c3;
-  max-height: 70vh;
 }
 
 :deep(.el-table) {
