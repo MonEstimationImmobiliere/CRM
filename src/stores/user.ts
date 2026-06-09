@@ -69,7 +69,7 @@ export const useUserStore = defineStore('user', () => {
 
   async function logout() {
     try {
-      await apiService.get('/user/logout');
+      await apiService.get('/logout');
     } finally {
       resetState();
       apiService.removeToken();

@@ -84,7 +84,7 @@ const routesList = computed(() => {
 const loading = inject<Layout.Loading>('loading');
 
 function logout() {
-  user.logout().then(_ => {
+  user.logout().finally(() => {
     router.replace('/login');
   });
 }
@@ -231,7 +231,7 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
   color: #333333;
 }
 
-.sideBar-logout-container{
+.sideBar-logout-container {
   display: flex;
   align-items: center;
   justify-conter: center;
