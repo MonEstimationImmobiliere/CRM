@@ -6,31 +6,18 @@
     "moduleResolution": "node",
     "strict": true,
     "jsx": "preserve",
-    "jsxFactory": "h",
-    "jsxFragmentFactory": "Fragment",
     "sourceMap": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
     "esModuleInterop": true,
-    "lib": [
-      "esnext",
-      "dom"
-    ],
+    "lib": ["esnext", "dom"],
     "skipLibCheck": true,
-    "types": [
-      "element-plus/global",
-      "node"
-    ],
+    "types": ["element-plus/global", "node"],
     "baseUrl": "./",
     "paths": {
-      "@": [
-        "src"
-      ],
-      "@/*": [
-        "src/*"
-      ]
+      "@": ["src"],
+      "@/*": ["src/*"]
     }
-    
   },
   "include": [
     "src/**/*.ts",

@@ -8,8 +8,8 @@ import { useDashboardStore } from '@/stores/dashboard';
 /** Retourne le type de tag Element Plus selon le type de propriété */
 export function getPropertyTypeTagType(
   propertyType: string | undefined
-): '' | 'success' | 'info' | 'warning' | 'danger' {
-  if (!propertyType) return '';
+): 'success' | 'info' | 'warning' | 'danger' | undefined {
+  if (!propertyType) return undefined;
 
   switch (propertyType.toLowerCase()) {
     case 'maison':
@@ -21,7 +21,7 @@ export function getPropertyTypeTagType(
     case 'terrain':
       return 'danger';
     default:
-      return '';
+      return undefined;
   }
 }
 

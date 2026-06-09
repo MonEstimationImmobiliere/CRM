@@ -290,11 +290,11 @@ const dialogTitle = computed<string>(() => {
   return `${numero}${rep} ${voie}, ${codePostal} ${city}`;
 });
 
-const propertyAddress = computed(() =>
-  `${store.selectedProperty?.numero || ''} ${
-    store.selectedProperty?.nom_voie || ''
-  }`.trim()
-);
+// const propertyAddress = computed(() =>
+//   `${store.selectedProperty?.numero || ''} ${
+//     store.selectedProperty?.nom_voie || ''
+//   }`.trim()
+// );
 
 const closeDialog = async (): Promise<void> => {
   if (saveInProgress.value) return;

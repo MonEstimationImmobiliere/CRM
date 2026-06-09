@@ -144,6 +144,7 @@ export interface IProperty {
   /** Liaison vers une unit */
   unit_id?: number | null;
   unit_label?: string;
+  unit?: any;
   row_type?: 'address' | 'unit' | string;
 
   /** Champs utiles pour le tableau principal */

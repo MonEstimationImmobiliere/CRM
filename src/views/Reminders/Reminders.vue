@@ -154,7 +154,11 @@ const {
 } = remindersStore;
 
 const isReminderCompleted = (r: Reminder): boolean => {
-  return r.completed === true || r.completed === 1 || r.completed === '1';
+  return (
+    r.completed === true ||
+    (r.completed as unknown) === 1 ||
+    (r.completed as unknown) === '1'
+  );
 };
 
 // Filtered & sorted reminders

@@ -14,8 +14,10 @@ export const PropertyService = {
     return data;
   },
 
-  async getProperty(id: number) {
-    const response = await apiService.get(`/property/${id}`);
+  async getProperty(id: number): Promise<Record<string, any>> {
+    const response = await apiService.get<Record<string, any>>(
+      `/property/${id}`
+    );
     return response.data;
   },
 

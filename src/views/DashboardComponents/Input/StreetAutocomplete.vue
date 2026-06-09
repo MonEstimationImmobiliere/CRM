@@ -13,7 +13,6 @@
         :fetch-suggestions="queryStreets"
         :debounce="500"
         :suffix-icon="Search"
-        :icon-size="60"
         clearable
         @clear="handleClear"
         @select="handleSelect"
@@ -30,6 +29,7 @@
 <script setup lang="ts">
 import { computed, watch } from 'vue';
 import { Search } from '@element-plus/icons-vue';
+// @ts-ignore
 import axios from 'axios';
 import API_URL from '@/utils/API_URL';
 
@@ -67,11 +67,11 @@ const localValue = computed({
 
 const queryStreets = (
   queryString: string,
+  // eslint-disable-next-line no-unused-vars
   cb: (results: { value: string; idFantoir: string }[]) => void
 ): void => {
   if (!props.codeInsee || queryString.length < 3) {
     cb([]);
-    return;
   }
 
   axios

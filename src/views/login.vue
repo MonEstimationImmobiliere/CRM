@@ -1,6 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue';
-import { appTitle } from '@/appConfig';
+// import { appTitle } from '@/appConfig';
 import { userStore } from '@/stores/user';
 import { useRouter } from 'vue-router';
 import { ElMessage } from 'element-plus';
@@ -44,8 +44,8 @@ function validatePassword(password: string): boolean {
 
 function login() {
   if (!refForm.value) return;
-  refForm.value.validate(async (valid, fields) => {
-    if (!valid) return false;
+  refForm.value.validate(async valid => {
+    if (!valid) return;
     loading.login = true;
     loginError.value = '';
 
