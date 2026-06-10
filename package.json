@@ -30,6 +30,7 @@
     "@vue/eslint-config-typescript": "^13.0.0",
     "axios": "^1.7.2",
     "element-plus": "^2.2.9",
+    "exceljs": "^4.4.0",
     "maplibre-gl": "^5.13.0",
     "nprogress": "^0.2.0",
     "overlayscrollbars": "^1.13.2",

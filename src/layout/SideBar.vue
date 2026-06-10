@@ -14,27 +14,53 @@
     </ElMenu>
   </Scrollbar>
   <div class="SideBar-logout-container">
-    <ConfirmationDialog
-      :title="'Confirmer la déconnexion?'"
-      :confirmButtonText="'OK'"
-      :cancelButtonText="'Annuler'"
-      :icon="'InfoFilled'"
-      :iconColor="'#626AEF'"
-      @confirm="logout"
-    />
-
-    <el-tooltip
-      :content="'Utilisateur ' + user.name"
-      placement="right"
-      :disabled="!sidebarRelated?.collapsed"
+    <el-popover
+      placement="top"
+      :width="280"
+      trigger="click"
+      popper-class="user-profile-popover"
     >
-      <div class="sidebar-user-name">
-        <el-icon><Avatar /></el-icon>
-        <span v-show="!sidebarRelated?.collapsed"
-          >Utilisateur {{ user.name }}</span
-        >
+      <template #reference>
+        <div class="sidebar-user-trigger">
+          <el-icon class="user-avatar-icon"><Avatar /></el-icon>
+          <span v-show="!sidebarRelated?.collapsed" class="user-trigger-name">{{
+            user.name
+          }}</span>
+        </div>
+      </template>
+
+      <div class="user-profile-card">
+        <div class="user-profile-header">
+          <div class="user-profile-avatar">
+            <el-icon :size="28"><Avatar /></el-icon>
+          </div>
+          <div class="user-profile-info">
+            <span class="user-profile-name">{{ user.name }}</span>
+            <span class="user-profile-email">{{ user.email }}</span>
+          </div>
+        </div>
+
+        <div class="user-profile-details">
+          <div class="user-detail-row">
+            <span class="user-detail-label">Agence</span>
+            <span class="user-detail-value">{{ user.code_agence || '—' }}</span>
+          </div>
+          <div class="user-detail-row">
+            <span class="user-detail-label">Rôle</span>
+            <span class="user-detail-value user-role-badge">{{
+              getRoleLabel(user.role)
+            }}</span>
+          </div>
+        </div>
+
+        <div class="user-profile-footer">
+          <el-button type="danger" plain class="logout-btn" @click="logout">
+            <el-icon><SwitchButton /></el-icon>
+            Se déconnecter
+          </el-button>
+        </div>
       </div>
-    </el-tooltip>
+    </el-popover>
   </div>
 </template>
 
@@ -54,7 +80,7 @@ import { ElMenu, ElMenuItem, ElSubMenu, ElIcon } from 'element-plus/es';
 import SvgIcon from '../components/SvgIcon.vue';
 import type { Layout } from 'types/layout';
 import { userStore } from '../stores/user';
-import { Avatar } from '@element-plus/icons-vue';
+import { Avatar, SwitchButton } from '@element-plus/icons-vue';
 
 const router = useRouter();
 const route = useRoute();
@@ -87,6 +113,15 @@ function logout() {
   user.logout().finally(() => {
     router.replace('/login');
   });
+}
+
+function getRoleLabel(role: string | undefined): string {
+  const labels: Record<string, string> = {
+    admin: 'Administrateur',
+    agency_manager: "Responsable d'agence",
+    agent: 'Agent',
+  };
+  return labels[role ?? ''] ?? role ?? '—';
 }
 
 watch(
@@ -209,18 +244,135 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
 }
 
 .SideBar-logout-container {
-  padding: 20px;
-  margin-bottom: 40px;
+  padding: 16px 20px;
+  margin-bottom: 20px;
   display: flex;
   align-items: center;
-  gap: 10px;
-  cursor: pointer;
   position: sticky;
   bottom: 0;
   width: 100%;
   background-color: #ffffff;
+}
+
+.sidebar-user-trigger {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  cursor: pointer;
+  transition: background-color 0.2s ease;
+}
+
+.sidebar-user-trigger:hover {
+  background-color: #f5f5f7;
+}
+
+.user-avatar-icon {
+  font-size: 20px;
+  color: #626aef;
+}
+
+.user-trigger-name {
+  font-size: 13px;
+  font-weight: 500;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-card {
+  display: flex;
   flex-direction: column;
-  align-items: flex-start;
+  gap: 16px;
+}
+
+.user-profile-header {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  padding-bottom: 14px;
+  border-bottom: 1px solid #f0f0f0;
+}
+
+.user-profile-avatar {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 44px;
+  height: 44px;
+  border-radius: 50%;
+  background: linear-gradient(135deg, #626aef 0%, #8b5cf6 100%);
+  color: #fff;
+  flex-shrink: 0;
+}
+
+.user-profile-info {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  min-width: 0;
+}
+
+.user-profile-name {
+  font-size: 14px;
+  font-weight: 600;
+  color: #1d1d1f;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-email {
+  font-size: 12px;
+  color: #86868b;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.user-profile-details {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.user-detail-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.user-detail-label {
+  font-size: 12px;
+  color: #86868b;
+  font-weight: 500;
+}
+
+.user-detail-value {
+  font-size: 12px;
+  color: #1d1d1f;
+  font-weight: 600;
+}
+
+.user-role-badge {
+  background: #f0edff;
+  color: #626aef;
+  padding: 2px 8px;
+  border-radius: 6px;
+  font-size: 11px;
+}
+
+.user-profile-footer {
+  padding-top: 12px;
+  border-top: 1px solid #f0f0f0;
+}
+
+.logout-btn {
+  width: 100%;
+  border-radius: 8px;
+  font-weight: 500;
 }
 
 .sidebar-user-name {

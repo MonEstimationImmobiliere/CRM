@@ -13,6 +13,8 @@ interface LoginResponse {
     status: string;
     id: number | null;
     role?: string;
+    code_agence?: string;
+    agency_id?: number | null;
   };
   token: string;
 }
@@ -37,6 +39,8 @@ export const useUserStore = defineStore('user', () => {
   const avatar = ref<string | null>(null);
   const status = ref<'active' | 'inactive'>('active');
   const role = ref<UserRole>('agent');
+  const code_agence = ref('');
+  const agency_id = ref<number | null>(null);
 
   // Actions
   async function login(userEmail: string, password: string) {
@@ -52,6 +56,8 @@ export const useUserStore = defineStore('user', () => {
       token.value = response.data.token || '';
       id.value = response.data.user.id || null;
       role.value = (response.data.user.role as UserRole) || 'agent';
+      code_agence.value = response.data.user.code_agence || '';
+      agency_id.value = response.data.user.agency_id ?? null;
 
       if (token.value) {
         apiService.setToken(token.value);
@@ -104,6 +110,8 @@ export const useUserStore = defineStore('user', () => {
     avatar.value = null;
     status.value = 'active';
     role.value = 'agent';
+    code_agence.value = '';
+    agency_id.value = null;
   }
 
   function setUserId(newId: number | null) {
@@ -120,6 +128,8 @@ export const useUserStore = defineStore('user', () => {
     avatar,
     status,
     role,
+    code_agence,
+    agency_id,
     // Actions
     login,
     logout,

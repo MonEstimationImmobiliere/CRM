@@ -278,7 +278,14 @@
       "valid": "Valider",
       "video": "Vidéo",
       "vigil": "Vigile",
-      "yes": "Oui"
+      "yes": "Oui",
+      "actions": "Actions",
+      "noDataAvailable": "Aucune donnée disponible",
+      "dataTable": "Tableau de données",
+      "tableExport": "export_tableau",
+      "confirm": "Confirmer",
+      "cancel": "Annuler",
+      "confirmDeletionMessage": "Êtes-vous sûr de vouloir supprimer cet élément ?"
     },
     "writeComment": "Rédiger un avis",
     "youCanCopyPastEmails": "Vous pouvez copier-coller une liste d'e-mails",
