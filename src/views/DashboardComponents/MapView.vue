@@ -9,12 +9,20 @@
       >
         <el-icon :size="20"><MapLocation /></el-icon>
       </button>
+      <button
+  class="parcelles-btn"
+  :class="{ active: showParcelles }"
+  title="Afficher / masquer les parcelles"
+  @click="toggleParcelles"
+>
+  Parcelles
+</button>
     </div>
   </section>
 </template>
 
 <script setup lang="ts">
-import { onMounted, onUnmounted, watch, nextTick, computed } from 'vue';
+import { onMounted, onUnmounted, watch, nextTick, computed, ref } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapLocation } from '@element-plus/icons-vue';
@@ -29,6 +37,8 @@ import {
 } from '@/utils/mapConstants';
 
 import type { IAddressDetail, IAddressGrouped } from '@/types/address';
+
+
 
 type Address = IAddressDetail | IAddressGrouped;
 
@@ -64,11 +74,12 @@ interface DvfPoint {
   total_surface_terrain?: number | null;
 }
 
-const props = defineProps<{
+const props = defineProps<{  
   addresses: Address[];
   cityCenter?: CityCenter | null;
   dpePoints?: DpePoint[];
   dvfPoints?: DvfPoint[];
+  parcellesGeojson?: GeoJSON.FeatureCollection;
 }>();
 
 const emit = defineEmits<{
@@ -81,6 +92,8 @@ const remindersStore = useRemindersStore();
 let dpePopup: maplibregl.Popup | null = null;
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
+
+const showParcelles = ref(false);
 
 const currentMode = computed(() => dashboard.activeMainMode || 'prospection');
 
@@ -132,6 +145,8 @@ function getProspectionFreshnessColor(dateMaj: any): string {
 
   return '#9ca3af'; // gris si trop ancien
 }
+
+
 
 function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
@@ -243,6 +258,38 @@ onMounted(async () => {
         'circle-stroke-color': '#ffffff',
       },
     });
+
+    map!.addSource('parcelles_cadastre', {
+  type: 'geojson',
+  data: emptyGeoJSON(),
+});
+
+map!.addLayer({
+  id: 'parcelles-fill',
+  type: 'fill',
+  source: 'parcelles_cadastre',
+  paint: {
+    'fill-color': '#2563eb',
+    'fill-opacity': 0.08,
+  },
+  layout: {
+    visibility: 'none',
+  },
+});
+
+map!.addLayer({
+  id: 'parcelles-line',
+  type: 'line',
+  source: 'parcelles_cadastre',
+  paint: {
+    'line-color': '#2563eb',
+    'line-width': 1,
+    'line-opacity': 0.45,
+  },
+  layout: {
+    visibility: 'none',
+  },
+});
 
     map!.addSource('dvf_points', {
       type: 'geojson',
@@ -466,6 +513,22 @@ function updateAddressPointsWithColors() {
 /* -------------------------------------
    VISIBILITE DES COUCHES
 ------------------------------------- */
+function toggleParcelles() {
+  showParcelles.value = !showParcelles.value;
+  updateParcelles();
+  updateLayerVisibility();
+}
+
+function updateParcelles() {
+  if (!mapLoaded || !map) return;
+
+  const src = map.getSource('parcelles_cadastre') as maplibregl.GeoJSONSource | undefined;
+
+  if (src) {
+    src.setData(props.parcellesGeojson || emptyGeoJSON());
+  }
+}
+
 function updateLayerVisibility() {
   if (!mapLoaded || !map) return;
 
@@ -507,6 +570,17 @@ function updateLayerVisibility() {
     'visibility',
     isDvfMode ? 'visible' : 'none'
   );
+  map.setLayoutProperty(
+  'parcelles-fill',
+  'visibility',
+  isDvfMode && showParcelles.value ? 'visible' : 'none'
+);
+
+map.setLayoutProperty(
+  'parcelles-line',
+  'visibility',
+  isDvfMode && showParcelles.value ? 'visible' : 'none'
+);
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
@@ -1049,13 +1123,27 @@ function setupWatchers() {
     }
   );
 
-  watch(
-    () => dashboard.selectedCity,
-    newCity => {
-      popups.close();
-      if (!newCity) return;
+watch(
+  () => props.parcellesGeojson,
+  () => {
+    updateParcelles();
+  },
+  { deep: true, immediate: true }
+);
+watch(
+  () => dashboard.selectedCity,
+  newCity => {
+    popups.close();
+
+    if (!newCity) {
+      updateParcelles();
+      updateLayerVisibility();
+      return;
     }
-  );
+
+    recenterMap();
+  }
+);
 
   // Quand on bascule sur la vue map → resize + recenter
   watch(
@@ -1120,5 +1208,26 @@ function setupWatchers() {
 .recenter-btn:hover {
   background: #f0f0f0;
   color: #2563eb;
+}
+
+.parcelles-btn {
+  position: absolute;
+  top: 56px;
+  right: 52px;
+  z-index: 2;
+  height: 32px;
+  padding: 0 10px;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.parcelles-btn.active {
+  background: #2563eb;
+  color: #fff;
 }
 </style>

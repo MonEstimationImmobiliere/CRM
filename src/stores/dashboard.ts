@@ -78,6 +78,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const selectedNumeroFull = ref<SelectedNumeroFull | null>(null);
   const dpePoints = ref<DpePoint[]>([]);
   const dvfPoints = ref<IDvfPoint[]>([]);
+
+  const parcellesGeojson = ref<GeoJSON.FeatureCollection>({
+  type: 'FeatureCollection',
+  features: [],
+});
   const markers = ref<Record<string, any>>({});
   const filterMode = ref<string | null>(null);
   const selectedOwnerName = ref('');
@@ -91,7 +96,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
     | 'dvf'
   >('prospection');
   const dpeFilterRange = ref<'1m' | '3m' | '6m' | '1y'>('3m');
-  const dvfFilterRange = ref<'1y' | '2y' | '3y' | '5y'>('1y');
+  const dvfFilterRange = ref<'1y' | '2y' | '3y' | '5y' | 'all'>('1y');
   const majFilterRange = ref<'7d' | '30d' | '3m' | '6m'>('30d');
   const favoritesOnly = ref(false);
 
@@ -156,11 +161,11 @@ export const useDashboardStore = defineStore('dashboard', () => {
       fetchDPE();
     }
 
-    if (mode === 'dvf') {
+if (mode === 'dvf') {
   viewType.value = 'map';
   fetchDVF();
+  fetchParcelles();
 }
-
     // Les modes sont des filtres client-side sur les adresses déjà chargées
     // → pas d'appel API, filteredAddresses computed gère le filtrage
   }
@@ -255,9 +260,41 @@ total_surface_terrain: p.total_surface_terrain
   );
 
     console.log('DVF POINTS', dvfPoints.value.length);
+await fetchParcelles();
+
   } catch (e) {
     console.error('fetchDVF error', e);
     dvfPoints.value = [];
+  }
+}
+
+async function fetchParcelles() {
+
+  try {
+    const codeInsee =
+      selectedCodeInsee.value ||
+      selectedCity.value?.codeInsee ||
+      selectedCity.value?.code_insee;
+
+    if (!codeInsee) {
+      parcellesGeojson.value = {
+        type: 'FeatureCollection',
+        features: [],
+      };
+      return;
+    }
+
+
+parcellesGeojson.value = await DvfService.getParcelles(codeInsee);
+
+
+
+  } catch (e) {
+    console.error('fetchParcelles error', e);
+    parcellesGeojson.value = {
+      type: 'FeatureCollection',
+      features: [],
+    };
   }
 }
 
@@ -432,8 +469,9 @@ total_surface_terrain: p.total_surface_terrain
       dpePoints.value = [];
     }
 
-    if (activeMainMode.value !== 'dvf') {
-  dvfPoints.value = [];
+if (activeMainMode.value === 'dvf') {
+  await fetchDVF();
+  await fetchParcelles();
 }
 
     const ownerName = selectedOwnerName.value.trim();
@@ -624,6 +662,10 @@ total_surface_terrain: p.total_surface_terrain
     addresses.value = [];
     dpePoints.value = [];
     dvfPoints.value = [];
+    parcellesGeojson.value = {
+  type: 'FeatureCollection',
+  features: [],
+};
     isDataLoaded.value = false;
     lastSearchParams.value = null;
     noResultsFound.value = false;
@@ -698,6 +740,7 @@ total_surface_terrain: p.total_surface_terrain
 
     // Computed
     filteredAddresses,
+    parcellesGeojson,
 
     // Actions
     fetchDPE,
@@ -716,5 +759,6 @@ total_surface_terrain: p.total_surface_terrain
     toggleFavoritesFilter,
 
     setMainMode,
+    fetchParcelles,
   };
 });

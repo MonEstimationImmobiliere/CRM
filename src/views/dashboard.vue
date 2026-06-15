@@ -153,6 +153,7 @@
               <el-option label="< 2 ans" value="2y" />
               <el-option label="< 3 ans" value="3y" />
               <el-option label="< 5 ans" value="5y" />
+              <el-option label="2014 - aujourd'hui" value="all" />
             </el-select>
           </div>
         </div>
@@ -223,6 +224,7 @@
   :city-center="dashboardStore.cityCenter"
   :dpe-points="dashboardStore.dpePoints"
   :dvf-points="dashboardStore.dvfPoints"
+  :parcelles-geojson="dashboardStore.parcellesGeojson"
   @edit-property="openPropertyDialog"
 />
 
