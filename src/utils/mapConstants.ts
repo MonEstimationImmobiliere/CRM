@@ -8,6 +8,15 @@ export const MAPTILER_KEY =
 
 export const MAP_STYLE = `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
 
+export const MAP_STYLE_STREETS =
+  `https://api.maptiler.com/maps/streets-v2/style.json?key=${MAPTILER_KEY}`;
+
+export const MAP_STYLE_SATELLITE =
+  `https://api.maptiler.com/maps/satellite/style.json?key=${MAPTILER_KEY}`;
+
+export const MAP_STYLE_HYBRID =
+  `https://api.maptiler.com/maps/hybrid/style.json?key=${MAPTILER_KEY}`;
+
 /* ----------------------------------------
    Defaults
 ---------------------------------------- */

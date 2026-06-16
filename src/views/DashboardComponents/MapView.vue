@@ -2,6 +2,7 @@
   <section class="mapContainer">
     <div class="map-wrapper">
       <div id="map" class="map"></div>
+
       <button
         class="recenter-btn"
         title="Recentrer la carte"
@@ -9,14 +10,24 @@
       >
         <el-icon :size="20"><MapLocation /></el-icon>
       </button>
+
       <button
-  class="parcelles-btn"
-  :class="{ active: showParcelles }"
-  title="Afficher / masquer les parcelles"
-  @click="toggleParcelles"
->
-  Parcelles
-</button>
+        class="parcelles-btn"
+        :class="{ active: showParcelles }"
+        title="Afficher / masquer les parcelles"
+        @click="toggleParcelles"
+      >
+        Parcelles
+      </button>
+
+      <button
+        class="map-style-btn"
+        :class="`style-${baseMapStyle}`"
+        title="Changer le fond de carte"
+        @click="cycleMapStyle"
+      >
+        {{ mapStyleLabel }}
+      </button>
     </div>
   </section>
 </template>
@@ -31,7 +42,9 @@ import { useRemindersStore } from '@/stores/reminders';
 import { useMapPopups, type MapAddress } from '@/composables/useMapPopups';
 import {
   COLORS,
-  MAP_STYLE,
+  MAP_STYLE_STREETS,
+  MAP_STYLE_SATELLITE,
+  MAP_STYLE_HYBRID,
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
 } from '@/utils/mapConstants';
@@ -190,12 +203,57 @@ function getPointColor(address: Address, mode: string): string {
 /* -------------------------------------
    INITIALISATION CARTE
 ------------------------------------- */
+
+type BaseMapStyle = 'streets' | 'satellite' | 'hybrid';
+
+const baseMapStyle = ref<BaseMapStyle>('streets');
+
+const mapStyleLabel = computed(() => {
+  if (baseMapStyle.value === 'streets') return 'Plan';
+  if (baseMapStyle.value === 'satellite') return 'Satellite';
+  return 'Hybride';
+});
+
+function getBaseMapStyleUrl() {
+  switch (baseMapStyle.value) {
+    case 'satellite':
+      return MAP_STYLE_SATELLITE;
+    case 'hybrid':
+      return MAP_STYLE_HYBRID;
+    default:
+      return MAP_STYLE_STREETS;
+  }
+}
+
+function cycleMapStyle() {
+  if (!map) return;
+
+  if (baseMapStyle.value === 'streets') {
+    baseMapStyle.value = 'satellite';
+  } else if (baseMapStyle.value === 'satellite') {
+    baseMapStyle.value = 'hybrid';
+  } else {
+    baseMapStyle.value = 'streets';
+  }
+
+  mapLoaded = false;
+
+  map.once('idle', () => {
+    mapLoaded = true;
+    rebuildMapLayers();
+    map?.resize();
+  });
+
+  map.setStyle(getBaseMapStyleUrl(), { diff: false });
+}
+
+
 onMounted(async () => {
   await remindersStore.loadReminders();
 
   map = new maplibregl.Map({
     container: 'map',
-    style: MAP_STYLE,
+    style: MAP_STYLE_STREETS,
     center: DEFAULT_CENTER,
     zoom: DEFAULT_ZOOM,
   });
@@ -205,180 +263,11 @@ onMounted(async () => {
   map.on('load', () => {
     mapLoaded = true;
 
-    // Source des adresses normales
-    map!.addSource('address_points', {
-      type: 'geojson',
-      data: emptyGeoJSON(),
-    });
-
-    map!.addLayer({
-      id: 'address-dots',
-      type: 'circle',
-      source: 'address_points',
-      paint: {
-        'circle-radius': 7,
-        'circle-color': COLORS.none,
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-      },
-    });
-
-    // Source des points DPE
-    map!.addSource('dpe_points', {
-      type: 'geojson',
-      data: emptyGeoJSON(),
-    });
-
-    map!.addLayer({
-      id: 'dpe-dots',
-      type: 'circle',
-      source: 'dpe_points',
-      paint: {
-        'circle-radius': 6,
-        'circle-color': [
-          'match',
-          ['get', 'etiquette'],
-          'A',
-          '#10b981',
-          'B',
-          '#22c55e',
-          'C',
-          '#84cc16',
-          'D',
-          '#eab308',
-          'E',
-          '#f97316',
-          'F',
-          '#ef4444',
-          'G',
-          '#991b1b',
-          '#6b7280',
-        ],
-        'circle-stroke-width': 1.5,
-        'circle-stroke-color': '#ffffff',
-      },
-    });
-
-    map!.addSource('parcelles_cadastre', {
-  type: 'geojson',
-  data: emptyGeoJSON(),
-});
-
-map!.addLayer({
-  id: 'parcelles-fill',
-  type: 'fill',
-  source: 'parcelles_cadastre',
-  paint: {
-    'fill-color': '#2563eb',
-    'fill-opacity': 0.08,
-  },
-  layout: {
-    visibility: 'none',
-  },
-});
-
-map!.addLayer({
-  id: 'parcelles-line',
-  type: 'line',
-  source: 'parcelles_cadastre',
-  paint: {
-    'line-color': '#2563eb',
-    'line-width': 1,
-    'line-opacity': 0.45,
-  },
-  layout: {
-    visibility: 'none',
-  },
-});
-
-    map!.addSource('dvf_points', {
-      type: 'geojson',
-      data: emptyGeoJSON(),
-      cluster: true,
-      clusterMaxZoom: 18,
-      clusterRadius: 35,
-    });
-
-    map!.addLayer({
-      id: 'dvf-clusters',
-      type: 'circle',
-      source: 'dvf_points',
-      filter: ['has', 'point_count'],
-      paint: {
-        'circle-radius': 15,
-        'circle-color': '#111827',
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-      },
-    });
-
-    map!.addLayer({
-      id: 'dvf-cluster-labels',
-      type: 'symbol',
-      source: 'dvf_points',
-      filter: ['has', 'point_count'],
-      layout: {
-        'text-field': ['to-string', ['get', 'point_count']],
-        'text-size': 12,
-        'text-allow-overlap': true,
-      },
-      paint: {
-        'text-color': '#ffffff',
-      },
-    });
-
-    map!.addLayer({
-      id: 'dvf-dots',
-      type: 'circle',
-      filter: ['!', ['has', 'point_count']],
-      source: 'dvf_points',
-      paint: {
-        'circle-radius': 9,
-        'circle-color': [
-          'match',
-          ['get', 'main_type'],
-          'maison',
-          '#ef4444',
-          'appartement',
-          '#8b5cf6',
-          'terrain',
-          '#22c55e',
-          'dependance',
-          '#f97316',
-          'local_commercial',
-          '#3b82f6',
-          '#6b7280',
-        ],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-      },
-    });
-
-    map!.addLayer({
-      id: 'dvf-labels',
-      type: 'symbol',
-      filter: ['!', ['has', 'point_count']],
-      source: 'dvf_points',
-      layout: {
-        'text-field': ['to-string', ['get', 'line_count']],
-        'text-size': 11,
-        'text-font': ['Open Sans Bold'],
-        'text-allow-overlap': true,
-      },
-      paint: {
-        'text-color': '#ffffff',
-      },
-    });
-
+    rebuildMapLayers();
     setupWatchers();
     popups.setup(map!);
     setupDpeInteractions();
     setupDvfInteractions();
-    updateDvfPoints();
-    updateAddressPoints();
-    updateAddressPointsWithColors();
-    updateDpePoints();
-    updateLayerVisibility();
     recenterMap();
   });
 });
@@ -394,6 +283,220 @@ onUnmounted(() => {
     map = null;
   }
 });
+
+function rebuildMapLayers() {
+  if (!map || !map.isStyleLoaded()) return;
+
+  try {
+    addAddressLayer();
+    addDpeLayer();
+    addParcellesLayer();
+    addDvfLayer();
+
+    updateAddressPoints();
+    updateAddressPointsWithColors();
+    updateDpePoints();
+    updateDvfPoints();
+    updateParcelles();
+    updateLayerVisibility();
+  } catch (error) {
+    console.error('Erreur pendant la reconstruction des layers MapLibre :', error);
+  }
+}
+
+function addAddressLayer() {
+  if (!map) return;
+
+  if (!map.getSource('address_points')) {
+    map.addSource('address_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+    });
+  }
+
+  if (!map.getLayer('address-dots')) {
+    map.addLayer({
+      id: 'address-dots',
+      type: 'circle',
+      source: 'address_points',
+      paint: {
+        'circle-radius': 7,
+        'circle-color': COLORS.none,
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
+  }
+}
+
+function addDpeLayer() {
+  if (!map) return;
+
+  if (!map.getSource('dpe_points')) {
+    map.addSource('dpe_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+    });
+  }
+
+  if (!map.getLayer('dpe-dots')) {
+    map.addLayer({
+      id: 'dpe-dots',
+      type: 'circle',
+      source: 'dpe_points',
+      paint: {
+        'circle-radius': 6,
+        'circle-color': [
+          'match',
+          ['get', 'etiquette'],
+          'A', '#10b981',
+          'B', '#22c55e',
+          'C', '#84cc16',
+          'D', '#eab308',
+          'E', '#f97316',
+          'F', '#ef4444',
+          'G', '#991b1b',
+          '#6b7280',
+        ],
+        'circle-stroke-width': 1.5,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
+  }
+}
+
+function addParcellesLayer() {
+  if (!map) return;
+
+  if (!map.getSource('parcelles_cadastre')) {
+    map.addSource('parcelles_cadastre', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+    });
+  }
+
+  if (!map.getLayer('parcelles-fill')) {
+    map.addLayer({
+      id: 'parcelles-fill',
+      type: 'fill',
+      source: 'parcelles_cadastre',
+      paint: {
+        'fill-color': '#2563eb',
+        'fill-opacity': 0.08,
+      },
+      layout: {
+        visibility: 'none',
+      },
+    });
+  }
+
+  if (!map.getLayer('parcelles-line')) {
+    map.addLayer({
+      id: 'parcelles-line',
+      type: 'line',
+      source: 'parcelles_cadastre',
+      paint: {
+        'line-color': '#2563eb',
+        'line-width': 1,
+        'line-opacity': 0.45,
+      },
+      layout: {
+        visibility: 'none',
+      },
+    });
+  }
+}
+
+function styleSupportsTextLayers() {
+  return Boolean(map?.getStyle()?.glyphs);
+}
+
+function addDvfLayer() {
+  if (!map) return;
+
+  if (!map.getSource('dvf_points')) {
+    map.addSource('dvf_points', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+      cluster: true,
+      clusterMaxZoom: 18,
+      clusterRadius: 35,
+    });
+  }
+
+  if (!map.getLayer('dvf-clusters')) {
+    map.addLayer({
+      id: 'dvf-clusters',
+      type: 'circle',
+      source: 'dvf_points',
+      filter: ['has', 'point_count'],
+      paint: {
+        'circle-radius': 15,
+        'circle-color': '#111827',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
+  }
+
+  if (styleSupportsTextLayers() && !map.getLayer('dvf-cluster-labels')) {
+    map.addLayer({
+      id: 'dvf-cluster-labels',
+      type: 'symbol',
+      source: 'dvf_points',
+      filter: ['has', 'point_count'],
+      layout: {
+        'text-field': ['to-string', ['get', 'point_count']],
+        'text-size': 12,
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    });
+  }
+
+  if (!map.getLayer('dvf-dots')) {
+    map.addLayer({
+      id: 'dvf-dots',
+      type: 'circle',
+      filter: ['!', ['has', 'point_count']],
+      source: 'dvf_points',
+      paint: {
+        'circle-radius': 9,
+        'circle-color': [
+          'match',
+          ['get', 'main_type'],
+          'maison', '#ef4444',
+          'appartement', '#8b5cf6',
+          'terrain', '#22c55e',
+          'dependance', '#f97316',
+          'local_commercial', '#3b82f6',
+          '#6b7280',
+        ],
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
+    });
+  }
+
+  if (styleSupportsTextLayers() && !map.getLayer('dvf-labels')) {
+    map.addLayer({
+      id: 'dvf-labels',
+      type: 'symbol',
+      filter: ['!', ['has', 'point_count']],
+      source: 'dvf_points',
+      layout: {
+        'text-field': ['to-string', ['get', 'line_count']],
+        'text-size': 11,
+        'text-allow-overlap': true,
+      },
+      paint: {
+        'text-color': '#ffffff',
+      },
+    });
+  }
+}
 
 function updateDvfPoints() {
   if (!mapLoaded || !map) return;
@@ -529,58 +632,25 @@ function updateParcelles() {
   }
 }
 
+function setLayerVisibility(layerId: string, visibility: 'visible' | 'none') {
+  if (!map || !map.getLayer(layerId)) return;
+  map.setLayoutProperty(layerId, 'visibility', visibility);
+}
+
 function updateLayerVisibility() {
   if (!mapLoaded || !map) return;
 
   const isDpeMode = dashboard.activeMainMode === 'dpe';
   const isDvfMode = dashboard.activeMainMode === 'dvf';
 
-  map.setLayoutProperty(
-    'address-dots',
-    'visibility',
-    isDpeMode || isDvfMode ? 'none' : 'visible'
-  );
-
-  map.setLayoutProperty(
-    'dpe-dots',
-    'visibility',
-    isDpeMode ? 'visible' : 'none'
-  );
-
-  map.setLayoutProperty(
-    'dvf-dots',
-    'visibility',
-    isDvfMode ? 'visible' : 'none'
-  );
-
-  map.setLayoutProperty(
-    'dvf-labels',
-    'visibility',
-    isDvfMode ? 'visible' : 'none'
-  );
-
-  map.setLayoutProperty(
-    'dvf-clusters',
-    'visibility',
-    isDvfMode ? 'visible' : 'none'
-  );
-
-  map.setLayoutProperty(
-    'dvf-cluster-labels',
-    'visibility',
-    isDvfMode ? 'visible' : 'none'
-  );
-  map.setLayoutProperty(
-  'parcelles-fill',
-  'visibility',
-  isDvfMode && showParcelles.value ? 'visible' : 'none'
-);
-
-map.setLayoutProperty(
-  'parcelles-line',
-  'visibility',
-  isDvfMode && showParcelles.value ? 'visible' : 'none'
-);
+  setLayerVisibility('address-dots', isDpeMode || isDvfMode ? 'none' : 'visible');
+  setLayerVisibility('dpe-dots', isDpeMode ? 'visible' : 'none');
+  setLayerVisibility('dvf-dots', isDvfMode ? 'visible' : 'none');
+  setLayerVisibility('dvf-labels', isDvfMode ? 'visible' : 'none');
+  setLayerVisibility('dvf-clusters', isDvfMode ? 'visible' : 'none');
+  setLayerVisibility('dvf-cluster-labels', isDvfMode ? 'visible' : 'none');
+  setLayerVisibility('parcelles-fill', isDvfMode && showParcelles.value ? 'visible' : 'none');
+  setLayerVisibility('parcelles-line', isDvfMode && showParcelles.value ? 'visible' : 'none');
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
@@ -1228,6 +1298,29 @@ watch(
 
 .parcelles-btn.active {
   background: #2563eb;
+  color: #fff;
+}
+
+
+.map-style-btn {
+  position: absolute;
+  top: 96px;
+  right: 52px;
+  z-index: 2;
+  height: 32px;
+  padding: 0 10px;
+  background: #fff;
+  border: none;
+  border-radius: 8px;
+  box-shadow: 0 1px 4px rgba(0, 0, 0, 0.2);
+  cursor: pointer;
+  font-size: 12px;
+  font-weight: 600;
+}
+
+.map-style-btn.style-satellite,
+.map-style-btn.style-hybrid {
+  background: #111827;
   color: #fff;
 }
 </style>
