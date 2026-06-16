@@ -405,6 +405,33 @@ function addParcellesLayer() {
       },
     });
   }
+
+  if (!map.getLayer('parcelles-labels')) {
+  map.addLayer({
+    id: 'parcelles-labels',
+    type: 'symbol',
+    source: 'parcelles_cadastre',
+    minzoom: 17,
+
+    layout: {
+      'text-field': [
+        'concat',
+        ['to-string', ['get', 'contenance']],
+        ' m²'
+      ],
+      'text-size': 11,
+      'text-allow-overlap': false,
+      'text-ignore-placement': false,
+    },
+
+    paint: {
+      'text-color': '#111827',
+      'text-halo-color': '#ffffff',
+      'text-halo-width': 1.5,
+    },
+  });
+}
+
 }
 
 function styleSupportsTextLayers() {
@@ -628,6 +655,7 @@ function updateParcelles() {
   const src = map.getSource('parcelles_cadastre') as maplibregl.GeoJSONSource | undefined;
 
   if (src) {
+    console.log('PARCELLE TEST', props.parcellesGeojson?.features?.[0]);
     src.setData(props.parcellesGeojson || emptyGeoJSON());
   }
 }
@@ -652,6 +680,11 @@ function updateLayerVisibility() {
 
   setLayerVisibility('parcelles-fill', showParcelles.value ? 'visible' : 'none');
   setLayerVisibility('parcelles-line', showParcelles.value ? 'visible' : 'none');
+
+  setLayerVisibility(
+  'parcelles-labels',
+  showParcelles.value ? 'visible' : 'none'
+);
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
