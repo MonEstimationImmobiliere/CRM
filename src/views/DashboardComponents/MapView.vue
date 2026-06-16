@@ -649,8 +649,9 @@ function updateLayerVisibility() {
   setLayerVisibility('dvf-labels', isDvfMode ? 'visible' : 'none');
   setLayerVisibility('dvf-clusters', isDvfMode ? 'visible' : 'none');
   setLayerVisibility('dvf-cluster-labels', isDvfMode ? 'visible' : 'none');
-  setLayerVisibility('parcelles-fill', isDvfMode && showParcelles.value ? 'visible' : 'none');
-  setLayerVisibility('parcelles-line', isDvfMode && showParcelles.value ? 'visible' : 'none');
+
+  setLayerVisibility('parcelles-fill', showParcelles.value ? 'visible' : 'none');
+  setLayerVisibility('parcelles-line', showParcelles.value ? 'visible' : 'none');
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
