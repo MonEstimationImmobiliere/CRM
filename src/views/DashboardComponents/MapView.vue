@@ -365,11 +365,122 @@ function addDpeLayer() {
   }
 }
 
+function pointInRing(point: [number, number], ring: any[]): boolean {
+  const [x, y] = point;
+  let inside = false;
+
+  for (let i = 0, j = ring.length - 1; i < ring.length; j = i++) {
+    const xi = Number(ring[i][0]);
+    const yi = Number(ring[i][1]);
+    const xj = Number(ring[j][0]);
+    const yj = Number(ring[j][1]);
+
+    const intersect =
+      yi > y !== yj > y &&
+      x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+
+    if (intersect) inside = !inside;
+  }
+
+  return inside;
+}
+
+function getParcelleLabelPoint(feature: any): [number, number] | null {
+  const geometry = feature.geometry;
+  if (!geometry) return null;
+
+  let polygons: any[] = [];
+
+  if (geometry.type === 'Polygon') {
+    polygons = [geometry.coordinates];
+  }
+
+  if (geometry.type === 'MultiPolygon') {
+    polygons = geometry.coordinates || [];
+  }
+
+  for (const polygon of polygons) {
+    const outerRing = polygon?.[0];
+    if (!outerRing?.length) continue;
+
+    const lons = outerRing.map((c: any) => Number(c[0]));
+    const lats = outerRing.map((c: any) => Number(c[1]));
+
+    const minLon = Math.min(...lons);
+    const maxLon = Math.max(...lons);
+    const minLat = Math.min(...lats);
+    const maxLat = Math.max(...lats);
+
+    const candidates: [number, number][] = [
+      [(minLon + maxLon) / 2, (minLat + maxLat) / 2],
+      [avg(lons), avg(lats)],
+      [minLon + (maxLon - minLon) * 0.35, minLat + (maxLat - minLat) * 0.5],
+      [minLon + (maxLon - minLon) * 0.65, minLat + (maxLat - minLat) * 0.5],
+      [minLon + (maxLon - minLon) * 0.5, minLat + (maxLat - minLat) * 0.35],
+      [minLon + (maxLon - minLon) * 0.5, minLat + (maxLat - minLat) * 0.65],
+    ];
+
+    for (const candidate of candidates) {
+      if (pointInRing(candidate, outerRing)) {
+        return candidate;
+      }
+    }
+
+    return outerRing[0] as [number, number];
+  }
+
+  return null;
+}
+
+function buildParcellesLabelsGeojson(
+  sourceGeojson: GeoJSON.FeatureCollection
+): GeoJSON.FeatureCollection {
+  const labelsByParcelle = new Map<string, GeoJSON.Feature>();
+
+  const features = sourceGeojson?.features || [];
+
+  features.forEach((feature: any) => {
+    const props = feature.properties || {};
+    const id = String(
+      props.id_parcelle || props.id || props.parcelle || JSON.stringify(feature.geometry)
+    );
+
+    if (labelsByParcelle.has(id)) return;
+
+    const point = getParcelleLabelPoint(feature);
+    if (!point) return;
+
+    labelsByParcelle.set(id, {
+      type: 'Feature',
+      geometry: {
+        type: 'Point',
+        coordinates: point,
+      },
+      properties: {
+        id_parcelle: id,
+        label: `${props.contenance || ''} m²`,
+      },
+    } as GeoJSON.Feature);
+  });
+
+  return {
+    type: 'FeatureCollection',
+    features: Array.from(labelsByParcelle.values()),
+  };
+}
+
 function addParcellesLayer() {
   if (!map) return;
 
   if (!map.getSource('parcelles_cadastre')) {
     map.addSource('parcelles_cadastre', {
+      type: 'geojson',
+      data: emptyGeoJSON(),
+    });
+  }
+
+  if (!map.getSource('parcelles_labels')) {
+    map.addSource('parcelles_labels', {
       type: 'geojson',
       data: emptyGeoJSON(),
     });
@@ -407,31 +518,25 @@ function addParcellesLayer() {
   }
 
   if (!map.getLayer('parcelles-labels')) {
-  map.addLayer({
-    id: 'parcelles-labels',
-    type: 'symbol',
-    source: 'parcelles_cadastre',
-    minzoom: 17,
-
-    layout: {
-      'text-field': [
-        'concat',
-        ['to-string', ['get', 'contenance']],
-        ' m²'
-      ],
-      'text-size': 11,
-      'text-allow-overlap': false,
-      'text-ignore-placement': false,
-    },
-
-    paint: {
-      'text-color': '#111827',
-      'text-halo-color': '#ffffff',
-      'text-halo-width': 1.5,
-    },
-  });
-}
-
+    map.addLayer({
+      id: 'parcelles-labels',
+      type: 'symbol',
+      source: 'parcelles_labels',
+      minzoom: 17,
+      layout: {
+        'text-field': ['get', 'label'],
+        'text-size': 11,
+        'text-allow-overlap': false,
+        'text-ignore-placement': false,
+        visibility: 'none',
+      },
+      paint: {
+        'text-color': '#111827',
+        'text-halo-color': '#ffffff',
+        'text-halo-width': 1.5,
+      },
+    });
+  }
 }
 
 function styleSupportsTextLayers() {
@@ -652,11 +757,16 @@ function toggleParcelles() {
 function updateParcelles() {
   if (!mapLoaded || !map) return;
 
-  const src = map.getSource('parcelles_cadastre') as maplibregl.GeoJSONSource | undefined;
+  const parcellesData = (props.parcellesGeojson || emptyGeoJSON()) as GeoJSON.FeatureCollection;
 
+  const src = map.getSource('parcelles_cadastre') as maplibregl.GeoJSONSource | undefined;
   if (src) {
-    console.log('PARCELLE TEST', props.parcellesGeojson?.features?.[0]);
-    src.setData(props.parcellesGeojson || emptyGeoJSON());
+    src.setData(parcellesData);
+  }
+
+  const labelSrc = map.getSource('parcelles_labels') as maplibregl.GeoJSONSource | undefined;
+  if (labelSrc) {
+    labelSrc.setData(buildParcellesLabelsGeojson(parcellesData));
   }
 }
 
