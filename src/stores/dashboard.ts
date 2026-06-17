@@ -200,8 +200,7 @@ if (mode === 'dvf') {
     };
   }
 
-  // --- Actions ---
-
+  // --- Actions ---10
 async function fetchDVF() {
   try {
     const codeInsee =
@@ -209,64 +208,108 @@ async function fetchDVF() {
       selectedCity.value?.codeInsee ||
       selectedCity.value?.code_insee;
 
-      const idFantoir = selectedCodeIdFantoir.value || null;
+    const idFantoir = selectedCodeIdFantoir.value || null;
 
     if (!codeInsee) {
       dvfPoints.value = [];
       return;
     }
 
-const json = await DvfService.getDVF(
-  codeInsee,
-  dvfFilterRange.value,
-  idFantoir
-);
-    console.log('DVF RAW JSON =', json);
-console.log('DVF codeInsee =', codeInsee);
-console.log('DVF range =', dvfFilterRange.value);
+    const json = await DvfService.getDVF(
+      codeInsee,
+      dvfFilterRange.value,
+      idFantoir
+    );
 
-console.log('DVF selectedCodeIdFantoir =', selectedCodeIdFantoir.value);
+    let historical: any[] = [];
 
-dvfPoints.value = (json || [])
-.map((p: any) => ({
-  lat: Number(p.lat ?? p.latitude),
-  lon: Number(p.lon ?? p.longitude),
+    if (dvfFilterRange.value === 'all') {
+      historical = await DvfService.getHistorical(codeInsee);
+    }
 
-  id_mutation: p.id_mutation || '',
-  numero_disposition: p.numero_disposition ?? null,
+    const mergedJson = [
+      ...(json || []),
+      ...(historical || []),
+    ];
 
-  adresse: p.adresse || '',
-  date_mutation: p.date_mutation,
+    console.log('DVF codeInsee =', codeInsee);
+    console.log('DVF range =', dvfFilterRange.value);
+    console.log('DVF selectedCodeIdFantoir =', selectedCodeIdFantoir.value);
+    console.log('DVF RAW JSON =', json?.length || 0);
+    console.log('DVF HISTORICAL =', historical.length);
+    console.log('DVF MERGED =', mergedJson.length);
+    console.log('DVF HISTORICAL SAMPLE =', historical[0]);
 
-  valeur_fonciere: p.valeur_fonciere
-    ? Number(p.valeur_fonciere)
-    : null,
+    dvfPoints.value = mergedJson
+      .map((p: any) => ({
+        ...p,
 
-  main_type: p.main_type || 'autre',
-  line_count: Number(p.line_count ?? 1),
+        lat: Number(p.lat ?? p.latitude),
+        lon: Number(p.lon ?? p.longitude),
 
-  built_items: p.built_items || [],
-land_items: p.land_items || [],
+        id_mutation: p.id_mutation || '',
+        numero_disposition: p.numero_disposition ?? null,
+
+        adresse: p.adresse || '',
+        date_mutation: p.date_mutation,
+
+        valeur_fonciere: p.valeur_fonciere
+          ? Number(p.valeur_fonciere)
+          : null,
+
+        main_type: p.main_type || p.type_local?.toLowerCase() || 'autre',
+        line_count: Number(p.line_count ?? 1),
+
+    built_items: p.built_items?.length
+  ? p.built_items
+  : p.type_local
+    ? [
+        {
+          type_local: p.type_local,
+          surface_reelle_bati: p.surface_reelle_bati
+            ? Number(p.surface_reelle_bati)
+            : null,
+          nombre_pieces_principales: p.nombre_pieces_principales,
+        },
+      ]
+    : [],
+
+land_items: p.land_items?.length
+  ? p.land_items
+  : p.surface_terrain
+    ? [
+        {
+          nature_culture: p.nature_culture,
+          surface_terrain: Number(p.surface_terrain),
+          id_parcelle: p.id_parcelle,
+        },
+      ]
+    : [],
+
 total_surface_terrain: p.total_surface_terrain
   ? Number(p.total_surface_terrain)
-  : null,
-}))
-  .filter(
-    (p: IDvfPoint) =>
-      !Number.isNaN(p.lat) &&
-      !Number.isNaN(p.lon) &&
-      p.lat !== 0 &&
-      p.lon !== 0
-  );
+  : p.surface_terrain
+    ? Number(p.surface_terrain)
+    : null,
+      }))
+      .filter(
+        (p: IDvfPoint) =>
+          !Number.isNaN(p.lat) &&
+          !Number.isNaN(p.lon) &&
+          p.lat !== 0 &&
+          p.lon !== 0
+      );
 
     console.log('DVF POINTS', dvfPoints.value.length);
-await fetchParcelles();
+    console.log('DVF POINTS SAMPLE =', dvfPoints.value[0]);
 
+    await fetchParcelles();
   } catch (e) {
     console.error('fetchDVF error', e);
     dvfPoints.value = [];
   }
 }
+
 
 async function fetchParcelles() {
 

@@ -1,33 +1,325 @@
 <template>
   <section class="mapContainer">
-    <div class="map-wrapper">
-      <div id="map" class="map"></div>
+    <div class="map-layout">
+      <div class="map-wrapper">
+        <div id="map" class="map"></div>
 
-      <button
-        class="recenter-btn"
-        title="Recentrer la carte"
-        @click="handleRecenter"
-      >
-        <el-icon :size="20"><MapLocation /></el-icon>
-      </button>
+        <button
+          class="recenter-btn"
+          title="Recentrer la carte"
+          @click="handleRecenter"
+        >
+          <el-icon :size="20"><MapLocation /></el-icon>
+        </button>
 
-      <button
-        class="parcelles-btn"
-        :class="{ active: showParcelles }"
-        title="Afficher / masquer les parcelles"
-        @click="toggleParcelles"
-      >
-        Parcelles
-      </button>
+        <button
+          class="parcelles-btn"
+          :class="{ active: showParcelles }"
+          title="Afficher / masquer les parcelles"
+          @click="toggleParcelles"
+        >
+          Parcelles
+        </button>
 
-      <button
-        class="map-style-btn"
-        :class="`style-${baseMapStyle}`"
-        title="Changer le fond de carte"
-        @click="cycleMapStyle"
+        <button
+          class="map-style-btn"
+          :class="`style-${baseMapStyle}`"
+          title="Changer le fond de carte"
+          @click="cycleMapStyle"
+        >
+          {{ mapStyleLabel }}
+        </button>
+      </div>
+
+      <aside class="map-side-panel" :class="{ empty: !selectedMapItem && !selectedMapItems.length }">
+        <div class="side-panel-header">
+          <div>
+            <div class="side-panel-eyebrow">{{ sidePanelEyebrow }}</div>
+            <h3>{{ sidePanelTitle }}</h3>
+          </div>
+
+          <button
+            v-if="selectedMapItem || selectedMapItems.length"
+            class="side-close"
+            title="Fermer"
+            @click="closeSidePanel"
+          >
+            ×
+          </button>
+        </div>
+
+        <div v-if="!selectedMapItem && !selectedMapItems.length" class="side-empty">
+          Cliquez sur une pastille, une vente DVF, un DPE ou une parcelle pour afficher les détails ici.
+        </div>
+
+        <div v-else class="side-content">
+<template v-if="selectedMapType === 'address'">
+  <div class="detail-card">
+    <div class="muted">Adresse</div>
+
+    <div class="detail-title">
+      {{ formatAddressSideTitle(selectedMapItem) }}
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <span>Numéro</span>
+        <strong>{{ selectedMapItem.numero_full || selectedMapItem.numero || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Voie</span>
+        <strong>{{ selectedMapItem.nom_voie || selectedMapItem.adresse || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Commune</span>
+        <strong>{{ selectedMapItem.nom_commune || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Code postal</span>
+        <strong>{{ selectedMapItem.code_postal || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Parcelle</span>
+        <strong>
+          {{ selectedMapItem.id_parcelle || selectedMapItem.cad_parcelles || '-' }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Terrain</span>
+        <strong>
+          {{
+            formatSurface(
+              selectedMapItem.contenance ||
+              selectedMapItem.surface_terrain ||
+              selectedMapItem.total_surface_terrain
+            )
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Unités</span>
+        <strong>
+          {{
+            selectedMapItem.units_count ||
+            selectedMapItem.nombre_unites ||
+            selectedMapItem.nombre_units ||
+            '-'
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Ventes DVF</span>
+        <strong>{{ selectedMapItem.nombre_ventes || 0 }}</strong>
+      </div>
+
+      <div>
+        <span>Dernière MAJ</span>
+        <strong>{{ formatDate(selectedMapItem.date_maj) }}</strong>
+      </div>
+
+      <div>
+        <span>Prix estimé</span>
+        <strong>{{ formatCurrency(selectedMapItem.dernier_prix_estime) }}</strong>
+      </div>
+    </div>
+
+    <!-- Liste des biens à l'adresse -->
+
+    <div
+      v-if="selectedAddressUnits.length > 1"
+      class="sub-section"
+    >
+      <h4>Biens à cette adresse</h4>
+
+      <div
+        v-for="(unit, index) in selectedAddressUnits"
+        :key="unit.unit_id || unit.id || index"
+        class="list-row"
+        @click="openAddressUnit(unit)"
       >
-        {{ mapStyleLabel }}
-      </button>
+        <strong>{{ formatAddressUnitLabel(unit) }}</strong>
+
+        <span>
+          {{
+            unit.row_type === 'unit'
+              ? 'Appartement / lot'
+              : 'Immeuble principal'
+          }}
+        </span>
+
+        <small v-if="unit.dernier_prix_estime">
+          Estimé : {{ formatCurrency(unit.dernier_prix_estime) }}
+        </small>
+      </div>
+    </div>
+
+    <!-- Rue groupée -->
+
+    <button
+      v-if="isStreetGroupPoint(selectedMapItem)"
+      class="primary-action"
+      @click="openStreetFromMap(selectedMapItem)"
+    >
+      Afficher la rue
+    </button>
+
+    <!-- Adresse unique -->
+
+    <button
+      v-else-if="
+        selectedAddressUnits.length === 1 &&
+        canOpenProperty(selectedMapItem)
+      "
+      class="primary-action"
+      @click="emitEditSelectedAddress"
+    >
+      Ouvrir / modifier la fiche
+    </button>
+  </div>
+</template>
+
+<template v-else-if="selectedMapType === 'dvf'">
+  <div class="detail-card">
+    <div
+      v-for="(sale, saleIndex) in selectedDvfSalesSorted"
+      :key="sale.id_mutation || saleIndex"
+      class="sub-section dvf-sale-section"
+    >
+      <div class="sale-header">
+        <span :class="getSaleBadgeClass(sale)">
+          {{ getSaleBadgeLabel(sale) }}
+        </span>
+
+        <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
+      </div>
+
+      <div class="muted">
+        Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
+      </div>
+
+      <div class="detail-grid dvf-simple-grid">
+        <div v-if="sale.total_surface_terrain">
+          <span>Terrain</span>
+          <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
+        </div>
+
+        <div
+          v-for="(item, index) in parseJsonArray(sale.built_items).filter((i:any) => !isDependance(i))"
+          :key="index"
+        >
+          <span>{{ item.type_local || 'Bien' }}</span>
+          <strong>
+            <template v-if="item.surface_reelle_bati">
+              {{ item.surface_reelle_bati }} m²
+            </template>
+            <template v-if="item.nombre_pieces_principales">
+              · {{ item.nombre_pieces_principales }} pièce(s)
+            </template>
+          </strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+<template v-else-if="selectedMapType === 'dvfCluster'">
+  <div class="detail-card">
+    <div
+      v-for="(sale, saleIndex) in selectedMapItemsSorted"
+      :key="sale.id_mutation || saleIndex"
+      class="sub-section dvf-sale-section"
+    >
+      <div class="sale-header">
+        <span :class="getSaleBadgeClass(sale)">
+          {{ getSaleBadgeLabel(sale) }}
+        </span>
+
+        <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
+      </div>
+
+      <div class="muted">
+        Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
+      </div>
+
+      <div class="detail-grid dvf-simple-grid">
+        <div v-if="sale.total_surface_terrain">
+          <span>Terrain</span>
+          <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
+        </div>
+
+        <div
+          v-for="(item, index) in parseJsonArray(sale.built_items).filter((i:any) => !isDependance(i))"
+          :key="index"
+        >
+          <span>{{ item.type_local || 'Bien' }}</span>
+          <strong>
+            <template v-if="item.surface_reelle_bati">
+              {{ item.surface_reelle_bati }} m²
+            </template>
+            <template v-if="item.nombre_pieces_principales">
+              · {{ item.nombre_pieces_principales }} pièce(s)
+            </template>
+          </strong>
+        </div>
+      </div>
+    </div>
+  </div>
+</template>
+
+          <template v-else-if="selectedMapType === 'dpe'">
+            <div class="detail-card">
+              <div class="detail-title">{{ selectedMapItem.adresse || 'Adresse inconnue' }}</div>
+
+              <div class="dpe-badge" :class="`dpe-${selectedMapItem.etiquette || 'x'}`">
+                DPE {{ selectedMapItem.etiquette || '-' }}
+              </div>
+
+              <div class="detail-grid">
+                <div>
+                  <span>Type</span>
+                  <strong>{{ selectedMapItem.type || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Date diagnostic</span>
+                  <strong>{{ formatDate(selectedMapItem.date) }}</strong>
+                </div>
+              </div>
+            </div>
+          </template>
+
+          <template v-else-if="selectedMapType === 'parcelle'">
+            <div class="detail-card">
+              <div class="detail-title">Parcelle cadastrale</div>
+
+              <div class="detail-grid">
+                <div>
+                  <span>Parcelle</span>
+                  <strong>{{ selectedMapItem.id_parcelle || selectedMapItem.id || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Surface terrain</span>
+                  <strong>{{ formatSurface(selectedMapItem.contenance) }}</strong>
+                </div>
+                <div>
+                  <span>Section</span>
+                  <strong>{{ selectedMapItem.section || '-' }}</strong>
+                </div>
+                <div>
+                  <span>Numéro</span>
+                  <strong>{{ selectedMapItem.numero || '-' }}</strong>
+                </div>
+              </div>
+            </div>
+          </template>
+        </div>
+      </aside>
     </div>
   </section>
 </template>
@@ -39,7 +331,6 @@ import 'maplibre-gl/dist/maplibre-gl.css';
 import { MapLocation } from '@element-plus/icons-vue';
 import { useDashboardStore } from '@/stores/dashboard';
 import { useRemindersStore } from '@/stores/reminders';
-import { useMapPopups, type MapAddress } from '@/composables/useMapPopups';
 import {
   COLORS,
   MAP_STYLE_STREETS,
@@ -102,21 +393,136 @@ const emit = defineEmits<{
 const dashboard = useDashboardStore();
 const remindersStore = useRemindersStore();
 
-let dpePopup: maplibregl.Popup | null = null;
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
 
 const showParcelles = ref(false);
 
+type MapSidePanelType = 'address' | 'dvf' | 'dvfCluster' | 'dpe' | 'parcelle' | null;
+
+const selectedMapType = ref<MapSidePanelType>(null);
+const selectedMapItem = ref<any | null>(null);
+const selectedMapItems = ref<any[]>([]);
+
+const sidePanelEyebrow = computed(() => {
+if (selectedMapType.value === 'dvf' || selectedMapType.value === 'dvfCluster') {
+  return 'Historique des ventes';
+}
+
+  return 'Détail carte';
+});
+
+const selectedDvfSalesSorted = computed(() => {
+  return [...selectedDvfSales.value].sort((a: any, b: any) =>
+    String(b.date_mutation || '').localeCompare(String(a.date_mutation || ''))
+  );
+});
+
+const selectedMapItemsSorted = computed(() => {
+  return [...selectedMapItems.value].sort((a: any, b: any) =>
+    String(b.date_mutation || '').localeCompare(String(a.date_mutation || ''))
+  );
+});
+const sidePanelTitle = computed(() => {
+  switch (selectedMapType.value) {
+    case 'address':
+      return 'Adresse / propriété';
+    case 'dvf':
+      return selectedMapItem.value?.adresse || selectedDvfSales.value[0]?.adresse || 'Adresse inconnue';
+    case 'dvfCluster':
+  return selectedMapItemsSorted.value[0]?.adresse || 'Adresse inconnue';
+    case 'dpe':
+      return 'Diagnostic DPE';
+    case 'parcelle':
+      return 'Parcelle';
+    default:
+      return 'Aucun élément sélectionné';
+  }
+});
+
+function openAddressUnit(unit: any) {
+  emit('edit-property', unit as Address);
+}
+
+function getSaleTypeLabel(sale: any): string {
+  const builtItem = parseJsonArray(sale?.built_items).find((item: any) => !isDependance(item));
+  const label = builtItem?.type_local || sale?.type_local || sale?.main_type || 'Bien';
+
+  return String(label).trim() || 'Bien';
+}
+
+function normalizeTypeForClass(value: any): string {
+  return String(value || '')
+    .toLowerCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .trim();
+}
+
+function getSaleBadgeClass(sale: any): string {
+  const type = normalizeTypeForClass(getSaleTypeLabel(sale));
+
+  if (type.includes('maison')) return 'sale-badge sale-badge-green';
+  if (type.includes('appartement')) return 'sale-badge sale-badge-blue';
+  if (type.includes('local')) return 'sale-badge sale-badge-orange';
+  if (type.includes('dependance')) return 'sale-badge sale-badge-purple';
+  if (type.includes('terrain') || type.includes('sol')) return 'sale-badge sale-badge-brown';
+
+  return 'sale-badge sale-badge-gray';
+}
+
+function getSaleBadgeLabel(sale: any): string {
+  return getSaleTypeLabel(sale);
+}
+
+function getBuiltLotLabel(sale: any): string {
+  const item = parseJsonArray(sale.built_items).find((i: any) => !isDependance(i));
+  const lots = Array.isArray(item?.lots) ? item.lots : [];
+  const lot = lots[0] || item?.lot_number || item?.lot || null;
+
+  return lot ? ` · Lot ${lot}` : '';
+}
+
+function formatAddressUnitLabel(unit: any): string {
+  if (unit.row_type === 'unit') {
+    return unit.unit_type
+      ? `${unit.unit_type} / ${unit.apart_number || unit.lot_number || unit.unit_id || '-'}`
+      : `Lot ${unit.apart_number || unit.lot_number || unit.unit_id || '-'}`;
+  }
+
+  return unit.property_type || unit.type || 'Immeuble';
+}
+
 const currentMode = computed(() => dashboard.activeMainMode || 'prospection');
 
-// Popup composable
-const popups = useMapPopups({
-  getAddresses: () => props.addresses as MapAddress[],
-  onEditProperty: (property: MapAddress) =>
-    emit('edit-property', property as Address),
-  flyTo,
+const selectedDvfSales = computed(() => {
+  if (selectedMapType.value !== 'dvf' || !selectedMapItem.value) {
+    return [];
+  }
+
+  const sales = parseJsonArray(selectedMapItem.value.sales_detail);
+
+  return sales.length ? sales : [selectedMapItem.value];
 });
+
+const selectedDvfLineCount = computed(() => {
+  return selectedDvfSales.value.reduce((total: number, sale: any) => {
+    return total + Number(sale.line_count || parseJsonArray(sale.built_items).length || 1);
+  }, 0);
+});
+
+const selectedDvfDependanceCount = computed(() => {
+  return selectedDvfSales.value.reduce((total: number, sale: any) => {
+    return total + countDependances(parseJsonArray(sale.built_items));
+  }, 0);
+});
+
+const selectedDvfTotalTerrain = computed(() => {
+  return selectedDvfSales.value.reduce((total: number, sale: any) => {
+    return total + Number(sale.total_surface_terrain || 0);
+  }, 0);
+});
+
 
 // Computed: Set des property_id ayant un rappel
 const reminderPropertyIds = computed(() => {
@@ -265,7 +671,7 @@ onMounted(async () => {
 
     rebuildMapLayers();
     setupWatchers();
-    popups.setup(map!);
+    setupAddressInteractions();
     setupDpeInteractions();
     setupDvfInteractions();
     recenterMap();
@@ -273,11 +679,8 @@ onMounted(async () => {
 });
 
 onUnmounted(() => {
-  if (dpePopup) {
-    dpePopup.remove();
-    dpePopup = null;
-  }
-  popups.close();
+  closeSidePanel();
+
   if (map) {
     map.remove();
     map = null;
@@ -288,16 +691,17 @@ function rebuildMapLayers() {
   if (!map || !map.isStyleLoaded()) return;
 
   try {
+    addParcellesLayer();
+
     addAddressLayer();
     addDpeLayer();
-    addParcellesLayer();
     addDvfLayer();
 
+    updateParcelles();
     updateAddressPoints();
     updateAddressPointsWithColors();
     updateDpePoints();
     updateDvfPoints();
-    updateParcelles();
     updateLayerVisibility();
   } catch (error) {
     console.error('Erreur pendant la reconstruction des layers MapLibre :', error);
@@ -432,6 +836,26 @@ function getParcelleLabelPoint(feature: any): [number, number] | null {
   return null;
 }
 
+const selectedAddressUnits = computed(() => {
+  if (selectedMapType.value !== 'address' || !selectedMapItem.value) {
+    return [];
+  }
+
+  const key =
+    selectedMapItem.value.id_fantoir_long ||
+    selectedMapItem.value.id_fantoir ||
+    '';
+
+  if (!key) return [];
+
+  return props.addresses.filter((a: any) => {
+    return (
+      a.id_fantoir_long === key ||
+      a.id_fantoir === key
+    );
+  });
+});
+
 function buildParcellesLabelsGeojson(
   sourceGeojson: GeoJSON.FeatureCollection
 ): GeoJSON.FeatureCollection {
@@ -501,6 +925,22 @@ function addParcellesLayer() {
     });
   }
 
+  if (!map.getLayer('parcelle-highlight')) {
+  map.addLayer({
+    id: 'parcelle-highlight',
+    type: 'fill',
+    source: 'parcelles_cadastre',
+    filter: ['==', ['get', 'id_parcelle'], ''],
+    paint: {
+      'fill-color': '#facc15',
+      'fill-opacity': 0.35,
+    },
+    layout: {
+      visibility: 'none',
+    },
+  });
+}
+
   if (!map.getLayer('parcelles-line')) {
     map.addLayer({
       id: 'parcelles-line',
@@ -553,6 +993,9 @@ function addDvfLayer() {
       cluster: true,
       clusterMaxZoom: 18,
       clusterRadius: 35,
+      clusterProperties: {
+        sale_count: ['+', ['get', 'sale_count']],
+      },
     });
   }
 
@@ -578,7 +1021,7 @@ function addDvfLayer() {
       source: 'dvf_points',
       filter: ['has', 'point_count'],
       layout: {
-        'text-field': ['to-string', ['get', 'point_count']],
+        'text-field': ['to-string', ['coalesce', ['get', 'sale_count'], ['get', 'point_count']]],
         'text-size': 12,
         'text-allow-overlap': true,
       },
@@ -595,20 +1038,11 @@ function addDvfLayer() {
       filter: ['!', ['has', 'point_count']],
       source: 'dvf_points',
       paint: {
-        'circle-radius': 9,
-        'circle-color': [
-          'match',
-          ['get', 'main_type'],
-          'maison', '#ef4444',
-          'appartement', '#8b5cf6',
-          'terrain', '#22c55e',
-          'dependance', '#f97316',
-          'local_commercial', '#3b82f6',
-          '#6b7280',
-        ],
-        'circle-stroke-width': 2,
-        'circle-stroke-color': '#ffffff',
-      },
+  'circle-radius': 9,
+  'circle-color': '#111827',
+  'circle-stroke-width': 2,
+  'circle-stroke-color': '#ffffff',
+},
     });
   }
 
@@ -619,7 +1053,7 @@ function addDvfLayer() {
       filter: ['!', ['has', 'point_count']],
       source: 'dvf_points',
       layout: {
-        'text-field': ['to-string', ['get', 'line_count']],
+        'text-field': ['to-string', ['get', 'sale_count']],
         'text-size': 11,
         'text-allow-overlap': true,
       },
@@ -630,39 +1064,214 @@ function addDvfLayer() {
   }
 }
 
+function normalizeDvfStreet(adresse: string): string {
+  return String(adresse || '')
+    .toUpperCase()
+    .normalize('NFD')
+    .replace(/[\u0300-\u036f]/g, '')
+    .replace(/^\s*\d+\s*(BIS|TER|QUATER)?\s+/i, '')
+    .replace(/\bRUE\b/g, 'RUE')
+    .replace(/\bAVENUE\b/g, 'AV')
+    .replace(/\bBOULEVARD\b/g, 'BD')
+    .replace(/\bROUTE\b/g, 'RTE')
+    .replace(/\bCHEMIN\b/g, 'CHE')
+    .replace(/\s+/g, ' ')
+    .trim();
+}
+
+function getDvfPointKey(p: any): string {
+  return getDvfSaleKey(p);
+}
+function getDvfSaleKey(p: any): string {
+  const date = String(p.date_mutation || '').substring(0, 10);
+  const price = Number(p.valeur_fonciere || 0);
+
+  return `${date}|${price}`;
+}
 function updateDvfPoints() {
   if (!mapLoaded || !map) return;
 
-  const features = (props.dvfPoints || [])
-    .filter(p => p.lat && p.lon)
-    .map(p => ({
+  const grouped = new Map<string, any[]>();
+
+  (props.dvfPoints || [])
+    .filter((p: any) => p.lat && p.lon)
+    .forEach((p: any) => {
+      const key = getDvfPointKey(p);
+
+      if (!grouped.has(key)) {
+        grouped.set(key, []);
+      }
+
+      grouped.get(key)!.push(p);
+    });
+
+  const features = Array.from(grouped.values()).map((group: any[]) => {
+    const first = group[0];
+    const salesMap = new Map<string, any>();
+
+    group.forEach((p: any) => {
+      const saleKey = getDvfSaleKey(p);
+
+      if (!salesMap.has(saleKey)) {
+        salesMap.set(saleKey, {
+          ...p,
+          built_items: [],
+          land_items: [],
+          parcelles_ids: [],
+          line_count: 0,
+          total_surface_terrain: 0,
+        });
+      }
+
+      const sale = salesMap.get(saleKey);
+
+      sale.line_count += Number(p.line_count ?? 1);
+
+      // Parcelle directe de la ligne DVF
+      const directParcelleId =
+        p.id_parcelle ||
+        p.numero_plan ||
+        p.parcelle ||
+        null;
+
+      if (directParcelleId) {
+        sale.parcelles_ids.push(String(directParcelleId).trim());
+      }
+
+      sale.built_items.push(...parseJsonArray(p.built_items));
+
+      const uniqueBuiltItems = new Map<string, any>();
+
+sale.built_items.forEach((built: any) => {
+  const key = [
+    built.type_local || '',
+    built.surface_reelle_bati || '',
+    built.nombre_pieces_principales || '',
+  ].join('|');
+
+  if (!uniqueBuiltItems.has(key)) {
+    uniqueBuiltItems.set(key, built);
+  }
+});
+
+sale.built_items = Array.from(uniqueBuiltItems.values());
+      sale.land_items.push(...parseJsonArray(p.land_items));
+
+      // Déduplication des terrains
+const uniqueLandItems = new Map<string, any>();
+
+sale.land_items.forEach((land: any) => {
+  const key = [
+    land.nature_culture || '',
+    land.surface_terrain || land.contenance || land.surface || '',
+    land.id_parcelle || land.numero_plan || land.parcelle || '',
+  ].join('|');
+
+  if (!uniqueLandItems.has(key)) {
+    uniqueLandItems.set(key, land);
+  }
+
+  const parcelleId =
+    land.id_parcelle ||
+    land.numero_plan ||
+    land.parcelle;
+
+  if (parcelleId) {
+    sale.parcelles_ids.push(String(parcelleId).trim());
+  }
+});
+
+sale.land_items = Array.from(uniqueLandItems.values());
+
+      sale.parcelles_ids = Array.from(
+        new Set(sale.parcelles_ids)
+      );
+
+      sale.total_surface_terrain = sale.land_items.reduce(
+        (total: number, land: any) =>
+          total +
+          Number(
+            land.contenance ||
+            land.surface_terrain ||
+            land.surface ||
+            0
+          ),
+        0
+      );
+    });
+
+    const sales = Array.from(salesMap.values()).sort(
+      (a: any, b: any) =>
+        String(b.date_mutation || '').localeCompare(
+          String(a.date_mutation || '')
+        )
+    );
+
+    // Centre de toutes les parcelles regroupées
+    const validLats = group
+      .map((p: any) => Number(p.lat ?? p.latitude))
+      .filter((v: number) => !Number.isNaN(v));
+
+    const validLons = group
+      .map((p: any) => Number(p.lon ?? p.longitude))
+      .filter((v: number) => !Number.isNaN(v));
+
+    const centerLat = avg(validLats);
+    const centerLon = avg(validLons);
+
+    return {
       type: 'Feature',
       geometry: {
         type: 'Point',
-        coordinates: [parseFloat(String(p.lon)), parseFloat(String(p.lat))],
+        coordinates: [centerLon, centerLat],
       },
       properties: {
-        ...p,
+        ...first,
 
-        adresse: p.adresse || '',
-        date_mutation: p.date_mutation || '',
+        adresse: first.adresse || '',
+        date_mutation: first.date_mutation || '',
+        valeur_fonciere: first.valeur_fonciere ?? null,
+        main_type: first.main_type || 'autre',
 
-        valeur_fonciere: p.valeur_fonciere ?? null,
+        sale_count: sales.length,
 
-        main_type: p.main_type || 'autre',
-        line_count: p.line_count || 1,
+        line_count: sales.reduce(
+          (sum: number, sale: any) =>
+            sum + Number(sale.line_count || 0),
+          0
+        ),
 
-        id_mutation: p.id_mutation || '',
+        sales_detail: JSON.stringify(sales),
 
-        built_items: JSON.stringify(p.built_items || []),
-        land_items: JSON.stringify(p.land_items || []),
-        total_surface_terrain: p.total_surface_terrain ?? null,
+        built_items: JSON.stringify(
+          sales.flatMap((sale: any) => sale.built_items || [])
+        ),
+
+        land_items: JSON.stringify(
+          sales.flatMap((sale: any) => sale.land_items || [])
+        ),
+
+        parcelles_ids: JSON.stringify(
+          Array.from(
+            new Set(
+              sales.flatMap(
+                (sale: any) => sale.parcelles_ids || []
+              )
+            )
+          )
+        ),
+
+        total_surface_terrain: sales.reduce(
+          (sum: number, sale: any) =>
+            sum + Number(sale.total_surface_terrain || 0),
+          0
+        ),
       },
-    }));
+    };
+  });
 
   setSourceData('dvf_points', features);
 }
-
 /* -------------------------------------
    UPDATE DES POINTS ADRESSES
 ------------------------------------- */
@@ -673,10 +1282,10 @@ function updateAddressPoints() {
     .filter(a => a.lat && a.lon)
     .map(a => ({
       type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
-      },
+    geometry: {
+  type: 'Point',
+  coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
+},
       properties: { ...a },
     }));
 
@@ -791,10 +1400,60 @@ function updateLayerVisibility() {
   setLayerVisibility('parcelles-fill', showParcelles.value ? 'visible' : 'none');
   setLayerVisibility('parcelles-line', showParcelles.value ? 'visible' : 'none');
 
+  setLayerVisibility('parcelle-highlight', showParcelles.value ? 'visible' : 'none');
+
   setLayerVisibility(
   'parcelles-labels',
   showParcelles.value ? 'visible' : 'none'
 );
+}
+
+function getIdsParcellesFromDvfItem(item: any): string[] {
+  const directIds = parseJsonArray(item?.parcelles_ids);
+
+  if (directIds.length) {
+    return directIds.map((id: any) => String(id).trim()).filter(Boolean);
+  }
+
+  const sales = parseJsonArray(item?.sales_detail);
+  const source = sales.length ? sales : [item];
+
+  const ids = new Set<string>();
+
+source.forEach((sale: any) => {
+  parseJsonArray(sale.parcelles_ids).forEach((id: any) => {
+    if (id) ids.add(String(id).trim());
+  });
+
+  parseJsonArray(sale.land_items).forEach((land: any) => {
+    const id = land.id_parcelle || land.numero_plan || land.parcelle;
+    if (id) ids.add(String(id).trim());
+  });
+
+  const directId = sale.id_parcelle || sale.numero_plan || sale.parcelle;
+  if (directId) ids.add(String(directId).trim());
+});
+
+  return Array.from(ids);
+}
+
+function highlightParcelles(idsParcelles?: string[] | null) {
+  if (!map || !map.getLayer('parcelle-highlight')) return;
+
+  const ids = (idsParcelles || [])
+    .map(id => String(id).trim())
+    .filter(Boolean);
+
+  if (!ids.length) {
+    map.setFilter('parcelle-highlight', ['==', ['get', 'id_parcelle'], '']);
+    return;
+  }
+
+  map.setFilter('parcelle-highlight', [
+    'in',
+    ['get', 'id_parcelle'],
+    ['literal', ids],
+  ]);
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
@@ -962,10 +1621,29 @@ function buildDvfSaleHtml(props: any, compact = false): string {
   `;
 }
 
+function setupAddressInteractions() {
+  if (!map) return;
+
+map.on('click', 'address-dots', e => {
+  const feature = e.features?.[0];
+  if (!feature) return;
+
+  const props = feature.properties || {};
+  openSidePanel('address', props);
+});
+
+  map.on('mouseenter', 'address-dots', () => {
+    if (map) map.getCanvas().style.cursor = 'pointer';
+  });
+
+  map.on('mouseleave', 'address-dots', () => {
+    if (map) map.getCanvas().style.cursor = '';
+  });
+}
+
 function setupDvfInteractions() {
   if (!map) return;
 
-  // Clic sur un cluster DVF : liste des ventes
   map.on('click', 'dvf-clusters', async e => {
     const features = map!.queryRenderedFeatures(e.point, {
       layers: ['dvf-clusters'],
@@ -978,57 +1656,44 @@ function setupDvfInteractions() {
     if (clusterId === undefined || clusterId === null) return;
 
     const source = map!.getSource('dvf_points') as any;
-
     const leaves = (await source.getClusterLeaves(clusterId, 50, 0)) as any[];
 
-    const html = leaves
-      .map((leaf: any) => buildDvfSaleHtml(leaf.properties, true))
-      .join('');
+const sales = leaves.flatMap((leaf: any) => {
+  const props = leaf.properties || {};
+  const details = parseJsonArray(props.sales_detail);
 
-    new maplibregl.Popup({ maxWidth: 'none' })
-      .setLngLat((cluster.geometry as any).coordinates)
-      .setHTML(
-        `
-        <div style="
-          min-width:300px;
-          max-height:400px;
-          overflow-y:auto;
-          overflow-wrap:anywhere;
-          word-break:break-word;
-        ">
-          <div style="font-weight:700;font-size:14px;margin-bottom:6px;">
-            ${leaves.length} ventes DVF
-          </div>
+  return details.length ? details : [props];
+});
 
-          ${html}
-        </div>
-      `
-      )
-      .addTo(map!);
+openSidePanel('dvfCluster', null, sales);
   });
 
-  // Clic sur une vente DVF simple
-  map.on('click', 'dvf-dots', e => {
-    const feature = e.features?.[0];
-    if (!feature) return;
+/*map.on('click', 'dvf-dots', e => {
+  const feature = e.features?.[0];
+  if (!feature) return;
 
-    const props: any = feature.properties;
+  const props = feature.properties || {};
 
-    new maplibregl.Popup({ maxWidth: 'none' })
-      .setLngLat((feature.geometry as any).coordinates)
-      .setHTML(
-        `
-        <div style="
-          min-width:300px;
-          overflow-wrap:anywhere;
-          word-break:break-word;
-        ">
-          ${buildDvfSaleHtml(props)}
-        </div>
-      `
-      )
-      .addTo(map!);
-  });
+  highlightParcelle(
+    props.id_parcelle ||
+    props.numero_plan ||
+    null
+  );
+
+  openSidePanel('dvf', props);
+});*/
+
+
+map.on('click', 'dvf-dots', e => {
+  const feature = e.features?.[0];
+  if (!feature) return;
+
+  const props = feature.properties || {};
+
+  console.log('DVF CLICK PROPS =', props);
+
+  openSidePanel('dvf', props);
+});
 
   map.on('mouseenter', 'dvf-dots', () => {
     if (map) map.getCanvas().style.cursor = 'pointer';
@@ -1054,93 +1719,184 @@ function setupDpeInteractions() {
     const feature = e.features?.[0];
     if (!feature) return;
 
-    const coordinates = (feature.geometry as any).coordinates.slice();
-    const props = feature.properties || {};
-
-    const adresse = props.adresse || 'Adresse inconnue';
-    const etiquette = props.etiquette || '-';
-    const type = props.type || '-';
-    const date = props.date
-      ? new Date(props.date).toLocaleDateString('fr-FR')
-      : '-';
-
-    const dpeColors: Record<string, string> = {
-      A: '#10b981',
-      B: '#22c55e',
-      C: '#84cc16',
-      D: '#eab308',
-      E: '#f97316',
-      F: '#ef4444',
-      G: '#991b1b',
-    };
-
-    const badgeColor = dpeColors[etiquette] || '#6b7280';
-
-    if (dpePopup) dpePopup.remove();
-
-    dpePopup = new maplibregl.Popup({
-      closeButton: true,
-      offset: 14,
-    })
-      .setLngLat(coordinates)
-      .setHTML(
-        `
-        <div style="
-          font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
-          min-width: 220px;
-          line-height: 1.4;
-        ">
-          <div style="
-            font-weight: 600;
-            font-size: 14px;
-            margin-bottom: 6px;
-          ">
-            ${adresse}
-          </div>
-
-          <div style="
-            display:flex;
-            align-items:center;
-            gap:8px;
-            margin-bottom:6px;
-          ">
-            <span style="
-              background:${badgeColor};
-              color:white;
-              font-weight:600;
-              padding:2px 8px;
-              border-radius:6px;
-              font-size:12px;
-            ">
-              DPE ${etiquette}
-            </span>
-
-            <span style="
-              font-size:12px;
-              color:#6b7280;
-            ">
-              ${type}
-            </span>
-          </div>
-
-          <div style="
-            font-size:12px;
-            color:#6b7280;
-          ">
-            Diagnostic réalisé le ${date}
-          </div>
-       
-       </div>
-      `
-      )
-      .addTo(map as any);
+    openSidePanel('dpe', feature.properties || {});
   });
 
   map.on('mouseenter', 'dpe-dots', () => {
     if (map) map.getCanvas().style.cursor = 'pointer';
   });
 
-  map.on('mouseleave', 'dpe-dots', () => {});
+  map.on('mouseleave', 'dpe-dots', () => {
+    if (map) map.getCanvas().style.cursor = '';
+  });
+}
+
+function openSidePanel(type: Exclude<MapSidePanelType, null>, item: any | null, items: any[] = []) {
+  selectedMapType.value = type;
+  selectedMapItem.value = item;
+  selectedMapItems.value = items;
+
+  if (type === 'dvf') {
+    highlightParcelles(getIdsParcellesFromDvfItem(item));
+  } else if (type === 'address' || type === 'dpe') {
+    highlightParcelles([getIdParcelleFromItem(item)].filter(Boolean) as string[]);
+  } else {
+    highlightParcelles(null);
+  }
+}
+
+
+
+function closeSidePanel() {
+  selectedMapType.value = null;
+  selectedMapItem.value = null;
+  selectedMapItems.value = [];
+
+  highlightParcelles(null);
+}
+
+function getIdParcelleFromItem(item: any): string | null {
+  if (!item) return null;
+
+  const raw =
+    item.id_parcelle ||
+    item.cad_parcelles ||
+    item.numero_plan ||
+    item.parcelle ||
+    null;
+
+  if (!raw) return null;
+
+  const text = String(raw);
+
+  // Si plusieurs parcelles sont stockées en CSV/JSON simple, on prend la première.
+  return text
+    .replace('[', '')
+    .replace(']', '')
+    .replaceAll('"', '')
+    .split(/[;,|]/)[0]
+    .trim() || null;
+}
+
+function formatAddressTitle(item: any): string {
+  const numero = item?.numero_full || item?.numero || '';
+  const voie = item?.nom_voie || item?.adresse || '';
+  const title = `${numero} ${voie}`.trim();
+
+  return title || 'Adresse';
+}
+
+function formatAddressSideTitle(item: any): string {
+  if (!item) return 'Adresse';
+
+  const numero = item.numero_full || item.numero || '';
+  const voie = item.nom_voie || item.adresse || '';
+
+  if (!numero && voie) {
+    return String(voie).toUpperCase();
+  }
+
+  const title = `${numero} ${voie}`.trim();
+  return title ? title.toUpperCase() : 'Adresse';
+}
+
+function canOpenProperty(item: any): boolean {
+  if (!item) return false;
+  return Boolean(item.numero || item.numero_full);
+}
+
+function isDependance(item: any): boolean {
+  const type = String(item?.type_local || '').toLowerCase();
+  return type.includes('dépendance') || type.includes('dependance');
+}
+
+function countDependances(items: any[]): number {
+  return items.filter((item: any) => {
+    const type = String(item.type_local || '').toLowerCase();
+    return type.includes('dépendance') || type.includes('dependance');
+  }).length;
+}
+function emitEditSelectedAddress() {
+  if (!selectedMapItem.value) return;
+  emit('edit-property', selectedMapItem.value as Address);
+}
+
+function formatCurrency(value: any): string {
+  const numberValue = Number(value);
+
+  if (!value || Number.isNaN(numberValue)) {
+    return 'Prix inconnu';
+  }
+
+  return new Intl.NumberFormat('fr-FR').format(numberValue) + ' €';
+}
+
+function formatSurface(value: any): string {
+  const numberValue = Number(value);
+
+  if (!value || Number.isNaN(numberValue)) {
+    return '-';
+  }
+
+  return new Intl.NumberFormat('fr-FR').format(numberValue) + ' m²';
+}
+
+function formatDate(value: any): string {
+  if (!value) return '-';
+
+  const d = new Date(value);
+
+  if (Number.isNaN(d.getTime())) {
+    return String(value);
+  }
+
+  return d.toLocaleDateString('fr-FR');
+}
+
+function parseJsonArray(value: any): any[] {
+  if (!value) return [];
+
+  if (Array.isArray(value)) return value;
+
+  try {
+    const parsed = JSON.parse(value);
+    return Array.isArray(parsed) ? parsed : [];
+  } catch {
+    return [];
+  }
+}
+
+function isStreetGroupPoint(item: any): boolean {
+  if (!item) return false;
+
+  const hasNumero = Boolean(item.numero || item.numero_full);
+
+  return !hasNumero && Boolean(item.id_fantoir || item.nom_voie || item.adresse);
+}
+
+
+async function openStreetFromMap(item: any) {
+  const streetName = item.nom_voie || item.adresse || '';
+  const idFantoir = item.id_fantoir || item.codeIdFantoir || item.id_fantoir_long || '';
+
+  if (!streetName || !idFantoir) {
+    openSidePanel('address', item);
+    return;
+  }
+
+  closeSidePanel();
+
+  dashboard.selectedStreet = {
+    value: streetName,
+    idFantoir,
+  };
+
+  dashboard.selectedCodeIdFantoir = idFantoir;
+  dashboard.selectedNumero = '';
+  dashboard.selectedRep = '';
+  dashboard.selectedNumeroFull = null;
+
+  await dashboard.querySearchAddress();
 }
 
 /* -------------------------------------
@@ -1271,9 +2027,7 @@ function setupWatchers() {
       updateDvfPoints();
       updateLayerVisibility();
 
-      if (dashboard.activeMainMode === 'dvf') {
-        recenterMap();
-      }
+  
     },
     { deep: true, immediate: true }
   );
@@ -1291,7 +2045,7 @@ function setupWatchers() {
     () => props.cityCenter,
     newCenter => {
       if (!newCenter) return;
-      popups.close();
+      closeSidePanel();
       recenterMap();
     },
     { immediate: true }
@@ -1304,7 +2058,7 @@ function setupWatchers() {
       updateDpePoints();
       updateDvfPoints();
       updateLayerVisibility();
-      recenterMap();
+    
     },
     { immediate: true }
   );
@@ -1322,7 +2076,7 @@ function setupWatchers() {
   watch(
     () => dashboard.selectedStreet,
     newStreet => {
-      popups.close();
+      closeSidePanel();
       if (!newStreet) return;
       recenterMap();
     }
@@ -1331,7 +2085,7 @@ function setupWatchers() {
   watch(
     () => dashboard.selectedNumeroFull,
     newNumero => {
-      popups.close();
+      closeSidePanel();
       if (!newNumero) return;
       recenterMap();
     }
@@ -1347,7 +2101,7 @@ watch(
 watch(
   () => dashboard.selectedCity,
   newCity => {
-    popups.close();
+    closeSidePanel();
 
     if (!newCity) {
       updateParcelles();
@@ -1384,6 +2138,14 @@ watch(
   border-radius: 18px;
 }
 
+.map-layout {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) 380px;
+  gap: 12px;
+  width: 100%;
+  min-width: 0;
+}
+
 .map-wrapper {
   position: relative;
   width: 100%;
@@ -1397,6 +2159,197 @@ watch(
   width: 100%;
   height: 100%;
 }
+
+.map-side-panel {
+  height: 700px;
+  overflow-y: auto;
+  background: #ffffff;
+  border-radius: 18px;
+  padding: 16px;
+  box-shadow: 0 1px 8px rgba(15, 23, 42, 0.12);
+  border: 1px solid #e5e7eb;
+}
+
+.side-panel-header {
+  display: flex;
+  justify-content: space-between;
+  gap: 12px;
+  align-items: flex-start;
+  padding-bottom: 12px;
+  margin-bottom: 12px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.side-panel-eyebrow {
+  font-size: 11px;
+  font-weight: 700;
+  color: #6b7280;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+}
+
+.side-panel-header h3 {
+  margin: 2px 0 0;
+  font-size: 18px;
+  color: #111827;
+}
+
+.side-close {
+  border: none;
+  background: #f3f4f6;
+  color: #111827;
+  border-radius: 10px;
+  width: 32px;
+  height: 32px;
+  font-size: 22px;
+  line-height: 1;
+  cursor: pointer;
+}
+
+.side-close:hover {
+  background: #e5e7eb;
+}
+
+.side-empty {
+  color: #6b7280;
+  font-size: 14px;
+  line-height: 1.5;
+  background: #f9fafb;
+  border: 1px dashed #d1d5db;
+  border-radius: 14px;
+  padding: 16px;
+}
+
+.side-content {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.detail-card {
+  background: #ffffff;
+}
+
+.detail-title {
+  font-size: 16px;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin-bottom: 8px;
+  text-transform: uppercase;
+}
+
+.muted {
+  font-size: 12px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.price {
+  font-size: 24px;
+  font-weight: 800;
+  color: #1e1b4b;
+  margin-bottom: 8px;
+}
+
+.detail-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 8px;
+  margin-top: 12px;
+}
+
+.detail-grid > div {
+  background: #f8fafc;
+  border-radius: 12px;
+  padding: 10px;
+  min-width: 0;
+}
+
+.detail-grid span {
+  display: block;
+  font-size: 11px;
+  color: #6b7280;
+  margin-bottom: 4px;
+}
+
+.detail-grid strong {
+  display: block;
+  font-size: 13px;
+  color: #111827;
+  overflow-wrap: anywhere;
+}
+
+.primary-action {
+  width: 100%;
+  margin-top: 14px;
+  border: none;
+  border-radius: 12px;
+  background: #2563eb;
+  color: #ffffff;
+  font-weight: 700;
+  padding: 10px 12px;
+  cursor: pointer;
+}
+
+.primary-action:hover {
+  background: #1d4ed8;
+}
+
+.sub-section {
+  margin-top: 16px;
+}
+
+.sub-section h4 {
+  margin: 0 0 8px;
+  color: #111827;
+}
+
+.mini-card,
+.list-row {
+  border: 1px solid #e5e7eb;
+  border-radius: 12px;
+  padding: 10px;
+  margin-bottom: 8px;
+  background: #ffffff;
+}
+
+.mini-card span,
+.list-row span,
+.list-row small {
+  display: block;
+  color: #6b7280;
+  font-size: 12px;
+  margin-top: 2px;
+}
+
+.list-row {
+  cursor: pointer;
+}
+
+.list-row:hover {
+  background: #f9fafb;
+}
+
+.dpe-badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  min-width: 72px;
+  padding: 6px 12px;
+  border-radius: 999px;
+  color: #ffffff;
+  font-weight: 800;
+  margin: 6px 0 12px;
+  background: #6b7280;
+}
+
+.dpe-A { background: #10b981; }
+.dpe-B { background: #22c55e; }
+.dpe-C { background: #84cc16; }
+.dpe-D { background: #eab308; }
+.dpe-E { background: #f97316; }
+.dpe-F { background: #ef4444; }
+.dpe-G { background: #991b1b; }
 
 .recenter-btn {
   position: absolute;
@@ -1445,7 +2398,6 @@ watch(
   color: #fff;
 }
 
-
 .map-style-btn {
   position: absolute;
   top: 96px;
@@ -1467,4 +2419,89 @@ watch(
   background: #111827;
   color: #fff;
 }
+
+@media (max-width: 1100px) {
+  .map-layout {
+    grid-template-columns: 1fr;
+  }
+
+  .map-side-panel {
+    height: auto;
+    max-height: 420px;
+  }
+}
+
+.mini-card-full {
+  width: 100%;
+}
+
+.mini-card-full span {
+  display: block;
+}
+
+.dvf-sale-section {
+  padding-bottom: 18px;
+  border-bottom: 1px solid #e5e7eb;
+}
+
+.dvf-sale-section:last-child {
+  border-bottom: none;
+}
+
+.dvf-simple-grid {
+  margin-top: 12px;
+}
+
+.sale-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  margin-bottom: 4px;
+}
+
+.sale-header .price {
+  margin-bottom: 0;
+}
+
+.sale-badge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: 999px;
+  padding: 4px 9px;
+  font-size: 11px;
+  font-weight: 800;
+  text-transform: uppercase;
+  white-space: nowrap;
+}
+
+.sale-badge-green {
+  background: #dcfce7;
+  color: #166534;
+}
+
+.sale-badge-blue {
+  background: #dbeafe;
+  color: #1d4ed8;
+}
+
+.sale-badge-orange {
+  background: #ffedd5;
+  color: #c2410c;
+}
+
+.sale-badge-purple {
+  background: #f3e8ff;
+  color: #7e22ce;
+}
+
+.sale-badge-brown {
+  background: #fef3c7;
+  color: #92400e;
+}
+
+.sale-badge-gray {
+  background: #f3f4f6;
+  color: #374151;
+}
+
 </style>
