@@ -1,155 +1,70 @@
 <template>
-  <div class="favorites-table-container">
-    <el-table
-      :data="favorites"
-      class="modern-favorites-table"
-      :default-sort="{ prop: 'numero', order: 'ascending' }"
-      :row-class-name="getRowClass"
-      @row-click="handleRowClick"
-      empty-text="Aucune propriété favorite trouvée"
-    >
-      <!-- Action Column with Favorite Button -->
-      <el-table-column width="60" align="center">
-        <template #default="{ row }">
-          <el-button
-            type="danger"
-            size="small"
-            circle
-            @click.stop="$emit('toggle-favorite', row)"
-            title="Retirer des favoris"
-          >
-            <el-icon><StarFilled /></el-icon>
-          </el-button>
-        </template>
-      </el-table-column>
+  <EMTableWithCard
+    :data="favorites"
+    :columns="favoriteColumns"
+    :actions="favoriteActions"
+    :searchable="true"
+    search-placeholder="Rechercher une propriété..."
+    :page-size="20"
+    empty-message="Aucune propriété favorite trouvée"
+    :navigateFromLine="(row: any) => emit('edit-property', row)"
+  >
+    <!-- Address -->
+    <template #cell-address="{ row }">
+      <div class="address-info">
+        <span class="street-name">{{ getFullAddress(row) }}</span>
+        <span v-if="getUnitLabel(row)" class="unit-label">
+          {{ getUnitLabel(row) }}
+        </span>
+      </div>
+    </template>
 
-      <el-table-column label="Adresse" sortable min-width="280">
-        <template #default="{ row }">
-          <div class="address-info">
-            <span class="street-name">
-              {{ getFullAddress(row) }}
-            </span>
-            <span v-if="getUnitLabel(row)" class="unit-label">
-              {{ getUnitLabel(row) }}
-            </span>
-          </div>
-        </template>
-      </el-table-column>
+    <!-- Property Type -->
+    <template #cell-property_type="{ row }">
+      <div class="property-type">
+        <el-tag :type="getPropertyTypeTagType(row.property_type)" size="small" round>
+          {{ row.property_type || 'Non renseigné' }}
+        </el-tag>
+      </div>
+    </template>
 
-      <!-- Property Type Column -->
-      <el-table-column
-        label="Type"
-        prop="property_type"
-        sortable
-        min-width="120"
-      >
-        <template #default="{ row }">
-          <div class="property-type">
-            <el-tag
-              :type="getPropertyTypeTagType(row.property_type)"
-              size="small"
-              round
-            >
-              {{ row.property_type || 'Non renseigné' }}
-            </el-tag>
-          </div>
-        </template>
-      </el-table-column>
+    <!-- Owner -->
+    <template #cell-owner="{ row }">
+      <div class="owner-info">
+        <span class="owner-name">{{ row.owner || 'Non renseigné' }}</span>
+      </div>
+    </template>
 
-      <!-- Owner Column -->
-      <el-table-column
-        label="Propriétaire"
-        prop="owner"
-        sortable
-        min-width="150"
-        :filters="ownerFilters"
-        :filter-method="filterByOwner"
-        filter-placement="bottom"
-      >
-        <template #default="{ row }">
-          <div class="owner-info">
-            <span class="owner-name">{{ row.owner || 'Non renseigné' }}</span>
-          </div>
-        </template>
-      </el-table-column>
+    <!-- Surface -->
+    <template #cell-surface="{ row }">
+      <div class="surface-info">
+        <span class="surface-value">{{ row.surface || 0 }} m²</span>
+      </div>
+    </template>
 
-      <!-- Surface Column -->
-      <el-table-column label="Surface" prop="surface" sortable min-width="100">
-        <template #default="{ row }">
-          <div class="surface-info">
-            <span class="surface-value">{{ row.surface || 0 }} m²</span>
-          </div>
-        </template>
-      </el-table-column>
-
-      <!-- Price Column -->
-      <el-table-column
-        label="Prix estimé"
-        prop="price"
-        sortable
-        min-width="120"
-      >
-        <template #default="{ row }">
-          <div class="price-info">
-            <span class="price-value">{{
-              formatPrice(row.price, 'Non renseigné')
-            }}</span>
-          </div>
-        </template>
-      </el-table-column>
-
-      <!-- Actions Column -->
-      <el-table-column label="Actions" width="200" align="center">
-        <template #default="{ row }">
-          <div class="action-buttons">
-            <el-button
-              type="primary"
-              size="default"
-              circle
-              @click.stop="$emit('edit-property', row)"
-              title="Modifier la propriété"
-            >
-              <el-icon><Edit /></el-icon>
-            </el-button>
-            <el-button
-              type="success"
-              size="default"
-              circle
-              @click.stop="$emit('create-reminder', row)"
-              title="Créer un rappel"
-            >
-              <el-icon><Plus /></el-icon>
-            </el-button>
-            <el-button
-              type="warning"
-              size="default"
-              circle
-              @click.stop="$emit('go-to-map', row)"
-              title="Voir sur la carte"
-            >
-              <el-icon><Location /></el-icon>
-            </el-button>
-          </div>
-        </template>
-      </el-table-column>
-    </el-table>
-  </div>
+    <!-- Price -->
+    <template #cell-price="{ row }">
+      <div class="price-info">
+        <span class="price-value">{{ formatPrice(row.price, 'Non renseigné') }}</span>
+      </div>
+    </template>
+  </EMTableWithCard>
 </template>
 
 <script setup lang="ts">
-import { computed } from 'vue';
-import { StarFilled, Edit, Plus, Location } from '@element-plus/icons-vue';
 import { formatPrice } from '@/helpers/intl';
-import {
-  getPropertyTypeTagType,
-  getPropertyCity,
-} from '@/utils/propertyHelpers';
+import { getPropertyTypeTagType } from '@/utils/propertyHelpers';
+import EMTableWithCard from '@/components/OwnReusableComponents/table/EMTableWithCard.vue';
+import type {
+  ColumnDefinition,
+  TableAction,
+} from '@/components/OwnReusableComponents/table/types';
 
 interface Props {
   favorites: any[];
 }
 
-const props = defineProps<Props>();
+defineProps<Props>();
 
 const emit = defineEmits([
   'edit-property',
@@ -158,13 +73,41 @@ const emit = defineEmits([
   'go-to-map',
 ]);
 
-const getRowClass = () => {
-  return 'favorite-row';
-};
+const favoriteColumns: ColumnDefinition<any>[] = [
+  { key: 'address', label: 'Adresse', sortable: false, minWidth: '280px' },
+  { key: 'property_type', label: 'Type', width: '120px' },
+  { key: 'owner', label: 'Propriétaire', width: '150px', filterMenu: true },
+  { key: 'surface', label: 'Surface', width: '100px' },
+  { key: 'price', label: 'Prix estimé', width: '130px' },
+];
 
-const handleRowClick = (row: any) => {
-  emit('edit-property', row);
-};
+const favoriteActions: TableAction<any>[] = [
+  {
+    key: 'edit',
+    label: 'Modifier la propriété',
+    icon: '✏️',
+    handler: (row) => emit('edit-property', row),
+  },
+  {
+    key: 'create-reminder',
+    label: 'Créer un rappel',
+    icon: '➕',
+    handler: (row) => emit('create-reminder', row),
+  },
+  {
+    key: 'go-to-map',
+    label: 'Voir sur la carte',
+    icon: '📍',
+    handler: (row) => emit('go-to-map', row),
+  },
+  {
+    key: 'toggle-favorite',
+    label: 'Retirer des favoris',
+    icon: '⭐',
+    danger: true,
+    handler: (row) => emit('toggle-favorite', row),
+  },
+];
 
 const getFullAddress = (row: any): string => {
   const parts: string[] = [];
@@ -192,73 +135,9 @@ const getUnitLabel = (row: any): string => {
 
   return parts.join(' / ');
 };
-
-const ownerFilters = computed(() => {
-  const owners = new Set<string>();
-  for (const fav of props.favorites) {
-    if (fav.owner) owners.add(fav.owner);
-  }
-  return [...owners].sort().map(o => ({ text: o, value: o }));
-});
-
-const filterByOwner = (value: string, row: any) => {
-  return row.owner === value;
-};
 </script>
 
 <style scoped>
-.favorites-table-container {
-  padding: 16px 0;
-}
-
-.modern-favorites-table {
-  border-radius: var(--table-radius);
-  overflow: hidden;
-  /* box-shadow: var(--table-shadow); */
-  border: 1px solid #c4c3c3;
-}
-
-:deep(.el-table) {
-  border-radius: var(--table-radius);
-}
-
-:deep(.el-table tr) {
-  background-color: transparent;
-}
-
-:deep(.el-table__header) {
-  background: #f7f7f7;
-}
-
-:deep(.el-table__header th) {
-  background: transparent !important;
-  color: #303030;
-  font-weight: 600;
-  padding: var(--table-cell-padding);
-}
-
-:deep(.el-table__body tr:hover) {
-  background-color: #f8fafc;
-}
-
-:deep(.favorite-row) {
-  transition: all 0.3s ease;
-  cursor: pointer;
-}
-
-:deep(.favorite-row:hover) {
-  background-color: var(--table-row-hover) !important;
-  transform: var(--btn-hover-translate);
-  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
-}
-
-:deep(.el-table__body td) {
-  padding: var(--table-cell-padding);
-  border-bottom: 1px solid var(--table-border-color);
-}
-
-.city-info,
-.street-info,
 .owner-info,
 .surface-info,
 .price-info {
@@ -267,17 +146,10 @@ const filterByOwner = (value: string, row: any) => {
   gap: 2px;
 }
 
-.city-name,
 .street-name,
 .owner-name {
   font-weight: 500;
   color: #1e293b;
-}
-
-.address-number {
-  font-weight: 600;
-  color: #3b82f6;
-  font-size: 16px;
 }
 
 .surface-value,
@@ -291,40 +163,8 @@ const filterByOwner = (value: string, row: any) => {
   justify-content: flex-start;
 }
 
-.action-buttons {
-  display: flex;
-  gap: var(--action-gap);
-  justify-content: center;
-}
-
-:deep(.el-button) {
-  /* border-radius: var(--btn-radius); */
-  transition: all 0.3s ease;
-}
-
-:deep(.el-button:hover) {
-  transform: var(--btn-hover-translate);
-  box-shadow: var(--btn-hover-shadow);
-}
-
 :deep(.el-tag) {
   font-weight: 500;
-}
-
-/* Mobile responsiveness */
-@media (max-width: 768px) {
-  .modern-favorites-table {
-    font-size: 14px;
-  }
-
-  :deep(.el-table__body td) {
-    padding: 12px 8px;
-  }
-
-  .action-buttons {
-    flex-direction: column;
-    gap: 4px;
-  }
 }
 
 .address-info {
