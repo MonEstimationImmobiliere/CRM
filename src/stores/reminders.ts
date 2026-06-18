@@ -35,7 +35,7 @@ export const useRemindersStore = defineStore('reminders', () => {
   const agencies = ref<Agency[]>([]);
   const loading = ref(false);
   const selectedReminder = ref<Reminder | null>(null);
-  const remindersViewType = ref<'table' | 'card'>('table');
+  const remindersViewType = ref<'table' | 'card' | 'calendar'>('table');
 
   // Cache in-memory par scope (durée de vie = session, invalidé sur mutation)
   const scopeCache = new Map<string, Reminder[]>();
@@ -398,7 +398,7 @@ const addReminder = async (reminderData: IReminderCreate) => {
     return reminderDate > today && reminderDate <= nextWeek;
   };
 
-  const setRemindersViewType = (viewType: 'table' | 'card') => {
+  const setRemindersViewType = (viewType: 'table' | 'card' | 'calendar') => {
     remindersViewType.value = viewType;
   };
 

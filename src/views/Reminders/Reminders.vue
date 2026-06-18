@@ -25,11 +25,7 @@
           <el-radio-button :label="true">Terminé</el-radio-button>
         </el-radio-group>
 
-        <el-button
-          type="primary"
-          @click="openNewReminderDialog"
-          class="add-reminder-btn"
-        >
+        <el-button type="primary" @click="openNewReminderDialog" class="add-reminder-btn">
           <el-icon><Plus /></el-icon>
           Nouveau rappel
         </el-button>
@@ -46,17 +42,16 @@
     /> -->
 
     <!-- Reminders List -->
-    <div class="reminders-list">
+    <div
+      class="reminders-list"
+      :class="{ 'reminders-list--calendar': currentRemindersView === 'calendar' }"
+    >
       <el-card v-if="filteredReminders.length === 0" class="empty-state">
         <div class="empty-content">
           <el-icon class="empty-icon"><Document /></el-icon>
           <h3>Aucun rappel trouvé</h3>
           <p>{{ emptyMessage }}</p>
-          <el-button
-            type="primary"
-            @click="showCreateDialog = true"
-            style="margin-top: 16px"
-          >
+          <el-button type="primary" @click="showCreateDialog = true" style="margin-top: 16px">
             <el-icon><Plus /></el-icon>
             Créer mon premier rappel
           </el-button>
@@ -72,9 +67,7 @@
         :searchable="true"
         search-placeholder="Rechercher un rappel..."
         :page-size="20"
-        :navigateFromLine="
-          (row: Reminder) => handleAction({ action: 'edit', reminder: row })
-        "
+        :navigateFromLine="(row: Reminder) => handleAction({ action: 'edit', reminder: row })"
       >
         <!-- Address -->
         <template #cell-address="{ row }">
@@ -130,9 +123,7 @@
         <template #cell-completed="{ row }">
           <EMToggleSwitch
             :model-value="isReminderCompleted(row)"
-            @update:model-value="
-              (val: boolean) => updateStatus(row, val ? 'completed' : 'todo')
-            "
+            @update:model-value="(val: boolean) => updateStatus(row, val ? 'completed' : 'todo')"
           />
         </template>
 
@@ -156,6 +147,13 @@
           @update-status="updateStatus"
         />
       </div>
+
+      <!-- Calendar View -->
+      <ReminderCalendarView
+        v-else-if="currentRemindersView === 'calendar'"
+        :reminders="filteredReminders"
+        @edit-reminder="editReminder"
+      />
     </div>
 
     <!-- Create/Edit Dialog -->
@@ -180,7 +178,7 @@ import { useUserStore } from '@/stores/user';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useDashboardStore } from '@/stores/dashboard';
 import { Plus, Document } from '@element-plus/icons-vue';
-import { DataBoard, Grid } from '@element-plus/icons-vue';
+import { DataBoard, Grid, Calendar as CalendarIcon } from '@element-plus/icons-vue';
 import ViewToggle from '@/components/ViewToggle.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { sortReminders, getTypeLabel } from '@/utils/reminderHelpers';
@@ -188,10 +186,8 @@ import { sortReminders, getTypeLabel } from '@/utils/reminderHelpers';
 import RemindersFilters from './components/RemindersFilters.vue';
 import ReminderCard from './components/ReminderCard.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
-import type {
-  ColumnDefinition,
-  TableAction,
-} from '@/components/OwnReusableComponents/table/types';
+import ReminderCalendarView from './components/ReminderCalendarView.vue';
+import type { ColumnDefinition, TableAction } from '@/components/OwnReusableComponents/table/types';
 import type { IReminderProperty } from '@/types/reminder';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import { PropertyService } from '@/api';
@@ -222,19 +218,10 @@ const openNewReminderDialog = () => {
   showCreateDialog.value = true;
 };
 // Store destructuring
-const {
-  todayReminders,
-  upcomingReminders,
-  overdueReminders,
-  completedReminders,
-} = remindersStore;
+const { todayReminders, upcomingReminders, overdueReminders, completedReminders } = remindersStore;
 
 const isReminderCompleted = (r: Reminder): boolean => {
-  return (
-    r.completed === true ||
-    (r.completed as unknown) === 1 ||
-    (r.completed as unknown) === '1'
-  );
+  return r.completed === true || (r.completed as unknown) === 1 || (r.completed as unknown) === '1';
 };
 
 // ── Table columns & actions ──────────────────────────────
@@ -278,28 +265,28 @@ const reminderActions: TableAction<Reminder>[] = [
     key: 'open-property',
     label: 'Ouvrir le bien',
     icon: '📋',
-    disabled: row => !row.property_id,
-    handler: row => handleAction({ action: 'open-property', reminder: row }),
+    disabled: (row) => !row.property_id,
+    handler: (row) => handleAction({ action: 'open-property', reminder: row }),
   },
   {
     key: 'edit',
     label: 'Modifier le rappel',
     icon: '✏️',
-    handler: row => handleAction({ action: 'edit', reminder: row }),
+    handler: (row) => handleAction({ action: 'edit', reminder: row }),
   },
   {
     key: 'new-reminder',
     label: 'Nouveau rappel lié',
     icon: '➕',
-    disabled: row => !row.property_id,
-    handler: row => handleAction({ action: 'new-reminder', reminder: row }),
+    disabled: (row) => !row.property_id,
+    handler: (row) => handleAction({ action: 'new-reminder', reminder: row }),
   },
   {
     key: 'go-to-map',
     label: 'Voir sur la carte',
     icon: '📍',
-    disabled: row => !row.property_id,
-    handler: row => handleAction({ action: 'go-to-map', reminder: row }),
+    disabled: (row) => !row.property_id,
+    handler: (row) => handleAction({ action: 'go-to-map', reminder: row }),
   },
 ];
 
@@ -309,8 +296,7 @@ const getBasePropertyAddress = (property: IReminderProperty): string => {
   if (property.numero) parts.push(String(property.numero));
   if (property.rep) parts.push(property.rep);
   if (property.nom_voie) parts.push(property.nom_voie);
-  const cityLine =
-    `${property.code_postal ?? ''} ${property.city ?? ''}`.trim();
+  const cityLine = `${property.code_postal ?? ''} ${property.city ?? ''}`.trim();
   if (cityLine) parts.push(cityLine);
   return parts.join(' ');
 };
@@ -330,9 +316,7 @@ const getDiffDays = (date: string): number => {
   today.setHours(0, 0, 0, 0);
   const target = new Date(date);
   target.setHours(0, 0, 0, 0);
-  return Math.ceil(
-    (target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24)
-  );
+  return Math.ceil((target.getTime() - today.getTime()) / (1000 * 60 * 60 * 24));
 };
 
 const formatShortDate = (dateStr: string): string => {
@@ -364,16 +348,16 @@ const getDateBlockClass = (r: Reminder): string => {
 const filteredReminders = computed(() => {
   let filtered = [...remindersStore.reminders];
 
-  filtered = filtered.filter(r =>
+  filtered = filtered.filter((r) =>
     completedFilter.value ? isReminderCompleted(r) : !isReminderCompleted(r)
   );
 
   if (typeFilter.value) {
-    filtered = filtered.filter(r => r.type === typeFilter.value);
+    filtered = filtered.filter((r) => r.type === typeFilter.value);
   }
 
   if (priorityFilter.value) {
-    filtered = filtered.filter(r => r.priority === priorityFilter.value);
+    filtered = filtered.filter((r) => r.priority === priorityFilter.value);
   }
 
   return sortReminders(filtered);
@@ -388,7 +372,7 @@ const getApiScope = (): 'me' | 'all' | 'agency' | 'user' => {
 
 watch(
   () => showCreateDialog.value,
-  isVisible => {
+  (isVisible) => {
     if (!isVisible) {
       editingReminder.value = null;
     }
@@ -457,9 +441,7 @@ const emptyMessage = computed(() => {
     upcoming: 'Aucun rappel à venir cette semaine.',
     completed: 'Aucun rappel terminé.',
   };
-  return (
-    messages[activeFilter.value] ?? 'Commencez par créer votre premier rappel.'
-  );
+  return messages[activeFilter.value] ?? 'Commencez par créer votre premier rappel.';
 });
 
 const createNewReminderFromProperty = (reminder: Reminder) => {
@@ -483,13 +465,7 @@ const createNewReminderFromProperty = (reminder: Reminder) => {
 };
 
 // Action handler from ReminderCard dropdown
-const handleAction = ({
-  action,
-  reminder,
-}: {
-  action: string;
-  reminder: Reminder;
-}) => {
+const handleAction = ({ action, reminder }: { action: string; reminder: Reminder }) => {
   if (action === 'edit') editReminder(reminder);
   else if (action === 'delete') deleteReminder(reminder);
   else if (action === 'new-reminder') createNewReminderFromProperty(reminder);
@@ -522,15 +498,11 @@ const duplicateReminder = async (reminder: Reminder) => {
 
 const deleteReminder = async (reminder: Reminder) => {
   try {
-    await ElMessageBox.confirm(
-      'Êtes-vous sûr de vouloir supprimer ce rappel ?',
-      'Confirmation',
-      {
-        confirmButtonText: 'Supprimer',
-        cancelButtonText: 'Annuler',
-        type: 'warning',
-      }
-    );
+    await ElMessageBox.confirm('Êtes-vous sûr de vouloir supprimer ce rappel ?', 'Confirmation', {
+      confirmButtonText: 'Supprimer',
+      cancelButtonText: 'Annuler',
+      type: 'warning',
+    });
     remindersStore.deleteReminder(reminder.id);
     ElMessage.success('Rappel supprimé avec succès');
   } catch {
@@ -539,10 +511,7 @@ const deleteReminder = async (reminder: Reminder) => {
 };
 
 // Save handler from ReminderFormDialog (validation is done in the dialog)
-const saveReminder = async (
-  form: ReminderFormData,
-  editing: Reminder | null
-) => {
+const saveReminder = async (form: ReminderFormData, editing: Reminder | null) => {
   saving.value = true;
   try {
     const payload = { ...form, completed: form.status === 'completed' };
@@ -565,10 +534,7 @@ const saveReminder = async (
 };
 
 // Status update from ReminderCard buttons
-const updateStatus = async (
-  reminder: Reminder,
-  status: 'todo' | 'progress' | 'completed'
-) => {
+const updateStatus = async (reminder: Reminder, status: 'todo' | 'progress' | 'completed') => {
   try {
     await remindersStore.updateReminderStatus(reminder.id, status);
 
@@ -579,9 +545,7 @@ const updateStatus = async (
     });
 
     ElMessage.success(
-      status === 'completed'
-        ? 'Rappel marqué comme terminé'
-        : 'Rappel marqué comme à faire'
+      status === 'completed' ? 'Rappel marqué comme terminé' : 'Rappel marqué comme à faire'
     );
   } catch (error) {
     console.error(error);
@@ -592,9 +556,7 @@ const updateStatus = async (
 const updateSharing = async (reminder: Reminder, sharing: boolean) => {
   try {
     await remindersStore.updateReminder(reminder.id, { sharing });
-    ElMessage.success(
-      sharing ? "Rappel partagé avec l'agence" : 'Rappel repassé en privé'
-    );
+    ElMessage.success(sharing ? "Rappel partagé avec l'agence" : 'Rappel repassé en privé');
   } catch {
     ElMessage.error('Erreur lors de la mise à jour du partage');
   }
@@ -603,18 +565,17 @@ const updateSharing = async (reminder: Reminder, sharing: boolean) => {
 const viewOptions = [
   { value: 'table', label: 'Vue tableau', icon: DataBoard },
   { value: 'card', label: 'Vue cartes', icon: Grid },
+  { value: 'calendar', label: 'Vue calendrier', icon: CalendarIcon },
 ];
 
 const currentRemindersView = computed({
   get: () => remindersStore.remindersViewType,
-  set: (v: string) =>
-    remindersStore.setRemindersViewType(v as 'table' | 'card'),
+  set: (v: string) => remindersStore.setRemindersViewType(v as 'table' | 'card' | 'calendar'),
 });
 
 const openProperty = async (reminder: Reminder) => {
   try {
-    const propertyId =
-      Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
+    const propertyId = Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
 
     if (propertyId <= 0) {
       ElMessage.error('Aucune propriété liée à ce rappel');
@@ -626,18 +587,14 @@ const openProperty = async (reminder: Reminder) => {
     const response: any = await PropertyService.getProperty(propertyId);
 
     const fullProperty =
-      response?.property ??
-      response?.data?.property ??
-      response?.data ??
-      response;
+      response?.property ?? response?.data?.property ?? response?.data ?? response;
 
     if (!fullProperty || Number(fullProperty.id ?? 0) <= 0) {
       ElMessage.error('Propriété introuvable');
       return;
     }
 
-    const unitId =
-      Number(fullProperty.unit?.id ?? 0) || Number(fullProperty.unit_id ?? 0);
+    const unitId = Number(fullProperty.unit?.id ?? 0) || Number(fullProperty.unit_id ?? 0);
 
     const normalizedProperty = {
       ...fullProperty,
@@ -665,8 +622,7 @@ const openProperty = async (reminder: Reminder) => {
 };
 
 const goToMap = async (reminder: Reminder) => {
-  const propertyId =
-    Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
+  const propertyId = Number(reminder.property?.id ?? 0) || Number(reminder.property_id ?? 0);
 
   if (propertyId <= 0) {
     ElMessage.error('Aucune propriété liée à ce rappel');
@@ -676,10 +632,7 @@ const goToMap = async (reminder: Reminder) => {
   try {
     const response: any = await PropertyService.getProperty(propertyId);
     const fullProperty =
-      response?.property ??
-      response?.data?.property ??
-      response?.data ??
-      response;
+      response?.property ?? response?.data?.property ?? response?.data ?? response;
 
     if (!fullProperty) {
       ElMessage.error('Propriété introuvable');
@@ -687,8 +640,7 @@ const goToMap = async (reminder: Reminder) => {
     }
 
     const city = fullProperty.city || fullProperty.nom_commune || '';
-    const codeInsee =
-      fullProperty.code_insee || fullProperty.code_commune || '';
+    const codeInsee = fullProperty.code_insee || fullProperty.code_commune || '';
     const idFantoir = fullProperty.id_fantoir || '';
     const numero = fullProperty.numero ? String(fullProperty.numero) : '';
     const rep = fullProperty.rep || '';
@@ -697,9 +649,7 @@ const goToMap = async (reminder: Reminder) => {
 
     dashboardStore.setSearchParams(
       city ? { value: city, codeInsee, code_insee: codeInsee } : null,
-      fullProperty.nom_voie
-        ? { value: fullProperty.nom_voie, idFantoir }
-        : null,
+      fullProperty.nom_voie ? { value: fullProperty.nom_voie, idFantoir } : null,
       codeInsee,
       idFantoir
     );
@@ -768,6 +718,11 @@ const goToMap = async (reminder: Reminder) => {
 /* ── List area ───────────────────────────── */
 .reminders-list {
   min-height: var(--empty-state-min-height);
+}
+
+/* In calendar mode, remove min-height so the calendar controls its own height */
+.reminders-list--calendar {
+  min-height: 0;
 }
 
 /* ── Empty state ─────────────────────────── */
