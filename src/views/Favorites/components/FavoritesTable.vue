@@ -55,10 +55,7 @@
 import { formatPrice } from '@/helpers/intl';
 import { getPropertyTypeTagType } from '@/utils/propertyHelpers';
 import EMTableWithCard from '@/components/OwnReusableComponents/table/EMTableWithCard.vue';
-import type {
-  ColumnDefinition,
-  TableAction,
-} from '@/components/OwnReusableComponents/table/types';
+import type { ColumnDefinition, TableAction } from '@/components/OwnReusableComponents/table/types';
 
 interface Props {
   favorites: any[];
@@ -66,12 +63,7 @@ interface Props {
 
 defineProps<Props>();
 
-const emit = defineEmits([
-  'edit-property',
-  'toggle-favorite',
-  'create-reminder',
-  'go-to-map',
-]);
+const emit = defineEmits(['edit-property', 'toggle-favorite', 'create-reminder', 'go-to-map']);
 
 const favoriteColumns: ColumnDefinition<any>[] = [
   { key: 'address', label: 'Adresse', sortable: false, minWidth: '280px' },
