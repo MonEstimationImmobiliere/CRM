@@ -3,7 +3,7 @@
     <el-drawer
       :model-value="store.isDialogVisible"
       @close="closeDialog"
-      size="40%"
+      :size="isMobile ? '98%' : '40%'"
       :show-close="false"
       modal-class="darker-drawer-overlay"
       :style="{
@@ -87,27 +87,15 @@
             />
           </el-tab-pane>
 
-          <el-tab-pane
-            label="Contact"
-            name="contact"
-            :disabled="isTypeUndefined"
-          >
+          <el-tab-pane label="Contact" name="contact" :disabled="isTypeUndefined">
             <ContactTab />
           </el-tab-pane>
 
-          <el-tab-pane
-            label="Commentaires"
-            name="comments"
-            :disabled="isTypeUndefined"
-          >
+          <el-tab-pane label="Commentaires" name="comments" :disabled="isTypeUndefined">
             <CommentsTab />
           </el-tab-pane>
 
-          <el-tab-pane
-            label="Rappels"
-            name="reminders"
-            :disabled="isTypeUndefined"
-          >
+          <el-tab-pane label="Rappels" name="reminders" :disabled="isTypeUndefined">
             <RemindersTab @open-reminder-dialog="openReminderDialog" />
           </el-tab-pane>
         </el-tabs>
@@ -121,25 +109,13 @@
       @save="handleSaveReminder"
     />
 
-    <UnitDialog
-      v-model="showUnitDialog"
-      :editing-unit="editingUnit"
-      @save="handleSaveUnit"
-    />
+    <UnitDialog v-model="showUnitDialog" :editing-unit="editingUnit" @save="handleSaveUnit" />
   </Teleport>
 </template>
 
 <script setup lang="ts">
 import { computed, ref, watch, nextTick, onMounted, onUnmounted } from 'vue';
-import {
-  ElForm,
-  ElIcon,
-  ElButton,
-  ElDrawer,
-  ElMessage,
-  ElTabs,
-  ElTabPane,
-} from 'element-plus';
+import { ElForm, ElIcon, ElButton, ElDrawer, ElMessage, ElTabs, ElTabPane } from 'element-plus';
 import { Star, StarFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useDashboardStore } from '@/stores/dashboard';
@@ -153,6 +129,9 @@ import RemindersTab from './RemindersTab.vue';
 import ReminderFormDialog from '@/views/Reminders/components/ReminderFormDialog.vue';
 import { useRemindersStore } from '@/stores/reminders';
 import UnitDialog from '../UnitDialog.vue';
+import useDeviceBreakpoints from '@/composables/isMobile';
+
+const { isMobile } = useDeviceBreakpoints();
 
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
@@ -163,9 +142,7 @@ const editingUnit = ref<any | null>(null);
 
 const activeTab = ref('characteristics');
 
-const isEditing = computed<boolean>(
-  () => Number(store.selectedProperty?.id ?? 0) > 0
-);
+const isEditing = computed<boolean>(() => Number(store.selectedProperty?.id ?? 0) > 0);
 
 const saveInProgress = ref(false);
 const propertySnapshot = ref<string | null>(null);
@@ -213,7 +190,7 @@ const serializeProperty = (prop: any): string => {
   delete copy.update_by;
   delete copy.created_by;
 
-  Object.keys(copy).forEach(key => {
+  Object.keys(copy).forEach((key) => {
     if (copy[key] === undefined) copy[key] = null;
     if (copy[key] === '') copy[key] = null;
 
@@ -236,11 +213,7 @@ watch(
 
     await nextTick();
 
-    if (
-      store.isDialogVisible &&
-      store.selectedProperty &&
-      !propertySnapshot.value
-    ) {
+    if (store.isDialogVisible && store.selectedProperty && !propertySnapshot.value) {
       propertySnapshot.value = serializeProperty(store.selectedProperty);
       console.log('SNAPSHOT PROPERTY =', propertySnapshot.value);
     }
@@ -250,7 +223,7 @@ watch(
 
 watch(
   () => store.isDialogVisible,
-  isVisible => {
+  (isVisible) => {
     if (!isVisible) {
       propertySnapshot.value = null;
       editingUnit.value = null;
@@ -260,15 +233,13 @@ watch(
   }
 );
 
-const propertyType = computed<string>(
-  () => (store.selectedProperty as any)?.property_type ?? ''
-);
+const propertyType = computed<string>(() => (store.selectedProperty as any)?.property_type ?? '');
 
 const isTypeUndefined = computed<boolean>(
   () => !propertyType.value || propertyType.value === 'inconnu'
 );
 
-watch(isTypeUndefined, isUndefined => {
+watch(isTypeUndefined, (isUndefined) => {
   if (isUndefined) {
     activeTab.value = 'characteristics';
   }
@@ -321,16 +292,10 @@ const openEditUnitDialog = () => {
   editingUnit.value = {
     ...(prop.unit ?? {}),
     id: prop.unit?.id ?? store.selectedProperty.unit_id ?? null,
-    unit_type:
-      prop.unit?.unit_type ??
-      store.selectedProperty.property_type ??
-      'appartement',
-    unit_label:
-      prop.unit?.unit_label ?? store.selectedProperty.unit_label ?? '',
-    apart_number:
-      prop.unit?.apart_number ?? store.selectedProperty.apart_number ?? null,
-    floor_number:
-      prop.unit?.floor_number ?? store.selectedProperty.floor_number ?? null,
+    unit_type: prop.unit?.unit_type ?? store.selectedProperty.property_type ?? 'appartement',
+    unit_label: prop.unit?.unit_label ?? store.selectedProperty.unit_label ?? '',
+    apart_number: prop.unit?.apart_number ?? store.selectedProperty.apart_number ?? null,
+    floor_number: prop.unit?.floor_number ?? store.selectedProperty.floor_number ?? null,
     staircase: prop.unit?.staircase ?? prop.staircase ?? '',
     building: prop.unit?.building ?? prop.building ?? '',
     lot_number: prop.unit?.lot_number ?? prop.lot_number ?? '',
@@ -402,18 +367,13 @@ const handleSaveProperty = async (): Promise<any> => {
     const filteredProperty = { ...store.selectedProperty } as any;
     delete filteredProperty.comment_rappel;
 
-    filteredProperty.id_fantoir_long = String(
-      store.selectedProperty.id_fantoir_long || ''
-    );
+    filteredProperty.id_fantoir_long = String(store.selectedProperty.id_fantoir_long || '');
 
     filteredProperty.row_type =
-      filteredProperty.row_type ||
-      (Number(filteredProperty.unit_id ?? 0) > 0 ? 'unit' : 'address');
+      filteredProperty.row_type || (Number(filteredProperty.unit_id ?? 0) > 0 ? 'unit' : 'address');
 
     filteredProperty.unit_id =
-      Number(filteredProperty.unit_id ?? 0) > 0
-        ? Number(filteredProperty.unit_id)
-        : null;
+      Number(filteredProperty.unit_id ?? 0) > 0 ? Number(filteredProperty.unit_id) : null;
 
     if (!isEditing.value && !hasNewPropertyMeaningfulData(filteredProperty)) {
       console.log('Nouvelle fiche vide, création ignorée');
@@ -444,9 +404,7 @@ const handleSaveProperty = async (): Promise<any> => {
   } catch (error: any) {
     console.error('Error saving property:', error);
     ElMessage.error(
-      error?.response?.data?.message ||
-        error?.message ||
-        'Erreur lors de la sauvegarde'
+      error?.response?.data?.message || error?.message || 'Erreur lors de la sauvegarde'
     );
     return null;
   } finally {
@@ -495,9 +453,7 @@ const createUnit = async (payload: any) => {
     rootProperty = createdRoot as any;
     await store.selectProperty(createdRoot as any);
   }
-  const savedUnit = await UnitService.save(
-    buildUnitPayload(payload, rootProperty)
-  );
+  const savedUnit = await UnitService.save(buildUnitPayload(payload, rootProperty));
 
   ElMessage.success('Unité créée avec sa property');
 
@@ -563,9 +519,7 @@ const handleSaveUnit = async (payload: any) => {
     console.error('Réponse backend unit:', error?.response?.data);
 
     ElMessage.error(
-      error?.response?.data?.message ||
-        error?.message ||
-        "Impossible de sauvegarder l'unité"
+      error?.response?.data?.message || error?.message || "Impossible de sauvegarder l'unité"
     );
   }
 };
@@ -574,10 +528,7 @@ const toggleFavorite = async () => {
   if (!store.selectedProperty?.id) return;
 
   try {
-    const savedRow = await store.toggleFavorite(
-      store.selectedProperty.id,
-      store.selectedProperty
-    );
+    const savedRow = await store.toggleFavorite(store.selectedProperty.id, store.selectedProperty);
 
     (store.selectedProperty as any).id = savedRow.id;
     (store.selectedProperty as any).favorite = savedRow.favorite;

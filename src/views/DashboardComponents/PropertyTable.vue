@@ -659,10 +659,12 @@ function getDisplayType(row: any): string {
   background: var(--apple-card-bg, #fff);
   border-radius: var(--card-radius, 12px);
   border: 1px solid rgba(229, 231, 235, 0.6);
-  box-shadow: var(--card-shadow, 0 1px 3px rgba(0,0,0,0.1));
+  box-shadow: var(--card-shadow, 0 1px 3px rgba(0, 0, 0, 0.1));
   padding: 14px;
   cursor: pointer;
-  transition: box-shadow 0.2s ease, transform 0.2s ease;
+  transition:
+    box-shadow 0.2s ease,
+    transform 0.2s ease;
   display: flex;
   flex-direction: column;
   gap: 10px;
@@ -670,7 +672,7 @@ function getDisplayType(row: any): string {
 
 .property-card-mobile:active {
   transform: scale(0.99);
-  box-shadow: var(--card-shadow-hover, 0 4px 12px rgba(0,0,0,0.15));
+  box-shadow: var(--card-shadow-hover, 0 4px 12px rgba(0, 0, 0, 0.15));
 }
 
 .pcm-header {
