@@ -780,13 +780,46 @@ const goToMap = async (reminder: Reminder) => {
     justify-content: space-between;
   }
 
-  .reminders-grid {
-    grid-template-columns: 1fr;
-    gap: 16px;
+  /* Stack the header rows on mobile */
+  .headerTopRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .headerRightContainer {
+    justify-content: flex-end;
+  }
+
+  .headerBottomRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
   }
 
   .add-reminder-btn {
+    width: 100%;
+    justify-content: center;
+  }
+
+  .completed-toggle {
+    margin-left: 0;
+    width: 100%;
+  }
+
+  .completed-toggle :deep(.el-radio-group) {
+    display: flex;
+    width: 100%;
+  }
+
+  .completed-toggle :deep(.el-radio-button) {
     flex: 1;
+    text-align: center;
+  }
+
+  .reminders-grid {
+    grid-template-columns: 1fr;
+    gap: 16px;
   }
 }
 

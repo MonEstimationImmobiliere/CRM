@@ -105,10 +105,7 @@
             <button
               class="modePill"
               :class="{ active: dashboardStore.activeMainMode === 'dpe' }"
-              :disabled="
-                !dashboardStore.selectedCodeInsee &&
-                !dashboardStore.selectedCity
-              "
+              :disabled="!dashboardStore.selectedCodeInsee && !dashboardStore.selectedCity"
               @click="dashboardStore.setMainMode('dpe')"
             >
               <span class="modeDot dpe"></span>
@@ -134,9 +131,6 @@
               class="modePill"
               :class="{ active: dashboardStore.activeMainMode === 'dvf' }"
               @click="dashboardStore.setMainMode('dvf')"
-
-
-
             >
               <span class="modeDot dvf"></span>
               DVF
@@ -163,10 +157,10 @@
     <!-- TABLE DES ADRESSES -->
     <div
       v-if="
-  viewType === 'table' &&
-  dashboardStore.activeMainMode !== 'dpe' &&
-  dashboardStore.activeMainMode !== 'dvf'
-"
+        viewType === 'table' &&
+        dashboardStore.activeMainMode !== 'dpe' &&
+        dashboardStore.activeMainMode !== 'dvf'
+      "
       v-loading="isLoading"
       element-loading-text="Chargement des adresses..."
       element-loading-background="rgba(255, 255, 255, 0.8)"
@@ -180,10 +174,7 @@
         @select-street="handleGroupedStreetClick"
         @select-numero="handleTableNumeroClick"
       />
-      <div
-        v-else-if="!isLoading && dashboardStore.isDataLoaded"
-        class="empty-state"
-      >
+      <div v-else-if="!isLoading && dashboardStore.isDataLoaded" class="empty-state">
         <el-icon class="empty-state-icon"><Search /></el-icon>
         <p class="empty-state-title">Aucun résultat correspondant</p>
         <p class="empty-state-subtitle">{{ emptyStateMessage }}</p>
@@ -193,40 +184,36 @@
     <!-- MODE CARD -->
     <div
       v-else-if="
-  viewType === 'card' &&
-  dashboardStore.activeMainMode !== 'dpe' &&
-  dashboardStore.activeMainMode !== 'dvf'
-"
+        viewType === 'card' &&
+        dashboardStore.activeMainMode !== 'dpe' &&
+        dashboardStore.activeMainMode !== 'dvf'
+      "
     >
       <PropertyTableCard
         v-if="addresses.length > 0"
         :addresses="addresses as IAddressDetail[]"
         @edit-property="openPropertyDialog"
       />
-      <div
-        v-else-if="!isLoading && dashboardStore.isDataLoaded"
-        class="empty-state"
-      >
+      <div v-else-if="!isLoading && dashboardStore.isDataLoaded" class="empty-state">
         <el-icon class="empty-state-icon"><Search /></el-icon>
         <p class="empty-state-title">Aucun résultat correspondant</p>
         <p class="empty-state-subtitle">{{ emptyStateMessage }}</p>
       </div>
     </div>
 
-<MapView
-  v-show="viewType === 'map'"
-  :addresses="
-    dashboardStore.activeMainMode === 'dpe' ||
-    dashboardStore.activeMainMode === 'dvf'
-      ? []
-      : addresses
-  "
-  :city-center="dashboardStore.cityCenter"
-  :dpe-points="dashboardStore.dpePoints"
-  :dvf-points="dashboardStore.dvfPoints"
-  :parcelles-geojson="dashboardStore.parcellesGeojson"
-  @edit-property="openPropertyDialog"
-/>
+    <MapView
+      v-show="viewType === 'map'"
+      :addresses="
+        dashboardStore.activeMainMode === 'dpe' || dashboardStore.activeMainMode === 'dvf'
+          ? []
+          : addresses
+      "
+      :city-center="dashboardStore.cityCenter"
+      :dpe-points="dashboardStore.dpePoints"
+      :dvf-points="dashboardStore.dvfPoints"
+      :parcelles-geojson="dashboardStore.parcellesGeojson"
+      @edit-property="openPropertyDialog"
+    />
 
     <PropertyForm />
     <CreateCustomPropertyDialog />
@@ -255,7 +242,6 @@ import PropertyTableCard from './DashboardComponents/PropertyTableCard.vue';
 import PropertyForm from './DashboardComponents/PropertyDialog/index.vue';
 import CreateCustomPropertyDialog from './DashboardComponents/CreateCustomPropertyDialog.vue';
 import MapView from './DashboardComponents/MapView.vue';
-
 
 /* ------------------------------------
       STORES
@@ -306,7 +292,7 @@ watch(
 
 watch(
   () => dashboardStore.activeMainMode,
-  newMode => {
+  (newMode) => {
     if (newMode === 'dpe' && dashboardStore.viewType !== 'map') {
       dashboardStore.viewType = 'map';
     }
@@ -349,38 +335,38 @@ watch(
 
 const selectedOwnerName = computed({
   get: () => dashboardStore.selectedOwnerName,
-  set: v => (dashboardStore.selectedOwnerName = v),
+  set: (v) => (dashboardStore.selectedOwnerName = v),
 });
 
 // --- Ville ---
 const selectedCity = computed({
   get: () => dashboardStore.selectedCity,
-  set: v => (dashboardStore.selectedCity = v),
+  set: (v) => (dashboardStore.selectedCity = v),
 });
 
 // --- Rue ---
 const selectedStreet = computed({
   get: () => dashboardStore.selectedStreet,
-  set: v => (dashboardStore.selectedStreet = v),
+  set: (v) => (dashboardStore.selectedStreet = v),
 });
 
 // --- Code INSEE ---
 const selectedCodeInsee = computed({
   get: () => dashboardStore.selectedCodeInsee,
-  set: v => (dashboardStore.selectedCodeInsee = v),
+  set: (v) => (dashboardStore.selectedCodeInsee = v),
 });
 
 // --- ID FANTOIR de la rue (nécessaire pour NuméroAutocomplete) ---
 const selectedCodeIdFantoir = computed({
   get: () => dashboardStore.selectedCodeIdFantoir,
-  set: v => (dashboardStore.selectedCodeIdFantoir = v),
+  set: (v) => (dashboardStore.selectedCodeIdFantoir = v),
 });
 
 // --- Numéro + rep (ex: "40 bis") ---
 const selectedNumeroFull = computed({
   get: () => dashboardStore.selectedNumeroFull || undefined,
 
-  set: v => {
+  set: (v) => {
     dashboardStore.selectedNumeroFull = v || null;
 
     if (!v) {
@@ -408,7 +394,7 @@ const selectedNumeroFull = computed({
 // --- Vue table / card ---
 const viewType = computed({
   get: () => dashboardStore.viewType,
-  set: v => (dashboardStore.viewType = v),
+  set: (v) => (dashboardStore.viewType = v),
 });
 
 // --- Résultats des adresses (filtrées par mode actif) ---
@@ -594,9 +580,7 @@ const openPropertyDialog = async (property: any) => {
 
     unit_id: unitId > 0 ? unitId : null,
 
-    row_type:
-      property.row_type ||
-      (unitId > 0 ? 'unit' : 'address'),
+    row_type: property.row_type || (unitId > 0 ? 'unit' : 'address'),
   };
 
   await store.selectProperty(normalizedProperty);
@@ -829,5 +813,63 @@ const openPropertyDialog = async (property: any) => {
   color: #9ca3af;
   margin: 0;
   max-width: 360px;
+}
+
+/* ── Mobile responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .headerFilterInfoContainer {
+    padding: 12px;
+    gap: 12px;
+  }
+
+  .headerTopRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .headerRightContainer {
+    justify-content: flex-end;
+  }
+
+  .autoCompleteContainer {
+    flex-direction: column;
+    gap: 10px;
+  }
+
+  .autoCompleteContainer > * {
+    width: 100%;
+    min-width: 0;
+  }
+
+  .headerBottomRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  /* Mode pills: single scrollable row on mobile */
+  .modeBar {
+    flex-wrap: nowrap;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    padding-bottom: 4px;
+    gap: 8px;
+  }
+
+  .modeBar::-webkit-scrollbar {
+    display: none;
+  }
+
+  .modePill {
+    white-space: nowrap;
+    flex-shrink: 0;
+    padding: 8px 12px;
+    font-size: 13px;
+  }
+
+  .modeSelect {
+    width: 100px;
+  }
 }
 </style>

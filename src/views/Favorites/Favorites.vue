@@ -26,12 +26,7 @@
               clearable
               class="filter-select"
             >
-              <el-option
-                v-for="city in availableCities"
-                :key="city"
-                :label="city"
-                :value="city"
-              />
+              <el-option v-for="city in availableCities" :key="city" :label="city" :value="city" />
             </el-select>
           </div>
           <div class="type-filter">
@@ -53,22 +48,15 @@
       </div>
     </EMCard>
 
-    <div
-      v-if="filteredFavorites.length === 0 && favorites.length > 0"
-      class="empty-state"
-    >
+    <div v-if="filteredFavorites.length === 0 && favorites.length > 0" class="empty-state">
       <el-empty description="Aucune propriété trouvée pour ces filtres">
-        <el-button type="primary" @click="clearFilters">
-          Effacer les filtres
-        </el-button>
+        <el-button type="primary" @click="clearFilters"> Effacer les filtres </el-button>
       </el-empty>
     </div>
 
     <div v-else-if="favorites.length === 0" class="empty-state">
       <el-empty description="Aucune propriété en favoris">
-        <el-button type="primary" @click="$router.push('/')">
-          Parcourir les propriétés
-        </el-button>
+        <el-button type="primary" @click="$router.push('/')"> Parcourir les propriétés </el-button>
       </el-empty>
     </div>
 
@@ -163,28 +151,22 @@ watch(
 
 const availableCities = computed(() => {
   return favorites.value
-    .map(property => property.city || property.nom_commune || null)
-    .filter(
-      (city): city is string =>
-        city !== null && city !== undefined && city !== ''
-    )
+    .map((property) => property.city || property.nom_commune || null)
+    .filter((city): city is string => city !== null && city !== undefined && city !== '')
     .filter((city, index, array) => array.indexOf(city) === index)
     .sort();
 });
 
 const availablePropertyTypes = computed(() => {
   const types = favorites.value
-    .map(property => property.property_type || null)
+    .map((property) => property.property_type || null)
     .filter((type, index, array) => array.indexOf(type) === index);
 
   const validTypes = types
-    .filter(
-      (type): type is NonNullable<typeof type> =>
-        type !== null && type !== undefined
-    )
+    .filter((type): type is NonNullable<typeof type> => type !== null && type !== undefined)
     .sort();
 
-  const hasNullTypes = types.some(type => type === null || type === undefined);
+  const hasNullTypes = types.some((type) => type === null || type === undefined);
 
   const result: string[] = [...validTypes];
   if (hasNullTypes) {
@@ -199,17 +181,16 @@ const filteredFavorites = computed(() => {
 
   if (selectedCity.value) {
     filtered = filtered.filter(
-      property =>
-        (property.city || property.nom_commune || '') === selectedCity.value
+      (property) => (property.city || property.nom_commune || '') === selectedCity.value
     );
   }
 
   if (selectedPropertyType.value) {
     if (selectedPropertyType.value === 'Non renseigné') {
-      filtered = filtered.filter(property => !property.property_type);
+      filtered = filtered.filter((property) => !property.property_type);
     } else {
       filtered = filtered.filter(
-        property => property.property_type === selectedPropertyType.value
+        (property) => property.property_type === selectedPropertyType.value
       );
     }
   }
@@ -317,10 +298,7 @@ const createReminderForProperty = (property: any) => {
   showReminderDialog.value = true;
 };
 
-const saveReminder = async (
-  form: ReminderFormData,
-  editingReminder: any | null
-) => {
+const saveReminder = async (form: ReminderFormData, editingReminder: any | null) => {
   savingReminder.value = true;
 
   try {
@@ -427,5 +405,42 @@ const currentFavoritesView = computed({
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(350px, 1fr));
   gap: 24px;
+}
+
+/* ── Mobile responsive ──────────────────────────────────────── */
+@media (max-width: 768px) {
+  .headerTopRow {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 12px;
+  }
+
+  .headerRightContainer {
+    justify-content: flex-end;
+  }
+
+  .filters-container {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 10px;
+  }
+
+  .filter-select {
+    width: 100%;
+  }
+
+  .scope-filter :deep(.el-radio-group) {
+    display: flex;
+    width: 100%;
+  }
+
+  .scope-filter :deep(.el-radio-button) {
+    flex: 1;
+    text-align: center;
+  }
+
+  .favorites-grid {
+    grid-template-columns: 1fr;
+  }
 }
 </style>

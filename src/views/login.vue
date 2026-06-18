@@ -44,7 +44,7 @@ function validatePassword(password: string): boolean {
 
 function login() {
   if (!refForm.value) return;
-  refForm.value.validate(async valid => {
+  refForm.value.validate(async (valid) => {
     if (!valid) return;
     loading.login = true;
     loginError.value = '';
@@ -68,10 +68,7 @@ function login() {
         data: any;
       }
 
-      const response = (await user.login(
-        form.username,
-        form.password
-      )) as LoginResponse;
+      const response = (await user.login(form.username, form.password)) as LoginResponse;
 
       if (response.status === 200) {
         ElMessage.success('Connexion réussie');
@@ -97,17 +94,8 @@ function login() {
     <section class="login-wrapper">
       <h2 class="title">Mon estimation immobilière.fr</h2>
       <h3 class="subtitle">Connexion</h3>
-      <el-form
-        ref="refForm"
-        label-width="0"
-        :model="form"
-        class="login-form shadow"
-        size="large"
-      >
-        <el-form-item
-          prop="username"
-          :rules="[{ required: true, message: 'username!' }]"
-        >
+      <el-form ref="refForm" label-width="0" :model="form" class="login-form shadow" size="large">
+        <el-form-item prop="username" :rules="[{ required: true, message: 'username!' }]">
           <el-input v-model="form.username">
             <template #prefix>
               <el-icon size="1.1rem">
@@ -116,24 +104,15 @@ function login() {
             </template>
           </el-input>
         </el-form-item>
-        <el-form-item
-          prop="password"
-          :rules="[{ required: true, message: 'password!' }]"
-        >
-          <el-input
-            v-model="form.password"
-            :type="form.showPassword ? 'text' : 'password'"
-          >
+        <el-form-item prop="password" :rules="[{ required: true, message: 'password!' }]">
+          <el-input v-model="form.password" :type="form.showPassword ? 'text' : 'password'">
             <template #prefix>
               <el-icon size="1.1rem">
                 <Lock />
               </el-icon>
             </template>
             <template #suffix>
-              <el-icon
-                size="1.1rem"
-                @click="form.showPassword = !form.showPassword"
-              >
+              <el-icon size="1.1rem" @click="form.showPassword = !form.showPassword">
                 <component :is="form.showPassword ? View : Hide" />
               </el-icon>
             </template>
@@ -169,6 +148,7 @@ function login() {
 
   & .login-wrapper {
     margin-top: -10rem;
+    padding: 0 1rem;
 
     & .title {
       color: var(--white);
@@ -179,7 +159,7 @@ function login() {
     & .login-form {
       background-color: var(--white);
       padding: 2rem 1.5rem;
-      width: 25rem;
+      width: min(25rem, 90vw);
       border-radius: 0.5rem;
 
       & .wrapper-remember {

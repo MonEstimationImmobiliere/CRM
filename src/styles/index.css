@@ -26,15 +26,11 @@ body {
   color: var(--apple-text-primary);
   font-size: 14px;
   font-family:
-    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto,
-    'Helvetica Neue', Arial, sans-serif;
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
   font-weight: 400;
   line-height: 1.6;
-  background: linear-gradient(
-    135deg,
-    var(--apple-bg-primary) 0%,
-    var(--apple-bg-secondary) 100%
-  );
+  background: linear-gradient(135deg, var(--apple-bg-primary) 0%, var(--apple-bg-secondary) 100%);
   min-height: 100vh;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -133,6 +129,23 @@ a:hover {
 @media screen and (max-width: 1300px) {
   html {
     font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+
+  /* Reduce default El card hover animation on touch to avoid jank */
+  :deep(.el-card:hover) {
+    transform: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
   }
 }
 

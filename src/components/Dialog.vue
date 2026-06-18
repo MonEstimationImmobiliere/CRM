@@ -27,7 +27,7 @@ const props = withDefaults(
   }
 );
 
-const _isMobile = isMobile();
+const { isMobile: _isMobile } = isMobile();
 
 const emit = defineEmits<{
   (e: 'update:show', value: boolean): void;

@@ -9,7 +9,7 @@ import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg';
 
 import type { Layout } from 'types/layout';
 
-const _isMobile = isMobile();
+const { isMobile: _isMobile, isCompact } = isMobile();
 const sidebarRelated = reactive<Layout.SidebarRelated>({
   collapsed: true,
   width: '13rem',
@@ -23,9 +23,7 @@ const keepAlivePages = ref<Layout.keepAlivePages>(new Set());
 //   return Array.from(keepAlivePages.value);
 // });
 const asideWidth = computed(() => {
-  return sidebarRelated?.collapsed
-    ? sidebarRelated?.collapsedWidth
-    : sidebarRelated?.width;
+  return sidebarRelated?.collapsed ? sidebarRelated?.collapsedWidth : sidebarRelated?.width;
 });
 
 onBeforeMount(() => {
@@ -33,7 +31,7 @@ onBeforeMount(() => {
 });
 
 function setSidebarCollapsed() {
-  sidebarRelated.collapsed = _isMobile.value;
+  sidebarRelated.collapsed = isCompact.value;
 }
 
 // provide layout-related state information for the child components
@@ -43,7 +41,7 @@ provide('loading', loading);
 </script>
 <template>
   <ElContainer style="height: 100%">
-    <ElAside v-if="!_isMobile" :width="asideWidth">
+    <ElAside v-if="!isCompact" :width="asideWidth">
       <div
         class="shadow-lg"
         style="display: flex; flex-direction: column; width: 100%; height: 100%"
@@ -66,11 +64,11 @@ provide('loading', loading);
       </div>
     </ElAside>
     <ElContainer>
-      <ElHeader>
+      <ElHeader :style="_isMobile ? 'height: auto; padding: 8px 12px;' : ''">
         <HeadBar></HeadBar>
         <!-- <TabsBar :withIcons="true"></TabsBar> -->
       </ElHeader>
-      <ElMain id="content-window">
+      <ElMain id="content-window" :class="{ 'content-mobile': _isMobile }">
         <Transition name="slide-left" mode="out-in">
           <RouterView />
         </Transition>
@@ -80,7 +78,7 @@ provide('loading', loading);
   <Teleport to="body">
     <Transition name="slide-right" mode="out-in" appear>
       <Shadow
-        v-if="_isMobile && !sidebarRelated.collapsed"
+        v-if="isCompact && !sidebarRelated.collapsed"
         @shadowClick="sidebarRelated.collapsed = true"
       >
         <div class="block sidebar-mobile">
@@ -116,5 +114,9 @@ provide('loading', loading);
 
 .shadow-lg {
   background-color: #fff;
+}
+
+:deep(.content-mobile) {
+  padding: 8px 12px;
 }
 </style>

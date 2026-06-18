@@ -52,7 +52,7 @@
 import { ref } from 'vue';
 import useIsMobile from '../../../composables/isMobile';
 
-const isMobile = useIsMobile();
+const { isMobile } = useIsMobile();
 const inputRef = ref<HTMLInputElement>();
 
 const focus = () => {

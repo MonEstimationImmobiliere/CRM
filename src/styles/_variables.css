@@ -65,4 +65,17 @@
   --sort-btn-radius: 8px;
 
   --empty-state-min-height: 400px;
+
+  /* ── Breakpoint tokens (doc only — use in @media queries) ──────
+   *  Mobile  : max-width 768px
+   *  Tablet  : 769px – 1024px
+   *  Desktop : min-width 1025px
+   *  Sidebar : max-width 992px (sidebar collapses)
+   * ────────────────────────────────────────────────────────────── */
+
+  /* ── Mobile overrides applied via media queries ── */
+  --page-padding-mobile: 12px;
+  --card-padding-mobile: 14px;
+  --grid-gap-mobile: 12px;
+  --table-cell-padding-mobile: 10px 8px;
 }
