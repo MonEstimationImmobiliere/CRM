@@ -3,6 +3,7 @@ import { computed } from 'vue';
 import { onBeforeMount, provide, reactive, ref } from 'vue';
 import HeadBar from './HeadBar.vue';
 import SideBar from './SideBar.vue';
+import BottomMenuMobile from './BottomMenuMobile.vue';
 // import TabsBar from './TabsBar.vue';
 import isMobile from '@/composables/isMobile';
 import MinimalistHouse from '@/assets/minimalist-original-icon-house-curvy.svg';
@@ -68,7 +69,7 @@ provide('loading', loading);
         <HeadBar></HeadBar>
         <!-- <TabsBar :withIcons="true"></TabsBar> -->
       </ElHeader>
-      <ElMain id="content-window" :class="{ 'content-mobile': _isMobile }">
+      <ElMain id="content-window" :class="{ 'content-mobile': _isMobile, 'content-with-bottom-menu': isCompact }">
         <Transition name="slide-left" mode="out-in">
           <RouterView />
         </Transition>
@@ -98,6 +99,7 @@ provide('loading', loading);
       </Shadow>
     </Transition>
   </Teleport>
+  <BottomMenuMobile v-if="isCompact" />
 </template>
 
 <style lang="postcss" scoped>
@@ -118,5 +120,9 @@ provide('loading', loading);
 
 :deep(.content-mobile) {
   padding: 8px 12px;
+}
+
+:deep(.content-with-bottom-menu) {
+  padding-bottom: calc(60px + env(safe-area-inset-bottom));
 }
 </style>
