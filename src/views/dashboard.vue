@@ -1,29 +1,36 @@
 <template>
   <section>
-    <EMCard class="headerFilterInfoContainer" :border-hover="false">
+    <EMCard :border-hover="false">
       <!-- LIGNE 1 -->
       <div class="headerTopRow">
         <div class="autoCompleteContainer">
-          <CityAutocomplete
-            v-model="selectedCity"
-            @select="handleCitySelect"
-            @clear="handleCityClear"
-          />
+          <div class="input-cell">
+            <CityAutocomplete
+              v-model="selectedCity"
+              @select="handleCitySelect"
+              @clear="handleCityClear"
+            />
+          </div>
 
-          <StreetAutocomplete
-            v-model="selectedStreet"
-            :code-insee="selectedCodeInsee"
-            @select="handleStreetSelect"
-            @clear="handleStreetClear"
-          />
+          <div class="input-cell">
+            <StreetAutocomplete
+              v-model="selectedStreet"
+              :code-insee="selectedCodeInsee"
+              @select="handleStreetSelect"
+              @clear="handleStreetClear"
+            />
+          </div>
 
-          <NumeroAutocomplete
-            v-model="selectedNumeroFull"
-            :id-fantoir="selectedCodeIdFantoir"
-            @select="handleNumeroSelect"
-            @clear="handleNumeroClear"
-          />
-          <div>
+          <div class="input-cell">
+            <NumeroAutocomplete
+              v-model="selectedNumeroFull"
+              :id-fantoir="selectedCodeIdFantoir"
+              @select="handleNumeroSelect"
+              @clear="handleNumeroClear"
+            />
+          </div>
+
+          <div class="input-cell">
             <el-input
               v-model="selectedOwnerName"
               clearable
@@ -590,19 +597,6 @@ const openPropertyDialog = async (property: any) => {
 </script>
 
 <style scoped>
-.headerFilterInfoContainer {
-  display: flex;
-  align-items: center;
-  flex-direction: row;
-  justify-content: space-between;
-  margin-bottom: 20px;
-  background: var(--apple-card-bg);
-  padding: 20px;
-  border-radius: var(--apple-radius);
-  box-shadow: var(--apple-shadow);
-  gap: 20px;
-}
-
 .autoCompleteContainer {
   display: flex;
   align-items: center;
@@ -670,7 +664,6 @@ const openPropertyDialog = async (property: any) => {
   display: flex;
   align-items: center;
   gap: 10px;
-  flex-wrap: wrap;
 }
 
 .modePill {
@@ -817,42 +810,71 @@ const openPropertyDialog = async (property: any) => {
 
 /* ── Mobile responsive ──────────────────────────────────────── */
 @media (max-width: 768px) {
+  /* Card : padding réduit */
   .headerFilterInfoContainer {
     padding: 12px;
-    gap: 12px;
   }
 
+  /* Ligne 1 : inputs + ViewToggle empilés verticalement */
   .headerTopRow {
     flex-direction: column;
     align-items: stretch;
-    gap: 12px;
+    gap: 10px;
   }
 
   .headerRightContainer {
     justify-content: flex-end;
+    align-self: flex-end;
   }
 
+  /* Colonne d'inputs */
   .autoCompleteContainer {
     flex-direction: column;
+    align-items: stretch;
     gap: 10px;
-  }
-
-  .autoCompleteContainer > * {
     width: 100%;
     min-width: 0;
   }
 
-  .headerBottomRow {
-    flex-direction: column;
-    align-items: stretch;
-    gap: 10px;
+  /*
+   * .input-cell encapsule chaque composant autocomplete/input.
+   * Forcer width à chaque niveau de la chaîne :
+   *   .input-cell → DynamicLabelUI root → slot div → el-autocomplete / el-input
+   */
+  .input-cell {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+    box-sizing: border-box;
   }
 
-  /* Mode pills: single scrollable row on mobile */
+  .input-cell :deep(.dynamic-label-wrapper) {
+    width: 100%;
+    min-width: 0;
+    max-width: 100%;
+  }
+
+  .input-cell :deep(.dynamic-label-wrapper > div) {
+    width: 100%;
+  }
+
+  .input-cell :deep(.el-autocomplete),
+  .input-cell :deep(.el-input) {
+    width: 100% !important;
+    max-width: 100% !important;
+  }
+
+  /* Ligne 2 : modeBar scrollable horizontalement */
+  .headerBottomRow {
+    overflow: hidden;
+  }
+
   .modeBar {
     flex-wrap: nowrap;
     overflow-x: auto;
     -webkit-overflow-scrolling: touch;
+    width: 100%;
+    min-width: 0;
     padding-bottom: 4px;
     gap: 8px;
   }
@@ -870,6 +892,7 @@ const openPropertyDialog = async (property: any) => {
 
   .modeSelect {
     width: 100px;
+    flex-shrink: 0;
   }
 }
 </style>

@@ -14,10 +14,7 @@
           @click="select(option)"
           @keydown.enter="select(option)"
         >
-          <el-icon
-            class="view-icon"
-            :class="{ active: modelValue === option.value }"
-          >
+          <el-icon class="view-icon" :class="{ active: modelValue === option.value }">
             <component :is="option.icon" />
           </el-icon>
         </div>
@@ -110,5 +107,19 @@ const select = (option: ViewToggleOption) => {
   opacity: 0.4;
   cursor: not-allowed;
   pointer-events: none;
+}
+
+@media (max-width: 768px) {
+  .view-controls {
+    padding: 8px 14px;
+  }
+
+  .grid-container {
+    padding: 6px 10px;
+  }
+
+  .view-icon {
+    font-size: 16px;
+  }
 }
 </style>

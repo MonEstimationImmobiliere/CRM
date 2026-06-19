@@ -6,6 +6,7 @@
     <div
       @focusin="!isDisabled && (isFocused = true)"
       @focusout="!isDisabled && (isFocused = false)"
+      style="width: 100%;"
     >
       <slot />
     </div>
@@ -36,8 +37,7 @@ const labelStyle = computed(() => {
   }
 
   return {
-    color:
-      isFocused.value || props.modelValue ? props.activeColor : props.color,
+    color: isFocused.value || props.modelValue ? props.activeColor : props.color,
   };
 });
 
@@ -47,6 +47,7 @@ const isDisabled = computed(() => props.disabled);
 <style scoped>
 .dynamic-label-wrapper {
   position: relative;
+  max-width: 100%;
 }
 
 .dynamic-label-wrapper label {
