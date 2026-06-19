@@ -69,7 +69,10 @@ provide('loading', loading);
         <HeadBar></HeadBar>
         <!-- <TabsBar :withIcons="true"></TabsBar> -->
       </ElHeader>
-      <ElMain id="content-window" :class="{ 'content-mobile': _isMobile, 'content-with-bottom-menu': isCompact }">
+      <ElMain
+        id="content-window"
+        :class="{ 'content-mobile': _isMobile, 'content-with-bottom-menu': isCompact }"
+      >
         <Transition name="slide-left" mode="out-in">
           <RouterView />
         </Transition>
