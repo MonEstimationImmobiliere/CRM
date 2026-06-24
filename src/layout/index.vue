@@ -65,7 +65,10 @@ provide('loading', loading);
       </div>
     </ElAside>
     <ElContainer>
-      <ElHeader :style="_isMobile ? 'height: auto; padding: 8px 12px;' : ''">
+      <ElHeader
+        :class="{ 'el-header--mobile': _isMobile }"
+        :style="!_isMobile ? '' : ''"
+      >
         <HeadBar></HeadBar>
         <!-- <TabsBar :withIcons="true"></TabsBar> -->
       </ElHeader>
@@ -82,7 +85,7 @@ provide('loading', loading);
   <Teleport to="body">
     <Transition name="slide-right" mode="out-in" appear>
       <Shadow
-        v-if="isCompact && !sidebarRelated.collapsed"
+        v-if="isCompact && !_isMobile && !sidebarRelated.collapsed"
         @shadowClick="sidebarRelated.collapsed = true"
       >
         <div class="block sidebar-mobile">
@@ -123,9 +126,21 @@ provide('loading', loading);
 
 :deep(.content-mobile) {
   padding: 8px 12px;
+  padding-top: calc(48px + 8px);
 }
 
 :deep(.content-with-bottom-menu) {
   padding-bottom: calc(60px + env(safe-area-inset-bottom));
+}
+
+:deep(.el-header--mobile) {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  z-index: 1000;
+  height: auto !important;
+  padding: 0 !important;
+  background: #ffffff;
 }
 </style>

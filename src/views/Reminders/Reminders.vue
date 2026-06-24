@@ -1,7 +1,32 @@
 <template>
   <div class="reminders-page">
-    <!-- Header bar: title + add button + view toggle -->
-    <EMCard class="headerFilterInfoContainer" :border-hover="false">
+    <!-- Mobile Header -->
+    <div v-if="isMobile" class="mobile-header-reminders">
+      <div class="mobile-header-top">
+        <h2>Mes Rappels</h2>
+        <ViewToggle v-model="currentRemindersView" :options="viewOptions" />
+      </div>
+
+      <RemindersFilters
+        v-model:sharing-filter="sharingFilter"
+        v-model:selected-user="selectedUser"
+        v-model:selected-agency="selectedAgency"
+        :user-role="userStore.role"
+      />
+
+      <el-radio-group v-model="completedFilter" class="mobile-completed-toggle">
+        <el-radio-button :label="false">À faire</el-radio-button>
+        <el-radio-button :label="true">Terminé</el-radio-button>
+      </el-radio-group>
+
+      <el-button type="primary" @click="openNewReminderDialog" class="mobile-add-btn">
+        <el-icon><Plus /></el-icon>
+        Nouveau rappel
+      </el-button>
+    </div>
+
+    <!-- Desktop Header -->
+    <EMCard v-else class="headerFilterInfoContainer" :border-hover="false">
       <div class="headerTopRow">
         <h2>Mes Rappels</h2>
 
@@ -182,6 +207,7 @@ import { DataBoard, Grid, Calendar as CalendarIcon } from '@element-plus/icons-v
 import ViewToggle from '@/components/ViewToggle.vue';
 import { ElMessage, ElMessageBox } from 'element-plus';
 import { sortReminders, getTypeLabel } from '@/utils/reminderHelpers';
+import useDeviceBreakpoints from '@/composables/isMobile';
 
 import RemindersFilters from './components/RemindersFilters.vue';
 import ReminderCard from './components/ReminderCard.vue';
@@ -193,6 +219,7 @@ import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import { PropertyService } from '@/api';
 import type { ReminderFormData } from './components/ReminderFormDialog.vue';
 
+const { isMobile } = useDeviceBreakpoints();
 const remindersStore = useRemindersStore();
 const propertyStore = usePropertyStore();
 const dashboardStore = useDashboardStore();
@@ -762,6 +789,53 @@ const goToMap = async (reminder: Reminder) => {
   display: grid;
   grid-template-columns: repeat(auto-fill, minmax(var(--grid-min-col), 1fr));
   gap: var(--grid-gap);
+}
+
+/* ── Mobile header ───────────────────────── */
+.mobile-header-reminders {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--el-bg-color, #fff);
+  border-radius: var(--apple-radius, 12px);
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.mobile-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-header-top h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.mobile-completed-toggle {
+  width: 100%;
+}
+
+.mobile-completed-toggle :deep(.el-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.mobile-completed-toggle :deep(.el-radio-button) {
+  flex: 1;
+}
+
+.mobile-completed-toggle :deep(.el-radio-button__inner) {
+  width: 100%;
+  text-align: center;
+}
+
+.mobile-add-btn {
+  width: 100%;
+  justify-content: center;
 }
 
 /* ── Responsive ──────────────────────────── */

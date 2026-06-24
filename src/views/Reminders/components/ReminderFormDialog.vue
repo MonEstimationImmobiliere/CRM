@@ -2,14 +2,18 @@
   <el-dialog
     :model-value="visible"
     :title="editingReminder ? 'Modifier le rappel' : 'Nouveau rappel'"
-    width="600px"
+    :width="isMobile ? '92%' : '600px'"
+    :fullscreen="false"
     @update:model-value="$emit('update:visible', $event)"
     @close="resetForm"
   >
-    <el-form ref="formRef" :model="form" :rules="rules" label-width="120px">
-   
-
-
+    <el-form
+      ref="formRef"
+      :model="form"
+      :rules="rules"
+      :label-position="isMobile ? 'top' : 'right'"
+      :label-width="isMobile ? '' : '120px'"
+    >
       <el-form-item label="Description">
         <el-input
           v-model="form.description"
@@ -40,35 +44,27 @@
         </el-select>
       </el-form-item>
 
+      <el-collapse>
+        <el-collapse-item title="Options avancées" name="advanced">
+          <el-form-item label="Statut">
+            <el-select v-model="form.status" class="full-width">
+              <el-option label="À faire" value="todo" />
+              <el-option label="En cours" value="progress" />
+              <el-option label="Terminé" value="completed" />
+            </el-select>
+          </el-form-item>
 
-
-<el-collapse>
-  <el-collapse-item title="Options avancées" name="advanced">
-    <el-form-item label="Statut">
-      <el-select v-model="form.status" class="full-width">
-        <el-option label="À faire" value="todo" />
-        <el-option label="En cours" value="progress" />
-        <el-option label="Terminé" value="completed" />
-      </el-select>
-    </el-form-item>
-
-    <el-form-item label="Partager">
-      <EMToggleSwitch
-        v-model="form.sharing"
-        label="Partager ce rappel avec l'agence"
-      />
-    </el-form-item>
-  </el-collapse-item>
-</el-collapse>
-
-
+          <el-form-item label="Partager">
+            <EMToggleSwitch v-model="form.sharing" label="Partager ce rappel avec l'agence" />
+          </el-form-item>
+        </el-collapse-item>
+      </el-collapse>
     </el-form>
 
     <template #footer>
       <div class="dialog-footer">
         <el-button @click="$emit('update:visible', false)">Annuler</el-button>
         <div class="footer-right">
- 
           <el-button type="primary" :loading="saving" @click="handleSave">
             {{ editingReminder ? 'Sauvegarder' : 'Créer' }}
           </el-button>
@@ -82,8 +78,11 @@
 import { ref, watch } from 'vue';
 
 import EMToggleSwitch from '@/components/OwnReusableComponents/switch/EMToggleSwitch.vue';
+import useDeviceBreakpoints from '@/composables/isMobile';
 import type { FormInstance, FormRules } from 'element-plus';
 import type { Reminder } from '@/stores/reminders';
+
+const { isMobile } = useDeviceBreakpoints();
 
 export interface ReminderFormData {
   title: string;
@@ -126,9 +125,9 @@ const getEmptyForm = (): ReminderFormData => ({
   description: '',
   date: new Date().toISOString().split('T')[0],
   type: 'rappel',
-priority: 'low',
-status: 'todo',
-sharing: true,
+  priority: 'low',
+  status: 'todo',
+  sharing: true,
   property_id: 0,
 });
 
@@ -143,30 +142,24 @@ function disabledDate(time: Date): boolean {
 }
 
 // Populate form when dialog opens or editing target changes
-watch(
-  [() => props.visible, () => props.editingReminder],
-  ([isVisible, reminder]) => {
-    if (!isVisible) return;
-    if (reminder) {
-      form.value = {
-        title: reminder.title,
-        description: reminder.description || '',
-        date: reminder.date,
-        type: reminder.type,
-        priority: reminder.priority,
-        status: reminder.status || (reminder.completed ? 'completed' : 'todo'),
-        sharing:
-  reminder.sharing === undefined ||
-  reminder.sharing === null
-    ? true
-    : reminder.sharing,
-        property_id: reminder.property_id,
-      };
-    } else {
-      form.value = getEmptyForm();
-    }
+watch([() => props.visible, () => props.editingReminder], ([isVisible, reminder]) => {
+  if (!isVisible) return;
+  if (reminder) {
+    form.value = {
+      title: reminder.title,
+      description: reminder.description || '',
+      date: reminder.date,
+      type: reminder.type,
+      priority: reminder.priority,
+      status: reminder.status || (reminder.completed ? 'completed' : 'todo'),
+      sharing:
+        reminder.sharing === undefined || reminder.sharing === null ? true : reminder.sharing,
+      property_id: reminder.property_id,
+    };
+  } else {
+    form.value = getEmptyForm();
   }
-);
+});
 
 const resetForm = () => {
   formRef.value?.resetFields();
@@ -175,23 +168,23 @@ const resetForm = () => {
 
 const handleSave = async () => {
   if (!formRef.value) return;
-  await formRef.value.validate(valid => {
+  await formRef.value.validate((valid) => {
     if (valid) {
       emit(
-  'save',
-  {
-    ...form.value,
-    title:
-      form.value.type === 'estimation'
-        ? 'Estimation'
-        : form.value.type === 'visite'
-          ? 'Visite'
-          : form.value.type === 'autre'
-            ? 'Autre'
-            : 'Rappel',
-  },
-  props.editingReminder
-);
+        'save',
+        {
+          ...form.value,
+          title:
+            form.value.type === 'estimation'
+              ? 'Estimation'
+              : form.value.type === 'visite'
+                ? 'Visite'
+                : form.value.type === 'autre'
+                  ? 'Autre'
+                  : 'Rappel',
+        },
+        props.editingReminder
+      );
     }
   });
 };

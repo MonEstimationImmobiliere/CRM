@@ -1,12 +1,43 @@
 <template>
   <div class="favorites-page">
-    <EMCard class="headerFilterInfoContainer" :border-hover="false">
+    <!-- Mobile Header -->
+    <div v-if="isMobile" class="mobile-header-favorites">
+      <div class="mobile-header-top">
+        <h2>Mes Favoris</h2>
+        <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
+      </div>
+      <el-radio-group v-model="selectedScope" @change="onScopeChange" class="mobile-scope-toggle">
+        <el-radio-button value="personal">Personnel</el-radio-button>
+        <el-radio-button value="agency">Tous</el-radio-button>
+      </el-radio-group>
+      <el-select
+        v-model="selectedCity"
+        placeholder="Filtrer par ville"
+        clearable
+        class="mobile-filter-select"
+      >
+        <el-option v-for="city in availableCities" :key="city" :label="city" :value="city" />
+      </el-select>
+      <el-select
+        v-model="selectedPropertyType"
+        placeholder="Filtrer par type"
+        clearable
+        class="mobile-filter-select"
+      >
+        <el-option
+          v-for="type in availablePropertyTypes"
+          :key="type"
+          :label="type"
+          :value="type"
+        />
+      </el-select>
+    </div>
+
+    <!-- Desktop Header -->
+    <EMCard v-else class="headerFilterInfoContainer" :border-hover="false">
       <div class="headerTopRow">
         <h2>Mes Propriétés Favorites</h2>
         <div class="headerRightContainer">
-          <!-- <el-tag size="large" type="info"
-            >{{ filteredFavorites.length }} favori(s)</el-tag
-          > -->
           <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
         </div>
       </div>
@@ -104,6 +135,9 @@ import ViewToggle from '@/components/ViewToggle.vue';
 import PropertyForm from '@/views/DashboardComponents/PropertyDialog/index.vue';
 import FavoritesTable from '@/views/Favorites/components/FavoritesTable.vue';
 import FavoritesCards from '@/views/Favorites/components/FavoritesCards.vue';
+import useDeviceBreakpoints from '@/composables/isMobile';
+
+const { isMobile } = useDeviceBreakpoints();
 
 import ReminderFormDialog from '@/views/Reminders/components/ReminderFormDialog.vue';
 import type { ReminderFormData } from '@/views/Reminders/components/ReminderFormDialog.vue';
@@ -408,6 +442,51 @@ const currentFavoritesView = computed({
 }
 
 /* ── Mobile responsive ──────────────────────────────────────── */
+.mobile-header-favorites {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  padding: 16px;
+  background: var(--el-bg-color, #fff);
+  border-radius: var(--apple-radius, 12px);
+  margin-bottom: 16px;
+  box-shadow: 0 1px 3px rgba(0, 0, 0, 0.06);
+}
+
+.mobile-header-top {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+}
+
+.mobile-header-top h2 {
+  margin: 0;
+  font-size: 1.25rem;
+  font-weight: 700;
+}
+
+.mobile-scope-toggle {
+  width: 100%;
+}
+
+.mobile-scope-toggle :deep(.el-radio-group) {
+  display: flex;
+  width: 100%;
+}
+
+.mobile-scope-toggle :deep(.el-radio-button) {
+  flex: 1;
+}
+
+.mobile-scope-toggle :deep(.el-radio-button__inner) {
+  width: 100%;
+  text-align: center;
+}
+
+.mobile-filter-select {
+  width: 100%;
+}
+
 @media (max-width: 768px) {
   .headerTopRow {
     flex-direction: column;
