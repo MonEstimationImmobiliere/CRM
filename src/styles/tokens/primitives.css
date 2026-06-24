@@ -1,4 +1,8 @@
-/* Design Tokens - Centralized CSS variables for consistent design system */
+/* ============================================================
+ * PRIMITIVE TOKENS (theme-agnostic)
+ * Échelles brutes du design system : typo, espacements, radius,
+ * ombres, z-index, durées, etc. Ne dépend d'aucun thème.
+ * ============================================================ */
 
 :root {
   /* ===================================

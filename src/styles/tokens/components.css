@@ -1,16 +1,17 @@
-@import './general-design-tokens.css';
-@import './unified-theme.css';
+/* ============================================================
+ * COMPONENT TOKENS
+ * Tokens de niveau composant, dérivés des primitives/thèmes.
+ * ============================================================ */
 
 :root {
   /* ===================================
    * CARD
    * =================================== */
-
   --ion-padding-card: 20px;
   --ion-margin-bottom-header: 0.75rem;
 
   /* ===================================
-   * HEARDER
+   * HEADER
    * =================================== */
   --ion-gap-header: 1rem;
   --ion-gap-header-left: 0.5rem;
@@ -19,9 +20,8 @@
   /* ===================================
    * INPUT
    * =================================== */
-
   --ion-input-border-radius: var(--ion-radius-lg);
-  --ion-input-height: var(--ion-size-10);
+  --ion-input-height: var(--ion-space-10);
 
   /* ===================================
    * SLIDER

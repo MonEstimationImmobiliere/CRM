@@ -1,5 +1,10 @@
-@import './general-design-tokens.css';
-@import './component-design-token.css';
+/* ============================================================
+ * SEMANTIC THEME TOKENS (--ion-*)
+ * Thème par défaut (light) sur `body`, + variantes activables
+ * via une classe : `body.classic-theme`, `body.dark-theme`.
+ * Ces tokens mappent les primitives vers des rôles sémantiques.
+ * ============================================================ */
+
 
 body {
   /* ===================================

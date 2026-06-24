@@ -1,3 +1,9 @@
+/* ============================================================
+ * SURFACE & UI TOKENS
+ * Design system "Apple", effets glassmorphism, et tokens
+ * partagés de mise en page (card / table / page / grid...).
+ * ============================================================ */
+
 :root {
   --theme-color: transparent;
   --light-blue: #e6f7ff;

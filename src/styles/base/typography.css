@@ -1,0 +1,80 @@
+/* ============================================================
+ * TYPOGRAPHY & BASE TEXT
+ * Police de base, liens, et taille de police racine responsive.
+ * ============================================================ */
+
+body {
+  color: var(--apple-text-primary);
+  font-size: 14px;
+  font-family:
+    -apple-system, BlinkMacSystemFont, 'SF Pro Display', 'Segoe UI', Roboto, 'Helvetica Neue',
+    Arial, sans-serif;
+  font-weight: 400;
+  line-height: 1.6;
+  background: linear-gradient(135deg, var(--apple-bg-primary) 0%, var(--apple-bg-secondary) 100%);
+  min-height: 100vh;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+  overflow-x: hidden;
+}
+
+a,
+a:focus,
+a:hover {
+  cursor: pointer;
+  color: var(--apple-accent);
+  text-decoration: none;
+  transition: var(--apple-transition);
+}
+
+a:hover {
+  opacity: 0.8;
+}
+
+/* ── Taille de police racine responsive ───────────────────── */
+@media screen and (min-width: 2201px) {
+  html {
+    font-size: 18px;
+  }
+}
+
+@media screen and (max-width: 2200px) {
+  html {
+    font-size: 17px;
+  }
+}
+
+@media screen and (max-width: 1900px) {
+  html {
+    font-size: 16px;
+  }
+}
+
+@media screen and (max-width: 1600px) {
+  html {
+    font-size: 15px;
+  }
+}
+
+@media screen and (max-width: 1300px) {
+  html {
+    font-size: 14px;
+  }
+}
+
+@media screen and (max-width: 768px) {
+  html {
+    font-size: 13px;
+  }
+
+  /* Reduce default El card hover animation on touch to avoid jank */
+  :deep(.el-card:hover) {
+    transform: none;
+  }
+}
+
+@media screen and (max-width: 480px) {
+  html {
+    font-size: 12px;
+  }
+}

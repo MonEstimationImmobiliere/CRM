@@ -1,103 +1,8 @@
-/* For information on how to create your own theme, please see:
-http://ionicframework.com/docs/theming/ */
-
-@import '../theme/unified-theme.css';
-
-/* Device-specific utility classes */
-/* These classes are automatically added to the body by the device detection plugin */
-
-/* Mobile-specific styles */
-.device-mobile {
-  --app-padding: 16px;
-  --card-margin: 16px;
-  --content-max-width: 100%;
-}
-
-/* Tablet-specific styles */
-.device-tablet {
-  --app-padding: 24px;
-  --card-margin: 20px;
-  --content-max-width: 768px;
-}
-
-/* Desktop-specific styles */
-.device-desktop {
-  --app-padding: 32px;
-  --card-margin: 24px;
-  --content-max-width: 1200px;
-}
-
-/* Touch device optimizations */
-.touch-device {
-  /* Larger touch targets */
-  --touch-target-size: 44px;
-
-  /* Remove hover effects that don't work on touch */
-  --hover-opacity: 1;
-  --hover-transform: none;
-}
-
-.no-touch {
-  /* Smaller targets for mouse/keyboard users */
-  --touch-target-size: 32px;
-
-  /* Enable hover effects */
-  --hover-opacity: 0.8;
-  --hover-transform: scale(1.02);
-}
-
-/* Orientation-specific styles */
-.orientation-portrait {
-  /* Portrait mode: optimize for vertical scrolling */
-  --content-padding-top: 20px;
-}
-
-.orientation-landscape {
-  /* Landscape mode: optimize for horizontal layout */
-  --content-padding-top: 16px;
-}
-
-/* Utility classes for responsive design */
-.mobile-only {
-  display: block;
-}
-
-.tablet-only,
-.desktop-only {
-  display: none;
-}
-
-.device-tablet .mobile-only,
-.device-desktop .mobile-only {
-  display: none;
-}
-
-.device-tablet .tablet-only {
-  display: block;
-}
-
-.device-desktop .desktop-only {
-  display: block;
-}
-
-/* Responsive grid system */
-.responsive-grid {
-  display: grid;
-  gap: var(--app-padding);
-  padding: var(--app-padding);
-}
-
-.device-mobile .responsive-grid {
-  grid-template-columns: 1fr;
-}
-
-.device-tablet .responsive-grid {
-  grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
-}
-
-.device-desktop .responsive-grid {
-  grid-template-columns: repeat(auto-fit, minmax(350px, 1fr));
-}
+/* ============================================================
+ * FORMS & OVERLAYS — styles globaux des composants Ionic
+ * (ion-input / textarea / select / searchbar / modal / content).
+ * Utilise les tokens de tokens/themes.css.
+ * ============================================================ */
 
 /* Global background styles */
 ion-content {
@@ -143,7 +48,7 @@ ion-modal::part(content) {
 
 /* ===================================
  * GLOBAL INPUT STYLES
- * Utilise les variables CSS du unified-theme.css
+ * Utilise les tokens CSS de tokens/themes.css
  * =================================== */
 
 /* Ion Input */
