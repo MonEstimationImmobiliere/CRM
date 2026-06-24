@@ -24,12 +24,7 @@
         clearable
         class="mobile-filter-select"
       >
-        <el-option
-          v-for="type in availablePropertyTypes"
-          :key="type"
-          :label="type"
-          :value="type"
-        />
+        <el-option v-for="type in availablePropertyTypes" :key="type" :label="type" :value="type" />
       </el-select>
     </div>
 
