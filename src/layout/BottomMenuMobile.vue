@@ -14,15 +14,10 @@
     </button>
 
     <!-- User avatar item -->
-    <el-popover
-      placement="top"
-      :width="280"
-      trigger="click"
-      popper-class="user-profile-popover"
-    >
+    <el-popover placement="top" :width="280" trigger="click" popper-class="user-profile-popover">
       <template #reference>
         <button class="bottom-menu-item">
-          <el-icon class="bottom-menu-icon" style="color: inherit;">
+          <el-icon class="bottom-menu-icon" style="color: inherit">
             <Avatar />
           </el-icon>
           <span class="bottom-menu-label">{{ userFirstName }}</span>
@@ -47,9 +42,7 @@
           </div>
           <div class="user-detail-row">
             <span class="user-detail-label">Rôle</span>
-            <span class="user-detail-value user-role-badge">{{
-              getRoleLabel(user.role)
-            }}</span>
+            <span class="user-detail-value user-role-badge">{{ getRoleLabel(user.role) }}</span>
           </div>
         </div>
 
@@ -68,7 +61,7 @@
 // ==========================================
 // 1. IMPORTS & TYPES
 // ==========================================
-import { ref, computed, inject, watch } from 'vue';
+import { computed, inject, watch } from 'vue';
 import { useRoute, useRouter } from 'vue-router';
 import type { Component } from 'vue';
 import type { RouteRecordRaw } from 'vue-router';
@@ -98,18 +91,15 @@ const visibleRoutes = computed((): RouteRecordRaw[] => {
   return router.options.routes.filter((r: RouteRecordRaw) => {
     if (r.meta?.hidden) return false;
     if (r.name === 'CarrierSelected') return false;
-    const visibleChildren = r.children?.filter(
-      (child: RouteRecordRaw) => !child.meta?.hidden
-    ) ?? [];
+    const visibleChildren =
+      r.children?.filter((child: RouteRecordRaw) => !child.meta?.hidden) ?? [];
     return visibleChildren.length > 0;
   });
 });
 
 const navItems = computed((): NavItem[] => {
   return visibleRoutes.value.map((r: RouteRecordRaw): NavItem => {
-    const visibleChild = r.children?.find(
-      (child: RouteRecordRaw) => !child.meta?.hidden
-    );
+    const visibleChild = r.children?.find((child: RouteRecordRaw) => !child.meta?.hidden);
     return {
       path: r.path,
       icon: visibleChild?.meta?.icon as Component | undefined,

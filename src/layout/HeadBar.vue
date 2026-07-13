@@ -33,33 +33,30 @@ const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated');
   </header>
 </template>
 
-<style scoped lang="postcss">
+<style scoped>
 header {
   display: flex;
   padding-top: 10px;
   justify-content: space-between;
   align-items: center;
   flex-wrap: nowrap;
-
-  & section {
-    &:first-of-type {
-      display: inline-flex;
-      flex-wrap: nowrap;
-      align-items: center;
-      flex-shrink: 0;
-      overflow: hidden;
-      flex: 1;
-    }
-
-    &:last-of-type {
-      display: inline-flex;
-      flex-wrap: nowrap;
-      flex-shrink: 0;
-      align-items: center;
-    }
-  }
 }
 
+header section:first-of-type {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  align-items: center;
+  flex-shrink: 0;
+  overflow: hidden;
+  flex: 1;
+}
+
+header section:last-of-type {
+  display: inline-flex;
+  flex-wrap: nowrap;
+  flex-shrink: 0;
+  align-items: center;
+}
 .header-mobile {
   background: #ffffff;
   border-bottom: 1px solid #f1f5f9;
@@ -122,11 +119,10 @@ header {
 .icon-sidebar-trigger {
   cursor: pointer;
   margin-right: 1.2rem;
-
   font-size: 1.6rem;
+}
 
-  &.collapsed {
-    transform: rotate(180deg);
-  }
+.icon-sidebar-trigger.collapsed {
+  transform: rotate(180deg);
 }
 </style>
