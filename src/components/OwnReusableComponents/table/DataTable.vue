@@ -74,8 +74,28 @@
     >
       <p>{{ deleteConfirmMessage }}</p>
       <template #footer>
-        <el-button @click="() => { showDeleteAlert = false; deleteIndex = null; }">{{ $t('cancel') }}</el-button>
-        <el-button type="danger" @click="() => { if (deleteIndex !== null) { emit('delete', deleteIndex); } showDeleteAlert = false; deleteIndex = null; }">{{ $t('delete') }}</el-button>
+        <el-button
+          @click="
+            () => {
+              showDeleteAlert = false;
+              deleteIndex = null;
+            }
+          "
+          >{{ $t('cancel') }}</el-button
+        >
+        <el-button
+          type="danger"
+          @click="
+            () => {
+              if (deleteIndex !== null) {
+                emit('delete', deleteIndex);
+              }
+              showDeleteAlert = false;
+              deleteIndex = null;
+            }
+          "
+          >{{ $t('delete') }}</el-button
+        >
       </template>
     </el-dialog>
   </div>
@@ -127,8 +147,6 @@ const showDeleteAlert = ref(false);
 const deleteIndex = ref<number | null>(null);
 const sortKey = ref<string | null>(null);
 const sortOrder = ref<'asc' | 'desc'>('asc');
-
-// Computed
 const sortedItems = computed(() => {
   if (!sortKey.value) return props.items;
 
@@ -148,8 +166,6 @@ const sortedItems = computed(() => {
     return sortOrder.value === 'asc' ? comparison : -comparison;
   });
 });
-
-
 
 // Methods
 const toggleSort = (key: string) => {

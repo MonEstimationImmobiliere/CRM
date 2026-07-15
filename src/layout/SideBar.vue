@@ -14,18 +14,11 @@
     </ElMenu>
   </Scrollbar>
   <div class="SideBar-logout-container">
-    <el-popover
-      placement="top"
-      :width="280"
-      trigger="click"
-      popper-class="user-profile-popover"
-    >
+    <el-popover placement="top" :width="280" trigger="click" popper-class="user-profile-popover">
       <template #reference>
         <div class="sidebar-user-trigger">
           <el-icon class="user-avatar-icon"><Avatar /></el-icon>
-          <span v-show="!sidebarRelated?.collapsed" class="user-trigger-name">{{
-            user.name
-          }}</span>
+          <span v-show="!sidebarRelated?.collapsed" class="user-trigger-name">{{ user.name }}</span>
         </div>
       </template>
 
@@ -47,9 +40,7 @@
           </div>
           <div class="user-detail-row">
             <span class="user-detail-label">Rôle</span>
-            <span class="user-detail-value user-role-badge">{{
-              getRoleLabel(user.role)
-            }}</span>
+            <span class="user-detail-value user-role-badge">{{ getRoleLabel(user.role) }}</span>
           </div>
         </div>
 
@@ -99,19 +90,16 @@ const defaultOpeneds = ref<string[]>(
   router
     .getRoutes()
     .filter(
-      matchedRoute =>
-        matchedRoute.children.length > 0 && /^\/\w+?$/.test(matchedRoute.path)
+      (matchedRoute) => matchedRoute.children.length > 0 && /^\/\w+?$/.test(matchedRoute.path)
     )
-    .map(matchedRoute => matchedRoute.path)
+    .map((matchedRoute) => matchedRoute.path)
 ); // default expanded item in the submenu
 
 const sidebarRelated = inject<Layout.SidebarRelated>('sidebarRelated');
 const keepAlivePages = inject<Layout.keepAlivePages>('keepAlivePages');
 const routesList = computed(() => {
   //on retire la route CarrierSelected du menu
-  const filteredRoutes = router.options.routes.filter(
-    route => route.name !== 'CarrierSelected'
-  );
+  const filteredRoutes = router.options.routes.filter((route) => route.name !== 'CarrierSelected');
   return filteredRoutes;
 });
 
@@ -165,11 +153,7 @@ const MenuItemLink = (
 ) => {
   if (props.route.meta?.external) {
     return (
-      <a
-        href={props.route.redirect as string}
-        target="_blank"
-        rel="noopener noreferrer"
-      >
+      <a href={props.route.redirect as string} target="_blank" rel="noopener noreferrer">
         {slots.default?.()}
       </a>
     );
@@ -191,7 +175,7 @@ const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
     const basePath = resolve(props.basePath, route.path);
     return (
       <_ElSubMenu index={basePath} v-slots={slots}>
-        {route.children?.map(item => (
+        {route.children?.map((item) => (
           <MenuItemNav route={item} basePath={basePath}></MenuItemNav>
         ))}
       </_ElSubMenu>
@@ -214,10 +198,8 @@ const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
   return props.route.meta?.hidden ? (
     <div style="display: none"></div>
   ) : props.route.children &&
-    props.route.children.filter((route: RouteRecordRaw) => !route.meta?.hidden)
-      .length > 0 ? (
-    props.route.children.filter((route: RouteRecordRaw) => !route.meta?.hidden)
-      .length > 1 ? (
+    props.route.children.filter((route: RouteRecordRaw) => !route.meta?.hidden).length > 0 ? (
+    props.route.children.filter((route: RouteRecordRaw) => !route.meta?.hidden).length > 1 ? (
       subMenuTemplate(props.route)
     ) : (
       menuItemTemplate(getOnlyChildPath(props.route))
@@ -228,9 +210,7 @@ const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
 };
 
 function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
-  const childRoute = parentRoute.children?.find(
-    (route: RouteRecordRaw) => !route.meta?.hidden
-  );
+  const childRoute = parentRoute.children?.find((route: RouteRecordRaw) => !route.meta?.hidden);
   return Object.assign({}, childRoute, {
     path: `${parentRoute.path}/${childRoute?.path}`,
   } as RouteRecordRaw);
@@ -245,8 +225,7 @@ function getOnlyChildPath(parentRoute: RouteRecordRaw): RouteRecordRaw {
 .menu-vertical:not(.el-menu--collapse) {
   width: v-bind('sidebarRelated?.width') !important;
   padding-left: calc(
-    var(--el-menu-expand-base-level-padding) + var(--el-menu-level) *
-      var(--el-menu-level-padding)
+    var(--el-menu-expand-base-level-padding) + var(--el-menu-level) * var(--el-menu-level-padding)
   );
   padding-right: 1rem;
 }
