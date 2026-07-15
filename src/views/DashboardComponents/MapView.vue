@@ -4,11 +4,7 @@
       <div class="map-wrapper">
         <div id="map" class="map"></div>
 
-        <button
-          class="recenter-btn"
-          title="Recentrer la carte"
-          @click="handleRecenter"
-        >
+        <button class="recenter-btn" title="Recentrer la carte" @click="handleRecenter">
           <el-icon :size="20"><MapLocation /></el-icon>
         </button>
 
@@ -31,7 +27,10 @@
         </button>
       </div>
 
-      <aside class="map-side-panel" :class="{ empty: !selectedMapItem && !selectedMapItems.length }">
+      <aside
+        class="map-side-panel"
+        :class="{ empty: !selectedMapItem && !selectedMapItems.length }"
+      >
         <div class="side-panel-header">
           <div>
             <div class="side-panel-eyebrow">{{ sidePanelEyebrow }}</div>
@@ -49,229 +48,226 @@
         </div>
 
         <div v-if="!selectedMapItem && !selectedMapItems.length" class="side-empty">
-          Cliquez sur une pastille, une vente DVF, un DPE ou une parcelle pour afficher les détails ici.
+          Cliquez sur une pastille, une vente DVF, un DPE ou une parcelle pour afficher les détails
+          ici.
         </div>
 
         <div v-else class="side-content">
-<template v-if="selectedMapType === 'address'">
-  <div class="detail-card">
-    <div class="muted">Adresse</div>
+          <template v-if="selectedMapType === 'address'">
+            <div class="detail-card">
+              <div class="muted">Adresse</div>
 
-    <div class="detail-title">
-      {{ formatAddressSideTitle(selectedMapItem) }}
-    </div>
+              <div class="detail-title">
+                {{ formatAddressSideTitle(selectedMapItem) }}
+              </div>
 
-    <div class="detail-grid">
-      <div>
-        <span>Numéro</span>
-        <strong>{{ selectedMapItem.numero_full || selectedMapItem.numero || '-' }}</strong>
-      </div>
+              <div class="detail-grid">
+                <div>
+                  <span>Numéro</span>
+                  <strong>{{
+                    selectedMapItem.numero_full || selectedMapItem.numero || '-'
+                  }}</strong>
+                </div>
 
-      <div>
-        <span>Voie</span>
-        <strong>{{ selectedMapItem.nom_voie || selectedMapItem.adresse || '-' }}</strong>
-      </div>
+                <div>
+                  <span>Voie</span>
+                  <strong>{{ selectedMapItem.nom_voie || selectedMapItem.adresse || '-' }}</strong>
+                </div>
 
-      <div>
-        <span>Commune</span>
-        <strong>{{ selectedMapItem.nom_commune || '-' }}</strong>
-      </div>
+                <div>
+                  <span>Commune</span>
+                  <strong>{{ selectedMapItem.nom_commune || '-' }}</strong>
+                </div>
 
-      <div>
-        <span>Code postal</span>
-        <strong>{{ selectedMapItem.code_postal || '-' }}</strong>
-      </div>
+                <div>
+                  <span>Code postal</span>
+                  <strong>{{ selectedMapItem.code_postal || '-' }}</strong>
+                </div>
 
-      <div>
-        <span>Parcelle</span>
-        <strong>
-          {{ selectedMapItem.id_parcelle || selectedMapItem.cad_parcelles || '-' }}
-        </strong>
-      </div>
+                <div>
+                  <span>Parcelle</span>
+                  <strong>
+                    {{ selectedMapItem.id_parcelle || selectedMapItem.cad_parcelles || '-' }}
+                  </strong>
+                </div>
 
-      <div>
-        <span>Terrain</span>
-        <strong>
-          {{
-            formatSurface(
-              selectedMapItem.contenance ||
-              selectedMapItem.surface_terrain ||
-              selectedMapItem.total_surface_terrain
-            )
-          }}
-        </strong>
-      </div>
+                <div>
+                  <span>Terrain</span>
+                  <strong>
+                    {{
+                      formatSurface(
+                        selectedMapItem.contenance ||
+                          selectedMapItem.surface_terrain ||
+                          selectedMapItem.total_surface_terrain
+                      )
+                    }}
+                  </strong>
+                </div>
 
-      <div>
-        <span>Unités</span>
-        <strong>
-          {{
-            selectedMapItem.units_count ||
-            selectedMapItem.nombre_unites ||
-            selectedMapItem.nombre_units ||
-            '-'
-          }}
-        </strong>
-      </div>
+                <div>
+                  <span>Unités</span>
+                  <strong>
+                    {{
+                      selectedMapItem.units_count ||
+                      selectedMapItem.nombre_unites ||
+                      selectedMapItem.nombre_units ||
+                      '-'
+                    }}
+                  </strong>
+                </div>
 
-      <div>
-        <span>Ventes DVF</span>
-        <strong>{{ selectedMapItem.nombre_ventes || 0 }}</strong>
-      </div>
+                <div>
+                  <span>Ventes DVF</span>
+                  <strong>{{ selectedMapItem.nombre_ventes || 0 }}</strong>
+                </div>
 
-      <div>
-        <span>Dernière MAJ</span>
-        <strong>{{ formatDate(selectedMapItem.date_maj) }}</strong>
-      </div>
+                <div>
+                  <span>Dernière MAJ</span>
+                  <strong>{{ formatDate(selectedMapItem.date_maj) }}</strong>
+                </div>
 
-      <div>
-        <span>Prix estimé</span>
-        <strong>{{ formatCurrency(selectedMapItem.dernier_prix_estime) }}</strong>
-      </div>
-    </div>
+                <div>
+                  <span>Prix estimé</span>
+                  <strong>{{ formatCurrency(selectedMapItem.dernier_prix_estime) }}</strong>
+                </div>
+              </div>
 
-    <!-- Liste des biens à l'adresse -->
+              <!-- Liste des biens à l'adresse -->
 
-    <div
-      v-if="selectedAddressUnits.length > 1"
-      class="sub-section"
-    >
-      <h4>Biens à cette adresse</h4>
+              <div v-if="selectedAddressUnits.length > 1" class="sub-section">
+                <h4>Biens à cette adresse</h4>
 
-      <div
-        v-for="(unit, index) in selectedAddressUnits"
-        :key="unit.unit_id || unit.id || index"
-        class="list-row"
-        @click="openAddressUnit(unit)"
-      >
-        <strong>{{ formatAddressUnitLabel(unit) }}</strong>
+                <div
+                  v-for="(unit, index) in selectedAddressUnits"
+                  :key="unit.unit_id || unit.id || index"
+                  class="list-row"
+                  @click="openAddressUnit(unit)"
+                >
+                  <strong>{{ formatAddressUnitLabel(unit) }}</strong>
 
-        <span>
-          {{
-            unit.row_type === 'unit'
-              ? 'Appartement / lot'
-              : 'Immeuble principal'
-          }}
-        </span>
+                  <span>
+                    {{ unit.row_type === 'unit' ? 'Appartement / lot' : 'Immeuble principal' }}
+                  </span>
 
-        <small v-if="unit.dernier_prix_estime">
-          Estimé : {{ formatCurrency(unit.dernier_prix_estime) }}
-        </small>
-      </div>
-    </div>
+                  <small v-if="unit.dernier_prix_estime">
+                    Estimé : {{ formatCurrency(unit.dernier_prix_estime) }}
+                  </small>
+                </div>
+              </div>
 
-    <!-- Rue groupée -->
+              <!-- Rue groupée -->
 
-    <button
-      v-if="isStreetGroupPoint(selectedMapItem)"
-      class="primary-action"
-      @click="openStreetFromMap(selectedMapItem)"
-    >
-      Afficher la rue
-    </button>
+              <button
+                v-if="isStreetGroupPoint(selectedMapItem)"
+                class="primary-action"
+                @click="openStreetFromMap(selectedMapItem)"
+              >
+                Afficher la rue
+              </button>
 
-    <!-- Adresse unique -->
+              <!-- Adresse unique -->
 
-    <button
-      v-else-if="
-        selectedAddressUnits.length === 1 &&
-        canOpenProperty(selectedMapItem)
-      "
-      class="primary-action"
-      @click="emitEditSelectedAddress"
-    >
-      Ouvrir / modifier la fiche
-    </button>
-  </div>
-</template>
+              <button
+                v-else-if="selectedAddressUnits.length === 1 && canOpenProperty(selectedMapItem)"
+                class="primary-action"
+                @click="emitEditSelectedAddress"
+              >
+                Ouvrir / modifier la fiche
+              </button>
+            </div>
+          </template>
 
-<template v-else-if="selectedMapType === 'dvf'">
-  <div class="detail-card">
-    <div
-      v-for="(sale, saleIndex) in selectedDvfSalesSorted"
-      :key="sale.id_mutation || saleIndex"
-      class="sub-section dvf-sale-section"
-    >
-      <div class="sale-header">
-        <span :class="getSaleBadgeClass(sale)">
-          {{ getSaleBadgeLabel(sale) }}
-        </span>
+          <template v-else-if="selectedMapType === 'dvf'">
+            <div class="detail-card">
+              <div
+                v-for="(sale, saleIndex) in selectedDvfSalesSorted"
+                :key="sale.id_mutation || saleIndex"
+                class="sub-section dvf-sale-section"
+              >
+                <div class="sale-header">
+                  <span :class="getSaleBadgeClass(sale)">
+                    {{ getSaleBadgeLabel(sale) }}
+                  </span>
 
-        <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
-      </div>
+                  <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
+                </div>
 
-      <div class="muted">
-        Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
-      </div>
+                <div class="muted">
+                  Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
+                </div>
 
-      <div class="detail-grid dvf-simple-grid">
-        <div v-if="sale.total_surface_terrain">
-          <span>Terrain</span>
-          <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
-        </div>
+                <div class="detail-grid dvf-simple-grid">
+                  <div v-if="sale.total_surface_terrain">
+                    <span>Terrain</span>
+                    <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
+                  </div>
 
-        <div
-          v-for="(item, index) in parseJsonArray(sale.built_items).filter((i:any) => !isDependance(i))"
-          :key="index"
-        >
-          <span>{{ item.type_local || 'Bien' }}</span>
-          <strong>
-            <template v-if="item.surface_reelle_bati">
-              {{ item.surface_reelle_bati }} m²
-            </template>
-            <template v-if="item.nombre_pieces_principales">
-              · {{ item.nombre_pieces_principales }} pièce(s)
-            </template>
-          </strong>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+                  <div
+                    v-for="(item, index) in parseJsonArray(sale.built_items).filter(
+                      (i: any) => !isDependance(i)
+                    )"
+                    :key="index"
+                  >
+                    <span>{{ item.type_local || 'Bien' }}</span>
+                    <strong>
+                      <template v-if="item.surface_reelle_bati">
+                        {{ item.surface_reelle_bati }} m²
+                      </template>
+                      <template v-if="item.nombre_pieces_principales">
+                        · {{ item.nombre_pieces_principales }} pièce(s)
+                      </template>
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
 
-<template v-else-if="selectedMapType === 'dvfCluster'">
-  <div class="detail-card">
-    <div
-      v-for="(sale, saleIndex) in selectedMapItemsSorted"
-      :key="sale.id_mutation || saleIndex"
-      class="sub-section dvf-sale-section"
-    >
-      <div class="sale-header">
-        <span :class="getSaleBadgeClass(sale)">
-          {{ getSaleBadgeLabel(sale) }}
-        </span>
+          <template v-else-if="selectedMapType === 'dvfCluster'">
+            <div class="detail-card">
+              <div
+                v-for="(sale, saleIndex) in selectedMapItemsSorted"
+                :key="sale.id_mutation || saleIndex"
+                class="sub-section dvf-sale-section"
+              >
+                <div class="sale-header">
+                  <span :class="getSaleBadgeClass(sale)">
+                    {{ getSaleBadgeLabel(sale) }}
+                  </span>
 
-        <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
-      </div>
+                  <div class="price">{{ formatCurrency(sale.valeur_fonciere) }}</div>
+                </div>
 
-      <div class="muted">
-        Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
-      </div>
+                <div class="muted">
+                  Vendu le {{ formatDate(sale.date_mutation) }}{{ getBuiltLotLabel(sale) }}
+                </div>
 
-      <div class="detail-grid dvf-simple-grid">
-        <div v-if="sale.total_surface_terrain">
-          <span>Terrain</span>
-          <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
-        </div>
+                <div class="detail-grid dvf-simple-grid">
+                  <div v-if="sale.total_surface_terrain">
+                    <span>Terrain</span>
+                    <strong>{{ formatSurface(sale.total_surface_terrain) }}</strong>
+                  </div>
 
-        <div
-          v-for="(item, index) in parseJsonArray(sale.built_items).filter((i:any) => !isDependance(i))"
-          :key="index"
-        >
-          <span>{{ item.type_local || 'Bien' }}</span>
-          <strong>
-            <template v-if="item.surface_reelle_bati">
-              {{ item.surface_reelle_bati }} m²
-            </template>
-            <template v-if="item.nombre_pieces_principales">
-              · {{ item.nombre_pieces_principales }} pièce(s)
-            </template>
-          </strong>
-        </div>
-      </div>
-    </div>
-  </div>
-</template>
+                  <div
+                    v-for="(item, index) in parseJsonArray(sale.built_items).filter(
+                      (i: any) => !isDependance(i)
+                    )"
+                    :key="index"
+                  >
+                    <span>{{ item.type_local || 'Bien' }}</span>
+                    <strong>
+                      <template v-if="item.surface_reelle_bati">
+                        {{ item.surface_reelle_bati }} m²
+                      </template>
+                      <template v-if="item.nombre_pieces_principales">
+                        · {{ item.nombre_pieces_principales }} pièce(s)
+                      </template>
+                    </strong>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </template>
 
           <template v-else-if="selectedMapType === 'dpe'">
             <div class="detail-card">
@@ -342,8 +338,6 @@ import {
 
 import type { IAddressDetail, IAddressGrouped } from '@/types/address';
 
-
-
 type Address = IAddressDetail | IAddressGrouped;
 
 interface CityCenter {
@@ -378,7 +372,7 @@ interface DvfPoint {
   total_surface_terrain?: number | null;
 }
 
-const props = defineProps<{  
+const props = defineProps<{
   addresses: Address[];
   cityCenter?: CityCenter | null;
   dpePoints?: DpePoint[];
@@ -405,9 +399,9 @@ const selectedMapItem = ref<any | null>(null);
 const selectedMapItems = ref<any[]>([]);
 
 const sidePanelEyebrow = computed(() => {
-if (selectedMapType.value === 'dvf' || selectedMapType.value === 'dvfCluster') {
-  return 'Historique des ventes';
-}
+  if (selectedMapType.value === 'dvf' || selectedMapType.value === 'dvfCluster') {
+    return 'Historique des ventes';
+  }
 
   return 'Détail carte';
 });
@@ -428,9 +422,11 @@ const sidePanelTitle = computed(() => {
     case 'address':
       return 'Adresse / propriété';
     case 'dvf':
-      return selectedMapItem.value?.adresse || selectedDvfSales.value[0]?.adresse || 'Adresse inconnue';
+      return (
+        selectedMapItem.value?.adresse || selectedDvfSales.value[0]?.adresse || 'Adresse inconnue'
+      );
     case 'dvfCluster':
-  return selectedMapItemsSorted.value[0]?.adresse || 'Adresse inconnue';
+      return selectedMapItemsSorted.value[0]?.adresse || 'Adresse inconnue';
     case 'dpe':
       return 'Diagnostic DPE';
     case 'parcelle':
@@ -523,14 +519,10 @@ const selectedDvfTotalTerrain = computed(() => {
   }, 0);
 });
 
-
 // Computed: Set des property_id ayant un rappel
 const reminderPropertyIds = computed(() => {
-  const allReminders = [
-    ...remindersStore.reminders,
-    ...remindersStore.agencyReminders,
-  ];
-  return new Set(allReminders.map(r => r.property_id));
+  const allReminders = [...remindersStore.reminders, ...remindersStore.agencyReminders];
+  return new Set(allReminders.map((r) => r.property_id));
 });
 
 /* -------------------------------------
@@ -565,8 +557,6 @@ function getProspectionFreshnessColor(dateMaj: any): string {
   return '#9ca3af'; // gris si trop ancien
 }
 
-
-
 function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
 
@@ -580,15 +570,12 @@ function getPointColor(address: Address, mode: string): string {
         : COLORS.none;
 
     case 'rappels': {
-      const hasReminder =
-        addr.id !== null && reminderPropertyIds.value.has(addr.id);
+      const hasReminder = addr.id !== null && reminderPropertyIds.value.has(addr.id);
       return hasReminder ? COLORS.rappels : COLORS.none;
     }
 
     case 'favorites':
-      return Number(addr.favorite) === 1 || addr.favorite === true
-        ? COLORS.favorites
-        : COLORS.none;
+      return Number(addr.favorite) === 1 || addr.favorite === true ? COLORS.favorites : COLORS.none;
 
     case 'maj':
       return addr.date_maj ? COLORS.maj : COLORS.none;
@@ -597,9 +584,7 @@ function getPointColor(address: Address, mode: string): string {
       return COLORS.none;
 
     case 'dvf':
-      return addr.nombre_ventes && addr.nombre_ventes > 0
-        ? COLORS.dvf
-        : COLORS.none;
+      return addr.nombre_ventes && addr.nombre_ventes > 0 ? COLORS.dvf : COLORS.none;
 
     default:
       return COLORS.none;
@@ -652,7 +637,6 @@ function cycleMapStyle() {
 
   map.setStyle(getBaseMapStyleUrl(), { diff: false });
 }
-
 
 onMounted(async () => {
   await remindersStore.loadReminders();
@@ -753,13 +737,20 @@ function addDpeLayer() {
         'circle-color': [
           'match',
           ['get', 'etiquette'],
-          'A', '#10b981',
-          'B', '#22c55e',
-          'C', '#84cc16',
-          'D', '#eab308',
-          'E', '#f97316',
-          'F', '#ef4444',
-          'G', '#991b1b',
+          'A',
+          '#10b981',
+          'B',
+          '#22c55e',
+          'C',
+          '#84cc16',
+          'D',
+          '#eab308',
+          'E',
+          '#f97316',
+          'F',
+          '#ef4444',
+          'G',
+          '#991b1b',
           '#6b7280',
         ],
         'circle-stroke-width': 1.5,
@@ -779,9 +770,7 @@ function pointInRing(point: [number, number], ring: any[]): boolean {
     const xj = Number(ring[j][0]);
     const yj = Number(ring[j][1]);
 
-    const intersect =
-      yi > y !== yj > y &&
-      x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
+    const intersect = yi > y !== yj > y && x < ((xj - xi) * (y - yi)) / (yj - yi) + xi;
 
     if (intersect) inside = !inside;
   }
@@ -836,23 +825,17 @@ function getParcelleLabelPoint(feature: any): [number, number] | null {
   return null;
 }
 
-const selectedAddressUnits = computed(() => {
+const selectedAddressUnits = computed<Record<string, any>[]>(() => {
   if (selectedMapType.value !== 'address' || !selectedMapItem.value) {
     return [];
   }
 
-  const key =
-    selectedMapItem.value.id_fantoir_long ||
-    selectedMapItem.value.id_fantoir ||
-    '';
+  const key = selectedMapItem.value.id_fantoir_long || selectedMapItem.value.id_fantoir || '';
 
   if (!key) return [];
 
   return props.addresses.filter((a: any) => {
-    return (
-      a.id_fantoir_long === key ||
-      a.id_fantoir === key
-    );
+    return a.id_fantoir_long === key || a.id_fantoir === key;
   });
 });
 
@@ -926,20 +909,20 @@ function addParcellesLayer() {
   }
 
   if (!map.getLayer('parcelle-highlight')) {
-  map.addLayer({
-    id: 'parcelle-highlight',
-    type: 'fill',
-    source: 'parcelles_cadastre',
-    filter: ['==', ['get', 'id_parcelle'], ''],
-    paint: {
-      'fill-color': '#facc15',
-      'fill-opacity': 0.35,
-    },
-    layout: {
-      visibility: 'none',
-    },
-  });
-}
+    map.addLayer({
+      id: 'parcelle-highlight',
+      type: 'fill',
+      source: 'parcelles_cadastre',
+      filter: ['==', ['get', 'id_parcelle'], ''],
+      paint: {
+        'fill-color': '#facc15',
+        'fill-opacity': 0.35,
+      },
+      layout: {
+        visibility: 'none',
+      },
+    });
+  }
 
   if (!map.getLayer('parcelles-line')) {
     map.addLayer({
@@ -1038,11 +1021,11 @@ function addDvfLayer() {
       filter: ['!', ['has', 'point_count']],
       source: 'dvf_points',
       paint: {
-  'circle-radius': 9,
-  'circle-color': '#111827',
-  'circle-stroke-width': 2,
-  'circle-stroke-color': '#ffffff',
-},
+        'circle-radius': 9,
+        'circle-color': '#111827',
+        'circle-stroke-width': 2,
+        'circle-stroke-color': '#ffffff',
+      },
     });
   }
 
@@ -1128,11 +1111,7 @@ function updateDvfPoints() {
       sale.line_count += Number(p.line_count ?? 1);
 
       // Parcelle directe de la ligne DVF
-      const directParcelleId =
-        p.id_parcelle ||
-        p.numero_plan ||
-        p.parcelle ||
-        null;
+      const directParcelleId = p.id_parcelle || p.numero_plan || p.parcelle || null;
 
       if (directParcelleId) {
         sale.parcelles_ids.push(String(directParcelleId).trim());
@@ -1142,69 +1121,55 @@ function updateDvfPoints() {
 
       const uniqueBuiltItems = new Map<string, any>();
 
-sale.built_items.forEach((built: any) => {
-  const key = [
-    built.type_local || '',
-    built.surface_reelle_bati || '',
-    built.nombre_pieces_principales || '',
-  ].join('|');
+      sale.built_items.forEach((built: any) => {
+        const key = [
+          built.type_local || '',
+          built.surface_reelle_bati || '',
+          built.nombre_pieces_principales || '',
+        ].join('|');
 
-  if (!uniqueBuiltItems.has(key)) {
-    uniqueBuiltItems.set(key, built);
-  }
-});
+        if (!uniqueBuiltItems.has(key)) {
+          uniqueBuiltItems.set(key, built);
+        }
+      });
 
-sale.built_items = Array.from(uniqueBuiltItems.values());
+      sale.built_items = Array.from(uniqueBuiltItems.values());
       sale.land_items.push(...parseJsonArray(p.land_items));
 
       // Déduplication des terrains
-const uniqueLandItems = new Map<string, any>();
+      const uniqueLandItems = new Map<string, any>();
 
-sale.land_items.forEach((land: any) => {
-  const key = [
-    land.nature_culture || '',
-    land.surface_terrain || land.contenance || land.surface || '',
-    land.id_parcelle || land.numero_plan || land.parcelle || '',
-  ].join('|');
+      sale.land_items.forEach((land: any) => {
+        const key = [
+          land.nature_culture || '',
+          land.surface_terrain || land.contenance || land.surface || '',
+          land.id_parcelle || land.numero_plan || land.parcelle || '',
+        ].join('|');
 
-  if (!uniqueLandItems.has(key)) {
-    uniqueLandItems.set(key, land);
-  }
+        if (!uniqueLandItems.has(key)) {
+          uniqueLandItems.set(key, land);
+        }
 
-  const parcelleId =
-    land.id_parcelle ||
-    land.numero_plan ||
-    land.parcelle;
+        const parcelleId = land.id_parcelle || land.numero_plan || land.parcelle;
 
-  if (parcelleId) {
-    sale.parcelles_ids.push(String(parcelleId).trim());
-  }
-});
+        if (parcelleId) {
+          sale.parcelles_ids.push(String(parcelleId).trim());
+        }
+      });
 
-sale.land_items = Array.from(uniqueLandItems.values());
+      sale.land_items = Array.from(uniqueLandItems.values());
 
-      sale.parcelles_ids = Array.from(
-        new Set(sale.parcelles_ids)
-      );
+      sale.parcelles_ids = Array.from(new Set(sale.parcelles_ids));
 
       sale.total_surface_terrain = sale.land_items.reduce(
         (total: number, land: any) =>
-          total +
-          Number(
-            land.contenance ||
-            land.surface_terrain ||
-            land.surface ||
-            0
-          ),
+          total + Number(land.contenance || land.surface_terrain || land.surface || 0),
         0
       );
     });
 
-    const sales = Array.from(salesMap.values()).sort(
-      (a: any, b: any) =>
-        String(b.date_mutation || '').localeCompare(
-          String(a.date_mutation || '')
-        )
+    const sales = Array.from(salesMap.values()).sort((a: any, b: any) =>
+      String(b.date_mutation || '').localeCompare(String(a.date_mutation || ''))
     );
 
     // Centre de toutes les parcelles regroupées
@@ -1235,35 +1200,20 @@ sale.land_items = Array.from(uniqueLandItems.values());
 
         sale_count: sales.length,
 
-        line_count: sales.reduce(
-          (sum: number, sale: any) =>
-            sum + Number(sale.line_count || 0),
-          0
-        ),
+        line_count: sales.reduce((sum: number, sale: any) => sum + Number(sale.line_count || 0), 0),
 
         sales_detail: JSON.stringify(sales),
 
-        built_items: JSON.stringify(
-          sales.flatMap((sale: any) => sale.built_items || [])
-        ),
+        built_items: JSON.stringify(sales.flatMap((sale: any) => sale.built_items || [])),
 
-        land_items: JSON.stringify(
-          sales.flatMap((sale: any) => sale.land_items || [])
-        ),
+        land_items: JSON.stringify(sales.flatMap((sale: any) => sale.land_items || [])),
 
         parcelles_ids: JSON.stringify(
-          Array.from(
-            new Set(
-              sales.flatMap(
-                (sale: any) => sale.parcelles_ids || []
-              )
-            )
-          )
+          Array.from(new Set(sales.flatMap((sale: any) => sale.parcelles_ids || [])))
         ),
 
         total_surface_terrain: sales.reduce(
-          (sum: number, sale: any) =>
-            sum + Number(sale.total_surface_terrain || 0),
+          (sum: number, sale: any) => sum + Number(sale.total_surface_terrain || 0),
           0
         ),
       },
@@ -1279,13 +1229,13 @@ function updateAddressPoints() {
   if (!mapLoaded || !map) return;
 
   const features = props.addresses
-    .filter(a => a.lat && a.lon)
-    .map(a => ({
+    .filter((a) => a.lat && a.lon)
+    .map((a) => ({
       type: 'Feature',
-    geometry: {
-  type: 'Point',
-  coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
-},
+      geometry: {
+        type: 'Point',
+        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
+      },
       properties: { ...a },
     }));
 
@@ -1299,8 +1249,8 @@ function updateDpePoints() {
   if (!mapLoaded || !map) return;
 
   const features = (props.dpePoints || [])
-    .filter(p => p.lat && p.lon)
-    .map(p => ({
+    .filter((p) => p.lat && p.lon)
+    .map((p) => ({
       type: 'Feature',
       geometry: {
         type: 'Point',
@@ -1402,10 +1352,7 @@ function updateLayerVisibility() {
 
   setLayerVisibility('parcelle-highlight', showParcelles.value ? 'visible' : 'none');
 
-  setLayerVisibility(
-  'parcelles-labels',
-  showParcelles.value ? 'visible' : 'none'
-);
+  setLayerVisibility('parcelles-labels', showParcelles.value ? 'visible' : 'none');
 }
 
 function getIdsParcellesFromDvfItem(item: any): string[] {
@@ -1420,19 +1367,19 @@ function getIdsParcellesFromDvfItem(item: any): string[] {
 
   const ids = new Set<string>();
 
-source.forEach((sale: any) => {
-  parseJsonArray(sale.parcelles_ids).forEach((id: any) => {
-    if (id) ids.add(String(id).trim());
-  });
+  source.forEach((sale: any) => {
+    parseJsonArray(sale.parcelles_ids).forEach((id: any) => {
+      if (id) ids.add(String(id).trim());
+    });
 
-  parseJsonArray(sale.land_items).forEach((land: any) => {
-    const id = land.id_parcelle || land.numero_plan || land.parcelle;
-    if (id) ids.add(String(id).trim());
-  });
+    parseJsonArray(sale.land_items).forEach((land: any) => {
+      const id = land.id_parcelle || land.numero_plan || land.parcelle;
+      if (id) ids.add(String(id).trim());
+    });
 
-  const directId = sale.id_parcelle || sale.numero_plan || sale.parcelle;
-  if (directId) ids.add(String(directId).trim());
-});
+    const directId = sale.id_parcelle || sale.numero_plan || sale.parcelle;
+    if (directId) ids.add(String(directId).trim());
+  });
 
   return Array.from(ids);
 }
@@ -1440,20 +1387,14 @@ source.forEach((sale: any) => {
 function highlightParcelles(idsParcelles?: string[] | null) {
   if (!map || !map.getLayer('parcelle-highlight')) return;
 
-  const ids = (idsParcelles || [])
-    .map(id => String(id).trim())
-    .filter(Boolean);
+  const ids = (idsParcelles || []).map((id) => String(id).trim()).filter(Boolean);
 
   if (!ids.length) {
     map.setFilter('parcelle-highlight', ['==', ['get', 'id_parcelle'], '']);
     return;
   }
 
-  map.setFilter('parcelle-highlight', [
-    'in',
-    ['get', 'id_parcelle'],
-    ['literal', ids],
-  ]);
+  map.setFilter('parcelle-highlight', ['in', ['get', 'id_parcelle'], ['literal', ids]]);
 }
 
 function buildDvfSaleHtml(props: any, compact = false): string {
@@ -1492,12 +1433,8 @@ function buildDvfSaleHtml(props: any, compact = false): string {
   const builtCardsHtml = builtItems
     .map((item: any) => {
       const typeLocal = item.type_local || '-';
-      const surfaceBati = item.surface_reelle_bati
-        ? `${item.surface_reelle_bati} m²`
-        : '-';
-      const pieces = item.nombre_pieces_principales
-        ? `${item.nombre_pieces_principales}`
-        : '-';
+      const surfaceBati = item.surface_reelle_bati ? `${item.surface_reelle_bati} m²` : '-';
+      const pieces = item.nombre_pieces_principales ? `${item.nombre_pieces_principales}` : '-';
 
       return `
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;${builtItems.length > 1 ? 'padding-bottom:10px;margin-bottom:10px;border-bottom:1px solid #e5e7eb;' : ''}">
@@ -1624,13 +1561,13 @@ function buildDvfSaleHtml(props: any, compact = false): string {
 function setupAddressInteractions() {
   if (!map) return;
 
-map.on('click', 'address-dots', e => {
-  const feature = e.features?.[0];
-  if (!feature) return;
+  map.on('click', 'address-dots', (e) => {
+    const feature = e.features?.[0];
+    if (!feature) return;
 
-  const props = feature.properties || {};
-  openSidePanel('address', props);
-});
+    const props = feature.properties || {};
+    openSidePanel('address', props);
+  });
 
   map.on('mouseenter', 'address-dots', () => {
     if (map) map.getCanvas().style.cursor = 'pointer';
@@ -1644,7 +1581,7 @@ map.on('click', 'address-dots', e => {
 function setupDvfInteractions() {
   if (!map) return;
 
-  map.on('click', 'dvf-clusters', async e => {
+  map.on('click', 'dvf-clusters', async (e) => {
     const features = map!.queryRenderedFeatures(e.point, {
       layers: ['dvf-clusters'],
     });
@@ -1658,17 +1595,17 @@ function setupDvfInteractions() {
     const source = map!.getSource('dvf_points') as any;
     const leaves = (await source.getClusterLeaves(clusterId, 50, 0)) as any[];
 
-const sales = leaves.flatMap((leaf: any) => {
-  const props = leaf.properties || {};
-  const details = parseJsonArray(props.sales_detail);
+    const sales = leaves.flatMap((leaf: any) => {
+      const props = leaf.properties || {};
+      const details = parseJsonArray(props.sales_detail);
 
-  return details.length ? details : [props];
-});
+      return details.length ? details : [props];
+    });
 
-openSidePanel('dvfCluster', null, sales);
+    openSidePanel('dvfCluster', null, sales);
   });
 
-/*map.on('click', 'dvf-dots', e => {
+  /*map.on('click', 'dvf-dots', e => {
   const feature = e.features?.[0];
   if (!feature) return;
 
@@ -1683,17 +1620,16 @@ openSidePanel('dvfCluster', null, sales);
   openSidePanel('dvf', props);
 });*/
 
+  map.on('click', 'dvf-dots', (e) => {
+    const feature = e.features?.[0];
+    if (!feature) return;
 
-map.on('click', 'dvf-dots', e => {
-  const feature = e.features?.[0];
-  if (!feature) return;
+    const props = feature.properties || {};
 
-  const props = feature.properties || {};
+    console.log('DVF CLICK PROPS =', props);
 
-  console.log('DVF CLICK PROPS =', props);
-
-  openSidePanel('dvf', props);
-});
+    openSidePanel('dvf', props);
+  });
 
   map.on('mouseenter', 'dvf-dots', () => {
     if (map) map.getCanvas().style.cursor = 'pointer';
@@ -1715,7 +1651,7 @@ map.on('click', 'dvf-dots', e => {
 function setupDpeInteractions() {
   if (!map) return;
 
-  map.on('click', 'dpe-dots', e => {
+  map.on('click', 'dpe-dots', (e) => {
     const feature = e.features?.[0];
     if (!feature) return;
 
@@ -1745,8 +1681,6 @@ function openSidePanel(type: Exclude<MapSidePanelType, null>, item: any | null, 
   }
 }
 
-
-
 function closeSidePanel() {
   selectedMapType.value = null;
   selectedMapItem.value = null;
@@ -1758,24 +1692,16 @@ function closeSidePanel() {
 function getIdParcelleFromItem(item: any): string | null {
   if (!item) return null;
 
-  const raw =
-    item.id_parcelle ||
-    item.cad_parcelles ||
-    item.numero_plan ||
-    item.parcelle ||
-    null;
+  const raw = item.id_parcelle || item.cad_parcelles || item.numero_plan || item.parcelle || null;
 
   if (!raw) return null;
 
   const text = String(raw);
 
   // Si plusieurs parcelles sont stockées en CSV/JSON simple, on prend la première.
-  return text
-    .replace('[', '')
-    .replace(']', '')
-    .replaceAll('"', '')
-    .split(/[;,|]/)[0]
-    .trim() || null;
+  return (
+    text.replace('[', '').replace(']', '').replaceAll('"', '').split(/[;,|]/)[0].trim() || null
+  );
 }
 
 function formatAddressTitle(item: any): string {
@@ -1874,7 +1800,6 @@ function isStreetGroupPoint(item: any): boolean {
   return !hasNumero && Boolean(item.id_fantoir || item.nom_voie || item.adresse);
 }
 
-
 async function openStreetFromMap(item: any) {
   const streetName = item.nom_voie || item.adresse || '';
   const idFantoir = item.id_fantoir || item.codeIdFantoir || item.id_fantoir_long || '';
@@ -1920,8 +1845,8 @@ async function recenterMap() {
     }
 
     if (points.length > 1) {
-      const lats = points.map(p => Number(p.lat));
-      const lons = points.map(p => Number(p.lon));
+      const lats = points.map((p) => Number(p.lat));
+      const lons = points.map((p) => Number(p.lon));
       flyTo(avg(lons), avg(lats), 10);
       return;
     }
@@ -1944,8 +1869,8 @@ async function recenterMap() {
     }
 
     if (points.length > 1) {
-      const lats = points.map(p => Number(p.lat));
-      const lons = points.map(p => Number(p.lon));
+      const lats = points.map((p) => Number(p.lat));
+      const lons = points.map((p) => Number(p.lon));
       flyTo(avg(lons), avg(lats), 10);
       return;
     }
@@ -1960,8 +1885,8 @@ async function recenterMap() {
   }
 
   if (dashboard.selectedStreet && props.addresses.length > 0) {
-    const lats = props.addresses.map(a => Number(a.lat));
-    const lons = props.addresses.map(a => Number(a.lon));
+    const lats = props.addresses.map((a) => Number(a.lat));
+    const lons = props.addresses.map((a) => Number(a.lon));
     flyTo(avg(lons), avg(lats), 16);
     return;
   }
@@ -2026,8 +1951,6 @@ function setupWatchers() {
     () => {
       updateDvfPoints();
       updateLayerVisibility();
-
-  
     },
     { deep: true, immediate: true }
   );
@@ -2043,7 +1966,7 @@ function setupWatchers() {
   // Recentrer dès que le centre change (ville ou résultats)
   watch(
     () => props.cityCenter,
-    newCenter => {
+    (newCenter) => {
       if (!newCenter) return;
       closeSidePanel();
       recenterMap();
@@ -2058,7 +1981,6 @@ function setupWatchers() {
       updateDpePoints();
       updateDvfPoints();
       updateLayerVisibility();
-    
     },
     { immediate: true }
   );
@@ -2075,7 +1997,7 @@ function setupWatchers() {
 
   watch(
     () => dashboard.selectedStreet,
-    newStreet => {
+    (newStreet) => {
       closeSidePanel();
       if (!newStreet) return;
       recenterMap();
@@ -2084,39 +2006,39 @@ function setupWatchers() {
 
   watch(
     () => dashboard.selectedNumeroFull,
-    newNumero => {
+    (newNumero) => {
       closeSidePanel();
       if (!newNumero) return;
       recenterMap();
     }
   );
 
-watch(
-  () => props.parcellesGeojson,
-  () => {
-    updateParcelles();
-  },
-  { deep: true, immediate: true }
-);
-watch(
-  () => dashboard.selectedCity,
-  newCity => {
-    closeSidePanel();
-
-    if (!newCity) {
+  watch(
+    () => props.parcellesGeojson,
+    () => {
       updateParcelles();
-      updateLayerVisibility();
-      return;
-    }
+    },
+    { deep: true, immediate: true }
+  );
+  watch(
+    () => dashboard.selectedCity,
+    (newCity) => {
+      closeSidePanel();
 
-    recenterMap();
-  }
-);
+      if (!newCity) {
+        updateParcelles();
+        updateLayerVisibility();
+        return;
+      }
+
+      recenterMap();
+    }
+  );
 
   // Quand on bascule sur la vue map → resize + recenter
   watch(
     () => dashboard.viewType,
-    newType => {
+    (newType) => {
       if (newType === 'map' && map && mapLoaded) {
         nextTick(() => {
           map!.resize();
@@ -2343,13 +2265,27 @@ watch(
   background: #6b7280;
 }
 
-.dpe-A { background: #10b981; }
-.dpe-B { background: #22c55e; }
-.dpe-C { background: #84cc16; }
-.dpe-D { background: #eab308; }
-.dpe-E { background: #f97316; }
-.dpe-F { background: #ef4444; }
-.dpe-G { background: #991b1b; }
+.dpe-A {
+  background: #10b981;
+}
+.dpe-B {
+  background: #22c55e;
+}
+.dpe-C {
+  background: #84cc16;
+}
+.dpe-D {
+  background: #eab308;
+}
+.dpe-E {
+  background: #f97316;
+}
+.dpe-F {
+  background: #ef4444;
+}
+.dpe-G {
+  background: #991b1b;
+}
 
 .recenter-btn {
   position: absolute;
@@ -2503,5 +2439,4 @@ watch(
   background: #f3f4f6;
   color: #374151;
 }
-
 </style>

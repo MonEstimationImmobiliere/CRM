@@ -6,7 +6,6 @@
     </div>
 
     <div v-if="items.length === 0" class="no-items">
-      <IconRenderer :icon="emptyIcon" size="large" color="medium"></IconRenderer>
       <p>{{ emptyMessage }}</p>
     </div>
 
@@ -40,24 +39,25 @@
             <!-- Actions -->
             <td v-if="!readOnly" class="actions-cell">
               <div class="action-buttons">
-                <IonButton
-                  fill="clear"
+                <el-button
+                  link
+                  type="primary"
                   size="small"
                   @click="handleEdit(item, index)"
                   :disabled="readOnly"
                 >
-                  <IconRenderer icon="create-outline" slot="icon-only"></IconRenderer>
-                </IonButton>
+                  <el-icon><Edit /></el-icon>
+                </el-button>
 
-                <IonButton
-                  fill="clear"
+                <el-button
+                  link
+                  type="danger"
                   size="small"
-                  color="danger"
                   @click="handleDelete(index)"
                   :disabled="readOnly"
                 >
-                  <IconRenderer icon="trash-outline" slot="icon-only" color="danger"></IconRenderer>
-                </IonButton>
+                  <el-icon><Delete /></el-icon>
+                </el-button>
               </div>
             </td>
           </tr>
@@ -66,22 +66,25 @@
     </div>
 
     <!-- Delete Confirmation -->
-    <IonAlert
+    <el-dialog
       v-if="showDeleteConfirmation"
-      :is-open="showDeleteAlert"
-      :header="deleteConfirmTitle"
-      :message="deleteConfirmMessage"
-      :buttons="deleteButtons"
-      @did-dismiss="showDeleteAlert = false"
-    />
+      v-model="showDeleteAlert"
+      :title="deleteConfirmTitle"
+      width="400px"
+    >
+      <p>{{ deleteConfirmMessage }}</p>
+      <template #footer>
+        <el-button @click="closeDeleteAlert">{{ t('cancel') }}</el-button>
+        <el-button type="danger" @click="confirmDelete">{{ t('delete') }}</el-button>
+      </template>
+    </el-dialog>
   </div>
 </template>
 
 <script setup lang="ts" generic="T extends Record<string, any>">
 import { ref, computed } from 'vue';
-import { IonButton, IonAlert } from '@ionic/vue';
 import { useI18n } from 'vue-i18n';
-import IconRenderer from '@/common/components/ui/icon/IconRenderer.vue';
+import { Delete, Edit } from '@element-plus/icons-vue';
 
 export interface Column {
   key: string;
@@ -146,28 +149,6 @@ const sortedItems = computed(() => {
   });
 });
 
-const deleteButtons = computed(() => [
-  {
-    text: t('cancel'),
-    role: 'cancel',
-    handler: () => {
-      showDeleteAlert.value = false;
-      deleteIndex.value = null;
-    },
-  },
-  {
-    text: t('delete'),
-    role: 'destructive',
-    handler: () => {
-      if (deleteIndex.value !== null) {
-        emit('delete', deleteIndex.value);
-      }
-      showDeleteAlert.value = false;
-      deleteIndex.value = null;
-    },
-  },
-]);
-
 // Methods
 const toggleSort = (key: string) => {
   if (sortKey.value === key) {
@@ -206,6 +187,18 @@ const handleDelete = (index: number) => {
       emit('delete', index);
     }
   }
+};
+
+const closeDeleteAlert = () => {
+  showDeleteAlert.value = false;
+  deleteIndex.value = null;
+};
+
+const confirmDelete = () => {
+  if (deleteIndex.value !== null) {
+    emit('delete', deleteIndex.value);
+  }
+  closeDeleteAlert();
 };
 </script>
 
