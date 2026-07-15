@@ -79,6 +79,14 @@ import type { RouteMeta, RouteRecordRaw } from 'vue-router';
 import { ElMenu, ElMenuItem, ElSubMenu, ElIcon } from 'element-plus/es';
 import SvgIcon from '../components/SvgIcon.vue';
 import type { Layout } from 'types/layout';
+
+// JSX type aliases to satisfy TypeScript JSX compatibility with Vue components
+const _ElIcon = ElIcon as any;
+const _ElSubMenu = ElSubMenu as any;
+const _ElMenuItem = ElMenuItem as any;
+const _SvgIcon = SvgIcon as any;
+const _RouterLink = RouterLink as any;
+const _MenuItemLinkJSX = (...args: any[]) => (MenuItemLink as any)(...args);
 import { userStore } from '../stores/user';
 import { Avatar, SwitchButton } from '@element-plus/icons-vue';
 
@@ -138,16 +146,16 @@ watch(
 const getNavIcon = (item: RouteMeta | undefined) => {
   if (!item || (item && !item.icon)) return null;
   return (
-    <ElIcon
+    <_ElIcon
       size="0.9rem"
       style="margin-right: 10px; padding: 0.5rem; border-radius: 0.3rem; box-shadow: 0 1.25rem 1.68rem #0000000d; width: auto; height: auto;"
     >
       {typeof item.icon === 'string' ? (
-        <SvgIcon iconName={item.icon as string} />
+        <_SvgIcon iconName={item.icon as string} />
       ) : (
         h(item?.icon as Component)
       )}
-    </ElIcon>
+    </_ElIcon>
   );
 };
 
@@ -160,13 +168,13 @@ const MenuItemLink = (
       <a
         href={props.route.redirect as string}
         target="_blank"
-        ref="noopener noreferrer"
+        rel="noopener noreferrer"
       >
         {slots.default?.()}
       </a>
     );
   }
-  return <RouterLink to={props.url}>{slots.default?.()}</RouterLink>;
+  return <_RouterLink to={props.url}>{slots.default?.()}</_RouterLink>;
 };
 
 const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
@@ -182,11 +190,11 @@ const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
     };
     const basePath = resolve(props.basePath, route.path);
     return (
-      <ElSubMenu index={basePath} v-slots={slots}>
+      <_ElSubMenu index={basePath} v-slots={slots}>
         {route.children?.map(item => (
           <MenuItemNav route={item} basePath={basePath}></MenuItemNav>
         ))}
-      </ElSubMenu>
+      </_ElSubMenu>
     );
   };
   // menu item template
@@ -196,11 +204,11 @@ const MenuItemNav = (props: { route: RouteRecordRaw; basePath: string }) => {
     };
     const url = resolve(props.basePath, route.path);
     return (
-      <MenuItemLink route={route} url={url}>
-        <ElMenuItem index={url} v-slots={slots}>
+      <_MenuItemLinkJSX route={route} url={url}>
+        <_ElMenuItem index={url} v-slots={slots}>
           {getNavIcon(route.meta)}
-        </ElMenuItem>
-      </MenuItemLink>
+        </_ElMenuItem>
+      </_MenuItemLinkJSX>
     );
   };
   return props.route.meta?.hidden ? (

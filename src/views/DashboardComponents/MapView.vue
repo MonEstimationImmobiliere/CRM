@@ -836,7 +836,7 @@ function getParcelleLabelPoint(feature: any): [number, number] | null {
   return null;
 }
 
-const selectedAddressUnits = computed(() => {
+const selectedAddressUnits = computed<any[]>(() => {
   if (selectedMapType.value !== 'address' || !selectedMapItem.value) {
     return [];
   }
