@@ -20,8 +20,8 @@ export const MAP_STYLE_HYBRID =
 /* ----------------------------------------
    Defaults
 ---------------------------------------- */
-export const DEFAULT_CENTER: [number, number] = [2.35, 48.85];
-export const DEFAULT_ZOOM = 13;
+export const DEFAULT_CENTER: [number, number] = [-0.370679, 49.182863];
+export const DEFAULT_ZOOM = 10;
 
 /* ----------------------------------------
    Display modes

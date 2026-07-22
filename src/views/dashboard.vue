@@ -305,7 +305,6 @@ watch(
     }
   }
 );
-
 // 🟥 Numéro change → recherche
 watch(
   () => dashboardStore.selectedNumeroFull,
@@ -567,31 +566,54 @@ const viewOptions = computed(() => [
       OUVERTURE FICHE
 ------------------------------------ */
 const handleEditProperty = async (property: any) => {
-  // Ne pas ouvrir la fiche si seulement la ville est sélectionnée
-  if (isCityOnly.value) {
+  if (
+    dashboardStore.activeMainMode === 'estimations' ||
+    property?.row_type === 'estimation'
+  ) {
     return;
   }
+
+  // Ne pas ouvrir la fiche si seulement la ville est sélectionnée
+  if (
+    dashboardStore.activeMainMode === 'prospection' &&
+    isCityOnly.value
+  ) {
+    return;
+  }
+
   await openPropertyDialog(property);
 };
 
 const openPropertyDialog = async (property: any) => {
+  if (
+    dashboardStore.activeMainMode === 'estimations' ||
+    property?.row_type === 'estimation'
+  ) {
+    return;
+  }
+
   const unitId = Number(property.unit_id ?? 0);
 
   const normalizedProperty = {
     ...store.defaultPropertyData,
     ...property,
 
-    id: Number(property.id ?? 0) > 0 ? Number(property.id) : 0,
+    id: Number(property.id ?? 0) > 0
+      ? Number(property.id)
+      : 0,
 
     id_fantoir_long: property.id_fantoir_long,
 
-    unit_id: unitId > 0 ? unitId : null,
+    unit_id: unitId > 0
+      ? unitId
+      : null,
 
-    row_type: property.row_type || (unitId > 0 ? 'unit' : 'address'),
+    row_type:
+      property.row_type ||
+      (unitId > 0 ? 'unit' : 'address'),
   };
 
   await store.selectProperty(normalizedProperty);
-
   store.setDialogVisible(true);
 };
 </script>

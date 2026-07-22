@@ -1,6 +1,6 @@
 // src/stores/dashboard.ts
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { ref, computed, watch  } from 'vue';
 import { PropertyService } from '@/api/property.service';
 import { useRemindersStore } from '@/stores/reminders';
 import type { IAddressGrouped, IAddressDetail } from '@/types/address';
@@ -99,6 +99,7 @@ export const useDashboardStore = defineStore('dashboard', () => {
   const dvfFilterRange = ref<'1y' | '2y' | '3y' | '5y' | 'all'>('1y');
   const majFilterRange = ref<'7d' | '30d' | '3m' | '6m'>('30d');
   const favoritesOnly = ref(false);
+  const favoritesScope = ref<'agency' | 'personal'>('agency');
 
   // Compteur pour protection contre les race conditions
   let searchVersion = 0;
@@ -142,33 +143,61 @@ export const useDashboardStore = defineStore('dashboard', () => {
     return `${year}-${month}-${day}`;
   }
 
-  function setMainMode(
-    mode:
-      | 'prospection'
-      | 'favorites'
-      | 'estimations'
-      | 'rappels'
-      | 'maj'
-      | 'dpe'
-      | 'dvf'
-  ) {
-    if (activeMainMode.value === mode) return;
+async function setMainMode(
+  mode:
+    | 'prospection'
+    | 'favorites'
+    | 'estimations'
+    | 'rappels'
+    | 'maj'
+    | 'dpe'
+    | 'dvf'
+) {
+  if (activeMainMode.value === mode) return;
 
-    activeMainMode.value = mode;
+  activeMainMode.value = mode;
 
-    if (mode === 'dpe') {
-      viewType.value = 'map';
-      fetchDPE();
-    }
+  // On invalide la recherche précédente
+  lastSearchParams.value = null;
+  noResultsFound.value = false;
 
-if (mode === 'dvf') {
-  viewType.value = 'map';
-  fetchDVF();
-  fetchParcelles();
-}
-    // Les modes sont des filtres client-side sur les adresses déjà chargées
-    // → pas d'appel API, filteredAddresses computed gère le filtrage
+  if (mode === 'favorites') {
+    await querySearchAddress();
+    return;
   }
+
+  if (mode === 'estimations') {
+    await querySearchEstimation();
+    return;
+  }
+
+  if (mode === 'rappels') {
+    await querySearchRappel();
+    return;
+  }
+
+  if (mode === 'maj') {
+    await querySearchMaj();
+    return;
+  }
+
+  if (mode === 'dpe') {
+    viewType.value = 'map';
+    await fetchDPE();
+    return;
+  }
+
+  if (mode === 'dvf') {
+    viewType.value = 'map';
+    await fetchDVF();
+    await fetchParcelles();
+    return;
+  }
+
+  if (mode === 'prospection') {
+    await querySearchAddress();
+  }
+}
 
   /**
    * Version debouncée pour les watchers — regroupe les mutations rapides
@@ -181,6 +210,59 @@ if (mode === 'dvf') {
       querySearchAddress();
     }, delay);
   }
+
+  /**
+ * Une sélection de ville doit toujours charger la liste des rues,
+ * quelle que soit la vue active : carte ou tableau.
+ */
+watch(
+  selectedCodeInsee,
+  async (newCodeInsee, oldCodeInsee) => {
+    if (newCodeInsee === oldCodeInsee) return;
+
+    // Ville supprimée
+    if (!newCodeInsee) {
+      addresses.value = [];
+      cityCenter.value = null;
+      lastSearchParams.value = null;
+      noResultsFound.value = false;
+      return;
+    }
+
+    // Chaque mode recharge uniquement ses propres données
+    switch (activeMainMode.value) {
+      case 'favorites':
+        // Les favoris ne dépendent pas de la ville
+        return;
+
+      case 'estimations':
+        await querySearchEstimation();
+        return;
+
+      case 'rappels':
+        await querySearchRappel();
+        return;
+
+      case 'maj':
+        await querySearchMaj();
+        return;
+
+      case 'dpe':
+        await fetchDPE();
+        return;
+
+      case 'dvf':
+        await fetchDVF();
+        await fetchParcelles();
+        return;
+
+      case 'prospection':
+      default:
+        debouncedSearch();
+        return;
+    }
+  }
+);
 
   /** Calcule le centre géographique d'une liste d'adresses */
   function computeCenter(addressList: (IAddressGrouped | IAddressDetail)[]) {
@@ -419,91 +501,51 @@ parcellesGeojson.value = await DvfService.getParcelles(codeInsee);
   // ===========================
   // FILTRE CLIENT-SIDE : computed réactif
   // ===========================
-  const filteredAddresses = computed(() => {
-    const mode = activeMainMode.value;
-    const all = addresses.value;
-    console.log(
-      `[filteredAddresses] mode=${mode} total=${all.length} all=`,
-      all
-    );
+const filteredAddresses = computed(() => {
+  const mode = activeMainMode.value;
+  const all = addresses.value;
 
-    switch (mode) {
-      case 'favorites':
-        return all.filter(a => {
-          const fav = (a as any).favorite;
-          return Number(fav) === 1 || fav === true;
-        });
+  console.log(
+    `[filteredAddresses] mode=${mode} total=${all.length} all=`,
+    all
+  );
 
-      case 'estimations':
-        return all.filter(a => {
-          const price = (a as any).price ?? (a as any).dernier_prix_estime;
-          return price != null && Number(price) > 0;
-        });
+  switch (mode) {
+    case 'favorites':
+    case 'estimations':
+    case 'rappels':
+    case 'maj':
+      // Les données sont déjà filtrées par l’API.
+      return all;
 
-      case 'rappels': {
-        const reminderStore = useRemindersStore();
-        const allReminders = [
-          ...reminderStore.reminders,
-          ...reminderStore.agencyReminders,
-        ];
-        const reminderIds = new Set(
-          allReminders.map(r => Number(r.property_id))
-        );
+    case 'dvf':
+      return all.filter(a => {
+        const dateVente = (a as any).date_derniere_vente;
+        if (!dateVente) return false;
 
-        return all.filter(a => {
-          const id = Number((a as any).id);
-          return id > 0 && reminderIds.has(id);
-        });
-      }
+        const d = new Date(dateVente);
+        if (Number.isNaN(d.getTime())) return false;
 
-      case 'maj':
-        return all.filter(a => {
-          const dateMaj = (a as any).date_maj;
-          if (!dateMaj) return false;
-          const d = new Date(dateMaj);
-          if (Number.isNaN(d.getTime())) return false;
-          const diffDays = (Date.now() - d.getTime()) / 86400000;
-          switch (majFilterRange.value) {
-            case '7d':
-              return diffDays <= 7;
-            case '30d':
-              return diffDays <= 30;
-            case '3m':
-              return diffDays <= 90;
-            case '6m':
-              return diffDays <= 180;
-            default:
-              return true;
-          }
-        });
+        const diffDays = (Date.now() - d.getTime()) / 86400000;
 
-      case 'dvf':
-        return all.filter(a => {
-          const dateVente = (a as any).date_derniere_vente;
-          if (!dateVente) return false;
-          const d = new Date(dateVente);
-          if (Number.isNaN(d.getTime())) return false;
-          const diffDays = (Date.now() - d.getTime()) / 86400000;
-          switch (dvfFilterRange.value) {
-            case '1y':
-              return diffDays <= 365;
-            case '2y':
-              return diffDays <= 730;
-            case '3y':
-              return diffDays <= 1095;
-            case '5y':
-              return diffDays <= 1825;
-            default:
-              return true;
-          }
-        });
+        switch (dvfFilterRange.value) {
+          case '1y':
+            return diffDays <= 365;
+          case '2y':
+            return diffDays <= 730;
+          case '3y':
+            return diffDays <= 1095;
+          case '5y':
+            return diffDays <= 1825;
+          default:
+            return true;
+        }
+      });
 
-      // prospection, dpe : pas de filtrage
-      default:
-        return all;
-    }
-  });
-
+    default:
+      return all;
+  }
+});
   // ===========================
   // RECHERCHE GEOGRAPHIQUE (toujours la même, quel que soit le mode)
   // ===========================
@@ -519,10 +561,13 @@ if (activeMainMode.value === 'dvf') {
 
     const ownerName = selectedOwnerName.value.trim();
 
-    // Skip si les paramètres géographiques n'ont pas changé
-    if (isSameSearch(ownerName || null)) {
-      return;
-    }
+// Le mode favoris ne dépend pas de la ville ni de la rue.
+if (
+  activeMainMode.value !== 'favorites' &&
+  isSameSearch(ownerName || null)
+) {
+  return;
+}
 
     const currentVersion = ++searchVersion;
 
@@ -530,6 +575,24 @@ if (activeMainMode.value === 'dvf') {
       isLoading.value = true;
 
       let results: (IAddressGrouped | IAddressDetail)[] = [];
+
+      // ===========================
+// FAVORIS SANS VILLE NI RUE
+// ===========================
+if (activeMainMode.value === 'favorites') {
+  results = await PropertyService.getFavoriteAddresses(
+    favoritesScope.value
+  );
+
+  console.log("FAVORITES API =", results);
+
+  if (currentVersion !== searchVersion) return;
+
+  finalizeSearch(results);
+  return;
+}
+
+
 
       // ===========================
       // PRIORITE 1 : PROPRIETAIRE
@@ -544,11 +607,12 @@ if (activeMainMode.value === 'dvf') {
       // ===========================
       // RECHERCHE GEOGRAPHIQUE
       // ===========================
-      const isCityOnly =
-        selectedCity.value &&
-        !selectedStreet.value &&
-        !selectedNumero.value &&
-        !selectedRep.value;
+    const isCityOnly =
+  !!selectedCity.value &&
+  !!selectedCodeInsee.value &&
+  !selectedStreet.value &&
+  !selectedNumero.value &&
+  !selectedRep.value;
 
       if (isCityOnly) {
         results = await PropertyService.getAddressesGroupedByCodeInsee(
@@ -591,38 +655,92 @@ if (activeMainMode.value === 'dvf') {
     }
   }
 
-  async function querySearchEstimation() {
-    if (!selectedCodeIdFantoir.value) return;
-    addresses.value = await PropertyService.getAddressesByFantoir(
-      selectedCodeIdFantoir.value,
-      'estimation',
-      selectedNumero.value || undefined,
-      selectedRep.value || undefined
-    );
-    isDataLoaded.value = true;
-  }
+async function querySearchEstimation() {
+  const currentVersion = ++searchVersion;
 
-  async function querySearchRappel() {
-    if (!selectedCodeIdFantoir.value) return;
-    addresses.value = await PropertyService.getAddressesByFantoir(
-      selectedCodeIdFantoir.value,
-      'rappel',
-      selectedNumero.value || undefined,
-      selectedRep.value || undefined
-    );
-    isDataLoaded.value = true;
-  }
+  try {
+    isLoading.value = true;
 
-  async function querySearchMaj() {
-    if (!selectedCodeIdFantoir.value) return;
-    addresses.value = await PropertyService.getAddressesByFantoir(
-      selectedCodeIdFantoir.value,
-      'maj',
-      selectedNumero.value || undefined,
-      selectedRep.value || undefined
-    );
+    const results = await PropertyService.getEstimationAddresses();
+
+    if (currentVersion !== searchVersion) return;
+
+    console.log('ESTIMATIONS API =', results);
+
+    addresses.value = results;
+    cityCenter.value = computeCenter(results);
     isDataLoaded.value = true;
+    noResultsFound.value = results.length === 0;
+  } catch (error) {
+    if (currentVersion !== searchVersion) return;
+
+    console.error('[querySearchEstimation] error:', error);
+
+    addresses.value = [];
+    cityCenter.value = null;
+    noResultsFound.value = true;
+  } finally {
+    if (currentVersion === searchVersion) {
+      isLoading.value = false;
+    }
   }
+}
+async function querySearchRappel() {
+  const currentVersion = ++searchVersion;
+
+  try {
+    isLoading.value = true;
+
+    const results = await PropertyService.getReminderAddresses(
+      favoritesScope.value
+    );
+
+    if (currentVersion !== searchVersion) return;
+
+    console.log('RAPPELS API =', results);
+
+    addresses.value = results;
+    cityCenter.value = computeCenter(results);
+    isDataLoaded.value = true;
+    noResultsFound.value = results.length === 0;
+  } catch (error) {
+    if (currentVersion !== searchVersion) return;
+
+    console.error('[querySearchRappel] error:', error);
+
+    addresses.value = [];
+    cityCenter.value = null;
+    noResultsFound.value = true;
+  } finally {
+    if (currentVersion === searchVersion) {
+      isLoading.value = false;
+    }
+  }
+}
+
+
+async function querySearchMaj() {
+  try {
+    isLoading.value = true;
+
+    addresses.value = await PropertyService.getMajAddresses(
+      favoritesScope.value
+    );
+
+    console.log("MAJ =", addresses.value.length);
+console.log(addresses.value[0]);
+
+    isDataLoaded.value = true;
+    noResultsFound.value = addresses.value.length === 0;
+  } catch (error) {
+    console.error('[querySearchMaj] error:', error);
+
+    addresses.value = [];
+    noResultsFound.value = true;
+  } finally {
+    isLoading.value = false;
+  }
+}
 
   function toggleFavoritesFilter() {
     favoritesOnly.value = !favoritesOnly.value;
@@ -678,18 +796,19 @@ if (activeMainMode.value === 'dvf') {
     }
   }
 
-  function setSearchParams(
-    city: SelectedCity | null,
-    street: SelectedStreet | null,
-    codeInsee: string,
-    codeIdFantoir: string
-  ) {
-    selectedCity.value = city;
-    selectedStreet.value = street;
-    selectedCodeInsee.value = codeInsee;
-    selectedCodeIdFantoir.value = codeIdFantoir;
-  }
+function setSearchParams(
+  city: SelectedCity | null,
+  street: SelectedStreet | null,
+  codeInsee: string,
+  codeIdFantoir: string
+) {
+  selectedCity.value = city;
+  selectedStreet.value = street;
+  selectedCodeInsee.value = codeInsee;
+  selectedCodeIdFantoir.value = codeIdFantoir;
 
+
+}
   function clearSearchData() {
     selectedCity.value = null;
     selectedStreet.value = null;
@@ -780,6 +899,7 @@ if (activeMainMode.value === 'dvf') {
     dvfFilterRange,
     majFilterRange,
     favoritesOnly,
+    favoritesScope,
 
     // Computed
     filteredAddresses,

@@ -54,6 +54,7 @@
 
         <div v-else class="side-content">
           <template v-if="selectedMapType === 'address'">
+
             <div class="detail-card">
               <div class="muted">Adresse</div>
 
@@ -177,6 +178,89 @@
             </div>
           </template>
 
+<template v-else-if="selectedMapType === 'estimation'">
+  <div class="detail-card">
+    <div class="muted">Estimation réalisée en ligne</div>
+
+    <div class="detail-title">
+      {{ formatAddressSideTitle(selectedMapItem) }}
+    </div>
+
+    <div class="price">
+      {{ formatCurrency(selectedMapItem.price) }}
+    </div>
+
+    <div class="detail-grid">
+      <div>
+        <span>Type de bien</span>
+        <strong>
+          {{
+            selectedMapItem.type_bien ||
+            selectedMapItem.label ||
+            selectedMapItem.property_type ||
+            '-'
+          }}
+        </strong>
+      </div>
+
+      <div>
+        <span>Surface habitable</span>
+        <strong>{{ formatSurface(selectedMapItem.surface) }}</strong>
+      </div>
+
+      <div>
+        <span>Terrain</span>
+        <strong>{{ formatSurface(selectedMapItem.area) }}</strong>
+      </div>
+
+      <div>
+        <span>Pièces</span>
+        <strong>{{ selectedMapItem.rooms || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Chambres</span>
+        <strong>{{ selectedMapItem.bedrooms || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Année de construction</span>
+        <strong>{{ selectedMapItem.year_built || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>État du bien</span>
+        <strong>{{ selectedMapItem.property_condition || '-' }}</strong>
+      </div>
+
+      <div>
+        <span>Date de l’estimation</span>
+        <strong>{{ formatDate(selectedMapItem.created_at) }}</strong>
+      </div>
+    </div>
+
+    <div
+      v-if="selectedMapItem.phone || selectedMapItem.email"
+      class="sub-section"
+    >
+      <h4>Coordonnées transmises</h4>
+
+      <div class="detail-grid">
+        <div v-if="selectedMapItem.phone">
+          <span>Téléphone</span>
+          <strong>{{ selectedMapItem.phone }}</strong>
+        </div>
+
+        <div v-if="selectedMapItem.email">
+          <span>E-mail</span>
+          <strong>{{ selectedMapItem.email }}</strong>
+        </div>
+      </div>
+    </div>
+
+    <!-- Aucun bouton d’ouverture de fiche property -->
+  </div>
+</template>
           <template v-else-if="selectedMapType === 'dvf'">
             <div class="detail-card">
               <div
@@ -390,17 +474,34 @@ const remindersStore = useRemindersStore();
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
 
+// Indique qu'une vraie modification de ville attend son nouveau cityCenter.
+let pendingCityRecenter = false;
+
 const showParcelles = ref(false);
 
-type MapSidePanelType = 'address' | 'dvf' | 'dvfCluster' | 'dpe' | 'parcelle' | null;
+type MapSidePanelType =
+  | 'address'
+  | 'estimation'
+  | 'dvf'
+  | 'dvfCluster'
+  | 'dpe'
+  | 'parcelle'
+  | null;
 
 const selectedMapType = ref<MapSidePanelType>(null);
 const selectedMapItem = ref<any | null>(null);
 const selectedMapItems = ref<any[]>([]);
 
 const sidePanelEyebrow = computed(() => {
-  if (selectedMapType.value === 'dvf' || selectedMapType.value === 'dvfCluster') {
+  if (
+    selectedMapType.value === 'dvf' ||
+    selectedMapType.value === 'dvfCluster'
+  ) {
     return 'Historique des ventes';
+  }
+
+  if (selectedMapType.value === 'estimation') {
+    return 'Estimation en ligne';
   }
 
   return 'Détail carte';
@@ -421,16 +522,26 @@ const sidePanelTitle = computed(() => {
   switch (selectedMapType.value) {
     case 'address':
       return 'Adresse / propriété';
+
+    case 'estimation':
+      return formatAddressSideTitle(selectedMapItem.value);
+
     case 'dvf':
       return (
-        selectedMapItem.value?.adresse || selectedDvfSales.value[0]?.adresse || 'Adresse inconnue'
+        selectedMapItem.value?.adresse ||
+        selectedDvfSales.value[0]?.adresse ||
+        'Adresse inconnue'
       );
+
     case 'dvfCluster':
       return selectedMapItemsSorted.value[0]?.adresse || 'Adresse inconnue';
+
     case 'dpe':
       return 'Diagnostic DPE';
+
     case 'parcelle':
       return 'Parcelle';
+
     default:
       return 'Aucun élément sélectionné';
   }
@@ -562,17 +673,17 @@ function getPointColor(address: Address, mode: string): string {
 
   switch (mode) {
     case 'prospection':
-      return getProspectionFreshnessColor(addr.date_maj);
+  return getProspectionFreshnessColor(
+    addr.date_maj ?? addr.updated_at
+  );
 
     case 'estimations':
-      return addr.dernier_prix_estime !== null && addr.dernier_prix_estime > 0
-        ? COLORS.estimations
-        : COLORS.none;
+  return Number(addr.price ?? 0) > 0
+    ? COLORS.estimations
+    : COLORS.none;
 
-    case 'rappels': {
-      const hasReminder = addr.id !== null && reminderPropertyIds.value.has(addr.id);
-      return hasReminder ? COLORS.rappels : COLORS.none;
-    }
+    case 'rappels':
+  return COLORS.rappels;
 
     case 'favorites':
       return Number(addr.favorite) === 1 || addr.favorite === true ? COLORS.favorites : COLORS.none;
@@ -1228,16 +1339,59 @@ function updateDvfPoints() {
 function updateAddressPoints() {
   if (!mapLoaded || !map) return;
 
+  console.log(
+  'MAP PREMIÈRE ADRESSE JSON =',
+  JSON.stringify(props.addresses[0], null, 2)
+);
+
+console.log(
+  'MAP CHAMPS PREMIÈRE ADRESSE =',
+  Object.keys(props.addresses[0] || {})
+);
+
   const features = props.addresses
-    .filter((a) => a.lat && a.lon)
-    .map((a) => ({
-      type: 'Feature',
-      geometry: {
-        type: 'Point',
-        coordinates: [parseFloat(String(a.lon)), parseFloat(String(a.lat))],
-      },
-      properties: { ...a },
-    }));
+    .map((address: any) => {
+      const lat = Number(
+        address.lat ??
+        address.latitude ??
+        address.lat_address ??
+        address.latitude_ban
+      );
+
+      const lon = Number(
+        address.lon ??
+        address.lng ??
+        address.longitude ??
+        address.lon_address ??
+        address.longitude_ban
+      );
+
+      if (
+        Number.isNaN(lat) ||
+        Number.isNaN(lon) ||
+        lat === 0 ||
+        lon === 0
+      ) {
+        console.warn('Adresse ignorée, coordonnées absentes :', address);
+        return null;
+      }
+
+      return {
+        type: 'Feature',
+        geometry: {
+          type: 'Point',
+          coordinates: [lon, lat],
+        },
+        properties: {
+          ...address,
+          lat,
+          lon,
+        },
+      };
+    })
+    .filter(Boolean);
+
+  console.log('MAP FEATURES CRÉÉES =', features.length, features);
 
   setSourceData('address_points', features);
 }
@@ -1275,32 +1429,119 @@ function updateAddressPointsWithColors() {
   if (!mapLoaded || !map) return;
 
   if (!props.addresses.length) {
-    map.setPaintProperty('address-dots', 'circle-color', COLORS.none);
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.none
+    );
     return;
   }
 
   const mode = currentMode.value;
 
-  const colorExpression: any[] = [
-    'match',
-    ['coalesce', ['get', 'id_fantoir_long'], ['get', 'id_fantoir']],
-  ];
+  /*
+   * Ces modes sont déjà filtrés par leur API dédiée.
+   * Toutes les propriétés reçues doivent donc avoir la couleur du mode.
+   */
+  if (mode === 'favorites') {
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.favorites
+    );
+    return;
+  }
+
+  if (mode === 'estimations') {
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.estimations
+    );
+    return;
+  }
+
+  if (mode === 'rappels') {
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.rappels
+    );
+    return;
+  }
+
+  if (mode === 'maj') {
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.maj
+    );
+    return;
+  }
+
+  /*
+   * Pour la prospection, les couleurs varient selon la date de MAJ.
+   *
+   * Plusieurs properties peuvent partager le même id_fantoir_long
+   * (immeuble + unités). On utilise donc une Map pour garantir
+   * une seule branche MapLibre par identifiant.
+   */
+  const colorsByAddressId = new Map<string, string>();
 
   for (const address of props.addresses) {
     const addr = address as any;
-    const id = addr.id_fantoir_long || addr.id_fantoir;
-    if (id) {
-      colorExpression.push(id, getPointColor(address, mode));
-    }
+
+    const id = String(
+      addr.id_fantoir_long ||
+      addr.id_fantoir ||
+      ''
+    );
+
+    if (!id) continue;
+
+    colorsByAddressId.set(
+      id,
+      getPointColor(address, mode)
+    );
+  }
+
+  const colorExpression: any[] = [
+    'match',
+    [
+      'to-string',
+      [
+        'coalesce',
+        ['get', 'id_fantoir_long'],
+        ['get', 'id_fantoir'],
+        '',
+      ],
+    ],
+  ];
+
+  for (const [id, color] of colorsByAddressId.entries()) {
+    colorExpression.push(id, color);
   }
 
   colorExpression.push(COLORS.none);
 
   try {
-    map.setPaintProperty('address-dots', 'circle-color', colorExpression);
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      colorExpression
+    );
   } catch (error) {
-    console.error('Error updating map colors:', error);
-    map.setPaintProperty('address-dots', 'circle-color', COLORS.prospection);
+    console.error(
+      'Error updating map colors:',
+      error,
+      colorExpression
+    );
+
+    map.setPaintProperty(
+      'address-dots',
+      'circle-color',
+      COLORS.prospection
+    );
   }
 }
 
@@ -1565,19 +1806,31 @@ function setupAddressInteractions() {
     const feature = e.features?.[0];
     if (!feature) return;
 
-    const props = feature.properties || {};
-    openSidePanel('address', props);
+    const item = feature.properties || {};
+
+    if (
+      currentMode.value === 'estimations' ||
+      item.row_type === 'estimation'
+    ) {
+      openSidePanel('estimation', item);
+      return;
+    }
+
+    openSidePanel('address', item);
   });
 
   map.on('mouseenter', 'address-dots', () => {
-    if (map) map.getCanvas().style.cursor = 'pointer';
+    if (map) {
+      map.getCanvas().style.cursor = 'pointer';
+    }
   });
 
   map.on('mouseleave', 'address-dots', () => {
-    if (map) map.getCanvas().style.cursor = '';
+    if (map) {
+      map.getCanvas().style.cursor = '';
+    }
   });
 }
-
 function setupDvfInteractions() {
   if (!map) return;
 
@@ -1827,7 +2080,7 @@ async function openStreetFromMap(item: any) {
 /* -------------------------------------
    RECENTRAGE LOGIQUE
 ------------------------------------- */
-async function recenterMap() {
+/*async function recenterMap() {
   await nextTick();
   if (!mapLoaded || !map) return;
 
@@ -1894,6 +2147,22 @@ async function recenterMap() {
   if (dashboard.selectedCity && props.cityCenter) {
     flyTo(props.cityCenter.lon, props.cityCenter.lat, 14);
   }
+}*/
+
+async function recenterMap() {
+  await nextTick();
+
+  if (!mapLoaded || !map) return;
+
+  // En mode favoris, ne jamais déplacer ni zoomer la carte.
+  if (dashboard.activeMainMode === 'favorites') {
+    return;
+  }
+
+  // Le recentrage dépend uniquement de la ville sélectionnée.
+  if (dashboard.selectedCity && props.cityCenter) {
+    flyTo(props.cityCenter.lon, props.cityCenter.lat, 11.5);
+  }
 }
 
 function handleRecenter() {
@@ -1932,19 +2201,66 @@ function setSourceData(sourceName: string, features: any[]) {
   }
 }
 
+
+function fitAddressPoints() {
+  if (!map || !mapLoaded) return;
+
+  const validAddresses = props.addresses.filter((address) => {
+    const lat = Number(address.lat);
+    const lon = Number(address.lon);
+
+    return (
+      !Number.isNaN(lat) &&
+      !Number.isNaN(lon) &&
+      lat !== 0 &&
+      lon !== 0
+    );
+  });
+
+  if (validAddresses.length === 0) return;
+
+  if (validAddresses.length === 1) {
+    flyTo(
+      Number(validAddresses[0].lon),
+      Number(validAddresses[0].lat),
+      16
+    );
+    return;
+  }
+
+  const bounds = new maplibregl.LngLatBounds();
+
+  validAddresses.forEach((address) => {
+    bounds.extend([
+      Number(address.lon),
+      Number(address.lat),
+    ]);
+  });
+
+  map.fitBounds(bounds, {
+    padding: 70,
+    maxZoom: 15,
+    duration: 800,
+  });
+}
 /* -------------------------------------
    WATCHERS
 ------------------------------------- */
 function setupWatchers() {
-  watch(
-    () => props.addresses,
-    () => {
-      updateAddressPoints();
-      updateAddressPointsWithColors();
-      updateLayerVisibility();
-    },
-    { deep: true, immediate: true }
-  );
+watch(
+  () => props.addresses,
+  async () => {
+    updateAddressPoints();
+    updateAddressPointsWithColors();
+    updateLayerVisibility();
+
+    /*if (dashboard.activeMainMode === 'favorites') {
+      await nextTick();
+      fitAddressPoints();
+    }*/
+  },
+  { deep: true, immediate: true }
+);
 
   watch(
     () => props.dvfPoints,
@@ -1963,27 +2279,72 @@ function setupWatchers() {
     { deep: true, immediate: true }
   );
 
-  // Recentrer dès que le centre change (ville ou résultats)
-  watch(
-    () => props.cityCenter,
-    (newCenter) => {
-      if (!newCenter) return;
-      closeSidePanel();
-      recenterMap();
-    },
-    { immediate: true }
-  );
+/*
+ * Une vraie modification du code INSEE signifie
+ * qu'une nouvelle ville vient d'être sélectionnée.
+ *
+ * On ne recentre pas immédiatement, car cityCenter
+ * contient encore le centre de l'ancienne recherche.
+ */
+watch(
+  () => dashboard.selectedCodeInsee,
+  (newCodeInsee, oldCodeInsee) => {
+    if (newCodeInsee === oldCodeInsee) {
+      return;
+    }
 
-  watch(
-    () => dashboard.activeMainMode,
-    () => {
-      updateAddressPointsWithColors();
-      updateDpePoints();
-      updateDvfPoints();
-      updateLayerVisibility();
-    },
-    { immediate: true }
-  );
+    // Ville supprimée : aucun recentrage à effectuer.
+    if (!newCodeInsee) {
+      pendingCityRecenter = false;
+      return;
+    }
+
+    pendingCityRecenter = true;
+    closeSidePanel();
+  }
+);
+
+/*
+ * cityCenter change aussi quand les résultats sont rechargés.
+ *
+ * On ne recentre donc que lorsqu'un véritable changement
+ * de ville a précédemment activé pendingCityRecenter.
+ */
+watch(
+  () => props.cityCenter,
+  async (newCenter) => {
+    if (!pendingCityRecenter || !newCenter) {
+      return;
+    }
+
+    await nextTick();
+
+    if (!mapLoaded || !map) {
+      return;
+    }
+
+    flyTo(newCenter.lon, newCenter.lat, 11.5);
+
+    // Le recentrage demandé par le changement de ville est terminé.
+    pendingCityRecenter = false;
+  }
+);
+
+watch(
+  () => dashboard.activeMainMode,
+  async (newMode) => {
+    updateAddressPointsWithColors();
+    updateDpePoints();
+    updateDvfPoints();
+    updateLayerVisibility();
+
+    /*if (newMode === 'favorites') {
+      await nextTick();
+      fitAddressPoints();
+    }*/
+  },
+  { immediate: true }
+);
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],
@@ -1995,23 +2356,19 @@ function setupWatchers() {
     { deep: true }
   );
 
-  watch(
-    () => dashboard.selectedStreet,
-    (newStreet) => {
-      closeSidePanel();
-      if (!newStreet) return;
-      recenterMap();
-    }
-  );
+watch(
+  () => dashboard.selectedStreet,
+  () => {
+    closeSidePanel();
+  }
+);
 
-  watch(
-    () => dashboard.selectedNumeroFull,
-    (newNumero) => {
-      closeSidePanel();
-      if (!newNumero) return;
-      recenterMap();
-    }
-  );
+watch(
+  () => dashboard.selectedNumeroFull,
+  () => {
+    closeSidePanel();
+  }
+);
 
   watch(
     () => props.parcellesGeojson,
@@ -2020,34 +2377,33 @@ function setupWatchers() {
     },
     { deep: true, immediate: true }
   );
-  watch(
-    () => dashboard.selectedCity,
-    (newCity) => {
-      closeSidePanel();
+watch(
+  () => dashboard.selectedCity,
+  newCity => {
+    closeSidePanel();
 
-      if (!newCity) {
-        updateParcelles();
-        updateLayerVisibility();
-        return;
-      }
-
-      recenterMap();
+    if (!newCity) {
+      updateParcelles();
+      updateLayerVisibility();
     }
-  );
+  }
+);
 
   // Quand on bascule sur la vue map → resize + recenter
-  watch(
-    () => dashboard.viewType,
-    (newType) => {
-      if (newType === 'map' && map && mapLoaded) {
-        nextTick(() => {
-          map!.resize();
-          recenterMap();
-        });
-      }
+watch(
+  () => dashboard.viewType,
+  (newType) => {
+    if (newType === 'map' && map && mapLoaded) {
+      nextTick(() => {
+        map!.resize();
+      });
     }
-  );
+  }
+);
 }
+
+
+
 </script>
 
 <style scoped>

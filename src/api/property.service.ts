@@ -104,44 +104,60 @@ export const PropertyService = {
     return response.data;
   },
 
-  async getFavoriteAddresses(
-    scope?: 'agency' | 'personal'
-  ): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(
-      `/favorite-properties?scope=${scope || ''}`
-    );
-    return response.data;
-  },
-
-  async getEstimationAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+async getFavoriteAddresses(
+  scope: 'agency' | 'personal' = 'personal'
+): Promise<IAddressDetail[]> {
+  const response = await apiService.get<IAddressDetail[]>(
+    '/address-owner',
+    {
       params: {
-        type: 'estimation',
+        favorite: true,
+        scope,
       },
-    });
-    return response.data;
-  },
+    }
+  );
 
-  async getReminderAddresses(): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+  return response.data;
+},
+
+async getEstimationAddresses(): Promise<IAddressDetail[]> {
+  const response = await apiService.get<IAddressDetail[]>(
+    '/address-estimations'
+  );
+
+  return response.data;
+},
+async getReminderAddresses(
+  scope: 'agency' | 'personal' = 'personal'
+): Promise<IAddressDetail[]> {
+  const response = await apiService.get<IAddressDetail[]>(
+    '/address-owner',
+    {
       params: {
         type: 'rappel',
+        scope,
       },
-    });
-    return response.data;
-  },
+    }
+  );
 
-  async getMajAddresses(
-    range: '7d' | '30d' | '3m' | '6m'
-  ): Promise<IAddressDetail[]> {
-    const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
+  return response.data;
+},
+
+async getMajAddresses(
+  scope: 'agency' | 'personal' = 'personal'
+): Promise<IAddressDetail[]> {
+  const response = await apiService.get<IAddressDetail[]>(
+    '/address-owner',
+    {
       params: {
         type: 'maj',
-        range,
+        scope,
       },
-    });
-    return response.data;
-  },
+    }
+  );
+
+  return response.data;
+},
 
   async getDvfAddresses(
     range: '1y' | '2y' | '3y' | '5y'
