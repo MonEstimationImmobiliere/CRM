@@ -49,7 +49,7 @@
     <div class="favorites-grid">
       <el-card
         v-for="property in sortedAndFilteredFavorites"
-        :key="property.id_fantoir_long"
+        :key="property.row_id"
         class="favorite-card"
         shadow="hover"
         tabindex="0"

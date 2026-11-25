@@ -12,6 +12,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  prospectionCodeInsee: String,
 });
 
 const emit = defineEmits(['update:modelValue', 'select', 'clear']);
@@ -57,7 +58,9 @@ const queryNumero = async (query: string) => {
 
   try {
     const url = `${API_URL}/address-number-search/${props.idFantoir}/${query}`;
-    const res = await apiService.get(url);
+    const res = await apiService.get(url, props.prospectionCodeInsee
+      ? { params: { prospection: 1, code_insee: props.prospectionCodeInsee } }
+      : undefined);
 
     return (res.data as any[]).map((item: any) => ({
       numero: item.numero,

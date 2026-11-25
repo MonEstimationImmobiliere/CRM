@@ -269,10 +269,11 @@
                 class="w-full"
               />
             </el-form-item>
-            <el-form-item label="Numéro de lot">
+            <el-form-item label="Lot cadastral">
               <el-input
-                :model-value="prop.lot_number ?? ''"
+                :model-value="prop.lot_number !== undefined ? prop.lot_number ?? '' : unitValue('lot_number') ?? ''"
                 @update:model-value="prop.lot_number = $event || null"
+                :maxlength="255"
                 size="large"
                 class="w-full"
               />
@@ -725,7 +726,7 @@
           <div class="card-content-grid">
             <div class="switch-item">
               <el-switch
-                :model-value="prop.adjoining"
+                :model-value="hasAdjoining"
                 @update:model-value="prop.adjoining = $event"
                 size="large"
               />
@@ -831,6 +832,11 @@ const store = usePropertyStore();
 // Accès typé any pour éviter les cast `as any` dans le template
 // (les templates Vue n'acceptent pas les opérateurs TypeScript)
 const prop = computed<any>(() => store.selectedProperty);
+const hasAdjoining = computed(() => {
+  const value = prop.value?.adjoining;
+  return [true, 1, '1', 'true', 'oui', 'simple', 'double', 'garage']
+    .includes(typeof value === 'string' ? value.trim().toLowerCase() : value);
+});
 
 const currentYear = new Date().getFullYear();
 

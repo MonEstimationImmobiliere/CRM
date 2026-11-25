@@ -25,3 +25,11 @@ export interface IUnit {
 
   lot_number?: string | null;
 }
+
+export interface DvfUnitDraft {
+  key: string;
+  unit_type: 'appartement' | 'local_commercial';
+  surface?: number;
+  rooms?: number;
+  lot_number?: string;
+}

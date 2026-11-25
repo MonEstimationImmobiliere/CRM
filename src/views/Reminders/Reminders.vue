@@ -7,12 +7,7 @@
         <ViewToggle v-model="currentRemindersView" :options="viewOptions" />
       </div>
 
-      <RemindersFilters
-        v-model:sharing-filter="sharingFilter"
-        v-model:selected-user="selectedUser"
-        v-model:selected-agency="selectedAgency"
-        :user-role="userStore.role"
-      />
+      <DashboardAgencyScopeSelect v-model="dashboardStore.reminderAddressScope" label="Périmètre des rappels" />
 
       <el-radio-group v-model="completedFilter" class="mobile-completed-toggle">
         <el-radio-button :label="false">À faire</el-radio-button>
@@ -37,12 +32,7 @@
 
       <div class="headerBottomRow">
         <!-- Scope filters -->
-        <RemindersFilters
-          v-model:sharing-filter="sharingFilter"
-          v-model:selected-user="selectedUser"
-          v-model:selected-agency="selectedAgency"
-          :user-role="userStore.role"
-        />
+        <DashboardAgencyScopeSelect v-model="dashboardStore.reminderAddressScope" label="Périmètre des rappels" />
 
         <!-- Completed / À faire toggle -->
         <el-radio-group v-model="completedFilter" class="completed-toggle">
@@ -209,7 +199,7 @@ import { ElMessage, ElMessageBox } from 'element-plus';
 import { sortReminders, getTypeLabel } from '@/utils/reminderHelpers';
 import useDeviceBreakpoints from '@/composables/isMobile';
 
-import RemindersFilters from './components/RemindersFilters.vue';
+import DashboardAgencyScopeSelect from '@/views/DashboardComponents/DashboardAgencyScopeSelect.vue';
 import ReminderCard from './components/ReminderCard.vue';
 import ReminderFormDialog from './components/ReminderFormDialog.vue';
 import ReminderCalendarView from './components/ReminderCalendarView.vue';
@@ -230,9 +220,6 @@ const router = useRouter();
 const activeFilter = ref('all');
 const typeFilter = ref('');
 const priorityFilter = ref('');
-const sharingFilter = ref('all');
-const selectedUser = ref<number | null>(null);
-const selectedAgency = ref<number | null>(null);
 const completedFilter = ref(false);
 const showCreateDialog = ref(false);
 const editingReminder = ref<Reminder | null>(null);
@@ -373,7 +360,10 @@ const getDateBlockClass = (r: Reminder): string => {
 
 // Filtered & sorted reminders
 const filteredReminders = computed(() => {
-  let filtered = [...remindersStore.reminders];
+  const agencyScope = dashboardStore.reminderAddressScope === 'agency';
+  let filtered = remindersStore.reminders.filter(reminder => agencyScope
+    ? reminder.sharing
+    : !reminder.sharing && Number(reminder.created_by) === Number(userStore.id));
 
   filtered = filtered.filter((r) =>
     completedFilter.value ? isReminderCompleted(r) : !isReminderCompleted(r)
@@ -389,13 +379,10 @@ const filteredReminders = computed(() => {
 
   return sortReminders(filtered);
 });
-// Resolve sharingFilter to API scope
-const getApiScope = (): 'me' | 'all' | 'agency' | 'user' => {
-  if (sharingFilter.value === 'personal') return 'me';
-  if (sharingFilter.value === 'user') return 'user';
-  if (sharingFilter.value === 'agency') return 'agency';
-  return 'all';
-};
+const loadScopedReminders = () => remindersStore.loadRemindersByScope(
+  dashboardStore.reminderAddressScope === 'agency' ? 'agency' : 'me',
+  { completed: completedFilter.value }
+);
 
 watch(
   () => showCreateDialog.value,
@@ -408,16 +395,8 @@ watch(
 
 // Reload when any filter changes (immediate: true triggers the initial fetch on mount)
 watch(
-  [sharingFilter, selectedUser, selectedAgency, completedFilter],
-  () => {
-    const scope = getApiScope();
-    if (scope === 'user' && !selectedUser.value) return; // wait for user selection
-    remindersStore.loadRemindersByScope(scope, {
-      userId: selectedUser.value ?? undefined,
-      agencyId: selectedAgency.value ?? undefined,
-      completed: completedFilter.value,
-    });
-  },
+  [() => dashboardStore.reminderAddressScope, completedFilter, () => userStore.token],
+  () => { if (userStore.token) void loadScopedReminders(); },
   { immediate: true }
 );
 
@@ -430,13 +409,7 @@ watch(
         : null;
 
       try {
-        const scope = getApiScope();
-
-        await remindersStore.loadRemindersByScope(scope, {
-          userId: selectedUser.value ?? undefined,
-          agencyId: selectedAgency.value ?? undefined,
-          completed: completedFilter.value,
-        });
+        await loadScopedReminders();
 
         if (savedProperty?.id) {
           remindersStore.reminders.forEach((reminder: any) => {
@@ -530,8 +503,11 @@ const deleteReminder = async (reminder: Reminder) => {
       cancelButtonText: 'Annuler',
       type: 'warning',
     });
-    remindersStore.deleteReminder(reminder.id);
-    ElMessage.success('Rappel supprimé avec succès');
+    if (await remindersStore.deleteReminder(reminder.id)) {
+      ElMessage.success('Rappel supprimé avec succès');
+    } else {
+      ElMessage.error('La suppression est interdite. Marquez le rappel comme terminé.');
+    }
   } catch {
     // User cancelled
   }
@@ -551,6 +527,7 @@ const saveReminder = async (form: ReminderFormData, editing: Reminder | null) =>
       ElMessage.success('Rappel créé avec succès');
     }
 
+    await loadScopedReminders();
     showCreateDialog.value = false;
     editingReminder.value = null;
   } catch {
@@ -565,11 +542,7 @@ const updateStatus = async (reminder: Reminder, status: 'todo' | 'progress' | 'c
   try {
     await remindersStore.updateReminderStatus(reminder.id, status);
 
-    await remindersStore.loadRemindersByScope(getApiScope(), {
-      userId: selectedUser.value ?? undefined,
-      agencyId: selectedAgency.value ?? undefined,
-      completed: completedFilter.value,
-    });
+    await loadScopedReminders();
 
     ElMessage.success(
       status === 'completed' ? 'Rappel marqué comme terminé' : 'Rappel marqué comme à faire'
@@ -583,6 +556,7 @@ const updateStatus = async (reminder: Reminder, status: 'todo' | 'progress' | 'c
 const updateSharing = async (reminder: Reminder, sharing: boolean) => {
   try {
     await remindersStore.updateReminder(reminder.id, { sharing });
+    await loadScopedReminders();
     ElMessage.success(sharing ? "Rappel partagé avec l'agence" : 'Rappel repassé en privé');
   } catch {
     ElMessage.error('Erreur lors de la mise à jour du partage');

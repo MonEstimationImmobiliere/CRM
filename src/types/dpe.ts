@@ -15,6 +15,8 @@ export type DpeLabel = 'A' | 'B' | 'C' | 'D' | 'E' | 'F' | 'G';
  */
 export interface IDpeResult {
   adresse_ban: string;
+  identifiant_ban?: string | null;
+  nom_rue_ban?: string | null;
   _geopoint: string;
   type_batiment: DpeBuildingType;
   date_etablissement_dpe: string;

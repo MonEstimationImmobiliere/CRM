@@ -6,11 +6,9 @@ import type {
   ReminderList,
 } from '@/types/reminder';
 
-export type ReminderScope = 'me' | 'all' | 'agency' | 'user';
+export type ReminderScope = 'me' | 'agency';
 
 export interface ReminderScopeOptions {
-  userId?: number;
-  agencyId?: number;
   completed?: boolean;
 }
 
@@ -27,24 +25,11 @@ export const ReminderService = {
     return response.data;
   },
 
-  async getRemindersByUser(userId: number): Promise<ReminderList> {
-    const response = await apiService.get<ReminderList>(
-      `/reminders?scope=user&user_id=${userId}`
-    );
-    return response.data;
-  },
-
   async getRemindersByScope(
     scope: ReminderScope,
     options?: ReminderScopeOptions
   ): Promise<ReminderList> {
     const params = new URLSearchParams({ scope });
-    if (scope === 'user' && options?.userId) {
-      params.set('user_id', String(options.userId));
-    }
-    if (scope === 'agency' && options?.agencyId) {
-      params.set('agency_id', String(options.agencyId));
-    }
     if (options?.completed) {
       params.set('completed', '1');
     }
@@ -67,12 +52,12 @@ export const ReminderService = {
   async updateReminder(
     id: number,
     reminder: Partial<IReminderUpdate>
-  ): Promise<IReminder> {
+  ): Promise<IReminder | null> {
     const response = await apiService.put<IReminder>(
       `/reminders/${id}`,
       reminder
     );
-    return response.data;
+    return response.status === 204 ? null : response.data;
   },
 
   async deleteReminder(id: number): Promise<void> {

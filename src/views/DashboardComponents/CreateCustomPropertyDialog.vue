@@ -447,12 +447,18 @@ const handleSave = async () => {
     formData.value.city = selectedCity?.value || '';
 
     // Créer la propriété personnalisée via le store dashboard
-    const createdProperty = await dashboardStore.createCustomProperty({
-      ...formData.value,
-      favorite: formData.value.favorite ? 'true' : undefined,
-    } as any);
+    const { favorite, ...propertyData } = formData.value;
+    const createdProperty = await dashboardStore.createCustomProperty(propertyData as any);
 
     ElMessage.success('Propriété personnalisée créée avec succès!');
+
+    if (favorite) {
+      try {
+        await propertyStore.setFavorite({ ...createdProperty, is_custom: true }, true);
+      } catch {
+        ElMessage.error('Le bien a été créé, mais son ajout aux favoris a échoué.');
+      }
+    }
 
     // Fermer le dialog
     handleClose();

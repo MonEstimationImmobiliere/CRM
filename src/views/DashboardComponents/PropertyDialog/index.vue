@@ -2,7 +2,7 @@
   <Teleport to="body">
     <el-drawer
       :model-value="store.isDialogVisible"
-      @close="closeDialog"
+      :before-close="closeDialog"
       :size="isMobile ? '98%' : '40%'"
       :show-close="false"
       modal-class="darker-drawer-overlay"
@@ -20,7 +20,7 @@
           <button
             type="button"
             class="el-button el-button--default app-button empty-default-slot icon-only squared border"
-            @click="closeDialog"
+            @click="closeDialog()"
           >
             <span>
               <div class="icon-wrapper" style="width: 16px; height: 16px">
@@ -48,8 +48,7 @@
               <el-icon>
                 <StarFilled
                   v-if="
-                    Number(store.selectedProperty?.favorite) === 1 ||
-                    store.selectedProperty?.favorite === true
+                    store.isFavorite(store.selectedProperty)
                   "
                   style="color: #f56c6c"
                 />
@@ -83,12 +82,21 @@
               :property-type="propertyType"
               @open-unit-dialog="openUnitDialog"
               @edit-unit="openEditUnitDialog"
-              ype-confirmed="handleSaveProperty"
+              @type-confirmed="handleSaveProperty"
             />
           </el-tab-pane>
 
-          <el-tab-pane label="Contact" name="contact" :disabled="isTypeUndefined">
+          <el-tab-pane label="Contact" name="contact">
             <ContactTab />
+            <ProspectionSection
+              v-if="store.isDialogVisible && prospectionTarget"
+              :target="prospectionTarget"
+              :collective="collectiveProspection"
+            />
+            <ProspectionSupervisionSection
+              v-if="store.isDialogVisible && activeTab === 'contact' && prospectionTarget && collectiveProspection"
+              :target="prospectionTarget"
+            />
           </el-tab-pane>
 
           <el-tab-pane label="Commentaires" name="comments" :disabled="isTypeUndefined">
@@ -97,6 +105,25 @@
 
           <el-tab-pane label="Rappels" name="reminders" :disabled="isTypeUndefined">
             <RemindersTab @open-reminder-dialog="openReminderDialog" />
+          </el-tab-pane>
+          <el-tab-pane label="Estimation" name="automatic-estimate">
+            <AutomaticEstimateTab v-if="store.isDialogVisible && activeTab === 'automatic-estimate'"
+              :key="store.selectedProperty.id ?? 0" :property-id="Number(store.selectedProperty.id ?? 0)"
+              :dirty="propertyHasChanges" :saving="saveInProgress" @save-property="handleSaveProperty"
+              @estimate-updated="refreshUnitDvf" />
+          </el-tab-pane>
+          <el-tab-pane label="Historique DVF" name="dvf-history">
+            <DvfHistoryTab v-if="store.isDialogVisible && activeTab === 'dvf-history'"
+              :key="store.selectedProperty.id ?? 0"
+              :commune="store.selectedProperty.code_insee" :street="store.selectedProperty.id_fantoir"
+              :number="store.selectedProperty.numero" :suffix="store.selectedProperty.rep"
+              :market-street="store.selectedProperty.prospection_street_key"
+              :sold-price-per-m2="store.selectedProperty.dernier_prix_vente_m2"
+              :unit="Number(store.selectedProperty.unit_id) > 0"
+              :property-id="Number(store.selectedProperty.id)"
+              :unit-type="store.selectedProperty.property_type" :links-revision="unitDvfRevision"
+              @links-changed="refreshUnitDvf" @unit-lot-loaded="updateLoadedUnitLot"
+              @create-unit="openDvfUnitDialog" @open-unit="openLinkedUnit" />
           </el-tab-pane>
         </el-tabs>
       </el-form>
@@ -109,7 +136,8 @@
       @save="handleSaveReminder"
     />
 
-    <UnitDialog v-model="showUnitDialog" :editing-unit="editingUnit" @save="handleSaveUnit" />
+    <UnitDialog v-model="showUnitDialog" :editing-unit="editingUnit" :initial-values="dvfUnitDraft?.sale"
+      :saving="savingDvfUnit" @save="handleSaveUnit" />
   </Teleport>
 </template>
 
@@ -119,33 +147,84 @@ import { ElForm, ElIcon, ElButton, ElDrawer, ElMessage, ElTabs, ElTabPane } from
 import { Star, StarFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { useDashboardStore } from '@/stores/dashboard';
+import { useProspectionScopeStore } from '@/stores/prospectionScope';
 import { UnitService } from '@/api';
 
 import ContactTab from './ContactTab.vue';
+import ProspectionSection from './ProspectionSection.vue';
+import ProspectionSupervisionSection from './ProspectionSupervisionSection.vue';
+import { getPersonalPropertyTarget } from '@/api/personal-property.service';
 import CharacteristicsTab from './CharacteristicsTab.vue';
 import CommentsTab from './CommentsTab.vue';
 import RemindersTab from './RemindersTab.vue';
+import AutomaticEstimateTab from './AutomaticEstimateTab.vue';
+import DvfHistoryTab from './DvfHistoryTab.vue';
 //import PropertyReminderForm from '../PropertyReminderForm.vue';
 import ReminderFormDialog from '@/views/Reminders/components/ReminderFormDialog.vue';
 import { useRemindersStore } from '@/stores/reminders';
 import UnitDialog from '../UnitDialog.vue';
+import type { DvfUnitDraft } from '@/types/unit';
 import useDeviceBreakpoints from '@/composables/isMobile';
 
 const { isMobile } = useDeviceBreakpoints();
 
 const store = usePropertyStore();
 const dashboardStore = useDashboardStore();
+function refreshUnitDvf() {
+  dashboardStore.lastSearchParams = null;
+  void dashboardStore.querySearchAddress();
+}
+function updateLoadedUnitLot(lot: string | null) {
+  if (store.selectedProperty?.unit) store.selectedProperty.unit.lot_number = lot;
+}
+const prospectionScope = useProspectionScopeStore();
+const collectiveProspection = computed(() =>
+  dashboardStore.activeMainMode === 'prospection' &&
+  !!prospectionScope.filters && prospectionScope.filters.scope !== 'me'
+);
 
 const showUnitDialog = ref(false);
 const showReminderDialog = ref(false);
 const editingUnit = ref<any | null>(null);
+const dvfUnitDraft = ref<{ parentId: number; sale: DvfUnitDraft }>();
+const savingDvfUnit = ref(false);
+const unitDvfRevision = ref(0);
+
+watch(showUnitDialog, opened => {
+  if (!opened) dvfUnitDraft.value = undefined;
+});
+
+function openDvfUnitDialog(sale: DvfUnitDraft) {
+  const property = store.selectedProperty;
+  const parentId = Number(property?.id);
+  if (!parentId || property?.property_type !== 'immeuble' || Number(property.unit_id) > 0) return;
+  editingUnit.value = null;
+  dvfUnitDraft.value = { parentId, sale };
+  showUnitDialog.value = true;
+}
+
+async function openLinkedUnit(property: { id: number; unit_id: number }) {
+  if (hasPropertyChanged()) {
+    ElMessage.warning('Enregistrez les modifications de l’immeuble avant d’ouvrir l’unité.');
+    return;
+  }
+  await store.selectProperty(property);
+  if (Number(store.selectedProperty?.id) === property.id) {
+    propertySnapshot.value = serializeProperty(store.selectedProperty);
+  }
+}
 
 const activeTab = ref('characteristics');
+watch([() => store.isDialogVisible, () => store.initialDialogTab], ([visible, tab]) => {
+  if (visible && tab) activeTab.value = tab;
+});
 
 const isEditing = computed<boolean>(() => Number(store.selectedProperty?.id ?? 0) > 0);
 
 const saveInProgress = ref(false);
+const saveFailed = ref(false);
 const propertySnapshot = ref<string | null>(null);
+const prospectionTarget = computed(() => getPersonalPropertyTarget(store.selectedProperty));
 
 const remindersStore = useRemindersStore();
 
@@ -267,11 +346,13 @@ const dialogTitle = computed<string>(() => {
 //   }`.trim()
 // );
 
-const closeDialog = async (): Promise<void> => {
+const closeDialog = async (done?: () => void): Promise<void> => {
   if (saveInProgress.value) return;
 
   await handleSaveProperty();
+  if (saveFailed.value) return;
 
+  done?.();
   store.setDialogVisible(false);
 
   await nextTick();
@@ -298,7 +379,7 @@ const openEditUnitDialog = () => {
     floor_number: prop.unit?.floor_number ?? store.selectedProperty.floor_number ?? null,
     staircase: prop.unit?.staircase ?? prop.staircase ?? '',
     building: prop.unit?.building ?? prop.building ?? '',
-    lot_number: prop.unit?.lot_number ?? prop.lot_number ?? '',
+    lot_number: (prop.lot_number !== undefined ? prop.lot_number : prop.unit?.lot_number) ?? '',
   };
 
   showUnitDialog.value = true;
@@ -320,8 +401,7 @@ const hasNewPropertyMeaningfulData = (property: any): boolean => {
   return Boolean(
     (propertyTypeVal &&
       propertyTypeVal !== 'inconnu' &&
-      propertyTypeVal !== 'address' &&
-      propertyTypeVal !== 'immeuble') ||
+      propertyTypeVal !== 'address') ||
     property.owner ||
     property.email ||
     property.phone ||
@@ -333,20 +413,9 @@ const hasNewPropertyMeaningfulData = (property: any): boolean => {
   );
 };
 
-const hasPropertyChanged = (): boolean => {
-  if (!store.selectedProperty || !propertySnapshot.value) return false;
-
-  const current = serializeProperty(store.selectedProperty);
-  const changed = current !== propertySnapshot.value;
-
-  if (changed) {
-    console.log('PROPERTY CHANGED');
-    console.log('SNAPSHOT =', propertySnapshot.value);
-    console.log('CURRENT  =', current);
-  }
-
-  return changed;
-};
+const propertyHasChanges = computed(() => !!store.selectedProperty && !!propertySnapshot.value
+  && serializeProperty(store.selectedProperty) !== propertySnapshot.value);
+const hasPropertyChanged = () => propertyHasChanges.value;
 
 const handleSaveProperty = async (): Promise<any> => {
   if (saveInProgress.value) {
@@ -357,6 +426,7 @@ const handleSaveProperty = async (): Promise<any> => {
   if (!store.selectedProperty) return null;
 
   saveInProgress.value = true;
+  saveFailed.value = false;
 
   try {
     if (isEditing.value && !hasPropertyChanged()) {
@@ -397,11 +467,16 @@ const handleSaveProperty = async (): Promise<any> => {
       await nextTick();
 
       propertySnapshot.value = serializeProperty(store.selectedProperty);
+      if (filteredProperty.unit_id && filteredProperty.lot_number !== undefined) {
+        unitDvfRevision.value++;
+        refreshUnitDvf();
+      }
       ElMessage.success('Propriété sauvegardée');
     }
 
     return saved;
   } catch (error: any) {
+    saveFailed.value = true;
     console.error('Error saving property:', error);
     ElMessage.error(
       error?.response?.data?.message || error?.message || 'Erreur lors de la sauvegarde'
@@ -461,6 +536,7 @@ const createUnit = async (payload: any) => {
     dashboardStore.lastSearchParams = null;
     await dashboardStore.querySearchAddress();
   }
+  void dashboardStore.refreshProspectionProgress();
 
   return savedUnit;
 };
@@ -484,13 +560,11 @@ const updateUnit = async (payload: any) => {
 
   (store.selectedProperty as any) = {
     ...store.selectedProperty,
-    unit_id: savedUnit?.id ?? unitId,
-    unit: {
-      ...(prop.unit ?? {}),
-      ...payload,
-      ...(savedUnit ?? {}),
-      id: savedUnit?.id ?? unitId,
-    },
+    ...savedUnit.property,
+    lot_number: undefined,
+    row_type: 'unit',
+    unit_id: savedUnit.unit.id ?? unitId,
+    unit: savedUnit.unit,
   };
 
   if (dashboardStore.isDataLoaded) {
@@ -500,13 +574,33 @@ const updateUnit = async (payload: any) => {
   propertySnapshot.value = serializeProperty(store.selectedProperty);
 
   ElMessage.success('Unité modifiée');
+  unitDvfRevision.value++;
+  refreshUnitDvf();
 
   return savedUnit;
 };
 
 const handleSaveUnit = async (payload: any) => {
+  const draft = dvfUnitDraft.value;
+  if (savingDvfUnit.value) return;
   try {
-    if (editingUnit.value?.id || store.selectedProperty?.unit_id) {
+    if (draft) {
+      const parent = store.selectedProperty;
+      if (!parent || Number(parent.id) !== draft.parentId) {
+        throw new Error('L’immeuble sélectionné a changé. Rouvrez la vente depuis son historique.');
+      }
+      savingDvfUnit.value = true;
+      await UnitService.save({
+        ...buildUnitPayload(payload, parent),
+        dvf_sale_key: draft.sale.key,
+        surface: payload.surface,
+        rooms: payload.rooms,
+      });
+      unitDvfRevision.value++;
+      refreshUnitDvf();
+      void dashboardStore.refreshProspectionProgress();
+      ElMessage.success('Unité créée et vente DVF rattachée.');
+    } else if (editingUnit.value?.id || store.selectedProperty?.unit_id) {
       await updateUnit(payload);
     } else {
       await createUnit(payload);
@@ -521,35 +615,28 @@ const handleSaveUnit = async (payload: any) => {
     ElMessage.error(
       error?.response?.data?.message || error?.message || "Impossible de sauvegarder l'unité"
     );
+    if (draft && error?.response?.status === 409) unitDvfRevision.value++;
+  } finally {
+    if (draft) savingDvfUnit.value = false;
   }
 };
 
 const toggleFavorite = async () => {
-  if (!store.selectedProperty?.id) return;
+  if (!store.selectedProperty) return;
 
   try {
-    const savedRow = await store.toggleFavorite(store.selectedProperty.id, store.selectedProperty);
-
-    (store.selectedProperty as any).id = savedRow.id;
-    (store.selectedProperty as any).favorite = savedRow.favorite;
-
-    dashboardStore.updateAddress({
-      ...(store.selectedProperty as any),
-      id: savedRow.id,
-      favorite: savedRow.favorite,
-    });
+    const favorite = await store.setFavorite(store.selectedProperty);
 
     ElMessage({
-      message: savedRow.favorite
+      message: favorite
         ? 'Propriété ajoutée aux favoris'
         : 'Propriété retirée des favoris',
-      type: savedRow.favorite ? 'success' : 'info',
+      type: favorite ? 'success' : 'info',
       duration: 2000,
     });
   } catch (error) {
     ElMessage({
-      message:
-        "La fiche du logement n'est pas encore créée. Veuillez la créer avant de l'ajouter aux favoris.",
+      message: 'Impossible de modifier le favori.',
       type: 'error',
       duration: 3000,
     });
@@ -560,7 +647,7 @@ const handleKeyDown = (e: KeyboardEvent) => {
   if (store.isDialogVisible && e.key === 'Enter') {
     const target = e.target as HTMLElement;
 
-    if (target.tagName.toLowerCase() === 'textarea') {
+    if (activeTab.value === 'automatic-estimate' || target.tagName.toLowerCase() === 'textarea' || target.closest('.prospection-section')) {
       return;
     }
 

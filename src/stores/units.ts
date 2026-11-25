@@ -73,14 +73,14 @@ export const useUnitStore = defineStore('unit', () => {
     };
   };
 
-  const saveUnit = async () => {
+  const saveUnit = async (propertyId: number) => {
     loading.value = true;
     error.value = null;
 
     try {
       console.log('SAVE UNIT PAYLOAD', unit.value);
 
-      const savedUnit = await UnitService.save(unit.value);
+      const { unit: savedUnit } = await UnitService.save({ ...unit.value, property_id: propertyId });
 
       unit.value = {
         ...unit.value,

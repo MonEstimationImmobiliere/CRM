@@ -1,4 +1,4 @@
-// filepath: /Users/yogann-henry/Documents/Develop/Projets-Perso/CRM_V2/CRM/src/types/address.ts
+import type { DvfSaleIdentity } from './dvf';
 
 /**
  * Interface pour une adresse groupée par rue
@@ -19,6 +19,11 @@ export interface IAddressGrouped {
  * Utilisé par l'endpoint /addresses/{id_fantoir}?type=adress
  */
 export interface IAddressDetail {
+  dvf_address_history_count?: number;
+  unit_id?: number | string | null;
+  display_estimate?: import('@/views/DashboardComponents/ProspectionEstimatedPrice.vue').DisplayEstimate | null;
+  prospection_address_key?: string | null;
+  prospection_street_key?: string | null;
   id_fantoir_long: string;
   code_insee: string;
   id_fantoir: string;
@@ -35,10 +40,18 @@ export interface IAddressDetail {
   price: number | null;
   favorite: string;
   apart_number: string;
+  unit_label?: string | null;
+  owner?: string | null;
   type_bien: string;
   nombre_ventes: number;
   date_derniere_vente: string | null;
   dernier_prix_vente: number | null;
+  dernier_prix_vente_m2?: number | null;
+  derniere_vente_surface_batie?: number | null;
+  derniere_vente_residentielle?: boolean;
+  derniere_vente_code_type_local?: '1' | '2' | '4' | null;
+  derniere_vente_dvf?: (DvfSaleIdentity & { lots: string[] }) | null;
+  date_mutation_dvf_ambigue?: string;
   nombre_estimations: number;
   date_maj: string | null;
   date_rappel: string | null;

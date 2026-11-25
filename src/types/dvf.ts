@@ -10,6 +10,17 @@ export interface IDvfLandItem {
   id_parcelle: string | null;
 }
 
+export interface DvfSaleIdentity {
+  id_mutation: string;
+  numero_disposition: number;
+  date_mutation: string;
+}
+
+export interface DvfSaleFocus {
+  sale: IDvfPoint | null;
+  center: [number, number] | null;
+}
+
 export interface IDvfPoint {
   lat: number;
   lon: number;

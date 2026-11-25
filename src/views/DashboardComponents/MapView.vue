@@ -4,6 +4,10 @@
       <div class="map-wrapper">
         <div id="map" class="map"></div>
 
+        <p v-if="currentMode === 'dvf' && dvfSearchError" class="dvf-search-status" role="status">
+          {{ dvfSearchError }}
+        </p>
+
         <button class="recenter-btn" title="Recentrer la carte" @click="handleRecenter">
           <el-icon :size="20"><MapLocation /></el-icon>
         </button>
@@ -11,11 +15,16 @@
         <button
           class="parcelles-btn"
           :class="{ active: showParcelles }"
+          :aria-pressed="showParcelles"
           title="Afficher / masquer les parcelles"
           @click="toggleParcelles"
         >
           Parcelles
         </button>
+
+        <p v-if="showParcelles && parcelViewportError" class="parcelles-status" role="status">
+          {{ parcelViewportError }}
+        </p>
 
         <button
           class="map-style-btn"
@@ -29,12 +38,42 @@
 
       <aside
         class="map-side-panel"
-        :class="{ empty: !selectedMapItem && !selectedMapItems.length }"
+        :class="{
+          empty: !showStreetSummary && !showCommuneSummary && !selectedMapItem && !selectedMapItems.length,
+          'prospection-address-panel': showCompactAddress,
+        }"
       >
         <div class="side-panel-header">
           <div>
+            <button
+              v-if="canReturnToStreet"
+              type="button"
+              class="return-to-city"
+              @click="returnToStreet"
+            >
+              ← Retour à la rue
+            </button>
+            <button
+              v-else-if="showStreetSummary"
+              type="button"
+              class="return-to-city"
+              @click="emit('return-to-city')"
+            >
+              ← Retour à la ville
+            </button>
             <div class="side-panel-eyebrow">{{ sidePanelEyebrow }}</div>
-            <h3>{{ sidePanelTitle }}</h3>
+            <template v-if="showCompactAddress">
+              <h3 class="prospection-address-title">{{ prospectionAddressTitle }}</h3>
+              <div class="muted">
+                {{ prospectionAddressLocality }}
+              </div>
+            </template>
+            <template v-else-if="showCommuneSummary">
+              <h3>{{ communeName }}</h3>
+              <div v-if="communePostalCode" class="muted">{{ communePostalCode }}</div>
+            </template>
+            <h3 v-else>{{ showStreetSummary ? dashboard.selectedStreet?.value : sidePanelTitle }}</h3>
+            <div v-if="showStreetSummary" class="muted">{{ dashboard.selectedCity?.city || dashboard.selectedCity?.value }}</div>
           </div>
 
           <button
@@ -47,14 +86,145 @@
           </button>
         </div>
 
-        <div v-if="!selectedMapItem && !selectedMapItems.length" class="side-empty">
-          Cliquez sur une pastille, une vente DVF, un DPE ou une parcelle pour afficher les détails
-          ici.
+        <ProspectionStreetSummary
+          v-if="showStreetSummary"
+          :count="streetProspectionProgress ?? null"
+          :code-insee="dashboard.selectedCodeInsee"
+          :street-key="dashboard.selectedCodeIdFantoir"
+        />
+        <ProspectionStreetSummary
+          v-else-if="showCommuneSummary"
+          :count="dashboard.prospectionProgress?.commune ?? null"
+          :street-count="communeStreetCount"
+          :code-insee="dashboard.selectedCodeInsee"
+          commune
+        />
+        <div v-else-if="!selectedMapItem && !selectedMapItems.length" class="side-empty">
+          {{ currentMode === 'maj'
+            ? 'Cliquez sur une pastille pour consulter les biens mis à jour à cette adresse.'
+            : 'Cliquez sur une pastille, une vente DVF, un DPE ou une parcelle pour afficher les détails ici.' }}
         </div>
 
         <div v-else class="side-content">
-          <template v-if="selectedMapType === 'address'">
+          <template v-if="showCompactAddress">
+            <div v-if="showProspectionAddress" class="prospection-address-progress">
+              <span>Prospection</span>
+              <ProspectionProgressBadge :count="selectedProspectionProgress" show-counts />
+            </div>
+            <dl class="prospection-address-stats">
+              <div>
+                <dt>Dernière MAJ</dt>
+                <dd>{{ formatDate(compactAddressStats.date_maj) }}</dd>
+              </div>
+              <div>
+                <dt>Prix estimé</dt>
+                <dd v-if="showProspectionAddress"><ProspectionEstimatedPrice :value="compactAddressStats.display_estimate" /></dd>
+                <dd v-else>{{ showEstimationAddress && compactEstimatedPrice == null ? '—' : formatCurrency(compactEstimatedPrice) }}</dd>
+              </div>
+            </dl>
 
+            <button
+              v-if="!dashboard.hasDirectAddressList && isStreetGroupPoint(selectedMapItem)"
+              class="primary-action"
+              type="button"
+              @click="openStreetFromMap(selectedMapItem)"
+            >
+              Afficher la rue
+            </button>
+            <section v-if="addressPropertyCards.length" class="prospection-properties">
+              <h4>Biens à cette adresse</h4>
+              <ul class="prospection-property-list">
+                <li v-for="card in addressPropertyCards" :key="card.key">
+                  <button
+                    class="prospection-property"
+                    type="button"
+                    :aria-pressed="showEstimationAddress ? card.property.id === selectedMapItem.id : undefined"
+                    @click="openCompactProperty(card.property)"
+                  >
+                    <span class="prospection-property-icon" :class="`type-${card.category}`">
+                      <component :is="propertyTypeIcons[card.category]" aria-hidden="true" />
+                    </span>
+                    <span class="prospection-property-text">
+                      <span class="prospection-property-title">
+                        {{ showEstimationAddress ? (card.property.label || card.typeLabel || card.property.type_bien || 'Estimation')
+                          : showMajAddress && card.isPrincipal ? (card.typeLabel || formatAddressUnitLabel(card.property))
+                          : formatAddressUnitLabel(card.property) }}
+                      </span>
+                      <span v-if="card.owner" class="prospection-property-type">{{ card.owner }}</span>
+                      <span v-if="showProspectionAddress" class="prospection-property-type">
+                        Prix estimé · <ProspectionEstimatedPrice :value="card.property.display_estimate" />
+                      </span>
+                      <template v-if="showProspectionAddress && !card.isPrincipal && card.property.date_derniere_vente">
+                        <span class="prospection-property-type">Dernière vente · {{ formatDate(card.property.date_derniere_vente) }}</span>
+                        <span v-if="card.property.dernier_prix_vente != null" class="prospection-property-type">
+                          {{ formatCurrency(card.property.dernier_prix_vente) }} · {{ formatCurrency(card.property.dernier_prix_vente_m2) }}/m²
+                        </span>
+                        <span v-for="item in unitMarketDifferences(card.property)" :key="item.scope" class="prospection-property-type">
+                          <DvfMarketTooltip :details="item.tooltip">
+                            {{ item.scope === 'street' ? 'Écart rue' : 'Écart commune' }} · {{ unitMarketPercent.format(item.difference) }}
+                            <small v-if="item.lowReliability"> · Faible fiabilité</small>
+                          </DvfMarketTooltip>
+                        </span>
+                      </template>
+                      <span v-if="showProspectionAddress && card.property.date_mutation_dvf_ambigue" class="prospection-property-type">
+                        Mutation DVF du {{ formatDate(card.property.date_mutation_dvf_ambigue) }} · périmètre indéterminé
+                      </span>
+                      <span v-if="!card.isPrincipal && card.typeLabel" class="prospection-property-type">
+                        {{ card.typeLabel }}
+                      </span>
+                      <span v-if="showEstimationAddress && card.property.created_at" class="prospection-property-type">
+                        {{ formatDate(card.property.created_at) }}
+                      </span>
+                      <span v-if="showFavoriteAddress" class="prospection-property-type">
+                        {{ card.favorite ? 'Favori personnel' : 'Non favori' }}
+                      </span>
+                      <span v-else-if="card.prospected !== undefined" class="prospection-property-type">
+                        {{ card.prospected ? 'Prospecté' : 'À prospecter' }}
+                      </span>
+                      <span v-else-if="card.isPrincipal && selectedProspectionProgress" class="prospection-property-type">
+                        Hors total de prospection
+                      </span>
+                    </span>
+                    <span class="prospection-property-badge" :class="{ principal: card.isPrincipal }">
+                      {{ showEstimationAddress ? 'Estimation' : card.isPrincipal ? 'Bien principal' : 'Unité' }}
+                    </span>
+                    <ArrowRight class="prospection-property-arrow" aria-hidden="true" />
+                  </button>
+                  <el-button v-if="showProspectionAddress && card.property.dvf_address_history_count != null"
+                    link type="primary" size="small" @click="emit('open-dvf-history', card.property as Address)">
+                    {{ card.property.dvf_address_history_count }} {{ card.property.dvf_address_history_count === 1 ? 'transaction DVF' : 'transactions DVF' }}
+                  </el-button>
+                </li>
+              </ul>
+            </section>
+            <section v-if="showEstimationAddress" ref="estimationDetails" class="sub-section" tabindex="-1">
+              <h4>Détail de l’estimation</h4>
+              <div v-if="estimationFacts.length" class="detail-grid">
+                <div v-for="fact in estimationFacts" :key="fact.label">
+                  <span>{{ fact.label }}</span>
+                  <strong>{{ fact.value }}</strong>
+                </div>
+              </div>
+            </section>
+            <section v-if="showReminderAddress" class="sub-section">
+              <h4>Rappels du bien</h4>
+              <p v-if="!selectedReminders.length" class="muted">Aucun rappel actif dans ce périmètre.</p>
+              <div v-for="reminder in selectedReminders" :key="reminder.id" class="detail-card">
+                <strong>{{ reminder.title }}</strong>
+                <div class="muted">{{ formatReminderDate(reminder.date) }} · {{ reminderStatus(reminder) }}</div>
+                <p v-if="reminder.description" class="reminder-comment">{{ reminder.description }}</p>
+                <button
+                  v-if="canEditMapReminder(reminder)"
+                  type="button"
+                  class="return-to-city"
+                  @click="emit('edit-reminder', reminder)"
+                >
+                  Modifier le rappel
+                </button>
+              </div>
+            </section>
+          </template>
+          <template v-else-if="selectedMapType === 'address'">
             <div class="detail-card">
               <div class="muted">Adresse</div>
 
@@ -178,89 +348,6 @@
             </div>
           </template>
 
-<template v-else-if="selectedMapType === 'estimation'">
-  <div class="detail-card">
-    <div class="muted">Estimation réalisée en ligne</div>
-
-    <div class="detail-title">
-      {{ formatAddressSideTitle(selectedMapItem) }}
-    </div>
-
-    <div class="price">
-      {{ formatCurrency(selectedMapItem.price) }}
-    </div>
-
-    <div class="detail-grid">
-      <div>
-        <span>Type de bien</span>
-        <strong>
-          {{
-            selectedMapItem.type_bien ||
-            selectedMapItem.label ||
-            selectedMapItem.property_type ||
-            '-'
-          }}
-        </strong>
-      </div>
-
-      <div>
-        <span>Surface habitable</span>
-        <strong>{{ formatSurface(selectedMapItem.surface) }}</strong>
-      </div>
-
-      <div>
-        <span>Terrain</span>
-        <strong>{{ formatSurface(selectedMapItem.area) }}</strong>
-      </div>
-
-      <div>
-        <span>Pièces</span>
-        <strong>{{ selectedMapItem.rooms || '-' }}</strong>
-      </div>
-
-      <div>
-        <span>Chambres</span>
-        <strong>{{ selectedMapItem.bedrooms || '-' }}</strong>
-      </div>
-
-      <div>
-        <span>Année de construction</span>
-        <strong>{{ selectedMapItem.year_built || '-' }}</strong>
-      </div>
-
-      <div>
-        <span>État du bien</span>
-        <strong>{{ selectedMapItem.property_condition || '-' }}</strong>
-      </div>
-
-      <div>
-        <span>Date de l’estimation</span>
-        <strong>{{ formatDate(selectedMapItem.created_at) }}</strong>
-      </div>
-    </div>
-
-    <div
-      v-if="selectedMapItem.phone || selectedMapItem.email"
-      class="sub-section"
-    >
-      <h4>Coordonnées transmises</h4>
-
-      <div class="detail-grid">
-        <div v-if="selectedMapItem.phone">
-          <span>Téléphone</span>
-          <strong>{{ selectedMapItem.phone }}</strong>
-        </div>
-
-        <div v-if="selectedMapItem.email">
-          <span>E-mail</span>
-          <strong>{{ selectedMapItem.email }}</strong>
-        </div>
-      </div>
-    </div>
-
-    <!-- Aucun bouton d’ouverture de fiche property -->
-  </div>
-</template>
           <template v-else-if="selectedMapType === 'dvf'">
             <div class="detail-card">
               <div
@@ -408,9 +495,27 @@
 import { onMounted, onUnmounted, watch, nextTick, computed, ref } from 'vue';
 import maplibregl from 'maplibre-gl';
 import 'maplibre-gl/dist/maplibre-gl.css';
-import { MapLocation } from '@element-plus/icons-vue';
+import {
+  ArrowRight, Box, House, Key, MapLocation, OfficeBuilding, Shop, SuitcaseLine, Van,
+} from '@element-plus/icons-vue';
 import { useDashboardStore } from '@/stores/dashboard';
-import { useRemindersStore } from '@/stores/reminders';
+import { usePropertyStore } from '@/stores/propertyHome';
+import { useUserStore } from '@/stores/user';
+import { loadFavoriteAddressDetails } from '@/utils/favoriteAddressDetails';
+import ProspectionProgressBadge from './ProspectionProgressBadge.vue';
+import ProspectionEstimatedPrice from './ProspectionEstimatedPrice.vue';
+import DvfMarketTooltip from './DvfMarketTooltip.vue';
+import { getDvfStatistics, type DvfStatistics } from '@/api/dvf-statistics.service';
+import { communeComparisonReference, relativeMarketDifference, streetComparisonReference, unitDvfCategory } from '@/utils/dvfResidentialComparison';
+import ProspectionStreetSummary from './ProspectionStreetSummary.vue';
+import { getPersonalPropertyTarget, personalPropertyKey } from '@/api/personal-property.service';
+import { countProspectionStreets, prospectionAddressKey, prospectionAddressRepresentative, prospectionColor, prospectionRowKey,
+  resolveProspectionMapSelection, rowProspectionCount } from '@/utils/prospectionProgress';
+import type { ProspectionCount, ProspectionMapSelection } from '@/utils/prospectionProgress';
+import { useRemindersStore, type Reminder } from '@/stores/reminders';
+import { DvfService } from '@/api/dvf.service';
+import { normalizeParcelBounds, PARCEL_MIN_ZOOM, useParcelViewport } from '@/composables/useParcelViewport';
+import { formatReminderDate, isOverdue, isToday } from '@/utils/reminderHelpers';
 import {
   COLORS,
   MAP_STYLE_STREETS,
@@ -419,6 +524,8 @@ import {
   DEFAULT_CENTER,
   DEFAULT_ZOOM,
 } from '@/utils/mapConstants';
+import type { MapDisplayMode } from '@/utils/mapConstants';
+import { dvfSaleKey } from '@/utils/mapAddressFilters';
 
 import type { IAddressDetail, IAddressGrouped } from '@/types/address';
 
@@ -458,26 +565,41 @@ interface DvfPoint {
 
 const props = defineProps<{
   addresses: Address[];
+  selectedAddressKey?: string | null;
+  streetProspectionProgress?: ProspectionCount | null;
   cityCenter?: CityCenter | null;
   dpePoints?: DpePoint[];
   dvfPoints?: DvfPoint[];
-  parcellesGeojson?: GeoJSON.FeatureCollection;
+  dvfSearchError?: string;
 }>();
 
 const emit = defineEmits<{
   'edit-property': [property: Address];
+  'open-dvf-history': [property: Address];
+  'edit-reminder': [reminder: Reminder];
+  'select-street': [street: { nom_voie: string; id_fantoir: string }];
+  'select-address': [selection: ProspectionMapSelection];
+  'return-to-street': [];
+  'return-to-city': [];
 }>();
 
 const dashboard = useDashboardStore();
+const propertyStore = usePropertyStore();
+const userStore = useUserStore();
 const remindersStore = useRemindersStore();
 
 let map: maplibregl.Map | null = null;
 let mapLoaded = false;
-
-// Indique qu'une vraie modification de ville attend son nouveau cityCenter.
-let pendingCityRecenter = false;
+let cameraMode: MapDisplayMode | null = null;
+let pendingAddressOpen = false;
+let syncingAddressFilters = false;
 
 const showParcelles = ref(false);
+const { collection: parcelCollection, error: parcelViewportError, refresh: refreshParcelViewport,
+  cancel: cancelParcelViewport } = useParcelViewport(readParcelBounds, DvfService.getParcellesByViewport);
+const parcelLabelCache = new WeakMap<GeoJSON.FeatureCollection, GeoJSON.FeatureCollection>();
+let highlightedParcelleIds: string[] = [];
+watch(parcelCollection, updateParcelles);
 
 type MapSidePanelType =
   | 'address'
@@ -592,15 +714,181 @@ function getBuiltLotLabel(sale: any): string {
 
 function formatAddressUnitLabel(unit: any): string {
   if (unit.row_type === 'unit') {
-    return unit.unit_type
-      ? `${unit.unit_type} / ${unit.apart_number || unit.lot_number || unit.unit_id || '-'}`
-      : `Lot ${unit.apart_number || unit.lot_number || unit.unit_id || '-'}`;
+    const label = unit.unit_label?.trim();
+    if (label) return label;
+
+    const type = unit.type_bien?.trim() || 'Unité';
+    const number = String(unit.apart_number ?? '').trim();
+    return number ? `${type} ${number}` : type;
   }
 
   return unit.property_type || unit.type || 'Immeuble';
 }
 
 const currentMode = computed(() => dashboard.activeMainMode || 'prospection');
+watch(currentMode, restoreMapViewport, { flush: 'sync' });
+watch(() => dashboard.cityRecenter, applyCityRecenter, { flush: 'post' });
+const showProspectionAddress = computed(
+  () => currentMode.value === 'prospection' && selectedMapType.value === 'address' && !!selectedMapItem.value
+);
+const showFavoriteAddress = computed(
+  () => currentMode.value === 'favorites' && selectedMapType.value === 'address' && !!selectedMapItem.value
+);
+const showEstimationAddress = computed(() =>
+  currentMode.value === 'estimations' && selectedMapType.value === 'estimation' && !!selectedMapItem.value
+);
+const showReminderAddress = computed(() =>
+  currentMode.value === 'rappels' && selectedMapType.value === 'address' && !!selectedMapItem.value
+);
+const showMajAddress = computed(() =>
+  currentMode.value === 'maj' && selectedMapType.value === 'address' && !!selectedMapItem.value
+);
+const showCompactAddress = computed(() =>
+  showProspectionAddress.value || showFavoriteAddress.value || showEstimationAddress.value ||
+  showReminderAddress.value || showMajAddress.value
+);
+const compactEstimatedPrice = computed(() => showEstimationAddress.value
+  ? selectedMapItem.value?.price
+  : compactAddressStats.value?.dernier_prix_estime ??
+    (showReminderAddress.value || showMajAddress.value ? selectedMapItem.value?.price : null));
+const estimationDetails = ref<HTMLElement | null>(null);
+const estimationFacts = computed(() => {
+  const item = selectedMapItem.value;
+  if (!showEstimationAddress.value || !item) return [];
+  return [
+    { label: 'Surface habitable', value: Number(item.surface) > 0 ? formatSurface(item.surface) : null },
+    { label: 'Terrain', value: Number(item.area) > 0 ? formatSurface(item.area) : null },
+    { label: 'Pièces', value: Number(item.rooms) > 0 ? item.rooms : null },
+    { label: 'Chambres', value: item.bedrooms },
+    { label: 'Année de construction', value: item.year_built || null },
+    { label: 'État du bien', value: item.property_condition },
+    { label: 'Date de l’estimation', value: item.created_at ? formatDate(item.created_at) : null },
+    { label: 'Téléphone', value: item.phone },
+    { label: 'E-mail', value: item.email },
+  ].filter(fact => fact.value !== null && fact.value !== undefined && fact.value !== '');
+});
+const selectedReminders = computed(() => {
+  const id = Number(selectedMapItem.value?.id);
+  return showReminderAddress.value && id > 0
+    ? dashboard.mapReminders.filter(reminder => Number(reminder.property_id) === id)
+    : [];
+});
+function canEditMapReminder(reminder: Reminder) {
+  return userStore.role === 'admin' || userStore.role === 'agency_manager' ||
+    Number(reminder.created_by) === Number(userStore.id);
+}
+function reminderStatus(reminder: Reminder) {
+  if (reminder.completed) return 'Terminé';
+  if (isOverdue(reminder.date, reminder.completed)) return 'En retard';
+  return isToday(reminder.date) ? 'Aujourd’hui' : 'À venir';
+}
+const favoriteAddressDetails = ref<IAddressDetail[]>([]);
+watch([showFavoriteAddress, selectedMapItem], async ([visible, item], _previous, onCleanup) => {
+  favoriteAddressDetails.value = [];
+  if (!visible || !item) return;
+  let cancelled = false;
+  onCleanup(() => { cancelled = true; });
+  try {
+    const rows = await loadFavoriteAddressDetails(item);
+    if (!cancelled) favoriteAddressDetails.value = rows;
+  } catch (error) {
+    if (!cancelled) console.error('Chargement des biens à cette adresse', error);
+  }
+});
+watch(() => userStore.token, () => {
+  if (showFavoriteAddress.value || showReminderAddress.value) closeSidePanel();
+});
+const compactAddressStats = computed(() => {
+  const selected = selectedMapItem.value;
+  if (!showFavoriteAddress.value) return selected;
+  const target = getPersonalPropertyTarget(selected);
+  if (!target) return selected;
+  const key = personalPropertyKey(target);
+  const detail = favoriteAddressDetails.value.find(row => {
+    const identity = getPersonalPropertyTarget(row);
+    return identity && personalPropertyKey(identity) === key;
+  });
+  return detail ? {
+    date_maj: detail.date_maj ?? selected.date_maj,
+    dernier_prix_estime: detail.dernier_prix_estime ?? selected.dernier_prix_estime,
+  } : selected;
+});
+const selectedProspectionProgress = computed(() => selectedMapItem.value
+  ? rowProspectionCount(dashboard.prospectionProgress, selectedMapItem.value)
+  : null);
+const unitMarketStatistics = ref<DvfStatistics | null>(null);
+const unitMarketPercent = new Intl.NumberFormat('fr-FR', { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 1 });
+
+watch(() => showProspectionAddress.value ? selectedMapItem.value?.code_insee : null, async (city, _, onCleanup) => {
+  unitMarketStatistics.value = null;
+  if (!city) return;
+  const request = new AbortController();
+  onCleanup(() => request.abort());
+  try {
+    const data = await getDvfStatistics(city, undefined, request.signal, true);
+    if (!request.signal.aborted) unitMarketStatistics.value = data;
+  } catch { /* The address remains readable if market statistics are unavailable. */ }
+});
+
+function unitMarketDifferences(row: Record<string, any>) {
+  const category = unitDvfCategory(row.derniere_vente_code_type_local);
+  if (!category || !row.dernier_prix_vente_m2) return [];
+  const statistics = unitMarketStatistics.value;
+  const street = row.prospection_street_key || row.id_fantoir;
+  return [communeComparisonReference(statistics, category),
+    streetComparisonReference(statistics?.streets?.[street]?.unit_categories?.[category], statistics, category)].flatMap(reference => {
+    const difference = relativeMarketDifference(row.dernier_prix_vente_m2, reference?.median);
+    return reference && difference !== null ? [{ ...reference, difference }] : [];
+  });
+}
+const prospectionAddressTitle = computed(() => {
+  const item = selectedMapItem.value;
+  const number = item?.numero_full || [item?.numero, item?.rep].filter(Boolean).join(' ');
+  return [number, item?.nom_voie || item?.adresse].filter(Boolean).join(' ') || 'Adresse';
+});
+const prospectionAddressLocality = computed(() => {
+  const item = selectedMapItem.value;
+  const selectedCity = dashboard.hasDirectAddressList ? undefined : dashboard.selectedCity;
+  return [item?.code_postal, item?.nom_commune || item?.city || selectedCity?.city || selectedCity?.value]
+    .filter(Boolean)
+    .join(' ');
+});
+const hasProspectionStreet = computed(
+  () => currentMode.value === 'prospection' && !!dashboard.selectedCity && !!dashboard.selectedStreet
+);
+const canReturnToStreet = computed(() => {
+  if (showProspectionAddress.value) return hasProspectionStreet.value;
+  const item = selectedMapItem.value;
+  return showFavoriteAddress.value && !!dashboard.selectedCity && !!dashboard.selectedStreet &&
+    !!dashboard.selectedCodeIdFantoir && item.code_insee === dashboard.selectedCodeInsee &&
+    (item.prospection_street_key || item.id_fantoir_defaut || item.id_fantoir) === dashboard.selectedCodeIdFantoir;
+});
+const showStreetSummary = computed(
+  () => hasProspectionStreet.value && !selectedMapItem.value && !selectedMapItems.value.length
+);
+const showCommuneSummary = computed(() =>
+  currentMode.value === 'prospection' && !!dashboard.selectedCity && !!dashboard.selectedCodeInsee &&
+  !dashboard.selectedStreet && !dashboard.selectedCodeIdFantoir && !dashboard.selectedNumero &&
+  !dashboard.selectedOwnerName.trim() && !selectedMapItem.value && !selectedMapItems.value.length
+);
+const communeStreetRows = computed(() => {
+  const search = dashboard.lastSearchParams;
+  if (!showCommuneSummary.value || !search || search.codeInsee !== dashboard.selectedCodeInsee ||
+      search.codeIdFantoir || search.numero || search.ownerName) return null;
+  return props.addresses.filter((row): row is IAddressGrouped => 'total_adresses' in row);
+});
+const communeName = computed(() =>
+  dashboard.selectedCity?.city || communeStreetRows.value?.[0]?.nom_commune || dashboard.selectedCity?.value
+);
+const communePostalCode = computed(() => {
+  const selected = dashboard.selectedCity?.value ?? '';
+  if (/^\d{5}$/.test(selected)) return selected;
+  const codes = new Set(communeStreetRows.value?.map(row => row.code_postal).filter(Boolean));
+  return [...codes].join(', ');
+});
+const communeStreetCount = computed(() => communeStreetRows.value
+  ? countProspectionStreets(communeStreetRows.value, dashboard.prospectionProgress)
+  : null);
 
 const selectedDvfSales = computed(() => {
   if (selectedMapType.value !== 'dvf' || !selectedMapItem.value) {
@@ -639,43 +927,12 @@ const reminderPropertyIds = computed(() => {
 /* -------------------------------------
    COULEUR DES POINTS ADRESSES
 ------------------------------------- */
-function getProspectionFreshnessColor(dateMaj: any): string {
-  if (!dateMaj) {
-    return '#9ca3af'; // gris visible
-  }
-
-  const majDate = new Date(dateMaj);
-  if (Number.isNaN(majDate.getTime())) {
-    return '#9ca3af';
-  }
-
-  const now = new Date();
-  const diffMs = now.getTime() - majDate.getTime();
-  const diffDays = diffMs / (1000 * 60 * 60 * 24);
-
-  if (diffDays <= 30) {
-    return '#15803d'; // vert foncé
-  }
-
-  if (diffDays <= 90) {
-    return '#22c55e'; // vert moyen
-  }
-
-  if (diffDays <= 180) {
-    return '#86efac'; // vert clair
-  }
-
-  return '#9ca3af'; // gris si trop ancien
-}
-
 function getPointColor(address: Address, mode: string): string {
   const addr = address as any;
 
   switch (mode) {
     case 'prospection':
-  return getProspectionFreshnessColor(
-    addr.date_maj ?? addr.updated_at
-  );
+      return prospectionColor(rowProspectionCount(dashboard.prospectionProgress, addr));
 
     case 'estimations':
   return Number(addr.price ?? 0) > 0
@@ -743,21 +1000,35 @@ function cycleMapStyle() {
   map.once('idle', () => {
     mapLoaded = true;
     rebuildMapLayers();
-    map?.resize();
+    map?.resize(undefined, false);
+    applyCityRecenter();
+    applyDvfSaleFocus();
+    syncParcelViewport();
   });
 
   map.setStyle(getBaseMapStyleUrl(), { diff: false });
 }
 
-onMounted(async () => {
-  await remindersStore.loadReminders();
+onMounted(() => {
+  void remindersStore.loadReminders();
+  cameraMode = currentMode.value;
+  const viewport = dashboard.mapViewports[cameraMode] ?? dashboard.lastMapViewport;
 
   map = new maplibregl.Map({
     container: 'map',
     style: MAP_STYLE_STREETS,
-    center: DEFAULT_CENTER,
-    zoom: DEFAULT_ZOOM,
+    center: viewport?.center ?? DEFAULT_CENTER,
+    zoom: viewport?.zoom ?? DEFAULT_ZOOM,
   });
+  map.on('moveend', saveMapViewport);
+  map.on('moveend', syncParcelViewport);
+  map.on('zoom', () => {
+    if (map && map.getZoom() < PARCEL_MIN_ZOOM) refreshParcelViewport();
+  });
+  map.on('movestart', event => {
+    if (event.originalEvent) dashboard.cancelCityRecenter();
+  });
+  saveMapViewport();
 
   map.addControl(new maplibregl.NavigationControl());
 
@@ -765,18 +1036,24 @@ onMounted(async () => {
     mapLoaded = true;
 
     rebuildMapLayers();
-    setupWatchers();
     setupAddressInteractions();
     setupDpeInteractions();
     setupDvfInteractions();
-    recenterMap();
+    openFilteredAddress();
+    applyCityRecenter();
+    applyDvfSaleFocus();
+    syncParcelViewport();
   });
 });
 
 onUnmounted(() => {
+  cancelParcelViewport();
   closeSidePanel();
 
   if (map) {
+    map.stop();
+    saveMapViewport();
+    cameraMode = null;
     map.remove();
     map = null;
   }
@@ -793,6 +1070,7 @@ function rebuildMapLayers() {
     addDvfLayer();
 
     updateParcelles();
+    applyParcelleHighlight();
     updateAddressPoints();
     updateAddressPointsWithColors();
     updateDpePoints();
@@ -937,8 +1215,37 @@ function getParcelleLabelPoint(feature: any): [number, number] | null {
 }
 
 const selectedAddressUnits = computed<Record<string, any>[]>(() => {
+  if (showEstimationAddress.value || showReminderAddress.value || showMajAddress.value) {
+    const item = selectedMapItem.value;
+    const key = prospectionAddressKey(item);
+    const rows = key ? props.addresses.filter(
+      (row): row is IAddressDetail => 'id' in row && prospectionAddressKey(row) === key
+    ) : [];
+    return rows.length ? [...new Map(rows.map(row => [row.id, row])).values()] : [item];
+  }
+
   if (selectedMapType.value !== 'address' || !selectedMapItem.value) {
     return [];
+  }
+
+  if (currentMode.value === 'prospection') {
+    const key = prospectionRowKey(selectedMapItem.value);
+    return key.startsWith('address:') ? props.addresses.filter(row => prospectionRowKey(row) === key) : [];
+  }
+
+  if (showFavoriteAddress.value) {
+    if (favoriteAddressDetails.value.length) return favoriteAddressDetails.value;
+    const item = selectedMapItem.value;
+    const key = prospectionAddressKey(item);
+    const target = getPersonalPropertyTarget(item);
+    if (!key || !target || target.bien_type === 'custom_property') return [item];
+    const identity = personalPropertyKey(target);
+    const siblings = props.addresses.filter(row => {
+      const sibling = getPersonalPropertyTarget(row);
+      return sibling && sibling.bien_type !== 'custom_property' &&
+        personalPropertyKey(sibling) !== identity && prospectionAddressKey(row) === key;
+    });
+    return [item, ...siblings];
   }
 
   const key = selectedMapItem.value.id_fantoir_long || selectedMapItem.value.id_fantoir || '';
@@ -948,6 +1255,66 @@ const selectedAddressUnits = computed<Record<string, any>[]>(() => {
   return props.addresses.filter((a: any) => {
     return a.id_fantoir_long === key || a.id_fantoir === key;
   });
+});
+
+const propertyTypeIcons = {
+  house: House,
+  apartment: OfficeBuilding,
+  commerce: Shop,
+  parking: Van,
+  office: SuitcaseLine,
+  warehouse: Box,
+  unknown: Key,
+};
+
+type PropertyCategory = keyof typeof propertyTypeIcons;
+
+const propertyTypes: Partial<Record<string, { category: PropertyCategory; label: string }>> = {
+  maison: { category: 'house', label: 'Maison' },
+  appartement: { category: 'apartment', label: 'Appartement' },
+  immeuble: { category: 'apartment', label: 'Immeuble' },
+  commerce: { category: 'commerce', label: 'Commerce' },
+  local_commercial: { category: 'commerce', label: 'Local commercial' },
+  garage: { category: 'parking', label: 'Garage' },
+  parking: { category: 'parking', label: 'Parking' },
+  bureau: { category: 'office', label: 'Bureau' },
+  entrepot: { category: 'warehouse', label: 'Entrepôt' },
+  cave: { category: 'unknown', label: 'Cave' },
+  dependance: { category: 'unknown', label: 'Dépendance' },
+  terrain: { category: 'unknown', label: 'Terrain' },
+};
+
+const addressPropertyCards = computed(() => {
+  if (!showCompactAddress.value) return [];
+
+  const rows = selectedAddressUnits.value;
+  if (showProspectionAddress.value && rows.length === 1 && (
+    isStreetGroupPoint(selectedMapItem.value) || !canOpenProperty(selectedMapItem.value)
+  )) return [];
+
+  return rows
+    .map((property, index) => {
+      const isPrincipal = property.row_type !== 'unit';
+      const target = getPersonalPropertyTarget(property);
+      const type = [property.unit_type, property.type_code, property.type_bien, isPrincipal ? property.property_type : null]
+        .map(type => String(type ?? '').trim().toLowerCase().normalize('NFD')
+          .replace(/[\u0300-\u036f]/g, '').replace(/\s+/g, '_'))
+        .map(code => propertyTypes[code])
+        .find(Boolean);
+
+      return {
+        property,
+        isPrincipal,
+        category: type?.category ?? 'unknown',
+        typeLabel: type?.label,
+        owner: showProspectionAddress.value && typeof property.owner === 'string' ? property.owner.trim() : '',
+        prospected: showProspectionAddress.value && target
+          ? dashboard.prospectionProgress?.bien_status[personalPropertyKey(target)] : undefined,
+        favorite: showFavoriteAddress.value && propertyStore.isFavorite(property),
+        key: `${property.row_type}-${property.row_id ?? index}-${property.id ?? ''}`,
+      };
+    })
+    .sort((first, second) => Number(second.isPrincipal) - Number(first.isPrincipal));
 });
 
 function buildParcellesLabelsGeojson(
@@ -1009,6 +1376,7 @@ function addParcellesLayer() {
       id: 'parcelles-fill',
       type: 'fill',
       source: 'parcelles_cadastre',
+      minzoom: PARCEL_MIN_ZOOM,
       paint: {
         'fill-color': '#2563eb',
         'fill-opacity': 0.08,
@@ -1024,6 +1392,7 @@ function addParcellesLayer() {
       id: 'parcelle-highlight',
       type: 'fill',
       source: 'parcelles_cadastre',
+      minzoom: PARCEL_MIN_ZOOM,
       filter: ['==', ['get', 'id_parcelle'], ''],
       paint: {
         'fill-color': '#facc15',
@@ -1040,6 +1409,7 @@ function addParcellesLayer() {
       id: 'parcelles-line',
       type: 'line',
       source: 'parcelles_cadastre',
+      minzoom: PARCEL_MIN_ZOOM,
       paint: {
         'line-color': '#2563eb',
         'line-width': 1,
@@ -1051,7 +1421,7 @@ function addParcellesLayer() {
     });
   }
 
-  if (!map.getLayer('parcelles-labels')) {
+  if (styleSupportsTextLayers() && !map.getLayer('parcelles-labels')) {
     map.addLayer({
       id: 'parcelles-labels',
       type: 'symbol',
@@ -1173,15 +1543,6 @@ function normalizeDvfStreet(adresse: string): string {
     .trim();
 }
 
-function getDvfPointKey(p: any): string {
-  return getDvfSaleKey(p);
-}
-function getDvfSaleKey(p: any): string {
-  const date = String(p.date_mutation || '').substring(0, 10);
-  const price = Number(p.valeur_fonciere || 0);
-
-  return `${date}|${price}`;
-}
 function updateDvfPoints() {
   if (!mapLoaded || !map) return;
 
@@ -1190,7 +1551,7 @@ function updateDvfPoints() {
   (props.dvfPoints || [])
     .filter((p: any) => p.lat && p.lon)
     .forEach((p: any) => {
-      const key = getDvfPointKey(p);
+      const key = dvfSaleKey(p);
 
       if (!grouped.has(key)) {
         grouped.set(key, []);
@@ -1204,7 +1565,7 @@ function updateDvfPoints() {
     const salesMap = new Map<string, any>();
 
     group.forEach((p: any) => {
-      const saleKey = getDvfSaleKey(p);
+      const saleKey = dvfSaleKey(p);
 
       if (!salesMap.has(saleKey)) {
         salesMap.set(saleKey, {
@@ -1227,6 +1588,7 @@ function updateDvfPoints() {
       if (directParcelleId) {
         sale.parcelles_ids.push(String(directParcelleId).trim());
       }
+      sale.parcelles_ids.push(...parseJsonArray(p.parcelles_ids));
 
       sale.built_items.push(...parseJsonArray(p.built_items));
 
@@ -1384,6 +1746,7 @@ console.log(
         },
         properties: {
           ...address,
+          prospection_display_key: prospectionRowKey(address),
           lat,
           lon,
         },
@@ -1479,19 +1842,12 @@ function updateAddressPointsWithColors() {
     return;
   }
 
-  /*
-   * Pour la prospection, les couleurs varient selon la date de MAJ.
-   *
-   * Plusieurs properties peuvent partager le même id_fantoir_long
-   * (immeuble + unités). On utilise donc une Map pour garantir
-   * une seule branche MapLibre par identifiant.
-   */
   const colorsByAddressId = new Map<string, string>();
 
   for (const address of props.addresses) {
     const addr = address as any;
 
-    const id = String(
+    const id = mode === 'prospection' ? prospectionRowKey(addr) : String(
       addr.id_fantoir_long ||
       addr.id_fantoir ||
       ''
@@ -1505,9 +1861,14 @@ function updateAddressPointsWithColors() {
     );
   }
 
+  if (!colorsByAddressId.size) {
+    map.setPaintProperty('address-dots', 'circle-color', COLORS.none);
+    return;
+  }
+
   const colorExpression: any[] = [
     'match',
-    [
+    mode === 'prospection' ? ['get', 'prospection_display_key'] : [
       'to-string',
       [
         'coalesce',
@@ -1540,7 +1901,7 @@ function updateAddressPointsWithColors() {
     map.setPaintProperty(
       'address-dots',
       'circle-color',
-      COLORS.prospection
+      mode === 'prospection' ? COLORS.none : COLORS.prospection
     );
   }
 }
@@ -1550,14 +1911,30 @@ function updateAddressPointsWithColors() {
 ------------------------------------- */
 function toggleParcelles() {
   showParcelles.value = !showParcelles.value;
-  updateParcelles();
-  updateLayerVisibility();
+  syncParcelViewport();
+}
+
+function canShowParcelles() {
+  return !!map && showParcelles.value && dashboard.viewType === 'map' && map.getZoom() >= PARCEL_MIN_ZOOM;
+}
+
+function readParcelBounds() {
+  if (!map || !canShowParcelles()) return null;
+  const bounds = map.getBounds();
+  return normalizeParcelBounds({
+    west: bounds.getWest(), south: bounds.getSouth(), east: bounds.getEast(), north: bounds.getNorth(),
+  });
+}
+
+function syncParcelViewport() {
+  refreshParcelViewport();
+  updateParcelVisibility();
 }
 
 function updateParcelles() {
   if (!mapLoaded || !map) return;
 
-  const parcellesData = (props.parcellesGeojson || emptyGeoJSON()) as GeoJSON.FeatureCollection;
+  const parcellesData = parcelCollection.value ?? emptyGeoJSON();
 
   const src = map.getSource('parcelles_cadastre') as maplibregl.GeoJSONSource | undefined;
   if (src) {
@@ -1565,8 +1942,13 @@ function updateParcelles() {
   }
 
   const labelSrc = map.getSource('parcelles_labels') as maplibregl.GeoJSONSource | undefined;
-  if (labelSrc) {
-    labelSrc.setData(buildParcellesLabelsGeojson(parcellesData));
+  if (labelSrc && map.getLayer('parcelles-labels')) {
+    let labels = parcelLabelCache.get(parcellesData);
+    if (!labels) {
+      labels = buildParcellesLabelsGeojson(parcellesData);
+      parcelLabelCache.set(parcellesData, labels);
+    }
+    labelSrc.setData(labels);
   }
 }
 
@@ -1588,12 +1970,15 @@ function updateLayerVisibility() {
   setLayerVisibility('dvf-clusters', isDvfMode ? 'visible' : 'none');
   setLayerVisibility('dvf-cluster-labels', isDvfMode ? 'visible' : 'none');
 
-  setLayerVisibility('parcelles-fill', showParcelles.value ? 'visible' : 'none');
-  setLayerVisibility('parcelles-line', showParcelles.value ? 'visible' : 'none');
+  updateParcelVisibility();
+}
 
-  setLayerVisibility('parcelle-highlight', showParcelles.value ? 'visible' : 'none');
-
-  setLayerVisibility('parcelles-labels', showParcelles.value ? 'visible' : 'none');
+function updateParcelVisibility() {
+  if (!mapLoaded) return;
+  const visibility = canShowParcelles() ? 'visible' : 'none';
+  for (const layer of ['parcelles-fill', 'parcelles-line', 'parcelle-highlight', 'parcelles-labels']) {
+    setLayerVisibility(layer, visibility);
+  }
 }
 
 function getIdsParcellesFromDvfItem(item: any): string[] {
@@ -1626,9 +2011,13 @@ function getIdsParcellesFromDvfItem(item: any): string[] {
 }
 
 function highlightParcelles(idsParcelles?: string[] | null) {
-  if (!map || !map.getLayer('parcelle-highlight')) return;
+  highlightedParcelleIds = (idsParcelles ?? []).map(id => String(id).trim()).filter(Boolean);
+  applyParcelleHighlight();
+}
 
-  const ids = (idsParcelles || []).map((id) => String(id).trim()).filter(Boolean);
+function applyParcelleHighlight() {
+  if (!map || !map.getLayer('parcelle-highlight')) return;
+  const ids = highlightedParcelleIds;
 
   if (!ids.length) {
     map.setFilter('parcelle-highlight', ['==', ['get', 'id_parcelle'], '']);
@@ -1808,11 +2197,32 @@ function setupAddressInteractions() {
 
     const item = feature.properties || {};
 
-    if (
-      currentMode.value === 'estimations' ||
-      item.row_type === 'estimation'
-    ) {
-      openSidePanel('estimation', item);
+    if (currentMode.value === 'prospection' && item.total_adresses !== undefined) {
+      void openStreetFromMap(item);
+      return;
+    }
+
+    if (currentMode.value === 'estimations') {
+      openEstimation(item);
+      return;
+    }
+    if (item.row_type === 'estimation') return;
+
+    if (currentMode.value === 'prospection') {
+      const key = prospectionAddressKey(item);
+      if (key && e.features?.some(candidate => {
+        const candidateKey = prospectionAddressKey(candidate.properties || {});
+        return candidateKey && candidateKey !== key;
+      })) return;
+
+      const address = key ? prospectionAddressRepresentative(props.addresses, key) : undefined;
+      openSidePanel('address', address ?? item);
+      const selection = address && resolveProspectionMapSelection(props.addresses, address);
+      if (selection) {
+        syncingAddressFilters = true;
+        emit('select-address', selection);
+        void nextTick(() => { syncingAddressFilters = false; });
+      }
       return;
     }
 
@@ -1921,6 +2331,7 @@ function setupDpeInteractions() {
 }
 
 function openSidePanel(type: Exclude<MapSidePanelType, null>, item: any | null, items: any[] = []) {
+  pendingAddressOpen = false;
   selectedMapType.value = type;
   selectedMapItem.value = item;
   selectedMapItems.value = items;
@@ -1934,12 +2345,66 @@ function openSidePanel(type: Exclude<MapSidePanelType, null>, item: any | null, 
   }
 }
 
+function openEstimation(item: any) {
+  if (currentMode.value === 'estimations' && item?.row_type === 'estimation') openSidePanel('estimation', item);
+}
+
+let lastDvfSaleFocus: typeof dashboard.dvfSaleFocus = null;
+
+function applyDvfSaleFocus() {
+  const focus = dashboard.dvfSaleFocus;
+  if (!focus) {
+    if (lastDvfSaleFocus && currentMode.value === 'dvf') closeSidePanel();
+    lastDvfSaleFocus = null;
+    return;
+  }
+  if (!mapLoaded || !map || currentMode.value !== 'dvf' || focus === lastDvfSaleFocus) return;
+
+  lastDvfSaleFocus = focus;
+  if (focus.sale) openSidePanel('dvf', focus.sale);
+  else closeSidePanel();
+  if (focus.center) {
+    map.resize(undefined, false);
+    flyTo(focus.center[0], focus.center[1], 17);
+  }
+}
+
+watch(() => dashboard.dvfSaleFocus, applyDvfSaleFocus);
+
+defineExpose({ openEstimation });
+
+function openCompactProperty(property: Record<string, any>) {
+  if (showEstimationAddress.value) {
+    openEstimation(property);
+    void nextTick(() => estimationDetails.value?.focus());
+  } else if (showProspectionAddress.value && selectedAddressUnits.value.length === 1) {
+    emitEditSelectedAddress();
+  } else {
+    openAddressUnit(property);
+  }
+}
+
 function closeSidePanel() {
+  pendingAddressOpen = false;
   selectedMapType.value = null;
   selectedMapItem.value = null;
   selectedMapItems.value = [];
 
   highlightParcelles(null);
+}
+
+function returnToStreet() {
+  closeSidePanel();
+  emit('return-to-street');
+}
+
+function openFilteredAddress() {
+  if (!pendingAddressOpen || dashboard.viewType !== 'map' || currentMode.value !== 'prospection') return;
+  const key = props.selectedAddressKey;
+  if (!key) return;
+
+  const address = prospectionAddressRepresentative(props.addresses, key);
+  if (address) openSidePanel('address', address);
 }
 
 function getIdParcelleFromItem(item: any): string | null {
@@ -2055,7 +2520,7 @@ function isStreetGroupPoint(item: any): boolean {
 
 async function openStreetFromMap(item: any) {
   const streetName = item.nom_voie || item.adresse || '';
-  const idFantoir = item.id_fantoir || item.codeIdFantoir || item.id_fantoir_long || '';
+  const idFantoir = item.prospection_street_key || item.id_fantoir || item.codeIdFantoir || item.id_fantoir_long || '';
 
   if (!streetName || !idFantoir) {
     openSidePanel('address', item);
@@ -2063,6 +2528,11 @@ async function openStreetFromMap(item: any) {
   }
 
   closeSidePanel();
+
+  if (currentMode.value === 'prospection') {
+    emit('select-street', { nom_voie: streetName, id_fantoir: idFantoir });
+    return;
+  }
 
   dashboard.selectedStreet = {
     value: streetName,
@@ -2080,95 +2550,48 @@ async function openStreetFromMap(item: any) {
 /* -------------------------------------
    RECENTRAGE LOGIQUE
 ------------------------------------- */
-/*async function recenterMap() {
-  await nextTick();
-  if (!mapLoaded || !map) return;
+function saveMapViewport() {
+  if (!map || !cameraMode) return;
+  const { lng, lat } = map.getCenter();
+  dashboard.saveMapViewport(cameraMode, { center: [lng, lat], zoom: map.getZoom() });
+}
 
-  if (dashboard.activeMainMode === 'dvf') {
-    if (dashboard.selectedCity && props.cityCenter) {
-      flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
-      return;
+function restoreMapViewport(mode: MapDisplayMode) {
+  if (!map || cameraMode === mode) return;
+
+  // Stop the outgoing animation before reading its last visible position.
+  map.stop();
+  saveMapViewport();
+  const viewport = dashboard.mapViewports[mode];
+  cameraMode = mode;
+  if (viewport) {
+    const { lng, lat } = map.getCenter();
+    if (lng !== viewport.center[0] || lat !== viewport.center[1] || map.getZoom() !== viewport.zoom) {
+      map.jumpTo(viewport);
     }
-
-    const points = props.dvfPoints || [];
-
-    if (points.length === 1) {
-      flyTo(points[0].lon, points[0].lat, 17);
-      return;
-    }
-
-    if (points.length > 1) {
-      const lats = points.map((p) => Number(p.lat));
-      const lons = points.map((p) => Number(p.lon));
-      flyTo(avg(lons), avg(lats), 10);
-      return;
-    }
-
-    return;
   }
+  saveMapViewport();
+}
 
-  // MODE DPE : toujours prioriser la ville choisie
-  if (dashboard.activeMainMode === 'dpe') {
-    if (dashboard.selectedCity && props.cityCenter) {
-      flyTo(props.cityCenter.lon, props.cityCenter.lat, 12);
-      return;
-    }
+function applyCityRecenter() {
+  const pending = dashboard.cityRecenter;
+  if (!map || !mapLoaded || dashboard.viewType !== 'map' || !pending ||
+      pending.mode !== cameraMode || pending.codeInsee !== dashboard.selectedCodeInsee) return;
 
-    const points = props.dpePoints || [];
-
-    if (points.length === 1) {
-      flyTo(points[0].lon, points[0].lat, 17);
-      return;
-    }
-
-    if (points.length > 1) {
-      const lats = points.map((p) => Number(p.lat));
-      const lons = points.map((p) => Number(p.lon));
-      flyTo(avg(lons), avg(lats), 10);
-      return;
-    }
-
-    return;
-  }
-
-  if (dashboard.selectedNumeroFull && props.addresses.length === 1) {
-    const a = props.addresses[0];
-    flyTo(a.lon, a.lat, 19);
-    return;
-  }
-
-  if (dashboard.selectedStreet && props.addresses.length > 0) {
-    const lats = props.addresses.map((a) => Number(a.lat));
-    const lons = props.addresses.map((a) => Number(a.lon));
-    flyTo(avg(lons), avg(lats), 16);
-    return;
-  }
-
-  if (dashboard.selectedCity && props.cityCenter) {
-    flyTo(props.cityCenter.lon, props.cityCenter.lat, 14);
-  }
-}*/
-
-async function recenterMap() {
-  await nextTick();
-
-  if (!mapLoaded || !map) return;
-
-  // En mode favoris, ne jamais déplacer ni zoomer la carte.
-  if (dashboard.activeMainMode === 'favorites') {
-    return;
-  }
-
-  // Le recentrage dépend uniquement de la ville sélectionnée.
-  if (dashboard.selectedCity && props.cityCenter) {
-    flyTo(props.cityCenter.lon, props.cityCenter.lat, 11.5);
-  }
+  dashboard.cancelCityRecenter();
+  flyTo(pending.center[0], pending.center[1], 11.5);
 }
 
 function handleRecenter() {
   if (!map || !mapLoaded) return;
-  map.resize();
-  recenterMap();
+  dashboard.cancelCityRecenter();
+  map.resize(undefined, false);
+
+  if (dashboard.hasDirectAddressList) {
+    fitAddressPoints();
+  } else if (currentMode.value !== 'favorites' && dashboard.selectedCity && props.cityCenter) {
+    flyTo(props.cityCenter.lon, props.cityCenter.lat, 11.5);
+  }
 }
 
 /* -------------------------------------
@@ -2243,21 +2666,23 @@ function fitAddressPoints() {
     duration: 800,
   });
 }
+
 /* -------------------------------------
    WATCHERS
 ------------------------------------- */
 function setupWatchers() {
+  watch(() => dashboard.prospectionProgress, () => {
+    if (currentMode.value === 'prospection') updateAddressPointsWithColors();
+  });
 watch(
   () => props.addresses,
-  async () => {
+  () => {
+    if (showMajAddress.value && !props.addresses.some(row =>
+      'id' in row && String(row.id) === String(selectedMapItem.value?.id)
+    )) closeSidePanel();
     updateAddressPoints();
     updateAddressPointsWithColors();
     updateLayerVisibility();
-
-    /*if (dashboard.activeMainMode === 'favorites') {
-      await nextTick();
-      fitAddressPoints();
-    }*/
   },
   { deep: true, immediate: true }
 );
@@ -2279,72 +2704,31 @@ watch(
     { deep: true, immediate: true }
   );
 
-/*
- * Une vraie modification du code INSEE signifie
- * qu'une nouvelle ville vient d'être sélectionnée.
- *
- * On ne recentre pas immédiatement, car cityCenter
- * contient encore le centre de l'ancienne recherche.
- */
-watch(
-  () => dashboard.selectedCodeInsee,
-  (newCodeInsee, oldCodeInsee) => {
-    if (newCodeInsee === oldCodeInsee) {
-      return;
-    }
-
-    // Ville supprimée : aucun recentrage à effectuer.
-    if (!newCodeInsee) {
-      pendingCityRecenter = false;
-      return;
-    }
-
-    pendingCityRecenter = true;
-    closeSidePanel();
-  }
-);
-
-/*
- * cityCenter change aussi quand les résultats sont rechargés.
- *
- * On ne recentre donc que lorsqu'un véritable changement
- * de ville a précédemment activé pendingCityRecenter.
- */
-watch(
-  () => props.cityCenter,
-  async (newCenter) => {
-    if (!pendingCityRecenter || !newCenter) {
-      return;
-    }
-
-    await nextTick();
-
-    if (!mapLoaded || !map) {
-      return;
-    }
-
-    flyTo(newCenter.lon, newCenter.lat, 11.5);
-
-    // Le recentrage demandé par le changement de ville est terminé.
-    pendingCityRecenter = false;
-  }
-);
+watch(() => dashboard.selectedCodeInsee, () => {
+  if (!syncingAddressFilters && !dashboard.hasDirectAddressList) closeSidePanel();
+});
 
 watch(
   () => dashboard.activeMainMode,
-  async (newMode) => {
+  (newMode, previousMode) => {
+    if (previousMode !== undefined) pendingAddressOpen = false;
+    if (previousMode && [newMode, previousMode].some(mode =>
+      mode === 'estimations' || mode === 'rappels' || mode === 'maj'
+    )) {
+      closeSidePanel();
+    }
     updateAddressPointsWithColors();
     updateDpePoints();
     updateDvfPoints();
     updateLayerVisibility();
-
-    /*if (newMode === 'favorites') {
-      await nextTick();
-      fitAddressPoints();
-    }*/
   },
   { immediate: true }
 );
+
+watch(() => dashboard.reminderAddressScope, () => {
+  if (currentMode.value !== 'rappels') return;
+  closeSidePanel();
+});
 
   watch(
     () => [remindersStore.reminders, remindersStore.agencyReminders],
@@ -2359,51 +2743,50 @@ watch(
 watch(
   () => dashboard.selectedStreet,
   () => {
-    closeSidePanel();
+    if (!syncingAddressFilters && !dashboard.hasDirectAddressList) closeSidePanel();
   }
 );
 
 watch(
   () => dashboard.selectedNumeroFull,
   () => {
-    closeSidePanel();
+    if (!syncingAddressFilters && !dashboard.hasDirectAddressList) closeSidePanel();
   }
 );
 
-  watch(
-    () => props.parcellesGeojson,
-    () => {
-      updateParcelles();
-    },
-    { deep: true, immediate: true }
-  );
 watch(
   () => dashboard.selectedCity,
   newCity => {
-    closeSidePanel();
+    if (dashboard.hasDirectAddressList) return;
+    if (!syncingAddressFilters) closeSidePanel();
 
     if (!newCity) {
-      updateParcelles();
       updateLayerVisibility();
     }
   }
 );
 
-  // Quand on bascule sur la vue map → resize + recenter
-watch(
-  () => dashboard.viewType,
-  (newType) => {
-    if (newType === 'map' && map && mapLoaded) {
-      nextTick(() => {
-        map!.resize();
-      });
-    }
-  }
-);
+  watch(
+    () => dashboard.viewType,
+    (newType) => {
+      pendingAddressOpen = newType === 'map' && currentMode.value === 'prospection' &&
+        !!dashboard.selectedCodeIdFantoir && !!dashboard.selectedNumero;
+      if (newType !== 'map') {
+        map?.stop();
+        syncParcelViewport();
+        return;
+      }
+      if (mapLoaded) map?.resize(undefined, false);
+      openFilteredAddress();
+      applyCityRecenter();
+      syncParcelViewport();
+    },
+    { immediate: true, flush: 'post' }
+  );
+  watch(() => props.selectedAddressKey, openFilteredAddress, { flush: 'post' });
 }
 
-
-
+setupWatchers();
 </script>
 
 <style scoped>
@@ -2458,6 +2841,23 @@ watch(
   border-bottom: 1px solid #e5e7eb;
 }
 
+.return-to-city {
+  background: transparent;
+  border: 0;
+  color: var(--el-text-color-secondary);
+  cursor: pointer;
+  font: inherit;
+  font-size: 0.875rem;
+  margin-bottom: 8px;
+  padding: 0;
+}
+
+.return-to-city:hover,
+.return-to-city:focus-visible {
+  color: var(--el-color-primary);
+  text-decoration: underline;
+}
+
 .side-panel-eyebrow {
   font-size: 11px;
   font-weight: 700;
@@ -2502,6 +2902,173 @@ watch(
   display: flex;
   flex-direction: column;
   gap: 12px;
+}
+
+.prospection-address-panel {
+  display: flex;
+  flex-direction: column;
+}
+
+.prospection-address-panel .side-panel-header {
+  flex-shrink: 0;
+}
+
+.prospection-address-panel .side-close {
+  flex-shrink: 0;
+}
+
+.side-panel-header .prospection-address-title {
+  font-size: 20px;
+  line-height: 1.25;
+  overflow-wrap: anywhere;
+}
+
+.prospection-address-panel .side-content,
+.prospection-properties {
+  min-height: 0;
+}
+
+.prospection-address-stats {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 8px;
+  margin: 0;
+}
+
+.prospection-address-progress {
+  display: flex;
+  justify-content: space-between;
+  gap: 8px;
+  font-size: 13px;
+  font-weight: 600;
+}
+
+.reminder-comment {
+  margin: 4px 0;
+  white-space: pre-wrap;
+  overflow-wrap: anywhere;
+}
+
+.prospection-address-stats > div {
+  padding: 8px 10px;
+  background: #f8fafc;
+  border: 1px solid #e5e7eb;
+  border-radius: 10px;
+}
+
+.prospection-address-stats dt {
+  color: #64748b;
+  font-size: 12px;
+}
+
+.prospection-address-stats dd {
+  margin: 2px 0 0;
+  color: #0f172a;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.prospection-properties {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.prospection-properties h4 {
+  margin: 0;
+  font-size: 14px;
+}
+
+.prospection-property-list {
+  display: grid;
+  gap: 6px;
+  margin: 0;
+  padding: 2px;
+  list-style: none;
+  overflow-y: auto;
+  overscroll-behavior-y: contain;
+}
+
+.prospection-property {
+  display: grid;
+  grid-template-columns: auto minmax(0, 1fr) auto auto;
+  align-items: center;
+  gap: 8px;
+  width: 100%;
+  padding: 7px 8px;
+  border: 1px solid #e2e8f0;
+  border-radius: 10px;
+  background: #fff;
+  color: #0f172a;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+}
+
+.prospection-property:hover,
+.prospection-property:focus-visible {
+  border-color: var(--el-color-primary);
+  background: #f8fafc;
+}
+
+.prospection-property-text {
+  display: grid;
+  gap: 2px;
+  min-width: 0;
+}
+
+.prospection-property-type {
+  color: #64748b;
+  font-size: 12px;
+  overflow-wrap: anywhere;
+}
+
+.prospection-property-title {
+  font-size: 13px;
+  font-weight: 600;
+  overflow-wrap: anywhere;
+}
+
+.prospection-property-icon {
+  display: grid;
+  place-items: center;
+  width: 28px;
+  height: 28px;
+  border-radius: 8px;
+  color: #475569;
+  background: #f1f5f9;
+}
+
+.prospection-property-icon svg,
+.prospection-property-arrow {
+  width: 15px;
+  height: 15px;
+}
+
+.prospection-property-arrow {
+  color: #64748b;
+}
+
+.prospection-property-icon.type-house { color: #166534; background: #dcfce7; }
+.prospection-property-icon.type-apartment { color: #1e40af; background: #dbeafe; }
+.prospection-property-icon.type-commerce { color: #9a3412; background: #ffedd5; }
+.prospection-property-icon.type-parking { color: #5b21b6; background: #ede9fe; }
+.prospection-property-icon.type-office { color: #155e75; background: #cffafe; }
+.prospection-property-icon.type-warehouse { color: #854d0e; background: #fef3c7; }
+
+.prospection-property-badge {
+  padding: 2px 6px;
+  border-radius: 999px;
+  color: #475569;
+  background: #f1f5f9;
+  font-size: 11px;
+  white-space: nowrap;
+}
+
+.prospection-property-badge.principal {
+  color: #334155;
+  background: #e2e8f0;
+  font-weight: 600;
 }
 
 .detail-card {
@@ -2690,6 +3257,26 @@ watch(
   color: #fff;
 }
 
+.parcelles-status,
+.dvf-search-status {
+  position: absolute;
+  z-index: 2;
+  left: 12px;
+  bottom: 24px;
+  max-width: calc(100% - 24px);
+  margin: 0;
+  padding: 6px 10px;
+  border-radius: 8px;
+  background: #fff;
+  color: #374151;
+  font-size: 12px;
+}
+
+.dvf-search-status {
+  top: 12px;
+  bottom: auto;
+}
+
 .map-style-btn {
   position: absolute;
   top: 96px;
@@ -2744,15 +3331,25 @@ watch(
   margin-top: 12px;
 }
 
-.sale-header {
-  display: flex;
-  align-items: center;
-  gap: 10px;
+.dvf-sale-section .sale-header {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr);
+  justify-items: start;
+  gap: 4px;
   margin-bottom: 4px;
 }
 
-.sale-header .price {
+.dvf-sale-section .sale-header .price {
+  max-width: 100%;
+  overflow-wrap: anywhere;
   margin-bottom: 0;
+}
+
+.dvf-sale-section .sale-header .sale-badge {
+  max-width: 100%;
+  box-sizing: border-box;
+  white-space: normal;
+  overflow-wrap: anywhere;
 }
 
 .sale-badge {

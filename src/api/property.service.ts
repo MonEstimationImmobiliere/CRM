@@ -1,5 +1,5 @@
 import apiService from '@/api/apiRequests';
-import type { IProperty, PropertyList } from '@/types/property';
+import type { IProperty } from '@/types/property';
 import type {
   IAddressDetail,
   AddressGroupedList,
@@ -55,10 +55,12 @@ export const PropertyService = {
   },
 
   async getAddressesGroupedByCodeInsee(
-    codeInsee: string
+    codeInsee: string,
+    prospection = false
   ): Promise<AddressGroupedList> {
     const response = await apiService.get<AddressGroupedList>(
-      `/address-city-grouped/${encodeURIComponent(codeInsee)}`
+      `/address-city-grouped/${encodeURIComponent(codeInsee)}`,
+      { params: { prospection } }
     );
     return response.data;
   },
@@ -67,14 +69,20 @@ export const PropertyService = {
     idFantoir: string,
     type: string,
     numero?: string,
-    rep?: string
+    rep?: string,
+    prospection = false,
+    codeInsee?: string
   ): Promise<AddressDetailList> {
     const params = new URLSearchParams({
       type,
     });
 
     if (numero) params.append('numero', numero);
-    if (rep) params.append('rep', rep);
+    if (rep || (prospection && rep !== undefined)) params.append('rep', rep ?? '');
+    if (prospection) {
+      params.set('prospection', '1');
+      if (codeInsee) params.set('code_insee', codeInsee);
+    }
 
     const response = await apiService.get<AddressDetailList>(
       `/addresses/${encodeURIComponent(idFantoir)}?${params.toString()}`
@@ -95,40 +103,25 @@ export const PropertyService = {
     return response.data;
   },
 
-  async getAddressesByOwner(ownerName: string): Promise<IAddressDetail[]> {
+  async getAddressesByOwner(ownerName: string, prospection = false): Promise<IAddressDetail[]> {
     const response = await apiService.get<IAddressDetail[]>(`/address-owner`, {
       params: {
         owner: ownerName,
+        prospection,
       },
     });
     return response.data;
   },
 
-async getFavoriteAddresses(
-  scope: 'agency' | 'personal' = 'personal'
-): Promise<IAddressDetail[]> {
+async getEstimationAddresses(includeDvf = false): Promise<IAddressDetail[]> {
   const response = await apiService.get<IAddressDetail[]>(
-    '/address-owner',
-    {
-      params: {
-        favorite: true,
-        scope,
-      },
-    }
-  );
-
-  return response.data;
-},
-
-async getEstimationAddresses(): Promise<IAddressDetail[]> {
-  const response = await apiService.get<IAddressDetail[]>(
-    '/address-estimations'
+    '/address-estimations', { params: { include_dvf: includeDvf ? 1 : undefined } }
   );
 
   return response.data;
 },
 async getReminderAddresses(
-  scope: 'agency' | 'personal' = 'personal'
+  scope: 'agency' | 'personal' = 'personal', includeDvf = false
 ): Promise<IAddressDetail[]> {
   const response = await apiService.get<IAddressDetail[]>(
     '/address-owner',
@@ -136,6 +129,7 @@ async getReminderAddresses(
       params: {
         type: 'rappel',
         scope,
+        include_dvf: includeDvf ? 1 : undefined,
       },
     }
   );
@@ -144,7 +138,7 @@ async getReminderAddresses(
 },
 
 async getMajAddresses(
-  scope: 'agency' | 'personal' = 'personal'
+  scope: 'agency' | 'personal' = 'personal', includeDvf = false
 ): Promise<IAddressDetail[]> {
   const response = await apiService.get<IAddressDetail[]>(
     '/address-owner',
@@ -152,6 +146,7 @@ async getMajAddresses(
       params: {
         type: 'maj',
         scope,
+        include_dvf: includeDvf ? 1 : undefined,
       },
     }
   );
@@ -170,23 +165,7 @@ async getMajAddresses(
     return response.data;
   },
 
-  async removeFromFavorites(propertyId: string): Promise<void> {
-    await apiService.delete(
-      `/property/${encodeURIComponent(propertyId)}/favorite`
-    );
-  },
-
-  async getFavorites(): Promise<PropertyList> {
-    const response = await apiService.get<PropertyList>('/property/favorite');
-    return response.data;
-  },
-
   async createCustomProperty(property: Partial<IProperty>): Promise<IProperty> {
-    const response = await apiService.post<IProperty>(`/property/create`, {
-      ...property,
-      is_custom: true,
-      id_fantoir: property.id_fantoir || '',
-    });
-    return response.data;
+    return this.createProperty({ ...property, is_custom: true, id_fantoir: property.id_fantoir || '' });
   },
 };

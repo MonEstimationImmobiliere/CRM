@@ -1,5 +1,5 @@
 <template>
-  <div class="property-table-container">
+  <div class="property-table-container" :class="{ 'prospection-street-table': showMarketComparison }">
     <!-- ── Mobile card view ──────────────────────────────── -->
     <div v-if="isMobile" class="property-cards-mobile">
       <div
@@ -51,50 +51,83 @@
         <div class="pcm-body">
           <div class="pcm-data-item">
             <span class="pcm-data-label">Surface</span>
-            <span class="pcm-data-value">{{ formatMetrage((row as any).surface) }}</span>
+            <span class="pcm-data-value">
+              <template v-if="!showMarketComparison || isEstimationMode || (isLocalMarketList && dvfSurface(row as any) === null)">
+                {{ formatMetrage((row as any).surface) || (isLocalMarketList ? '—' : '') }}
+              </template>
+              <template v-else-if="prospectionCrmSurface(row as any) !== null">
+                {{ formatMetrage(prospectionCrmSurface(row as any)) }}
+              </template>
+              <template v-else-if="dvfSurface(row as any) !== null">
+                <em>{{ formatDvfSurface(row as any) }}</em> <small>{{ dvfSurfaceLabel(row as any) }}</small>
+              </template>
+              <template v-else>—</template>
+            </span>
           </div>
           <div class="pcm-data-item">
             <span class="pcm-data-label">Dernière vente</span>
-            <span class="pcm-data-value">{{ formatDate((row as any).date_derniere_vente) }}</span>
+            <span class="pcm-data-value">
+              {{ formatDate((row as any).date_derniere_vente) }}
+              <el-button v-if="showMarketComparison && (row as any).derniere_vente_dvf" link type="primary"
+                class="dvf-sale-link"
+                size="small" title="Voir la vente dans DVF" aria-label="Voir la vente dans DVF"
+                @click.stop="emit('open-dvf-sale', row)">
+                <el-icon><Location /></el-icon>
+              </el-button>
+              <el-button v-if="isProspectionMode && (row as any).dvf_address_history_count != null"
+                link type="primary" size="small" @click.stop="emit('open-dvf-history', row)">
+                {{ historyLabel((row as any).dvf_address_history_count) }}
+              </el-button>
+            </span>
           </div>
           <div class="pcm-data-item">
             <span class="pcm-data-label">Prix vendu</span>
             <span class="pcm-data-value">{{ formatPrice((row as any).dernier_prix_vente) }}</span>
           </div>
+          <template v-if="showMarketComparison">
+            <div class="pcm-data-item">
+              <span class="pcm-data-label">Prix vendu au m²</span>
+              <span class="pcm-data-value">{{ formatSoldPricePerSquareMetre((row as any).dernier_prix_vente_m2) }}</span>
+              <small v-if="dvfSaleType((row as any).derniere_vente_code_type_local)" class="dvf-sale-type"
+                :data-dvf-type="(row as any).derniere_vente_code_type_local">
+                {{ dvfSaleType((row as any).derniere_vente_code_type_local) }}
+              </small>
+              <small v-if="dvfLotsLabel(row as any)">{{ dvfLotsLabel(row as any) }}</small>
+            </div>
+          </template>
+          <div v-for="column in marketColumns" :key="column.scope" class="pcm-data-item">
+            <span class="pcm-data-label">{{ column.label }}</span>
+            <DvfMarketTooltip :details="marketReferenceFor(row as any, column.scope)?.tooltip" :note="marketDifferenceNote(row as any, column.scope)">
+              <span class="pcm-data-value">{{ formatMarketDifference(row as any, column.scope) }}</span>
+              <small v-if="hasWeakMarketDifference(row as any, column.scope)" class="dvf-low-reliability"> · Faible fiabilité</small>
+            </DvfMarketTooltip>
+            <small v-if="column.scope === 'default' && usesFavoriteCommuneReference(row as any)">Réf. commune</small>
+          </div>
           <div class="pcm-data-item">
             <span class="pcm-data-label">Prix estimé</span>
-            <span class="pcm-data-value" :style="{ color: (row as any).price ? 'green' : 'blue' }">
-              {{ formatPrice((row as any).price || (row as any).dernier_prix_estime) }}
+            <ProspectionEstimatedPrice v-if="isProspectionMode" :value="(row as any).display_estimate" />
+            <span v-else class="pcm-data-value" :style="{ color: (row as any).price ? 'green' : 'blue' }">
+              {{ isEstimationMode ? formatPrice((row as any).price, '—') : formatPrice((row as any).price || (row as any).dernier_prix_estime) }}
             </span>
+          </div>
+          <div v-if="isEstimationMode" class="pcm-data-item">
+            <span class="pcm-data-label">Écart simulateur / marché</span>
+            <DvfMarketTooltip :details="(row as any).tableMarketReference?.tooltip" :note="simulationMarketTitle(row as any)">
+              <span class="pcm-data-value">{{ formatSimulationMarketDifference(row as any) }}</span>
+            </DvfMarketTooltip>
           </div>
         </div>
 
-        <!-- Footer: contact status + actions -->
+        <!-- Footer: prospection status and actions -->
         <div class="pcm-footer">
-          <div class="pcm-contact">
-            <img
-              :src="getWeatherIcon((row as any).date_rappel)"
-              alt="météo"
-              width="20"
-              height="20"
-            />
-            <span
-              class="pcm-weather-label"
-              :style="{
-                color: getWeatherLabel((row as any).date_rappel).includes('eviter')
-                  ? 'red'
-                  : getWeatherLabel((row as any).date_rappel).includes('mois')
-                    ? 'orange'
-                    : 'green',
-              }"
-              >{{ getWeatherLabel((row as any).date_rappel) }}</span
-            >
-          </div>
+          <ProspectionProgressBadge :count="progressForRow(row)" />
           <div class="pcm-actions" v-if="!cityOnly">
-            <el-button @click.stop="toggleFavorite(row)" size="small" circle>
+            <PropertyReminderActions v-if="(row as any).tableReminders?.length"
+              :reminders="(row as any).tableReminders" @edit-reminder="emit('edit-reminder', $event)" />
+            <el-button v-if="!isEstimationMode" @click.stop="toggleFavorite(row)" size="small" circle>
               <el-icon>
                 <StarFilled
-                  v-if="Number((row as any).favorite) === 1 || (row as any).favorite === true"
+                  v-if="store.isFavorite(row)"
                   style="color: #f56c6c"
                 />
                 <Star v-else style="color: #909399" />
@@ -113,13 +146,15 @@
     <!-- ── Desktop table view ────────────────────────────── -->
     <el-table
       v-else
+      :key="dashboardStore.activeMainMode"
       :data="filteredAddresses"
       :row-key="getRowKey"
       class="modern-property-table"
-      :default-sort="{ prop: 'numero', order: 'ascending' }"
+      :default-sort="dashboardStore.propertyTableSort ?? undefined"
       max-height="calc(100vh - 320px)"
       :row-class-name="getRowClass"
       @row-click="handleRowClick"
+      @sort-change="handleSortChange"
     >
       <el-table-column label="Ville" prop="city" sortable min-width="100">
         <template #default="{ row }"> {{ row.nom_commune }} {{ row.code_postal }} </template>
@@ -131,7 +166,7 @@
         sortable
         min-width="80"
         :sort-method="sortByNumeroAndRep"
-        :sort-orders="['ascending', 'descending']"
+        :sort-orders="['ascending', 'descending', null]"
       >
         <template #default="{ row }">
           <span class="numeroClickable" @click.stop="handleNumeroClick(row)">
@@ -179,17 +214,37 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Surface" prop="surface_reelle_bati" sortable min-width="90">
+      <el-table-column label="Surface" prop="surface_reelle_bati" sortable min-width="90"
+        :sort-method="showMarketComparison ? compareDvfSurface : undefined"
+      >
         <template #default="{ row }">
-          {{ formatMetrage(row.surface) }}
+          <template v-if="!showMarketComparison || isEstimationMode || (isLocalMarketList && dvfSurface(row) === null)">
+            {{ formatMetrage(row.surface) || (isLocalMarketList ? '—' : '') }}
+          </template>
+          <template v-else-if="prospectionCrmSurface(row) !== null">
+            {{ formatMetrage(prospectionCrmSurface(row)) }}
+          </template>
+          <template v-else-if="dvfSurface(row) !== null">
+            <em>{{ formatDvfSurface(row) }}</em>
+            <div><small>{{ dvfSurfaceLabel(row) }}</small></div>
+          </template>
+          <template v-else>—</template>
         </template>
       </el-table-column>
 
       <el-table-column label="Dernière vente" prop="date_derniere_vente" sortable min-width="120">
         <template #default="{ row }">
-          <!-- {{ row.date_derniere_vente }}<span v-if="row.nombre_ventes"> ({{ row.nombre_ventes }})</span> -->
-
           {{ formatDate(row.date_derniere_vente) }}
+          <el-button v-if="showMarketComparison && row.derniere_vente_dvf" link type="primary"
+            class="dvf-sale-link"
+            size="small" title="Voir la vente dans DVF" aria-label="Voir la vente dans DVF"
+            @click.stop="emit('open-dvf-sale', row)">
+            <el-icon><Location /></el-icon>
+          </el-button>
+          <el-button v-if="isProspectionMode && row.dvf_address_history_count != null"
+            link type="primary" size="small" @click.stop="emit('open-dvf-history', row)">
+            {{ historyLabel(row.dvf_address_history_count) }}
+          </el-button>
         </template>
       </el-table-column>
 
@@ -199,36 +254,65 @@
         </template>
       </el-table-column>
 
-      <el-table-column label="Prix Estimé" prop="dernier_prix_estime" sortable min-width="100">
+      <el-table-column
+        v-if="showMarketComparison" label="Prix vendu au m²" prop="dernier_prix_vente_m2"
+        sortable :sort-by="row => row.dernier_prix_vente_m2 ?? -1" min-width="145"
+      >
         <template #default="{ row }">
-          <span :style="{ color: row.price ? 'green' : 'blue', fontWeight: 400 }">
-            {{ formatPrice(row.price || row.dernier_prix_estime) }}
+          {{ formatSoldPricePerSquareMetre(row.dernier_prix_vente_m2) }}
+          <div v-if="dvfSaleType(row.derniere_vente_code_type_local)">
+            <small class="dvf-sale-type" :data-dvf-type="row.derniere_vente_code_type_local">
+              {{ dvfSaleType(row.derniere_vente_code_type_local) }}
+            </small>
+          </div>
+          <div v-if="dvfLotsLabel(row)"><small>{{ dvfLotsLabel(row) }}</small></div>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        v-for="column in marketColumns" :key="column.scope" :label="column.label"
+        :prop="column.scope === 'default' ? 'marketDifference' : `marketDifference-${column.scope}`"
+        sortable :sort-method="(a, b) => (marketDifference(a, column.scope) ?? -1) - (marketDifference(b, column.scope) ?? -1)" min-width="135"
+      >
+        <template #default="{ row }">
+          <DvfMarketTooltip :details="marketReferenceFor(row, column.scope)?.tooltip" :note="marketDifferenceNote(row, column.scope)">
+            {{ formatMarketDifference(row, column.scope) }}
+            <small v-if="hasWeakMarketDifference(row, column.scope)" class="dvf-low-reliability"> · Faible fiabilité</small>
+          </DvfMarketTooltip>
+          <div v-if="column.scope === 'default' && usesFavoriteCommuneReference(row)"><small>Réf. commune</small></div>
+        </template>
+      </el-table-column>
+
+      <el-table-column label="Prix Estimé" prop="dernier_prix_estime" sortable min-width="100"
+        :sort-by="isProspectionMode ? row => row.display_estimate?.price ?? -1 : undefined">
+        <template #default="{ row }">
+          <ProspectionEstimatedPrice v-if="isProspectionMode" :value="row.display_estimate" />
+          <span v-else :style="{ color: row.price ? 'green' : 'blue', fontWeight: 400 }">
+          {{ isEstimationMode ? formatPrice(row.price, '—') : formatPrice(row.price || row.dernier_prix_estime) }}
           </span>
         </template>
       </el-table-column>
 
-      <el-table-column label="Contact" prop="date_rappel" sortable min-width="120">
+      <el-table-column v-if="isEstimationMode" label="Écart simulateur / marché" prop="simulationMarketDifference"
+        sortable :sort-method="(a, b) => (simulationMarketDifference(a) ?? -1) - (simulationMarketDifference(b) ?? -1)"
+        min-width="190"
+      >
         <template #default="{ row }">
-          <div style="display: flex; align-items: center; gap: 6px; font-weight: 400">
-            <img
-              :src="getWeatherIcon(row.date_rappel)"
-              alt="météo"
-              width="24"
-              height="24"
-              style="display: block; margin-right: 6px"
-            />
-            <span
-              style="line-height: 1"
-              :style="{
-                color: getWeatherLabel(row.date_rappel).includes('eviter')
-                  ? 'red'
-                  : getWeatherLabel(row.date_rappel).includes('mois')
-                    ? 'orange'
-                    : 'green',
-              }"
-              >{{ getWeatherLabel(row.date_rappel) }}</span
-            >
-          </div>
+          <DvfMarketTooltip :details="row.tableMarketReference?.tooltip" :note="simulationMarketTitle(row)">
+            {{ formatSimulationMarketDifference(row) }}
+          </DvfMarketTooltip>
+        </template>
+      </el-table-column>
+
+      <el-table-column
+        label="Prospection"
+        prop="prospection_address_key"
+        sortable
+        :sort-method="compareProspection"
+        min-width="120"
+      >
+        <template #default="{ row }">
+          <ProspectionProgressBadge :count="progressForRow(row)" />
         </template>
       </el-table-column>
 
@@ -241,10 +325,12 @@
       >
         <template #default="{ row }">
           <div class="action-buttons">
-            <el-button @click.stop="toggleFavorite(row)" size="small" circle>
+            <PropertyReminderActions v-if="row.tableReminders?.length"
+              :reminders="row.tableReminders" @edit-reminder="emit('edit-reminder', $event)" />
+            <el-button v-if="!isEstimationMode" @click.stop="toggleFavorite(row)" size="small" circle>
               <el-icon>
                 <StarFilled
-                  v-if="Number(row.favorite) === 1 || row.favorite === true"
+                  v-if="store.isFavorite(row)"
                   style="color: #f56c6c"
                 />
                 <Star v-else style="color: #909399" />
@@ -263,16 +349,13 @@
 <script setup lang="ts">
 import useDeviceBreakpoints from '@/composables/isMobile';
 //ICONE
-import soleil from '@/assets/soleil.png';
-import soleilNuage from '@/assets/soleil-nuage.png';
-import nuage from '@/assets/nuage.png';
-import nuagePluie from '@/assets/nuage-pluie.png';
-import orage from '@/assets/orage.png';
 import { Star, StarFilled } from '@element-plus/icons-vue';
-import { House, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue';
+import { House, Location, OfficeBuilding, QuestionFilled } from '@element-plus/icons-vue';
 import { usePropertyStore } from '@/stores/propertyHome';
 import { ElMessage } from 'element-plus';
 import { useDashboardStore } from '@/stores/dashboard';
+import ProspectionProgressBadge from './ProspectionProgressBadge.vue';
+import { prospectionRatio, tableRowProspectionCount } from '@/utils/prospectionProgress';
 import { useRemindersStore } from '@/stores/reminders';
 import {
   formatDateShort as formatDate,
@@ -280,11 +363,19 @@ import {
   formatSurface as formatMetrage,
 } from '@/helpers/intl';
 import { ref, computed, onMounted } from 'vue';
+import type { PropType } from 'vue';
+import type { IAddressDetail } from '@/types/address';
+import PropertyReminderActions from './PropertyReminderActions.vue';
+import { communeComparisonReference, relativeMarketDifference, savedSimulationPricePerM2, streetComparisonReference, unitDvfCategory, type DvfResidentialReference } from '@/utils/dvfResidentialComparison';
+import type { DvfStatistics } from '@/api/dvf-statistics.service';
+import ProspectionEstimatedPrice from './ProspectionEstimatedPrice.vue';
+import DvfMarketTooltip from './DvfMarketTooltip.vue';
 const selectedId = ref<number | null>(null);
 
 const { isMobile } = useDeviceBreakpoints();
 
-const emit = defineEmits(['select-street', 'select-numero', 'edit-property']);
+const emit = defineEmits(['select-street', 'select-numero', 'edit-property', 'open-dvf-sale', 'open-dvf-history', 'edit-reminder']);
+const historyLabel = (count: number) => `${count} ${count === 1 ? 'transaction DVF' : 'transactions DVF'}`;
 
 const handleStreetClick = (row: any) => {
   emit('select-street', row);
@@ -310,35 +401,21 @@ const getRowKey = (row: any) => {
   return `address_${row.id_fantoir_long}`;
 };
 
-function getMonthsDiff(dateRappel: string | null): number {
-  if (!dateRappel) return -1;
-  const rappel = new Date(dateRappel);
-  const now = new Date();
-  return (now.getFullYear() - rappel.getFullYear()) * 12 + (now.getMonth() - rappel.getMonth());
-}
-
-function getWeatherIcon(dateRappel: string | null): string {
-  const diff = getMonthsDiff(dateRappel);
-  if (diff < 0 || diff < 1) return soleil;
-  if (diff < 3) return soleilNuage;
-  if (diff < 6) return nuage;
-  if (diff < 12) return nuagePluie;
-  return orage;
-}
-
-function getWeatherLabel(dateRappel: string | null): string {
-  const diff = getMonthsDiff(dateRappel);
-  if (diff < 0) return 'Immediat';
-  if (diff < 1) return 'Immediat';
-  if (diff < 3) return '1 mois';
-  if (diff < 6) return '3 mois';
-  if (diff < 12) return '6 mois';
-  return 'A eviter';
-}
-
 const store = usePropertyStore();
 
 const dashboardStore = useDashboardStore();
+
+function handleSortChange({ prop, order }: { prop?: string | null; order?: string | null }) {
+  dashboardStore.setPropertyTableSort(
+    prop && (order === 'ascending' || order === 'descending') ? { prop, order } : null
+  );
+}
+const isEstimationMode = computed(() => dashboardStore.activeMainMode === 'estimations');
+const isProspectionMode = computed(() => dashboardStore.activeMainMode === 'prospection');
+const isLocalMarketList = computed(() => ['favorites', 'estimations', 'rappels', 'maj'].includes(dashboardStore.activeMainMode));
+const progressForRow = (row: any) => tableRowProspectionCount(dashboardStore.prospectionProgress, row);
+const compareProspection = (a: any, b: any) =>
+  prospectionRatio(progressForRow(a)) - prospectionRatio(progressForRow(b));
 const remindersStore = useRemindersStore();
 
 onMounted(() => {
@@ -377,7 +454,14 @@ onMounted(() => {
     }
   });
 });*/
-const filteredAddresses = computed(() => props.addresses);
+const filteredAddresses = computed(() => {
+  const sort = dashboardStore.propertyTableSort;
+  if (sort?.prop === 'prospection_address_key') {
+    // Reapply an active prospection sort when the server snapshot changes.
+    return dashboardStore.prospectionProgress ? [...props.addresses] : props.addresses;
+  }
+  return props.addresses;
+});
 
 const handleFilterModeChange = (mode: string) => {
   dashboardStore.filterMode = dashboardStore.filterMode === mode ? null : mode;
@@ -392,7 +476,136 @@ const props = defineProps({
     type: Boolean,
     default: false,
   },
+  showMarketComparison: Boolean,
+  marketStreet: String,
+  marketCity: String,
+  marketStatistics: { type: Object as PropType<DvfStatistics | null>, default: null },
+  communeMarketReference: {
+    type: Object as PropType<DvfResidentialReference | null>,
+    default: null,
+  },
+  marketReference: {
+    type: Object as PropType<DvfResidentialReference | null>,
+    default: null,
+  },
 });
+
+const marketPercent = new Intl.NumberFormat('fr-FR', { style: 'percent', signDisplay: 'exceptZero', maximumFractionDigits: 1 });
+type MarketScope = 'default' | 'commune' | 'street';
+const marketColumns = computed<{ scope: MarketScope; label: string }[]>(() => {
+  if (dashboardStore.activeMainMode === 'prospection') {
+    if (!props.marketCity) return [];
+    return props.marketStreet
+      ? [{ scope: 'commune', label: 'Écart commune' }, { scope: 'street', label: 'Écart rue' }]
+      : [{ scope: 'commune', label: 'Écart commune' }];
+  }
+  return props.showMarketComparison ? [{ scope: 'default', label: isLocalMarketList.value ? 'Écart rue' : 'Écart' }] : [];
+});
+
+function formatSoldPricePerSquareMetre(price?: number | null) {
+  return price == null ? '—' : `${formatPrice(price)} / m²`;
+}
+
+type DvfSurfaceRow = { derniere_vente_surface_batie?: number | null; surface?: number | null };
+const dvfSurfaceFormatter = new Intl.NumberFormat('fr-FR', { maximumFractionDigits: 2 });
+
+function dvfSurface(row: DvfSurfaceRow): number | null {
+  const surface = row.derniere_vente_surface_batie;
+  return surface != null && Number.isFinite(surface) && surface > 0 ? surface : null;
+}
+
+function formatDvfSurface(row: DvfSurfaceRow) {
+  const surface = dvfSurface(row);
+  return surface === null ? '' : `${dvfSurfaceFormatter.format(surface)} m²`;
+}
+
+function dvfSurfaceLabel(row: { derniere_vente_code_type_local?: string | null }) {
+  return row.derniere_vente_code_type_local === '2' ? 'Local vendu · DVF · Non vérifiée' : 'DVF · Non vérifiée';
+}
+
+function prospectionCrmSurface(row: DvfSurfaceRow): number | null {
+  const surface = Number(row.surface);
+  return !isLocalMarketList.value && Number.isFinite(surface) && surface > 0 ? surface : null;
+}
+
+function compareDvfSurface(a: DvfSurfaceRow, b: DvfSurfaceRow) {
+  if (isEstimationMode.value) return (a.surface ?? -1) - (b.surface ?? -1);
+  return (prospectionCrmSurface(a) ?? dvfSurface(a) ?? (isLocalMarketList.value ? a.surface : null) ?? -1) -
+    (prospectionCrmSurface(b) ?? dvfSurface(b) ?? (isLocalMarketList.value ? b.surface : null) ?? -1);
+}
+
+function dvfSaleType(code?: string | null): string {
+  switch (code) {
+    case '1': return 'Maison';
+    case '2': return 'Appartement';
+    case '4': return 'Commercial';
+    default: return '';
+  }
+}
+
+function dvfLotsLabel(row: { derniere_vente_code_type_local?: string | null; derniere_vente_dvf?: { lots: string[] } | null }) {
+  const lots = row.derniere_vente_dvf?.lots;
+  if (row.derniere_vente_code_type_local !== '2' || !lots?.length) return '';
+  return lots.length === 1 ? `Lot n° ${lots[0]}` : `Lots n° ${lots.join(', ')}`;
+}
+
+type MarketRow = Partial<IAddressDetail> & { tableMarketReference?: DvfResidentialReference | null };
+
+function simulationMarketDifference(row: MarketRow) {
+  return relativeMarketDifference(savedSimulationPricePerM2(row), row.tableMarketReference?.median);
+}
+
+function formatSimulationMarketDifference(row: MarketRow) {
+  const difference = simulationMarketDifference(row);
+  return difference === null ? '—' : marketPercent.format(difference);
+}
+
+function simulationMarketTitle(row: MarketRow) {
+  const reference = row.tableMarketReference;
+  if (!reference || simulationMarketDifference(row) === null) return undefined;
+  const scope = reference.scope === 'street' ? 'rue' : 'commune';
+  return `Référence résidentielle ${scope} · ${formatSoldPricePerSquareMetre(reference.median)}. Écart descriptif, sans indication sur la fiabilité de l’estimation.`;
+}
+
+function marketReferenceFor(row: MarketRow, scope: MarketScope = 'default') {
+  if (scope === 'default') return row.tableMarketReference;
+  if (row.code_insee !== props.marketCity) return null;
+  if (Number(row.unit_id) > 0) {
+    const category = unitDvfCategory(row.derniere_vente_code_type_local);
+    if (!category) return null;
+    if (scope === 'commune') return communeComparisonReference(props.marketStatistics, category);
+    const street = row.prospection_street_key || row.id_fantoir;
+    return street && street === props.marketStreet
+      ? streetComparisonReference(props.marketStatistics?.streets?.[street]?.unit_categories?.[category], props.marketStatistics, category)
+      : null;
+  }
+  if (scope === 'commune') return props.communeMarketReference;
+  return (row.prospection_street_key || row.id_fantoir) === props.marketStreet ? props.marketReference : null;
+}
+
+function marketDifference(row: MarketRow, scope: MarketScope = 'default') {
+  const code = row.derniere_vente_code_type_local;
+  const comparable = code == null ? row.derniere_vente_residentielle : dvfSaleType(code) !== '';
+  return comparable ? relativeMarketDifference(row.dernier_prix_vente_m2, marketReferenceFor(row, scope)?.median) : null;
+}
+
+function usesFavoriteCommuneReference(row: MarketRow) {
+  return isLocalMarketList.value && marketDifference(row) !== null && marketReferenceFor(row)?.scope === 'commune';
+}
+
+function formatMarketDifference(row: MarketRow, scope: MarketScope) {
+  const difference = marketDifference(row, scope);
+  return difference === null ? '—' : marketPercent.format(difference);
+}
+
+function marketDifferenceNote(row: MarketRow, scope: MarketScope) {
+  return row.derniere_vente_code_type_local === '4' && !(scope !== 'default' && Number(row.unit_id) > 0) && marketDifference(row, scope) !== null
+    ? 'Comparaison avec le prix résidentiel de référence, malgré une catégorie de bien différente.' : undefined;
+}
+
+function hasWeakMarketDifference(row: MarketRow, scope: MarketScope) {
+  return marketDifference(row, scope) !== null && marketReferenceFor(row, scope)?.lowReliability;
+}
 
 const handleRowClick = (row: any) => {
   if (props.cityOnly) {
@@ -433,32 +646,8 @@ const getRowClass = ({ row }: any) => {
 
 const toggleFavorite = async (row: any) => {
   try {
-    const normalizedRow = {
-      ...row,
-      row_type: row.row_type || (Number(row.unit_id ?? 0) > 0 ? 'unit' : 'address'),
-
-      unit_id: Number(row.unit_id ?? 0) > 0 ? Number(row.unit_id) : null,
-    };
-
-    const savedRow = await store.toggleFavorite(normalizedRow.id ?? 0, normalizedRow);
-
-    Object.assign(row, {
-      ...savedRow,
-      row_type: savedRow.row_type || normalizedRow.row_type,
-      unit_id:
-        Number(savedRow.unit_id ?? normalizedRow.unit_id ?? 0) > 0
-          ? Number(savedRow.unit_id ?? normalizedRow.unit_id)
-          : null,
-    });
-
-    ElMessage.success(savedRow.favorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
-
-    dashboardStore.updateAddress({
-      ...row,
-      ...savedRow,
-      row_type: row.row_type,
-      unit_id: row.unit_id,
-    });
+    const favorite = await store.setFavorite(row);
+    ElMessage.success(favorite ? 'Ajouté aux favoris' : 'Retiré des favoris');
   } catch (e) {
     console.error('toggleFavorite error:', e);
     ElMessage.error('Impossible de modifier le favori');
@@ -497,11 +686,24 @@ function getDisplayType(row: any): string {
 </script>
 
 <style scoped>
+.dvf-low-reliability { color: var(--el-color-warning-dark-2); }
 .property-table-container {
+  --prospection-dot-size: 12px;
   max-width: 100%;
   min-width: 0;
   overflow-x: auto;
   box-sizing: border-box;
+}
+
+.prospection-street-table {
+  --prospection-dot-size: 14px;
+}
+
+.dvf-sale-link {
+  min-width: 28px;
+  min-height: 28px;
+  font-size: 16px;
+  vertical-align: middle;
 }
 
 .modern-property-table {
@@ -555,11 +757,19 @@ function getDisplayType(row: any): string {
 
 .icon-maison {
   font-size: 24px;
+}
+
+.icon-maison,
+.dvf-sale-type[data-dvf-type='1'] {
   color: #059669;
 }
 
 .icon-appartement {
   font-size: 24px;
+}
+
+.icon-appartement,
+.dvf-sale-type[data-dvf-type='2'] {
   color: #3b82f6;
 }
 
@@ -633,6 +843,10 @@ function getDisplayType(row: any): string {
 
 .icon-commerce {
   font-size: 24px;
+}
+
+.icon-commerce,
+.dvf-sale-type[data-dvf-type='4'] {
   color: #7c3aed;
 }
 
@@ -766,16 +980,6 @@ function getDisplayType(row: any): string {
   border-top: 1px solid #f3f4f6;
 }
 
-.pcm-contact {
-  display: flex;
-  align-items: center;
-  gap: 6px;
-}
-
-.pcm-weather-label {
-  font-size: 12px;
-  font-weight: 600;
-}
 
 .pcm-actions {
   display: flex;

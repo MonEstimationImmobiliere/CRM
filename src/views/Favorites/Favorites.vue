@@ -6,10 +6,6 @@
         <h2>Mes Favoris</h2>
         <ViewToggle v-model="currentFavoritesView" :options="viewOptions" />
       </div>
-      <el-radio-group v-model="selectedScope" @change="onScopeChange" class="mobile-scope-toggle">
-        <el-radio-button value="personal">Personnel</el-radio-button>
-        <el-radio-button value="agency">Tous</el-radio-button>
-      </el-radio-group>
       <el-select
         v-model="selectedCity"
         placeholder="Filtrer par ville"
@@ -39,12 +35,6 @@
 
       <div class="headerBottomRow">
         <div class="filters-container">
-          <div class="scope-filter">
-            <el-radio-group v-model="selectedScope" @change="onScopeChange">
-              <el-radio-button value="personal">Personnel</el-radio-button>
-              <el-radio-button value="agency">Tous</el-radio-button>
-            </el-radio-group>
-          </div>
           <div class="city-filter">
             <el-select
               v-model="selectedCity"
@@ -148,14 +138,12 @@ const router = useRouter();
 
 const selectedCity = ref<string>('');
 const selectedPropertyType = ref<string>('');
-const selectedScope = ref<'agency' | 'personal'>('personal');
-//const favorites = computed(() => store.favorites);
 const favorites = computed(() => store.favoriteAddresses);
 const favoritesViewType = computed(() => store.favoritesViewType);
 
 onMounted(async () => {
   try {
-    await store.loadFavoriteAddresses(selectedScope.value);
+    await store.loadFavoriteAddresses();
   } catch (error) {
     ElMessage({
       message: 'Erreur lors du chargement des favoris',
@@ -170,7 +158,7 @@ watch(
   async (isVisible, wasVisible) => {
     if (wasVisible && !isVisible) {
       try {
-        await store.loadFavoriteAddresses(selectedScope.value);
+        await store.loadFavoriteAddresses();
       } catch (error) {
         ElMessage.error('Erreur lors du rafraîchissement des favoris');
       }
@@ -229,16 +217,11 @@ const filteredFavorites = computed(() => {
 
 const toggleFavorite = async (propertyData: any) => {
   try {
-    const savedRow = await store.toggleFavorite(propertyData.id, propertyData);
-
-    propertyData.id = savedRow.id;
-    propertyData.favorite = savedRow.favorite;
+    await store.setFavorite(propertyData, false);
 
     ElMessage({
-      message: savedRow.favorite
-        ? 'Propriété ajoutée aux favoris'
-        : 'Propriété retirée des favoris',
-      type: savedRow.favorite ? 'success' : 'info',
+      message: 'Propriété retirée des favoris',
+      type: 'info',
       duration: 2000,
     });
   } catch (error) {
@@ -259,7 +242,7 @@ const openPropertyDialog = async (property: any) => {
 
     id: Number(property.id ?? 0) > 0 ? Number(property.id) : 0,
 
-    id_fantoinit_id: unitId > 0 ? unitId : null,
+    unit_id: unitId > 0 ? unitId : null,
 
     row_type: property.row_type || (unitId > 0 ? 'unit' : 'address'),
   };
@@ -273,13 +256,6 @@ const clearFilters = () => {
   selectedPropertyType.value = '';
 };
 
-const onScopeChange = async (scope: string | number | boolean | undefined) => {
-  try {
-    await store.loadFavoriteAddresses(scope as 'agency' | 'personal');
-  } catch (error) {
-    ElMessage.error('Erreur lors du chargement des favoris');
-  }
-};
 
 const goToMap = (property: any) => {
   const city = property.city || property.nom_commune || '';

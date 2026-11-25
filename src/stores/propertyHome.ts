@@ -1,7 +1,10 @@
 import { defineStore } from 'pinia';
-import { ref, computed } from 'vue';
+import { computed, ref, watch } from 'vue';
 import { PropertyService } from '@/api';
 import type { IProperty } from '@/types/property';
+import { getPersonalPropertyTarget, personalPropertyKey, PersonalPropertyService } from '@/api/personal-property.service';
+import type { FavoriteAddress } from '@/api/personal-property.service';
+import { useUserStore } from '@/stores/user';
 
 const defaultPropertyData: Partial<IProperty> = {
   id_fantoir_long: '',
@@ -67,6 +70,7 @@ export const usePropertyStore = defineStore('property', () => {
   const properties = ref<Partial<IProperty>[]>([]);
   const selectedProperty = ref<Partial<IProperty> | null>(null);
   const isDialogVisible = ref<boolean>(false);
+  const initialDialogTab = ref<string | null>(null);
   const favoritesViewType = ref<'table' | 'card'>('table');
 
   function addProperty(property: Partial<IProperty>) {
@@ -165,6 +169,7 @@ export const usePropertyStore = defineStore('property', () => {
         saved.favorite === 1 ||
         saved.favorite === '1',
     };
+    if (savedNormalized.unit_id) savedNormalized.lot_number = undefined;
 
     if (propertyId > 0) {
       updatePropertyInStore(savedNormalized);
@@ -176,6 +181,12 @@ export const usePropertyStore = defineStore('property', () => {
       ...selectedProperty.value,
       ...savedNormalized,
     };
+
+    const favorite = findFavorite(savedNormalized);
+    if (favorite) {
+      revision++;
+      Object.assign(favorite, saved, { favorite: true });
+    }
 
     console.log('STORE selectedProperty AFTER SAVE =', selectedProperty.value);
 
@@ -308,7 +319,8 @@ export const usePropertyStore = defineStore('property', () => {
         ...defaultPropertyData,
         ...property,
 
-        id: 0,
+        // A failed detail request does not make an existing CRM record a new one.
+        id: Number(property.id) > 0 ? Number(property.id) : 0,
 
         city: (property as any).city || (property as any).nom_commune || '',
         nom_commune:
@@ -345,297 +357,89 @@ export const usePropertyStore = defineStore('property', () => {
       favorite: Boolean(property.favorite),
     };
   }
-  function setDialogVisible(visible: boolean) {
+  function setDialogVisible(visible: boolean, tab: string | null = null) {
+    if (visible) initialDialogTab.value = tab;
     isDialogVisible.value = visible;
   }
 
-  const favorites = computed(() =>
-    properties.value.filter(property => property.favorite === true)
-  );
+  const favoriteAddresses = ref<FavoriteAddress[]>([]);
+  const favoritesByKey = computed(() => new Map(
+    favoriteAddresses.value.map(favorite => [favorite.row_id, favorite])
+  ));
+  const userStore = useUserStore();
+  let loaded = false;
+  let revision = 0;
+  let loading: Promise<void> | undefined;
+  const pendingFavorites = new Set<string>();
 
-  const toggleFavorite = async (
-    propertyId: number | string,
-    sourceRow: any = null
-  ): Promise<any> => {
-    const numericId = Number(propertyId);
+  watch(() => userStore.token, () => {
+    revision++;
+    loaded = false;
+    loading = undefined;
+    favoriteAddresses.value = [];
+    pendingFavorites.clear();
+  }, { flush: 'sync' });
 
-    const rowType = String(sourceRow?.row_type ?? '')
-      .trim()
-      .toLowerCase();
-
-    const unitId = Number(sourceRow?.unit_id ?? 0);
-
-    console.log('TOGGLE FAVORITE CALLED', {
-      propertyId,
-      numericId,
-      rowType,
-      unitId,
-      sourceRow,
-    });
-
-    // =========================
-    // CAS 1 : property existe déjà
-    // =========================
-    if (numericId > 0) {
-      const existingResponse: any =
-        await PropertyService.getProperty(numericId);
-
-      const existing =
-        existingResponse?.property ??
-        existingResponse?.data?.property ??
-        existingResponse?.data ??
-        existingResponse;
-
-      if (!existing || !existing.id) {
-        throw new Error('Propriété introuvable');
-      }
-
-      const updatedProperty: any = {
-        ...existing,
-        favorite: existing.favorite ? 0 : 1,
-      };
-
-      const updatedResponse: any = await PropertyService.updateProperty(
-        Number(updatedProperty.id),
-        updatedProperty
-      );
-
-      const updated =
-        updatedResponse?.property ??
-        updatedResponse?.data?.property ??
-        updatedResponse?.data ??
-        updatedProperty;
-
-      updatePropertyInStore(updated);
-
-      if (sourceRow) {
-        sourceRow.id = updated.id;
-        sourceRow.favorite = updated.favorite;
-        sourceRow.unit_id = updated.unit_id ?? sourceRow.unit_id ?? 0;
-        sourceRow.property_type =
-          updated.property_type ?? sourceRow.property_type;
-      }
-
-      if (
-        selectedProperty.value &&
-        Number(selectedProperty.value.id) === Number(updated.id)
-      ) {
-        selectedProperty.value = {
-          ...selectedProperty.value,
-          ...updated,
-        } as any;
-      }
-
-      return updated;
+  watch(isDialogVisible, visible => {
+    if (visible && !loaded) {
+      void loadFavoriteAddresses().catch(error => console.error('Chargement des favoris', error));
     }
+  });
 
-    // =========================
-    // CAS 2 : unit sans property encore créée
-    // =========================
-    if (rowType === 'unit') {
-      if (!unitId || unitId <= 0) {
-        throw new Error('Impossible de créer la property : unit_id manquant');
+  function findFavorite(row: any) {
+    const target = getPersonalPropertyTarget(row);
+    if (!target) return undefined;
+    const key = personalPropertyKey(target);
+
+    return favoritesByKey.value.get(key) ??
+      (Number(row.id) > 0 ? favoritesByKey.value.get(`custom_property:${row.id}`) : undefined);
+  }
+
+  function loadFavoriteAddresses() {
+    if (loading) return loading;
+    const version = revision;
+    const request = PersonalPropertyService.getFavorites()
+      .then(rows => {
+        if (version !== revision) return;
+        favoriteAddresses.value = rows;
+        loaded = true;
+      })
+      .finally(() => {
+        if (loading === request) loading = undefined;
+      });
+    loading = request;
+    return request;
+  }
+
+  async function setFavorite(row: any, enabled?: boolean): Promise<boolean> {
+    const target = getPersonalPropertyTarget(row);
+    if (!target) throw new Error('Bien sans identifiant de favori.');
+    const sessionToken = userStore.token;
+    const pendingKey = personalPropertyKey(target);
+    if (pendingFavorites.has(pendingKey)) return !!findFavorite(row);
+    pendingFavorites.add(pendingKey);
+
+    try {
+      if (!loaded && enabled === undefined) await loadFavoriteAddresses();
+      if (sessionToken !== userStore.token) throw new Error('Session modifiée.');
+      const existing = findFavorite(row);
+      const favorite = enabled ?? !existing;
+      const resolved = existing ? getPersonalPropertyTarget(existing)! : target;
+      const added = favorite
+        ? await PersonalPropertyService.addFavorite(resolved)
+        : await PersonalPropertyService.removeFavorite(resolved);
+
+      if (sessionToken === userStore.token) {
+        revision++;
+        const key = added?.row_id ?? personalPropertyKey(resolved);
+        const remaining = favoriteAddresses.value.filter(item => item.row_id !== key);
+        favoriteAddresses.value = added ? [added, ...remaining] : remaining;
       }
-
-      const propertyToCreate: any = {
-        ...defaultPropertyData,
-
-        id: 0,
-        row_type: 'unit',
-        unit_id: unitId,
-
-        id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
-        id_fantoir: sourceRow?.id_fantoir || '',
-        code_insee: sourceRow?.code_insee || '',
-        code_postal: sourceRow?.code_postal || '',
-        nom_voie: sourceRow?.nom_voie || '',
-        numero: sourceRow?.numero || '',
-        rep: sourceRow?.rep || '',
-        city: sourceRow?.city || sourceRow?.nom_commune || '',
-        nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
-
-        property_type:
-          sourceRow?.property_type ||
-          sourceRow?.type_code ||
-          sourceRow?.unit_type ||
-          'appartement',
-
-        favorite: 1,
-      };
-
-      console.log('CREATE UNIT PROPERTY FROM FAVORITE', propertyToCreate);
-
-      const createdResponse: any =
-        await PropertyService.createProperty(propertyToCreate);
-
-      const created =
-        createdResponse?.property ??
-        createdResponse?.data?.property ??
-        createdResponse?.data ??
-        createdResponse;
-
-      if (!created || !created.id) {
-        throw new Error("La property unit n'a pas été créée correctement");
-      }
-
-      addProperty(created);
-
-      if (sourceRow) {
-        sourceRow.id = created.id;
-        sourceRow.favorite = created.favorite;
-        sourceRow.unit_id = created.unit_id ?? unitId;
-        sourceRow.property_type = created.property_type;
-      }
-
-      if (
-        selectedProperty.value &&
-        selectedProperty.value.row_type === 'unit' &&
-        Number(selectedProperty.value.unit_id) === unitId
-      ) {
-        selectedProperty.value = {
-          ...selectedProperty.value,
-          ...created,
-        } as any;
-      }
-
-      return created;
+      return favorite;
+    } finally {
+      if (sessionToken === userStore.token) pendingFavorites.delete(pendingKey);
     }
-
-    // =========================
-    // CAS 3 : adresse racine sans property encore créée
-    // =========================
-    if (rowType === 'address') {
-      const propertyToCreate: any = {
-        ...defaultPropertyData,
-        ...sourceRow,
-
-        id: 0,
-        unit_id: 0,
-        row_type: 'address',
-
-        id_fantoir_long: String(sourceRow?.id_fantoir_long || ''),
-        id_fantoir: sourceRow?.id_fantoir || '',
-        code_insee: sourceRow?.code_insee || '',
-        code_postal: sourceRow?.code_postal || '',
-        nom_voie: sourceRow?.nom_voie || '',
-        numero: sourceRow?.numero || '',
-        rep: sourceRow?.rep || '',
-        city: sourceRow?.city || sourceRow?.nom_commune || '',
-        nom_commune: sourceRow?.nom_commune || sourceRow?.city || '',
-
-        property_type:
-          sourceRow?.property_type || sourceRow?.type_code || 'immeuble',
-
-        favorite: 1,
-      };
-
-      console.log('CREATE ROOT PROPERTY FROM FAVORITE', propertyToCreate);
-
-      const createdResponse: any =
-        await PropertyService.createProperty(propertyToCreate);
-
-      const created =
-        createdResponse?.property ??
-        createdResponse?.data?.property ??
-        createdResponse?.data ??
-        createdResponse;
-
-      if (!created || !created.id) {
-        throw new Error("La property racine n'a pas été créée correctement");
-      }
-
-      addProperty(created);
-
-      if (sourceRow) {
-        sourceRow.id = created.id;
-        sourceRow.favorite = created.favorite;
-        sourceRow.unit_id = 0;
-        sourceRow.property_type = created.property_type;
-      }
-
-      if (
-        selectedProperty.value &&
-        selectedProperty.value.row_type === 'address' &&
-        selectedProperty.value.id_fantoir_long === created.id_fantoir_long
-      ) {
-        selectedProperty.value = {
-          ...selectedProperty.value,
-          ...created,
-        } as any;
-      }
-
-      return created;
-    }
-
-    throw new Error(
-      'Impossible de déterminer le type de ligne pour le favori.'
-    );
-  };
-
-  const isFavorite = (propertyIdentifier: number | string): boolean => {
-    const property = properties.value.find(
-      p =>
-        Number(p.id) === Number(propertyIdentifier) ||
-        String(p.id_fantoir_long) === String(propertyIdentifier)
-    );
-
-    return Boolean(property?.favorite);
-  };
-
-  const favoriteAddresses = ref<any[]>([]);
-
-  const loadFavoriteAddresses = async (scope?: 'agency' | 'personal') => {
-    const rows = await PropertyService.getFavoriteAddresses(scope);
-
-    favoriteAddresses.value = rows.map((row: any) => ({
-      ...defaultPropertyData,
-      ...row,
-      numero: String(row.numero ?? ''),
-      city: row.city || row.nom_commune || '',
-      nom_commune: row.nom_commune || row.city || '',
-      favorite:
-        row.favorite === true || row.favorite === 1 || row.favorite === '1',
-    }));
-  };
-
-  const loadFavoritesProperties = async () => {
-    const favoriteProperties = await PropertyService.getFavorites();
-
-    properties.value.forEach(property => {
-      if (property.favorite) {
-        property.favorite = false;
-      }
-    });
-
-    favoriteProperties.forEach(property => {
-      const normalizedProperty = {
-        ...defaultPropertyData,
-        ...property,
-        numero: String((property as any).numero ?? ''),
-        city: (property as any).city || (property as any).nom_commune || '',
-        nom_commune:
-          (property as any).nom_commune || (property as any).city || '',
-        favorite: true,
-      };
-
-      const existingIndex = properties.value.findIndex(
-        p =>
-          p.id === (property as any).id ||
-          p.id_fantoir_long === (property as any).id_fantoir_long
-      );
-
-      if (existingIndex !== -1) {
-        properties.value[existingIndex] = {
-          ...properties.value[existingIndex],
-          ...normalizedProperty,
-        } as (typeof properties.value)[number];
-      } else {
-        properties.value.push(
-          normalizedProperty as (typeof properties.value)[number]
-        );
-      }
-    });
-  };
+  }
 
   const setFavoritesViewType = (viewType: 'table' | 'card') => {
     favoritesViewType.value = viewType;
@@ -645,6 +449,7 @@ export const usePropertyStore = defineStore('property', () => {
     properties,
     selectedProperty,
     isDialogVisible,
+    initialDialogTab,
     favoritesViewType,
     saveProperty,
     addProperty,
@@ -655,11 +460,9 @@ export const usePropertyStore = defineStore('property', () => {
     setDialogVisible,
     setFavoritesViewType,
     defaultPropertyData,
-    favorites,
     favoriteAddresses,
-    toggleFavorite,
-    isFavorite,
+    setFavorite,
+    isFavorite: (row: any) => !!findFavorite(row),
     loadFavoriteAddresses,
-    loadFavoritesProperties,
   };
 });

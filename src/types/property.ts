@@ -64,6 +64,20 @@ export type SanitationType = 'tout_egout' | 'fosse_septique' | 'autre' | null;
  * Interface complète pour une propriété (Favorite ou Property)
  * Basée sur le retour de l'API /property/favorite
  */
+export interface ProspectionCommand {
+  years: number;
+  months: number;
+  comment: string | null;
+}
+
+export interface PersonalProspection {
+  prospection_years?: number | null;
+  prospection_months?: number | null;
+  prospection_comment?: string | null;
+  prospection_validated_at?: string | null;
+  prospection_expires_at?: string | null;
+}
+
 export interface IProperty {
   id: number;
   id_fantoir_long: string;
@@ -75,6 +89,7 @@ export interface IProperty {
   rep: string | null;
   city: string | null;
   apart_number: string | null;
+  lot_number?: string | null;
   /** Alias historique pour apart_number */
   numero_appartement?: string;
   /** Nom de la commune (utilisé par certaines vues) */
@@ -156,6 +171,8 @@ export interface IProperty {
   nombre_ventes?: number | null;
   date_derniere_vente?: string | null;
   dernier_prix_vente?: number | null;
+  dernier_prix_vente_m2?: number | null;
+  prospection_street_key?: string | null;
   nombre_estimations?: number | null;
   dernier_prix_estime?: number | null;
 

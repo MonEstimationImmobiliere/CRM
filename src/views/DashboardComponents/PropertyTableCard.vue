@@ -46,7 +46,7 @@
     <div class="property-grid">
       <el-card
         v-for="property in sortedProperties"
-        :key="property.id_fantoir"
+        :key="property.id || property.id_fantoir_long || property.id_fantoir"
         class="property-card"
         :body-style="{ padding: '0px' }"
         shadow="hover"
@@ -134,9 +134,9 @@
 
           <div class="card-actions">
             <el-button
-              @click.stop="toggleFavorite(String(property.id_fantoir_long))"
+              @click.stop="toggleFavorite(property)"
               :type="
-                isFavorite(String(property.id_fantoir_long))
+                store.isFavorite(property)
                   ? 'warning'
                   : 'default'
               "
@@ -145,7 +145,7 @@
             >
               <el-icon>
                 <StarFilled
-                  v-if="isFavorite(String(property.id_fantoir_long))"
+                  v-if="store.isFavorite(property)"
                 />
                 <Star v-else />
               </el-icon>
@@ -235,9 +235,9 @@ const handleSortClick = (criteria: 'price' | 'size' | 'bedrooms'): void => {
 };
 
 // Gestion des favoris
-const toggleFavorite = async (propertyId: string) => {
+const toggleFavorite = async (property: unknown) => {
   try {
-    const newFavoriteState = await store.toggleFavorite(propertyId);
+    const newFavoriteState = await store.setFavorite(property);
     ElMessage({
       message: newFavoriteState
         ? 'Propriété ajoutée aux favoris'
@@ -252,10 +252,6 @@ const toggleFavorite = async (propertyId: string) => {
       duration: 3000,
     });
   }
-};
-
-const isFavorite = (propertyId: string): boolean => {
-  return store.isFavorite(propertyId);
 };
 
 // const onImageError = (event: Event) => {

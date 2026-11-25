@@ -44,6 +44,7 @@ const props = defineProps({
     type: String,
     required: true,
   },
+  prospection: Boolean,
 });
 
 const emit = defineEmits(['update:modelValue', 'select', 'clear']);
@@ -75,7 +76,8 @@ const queryStreets = (
   }
 
   axios
-    .get(`${API_URL}/addresses/${props.codeInsee}/nom_voie/${queryString}`)
+    .get(`${API_URL}/addresses/${props.codeInsee}/nom_voie/${queryString}`,
+      props.prospection ? { params: { prospection: 1 } } : undefined)
     .then(response => {
       const data = response.data;
       const results = data.map((item: any) => ({

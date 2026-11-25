@@ -10,6 +10,7 @@
   >
     <EMTable
       :data="data"
+      :row-key="props.rowKey"
       :columns="columns"
       :actions="actions"
       :page-size="$props.pageSize"
@@ -44,6 +45,7 @@ const props = defineProps<{
   title?: string;
   subtitle?: string;
   data: T[];
+  rowKey?: keyof T;
   columns: ColumnDefinition<T>[];
   actions?: TableAction<T>[];
   searchable?: boolean;

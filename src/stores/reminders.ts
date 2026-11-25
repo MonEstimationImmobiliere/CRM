@@ -1,14 +1,12 @@
 import { defineStore } from 'pinia';
 import { ref, computed, watch } from 'vue';
-import { LocalStorage, STORAGE_KEYS } from '@/utils/localStorage';
+import { useUserStore } from '@/stores/user';
 import { NotificationService } from '@/utils/notifications';
 import {
   ReminderService,
   type ReminderScope,
   type ReminderScopeOptions,
 } from '@/api/reminder.service';
-import { UserService, type AgencyUser } from '@/api/user.service';
-import type { Agency } from '@/api/user.service';
 import { isOverdue as helperIsOverdue, isToday as helperIsToday } from '@/utils/reminderHelpers';
 import type {
   IReminder,
@@ -26,10 +24,9 @@ export interface Reminder extends IReminder {
 }
 
 export const useRemindersStore = defineStore('reminders', () => {
+  const user = useUserStore();
   const reminders = ref<Reminder[]>([]);
   const agencyReminders = ref<Reminder[]>([]);
-  const agencyUsers = ref<AgencyUser[]>([]);
-  const agencies = ref<Agency[]>([]);
   const loading = ref(false);
   const selectedReminder = ref<Reminder | null>(null);
   const remindersViewType = ref<'table' | 'card' | 'calendar'>('table');
@@ -38,64 +35,49 @@ export const useRemindersStore = defineStore('reminders', () => {
   const scopeCache = new Map<string, Reminder[]>();
 
   const buildCacheKey = (scope: ReminderScope, options?: ReminderScopeOptions): string =>
-    `${scope}-${options?.userId ?? ''}-${options?.agencyId ?? ''}-${options?.completed ? '1' : '0'}`;
+    `${scope}-${options?.completed ? '1' : '0'}`;
 
-  const invalidateCache = () => scopeCache.clear();
+  let scopeRequest = 0;
+  const invalidateCache = () => {
+    scopeRequest++;
+    scopeCache.clear();
+    loading.value = false;
+  };
+  watch(() => user.token, () => {
+    invalidateCache();
+    reminders.value = [];
+    agencyReminders.value = [];
+    selectedReminder.value = null;
+  }, { flush: 'sync' });
 
   // Load reminders from API
   const loadReminders = async () => {
+    const token = user.token;
+    const request = scopeRequest;
     try {
       loading.value = true;
       const [userReminders, sharedReminders] = await Promise.all([
         ReminderService.getUserReminders(),
         ReminderService.getAgencyReminders(),
       ]);
+      if (token !== user.token) return;
 
-      console.log('[loadReminders] userReminders:', userReminders);
-      console.log('[loadReminders] sharedReminders:', sharedReminders);
-
-      reminders.value = userReminders
-        .filter((r) => r.id)
-        .map((r) => ({ ...r, sharing: r.sharing || false }));
+      if (request === scopeRequest) {
+        reminders.value = userReminders
+          .filter((r) => r.id)
+          .map((r) => ({ ...r, sharing: r.sharing || false }));
+      }
 
       agencyReminders.value = sharedReminders
         .filter((r) => r.id)
         .map((r) => ({ ...r, sharing: r.sharing || false }));
 
-      if (LocalStorage.isAvailable()) {
-        LocalStorage.set(STORAGE_KEYS.REMINDERS, reminders.value);
-      }
     } catch {
-      // Fallback to localStorage
-      if (LocalStorage.isAvailable()) {
-        const savedReminders = LocalStorage.get<Reminder[]>(STORAGE_KEYS.REMINDERS);
-        if (savedReminders && Array.isArray(savedReminders)) {
-          reminders.value = savedReminders.map((r) => ({
-            ...r,
-            sharing: r.sharing || false,
-          }));
-        }
-      }
+      if (token === user.token) agencyReminders.value = [];
     } finally {
-      loading.value = false;
+      if (token === user.token && request === scopeRequest) loading.value = false;
     }
   };
-
-  // Save reminders to localStorage
-  const saveReminders = () => {
-    if (LocalStorage.isAvailable()) {
-      LocalStorage.set(STORAGE_KEYS.REMINDERS, reminders.value);
-    }
-  };
-
-  // Watch for changes in reminders and save to localStorage
-  watch(
-    reminders,
-    () => {
-      saveReminders();
-    },
-    { deep: true }
-  );
 
   // Initialize store with sample data if none exists
   const initializeStore = async () => {
@@ -215,6 +197,7 @@ export const useRemindersStore = defineStore('reminders', () => {
 
   // Actions
   const addReminder = async (reminderData: IReminderCreate) => {
+    const token = user.token;
     try {
       const newReminder = await ReminderService.createReminder({
         ...reminderData,
@@ -226,6 +209,7 @@ export const useRemindersStore = defineStore('reminders', () => {
         sharing: newReminder.sharing || false,
       };
 
+      if (token !== user.token) return reminderWithDefaults;
       invalidateCache();
       reminders.value.push(reminderWithDefaults);
       NotificationService.reminderCreated(reminderWithDefaults.title);
@@ -242,47 +226,37 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const updateReminder = async (id: number, updates: Partial<IReminderCreate>) => {
-    try {
-      // Strip local-only 'status' field before sending to API
-      const { status: _status, ...apiUpdates } = updates as Partial<IReminderCreate> & {
-        status?: string;
-      };
+    const token = user.token;
+    const { status: _status, ...apiUpdates } = updates as Partial<IReminderCreate> & {
+      status?: string;
+    };
 
-      const updatedReminder = await ReminderService.updateReminder(id, apiUpdates);
-      const index = reminders.value.findIndex((r) => r.id === id);
-      if (index !== -1) {
-        invalidateCache();
-        reminders.value[index] = {
-          ...reminders.value[index],
-          ...updatedReminder,
-          sharing: updatedReminder.sharing || false,
-        };
-        NotificationService.reminderUpdated(reminders.value[index].title);
-        return reminders.value[index];
-      }
-    } catch {
-      // Fallback local
-      const index = reminders.value.findIndex((r) => r.id === id);
-      if (index !== -1) {
-        invalidateCache();
-        reminders.value[index] = {
-          ...reminders.value[index],
-          ...updates,
-          updated_at: new Date().toISOString(),
-        };
-        NotificationService.reminderUpdated(reminders.value[index].title);
-        return reminders.value[index];
-      }
+    const updatedReminder = await ReminderService.updateReminder(id, apiUpdates);
+    if (token !== user.token) return;
+    invalidateCache();
+    const index = reminders.value.findIndex((r) => r.id === id);
+    if (!updatedReminder?.id) {
+      if (index !== -1) reminders.value.splice(index, 1);
+      agencyReminders.value = agencyReminders.value.filter(reminder => reminder.id !== id);
+      return;
     }
+    const current: Reminder = { ...updatedReminder, sharing: updatedReminder.sharing || false };
+    if (index !== -1) reminders.value[index] = current;
+    const agencyIndex = agencyReminders.value.findIndex(reminder => reminder.id === id);
+    if (agencyIndex !== -1) agencyReminders.value[agencyIndex] = current;
+    NotificationService.reminderUpdated(current.title);
+    return current;
   };
 
   const deleteReminder = async (id: number) => {
+    const token = user.token;
     try {
       await ReminderService.deleteReminder(id);
     } catch {
-      // Continue with local deletion even if API fails
+      return false;
     }
 
+    if (token !== user.token) return false;
     const index = reminders.value.findIndex((r) => r.id === id);
     if (index !== -1) {
       invalidateCache();
@@ -307,12 +281,9 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const updateReminderStatus = async (id: number, status: 'todo' | 'progress' | 'completed') => {
-    const completed = status === 'completed';
-    const index = reminders.value.findIndex((r) => r.id === id);
-    if (index !== -1) {
-      reminders.value[index].status = status;
-    }
-    return await updateReminder(id, { completed });
+    const updated = await updateReminder(id, { completed: status === 'completed' });
+    if (updated) updated.status = status;
+    return updated;
   };
 
   const selectReminder = (reminder: Reminder | null) => {
@@ -324,7 +295,8 @@ export const useRemindersStore = defineStore('reminders', () => {
   };
 
   const getRemindersByProperty = (propertyId: number) => {
-    return reminders.value.filter((r) => r.property_id === propertyId);
+    const matches = [...agencyReminders.value, ...reminders.value].filter(r => r.property_id === propertyId);
+    return [...new Map(matches.map(reminder => [reminder.id, reminder])).values()];
   };
 
   const getRemindersByDateRange = (startDate: string, endDate: string) => {
@@ -374,43 +346,30 @@ export const useRemindersStore = defineStore('reminders', () => {
     remindersViewType.value = viewType;
   };
 
-  const loadAgencyUsers = async () => {
-    try {
-      agencyUsers.value = await UserService.getUsersFromSameAgency();
-    } catch {
-      agencyUsers.value = [];
-    }
-  };
-
-  const loadAgencies = async () => {
-    try {
-      agencies.value = await UserService.getAgencies();
-    } catch {
-      agencies.value = [];
-    }
-  };
-
   const loadRemindersByScope = async (scope: ReminderScope, options?: ReminderScopeOptions) => {
+    const request = ++scopeRequest;
     const key = buildCacheKey(scope, options);
 
     // Serve from cache if available — no network round-trip needed
     if (scopeCache.has(key)) {
       reminders.value = scopeCache.get(key)!;
+      loading.value = false;
       return;
     }
 
     try {
       loading.value = true;
       const data = await ReminderService.getRemindersByScope(scope, options);
+      if (request !== scopeRequest) return;
       const normalised = data
         .filter((r) => r.id)
         .map((r) => ({ ...r, sharing: r.sharing || false }));
       scopeCache.set(key, normalised);
       reminders.value = normalised;
     } catch {
-      // keep current data
+      if (request === scopeRequest) reminders.value = [];
     } finally {
-      loading.value = false;
+      if (request === scopeRequest) loading.value = false;
     }
   };
 
@@ -418,8 +377,6 @@ export const useRemindersStore = defineStore('reminders', () => {
     // State
     reminders,
     agencyReminders,
-    agencyUsers,
-    agencies,
     loading,
     selectedReminder,
     remindersViewType,
@@ -452,8 +409,6 @@ export const useRemindersStore = defineStore('reminders', () => {
     isReminderToday,
     isReminderUpcoming,
     setRemindersViewType,
-    loadAgencyUsers,
-    loadAgencies,
     loadRemindersByScope,
   };
 });

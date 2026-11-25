@@ -1,6 +1,7 @@
 <template>
   <EMTableWithCard
     :data="favorites"
+    row-key="row_id"
     :columns="favoriteColumns"
     :actions="favoriteActions"
     :searchable="true"
